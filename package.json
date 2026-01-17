@@ -1,0 +1,40 @@
+{
+  "name": "@shashwatgtmalpha/impact-mcp",
+  "mcpName": "io.github.shashwatgtm/impact-mcp",
+  "version": "2.0.0",
+  "description": "IMPACT Framework - B2B positioning with hypothesis generation",
+  "main": "dist/index.js",
+  "bin": {
+    "impact-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "positioning",
+    "b2b",
+    "gtm",
+    "marketing",
+    "impact-framework"
+  ],
+  "author": "Shashwat Ghosh <shashwat@helixgtm.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shashwatgtm/impact-mcp.git"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

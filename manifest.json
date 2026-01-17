@@ -1,0 +1,13 @@
+{
+  "name": "IMPACT MCP - B2B Positioning Engine",
+  "version": "2.0.2",
+  "description": "Hypothesis-driven positioning with 8 tools: champion identification, competitive mapping, value proposition, market anchoring, messaging, and channel execution.",
+  "author": "https://github.com/shashwatgtm",
+  "license": "MIT",
+  "repository": "https://github.com/shashwatgtm/impact-mcp",
+  "runtime": "node",
+  "entry": "dist/index.js",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
