@@ -1,4 +1,4 @@
-# IMPACT MCP v2.0.2
+# IMPACT MCP v2.0.0
 
 **Hypothesis-Driven B2B Positioning Engine** - 8 tools implementing the IMPACT framework for strategic positioning and go-to-market messaging.
 
