@@ -1,0 +1,59 @@
+# IMPACT MCP connector
+
+> IMPACT gives Claude eight positioning tools for B2B teams: identify champions, map alternatives, pinpoint value, anchor a market segment, craft the message, translate it into execution, run a full positioning audit, and read the IMPACT framework itself. Every tool turns the details you give it into a structured positioning draft with hypotheses to test.
+
+- MCP server URL (Streamable HTTP, no sign-in, read-only tools): https://impact-mcp.netlify.app/mcp
+- Setup and tools: https://impact-mcp.netlify.app/
+- Privacy policy: https://impact-mcp.netlify.app/privacy.html
+- Local npm package: @shashwatgtmalpha/impact-mcp
+- Source code: https://github.com/shashwatgtm/impact-mcp
+- Built by: Shashwat Ghosh, Helix GTM Consulting (https://www.gtmexpert.com)
+
+## Tools
+
+- IMPACT Framework Guide (impact_get_framework): Get complete IMPACT framework methodology with phase-by-phase guidance
+- Identify Champions (impact_identify_champions): Generate champion hypotheses from company/product context - no blanks, actionable insights
+- Map Alternatives (impact_map_alternatives): Analyze competitive landscape and find positioning whitespace
+- Pinpoint Value (impact_pinpoint_value): Generate value proposition with quantification and proof points
+- Anchor Market (impact_anchor_market): Select beachhead market with scoring and TAM/SAM/SOM framework
+- Craft Message (impact_craft_message): Build positioning statement and message hierarchy with variations
+- Translate Execution (impact_translate_execution): Adapt positioning for specific channels and touchpoints
+- IMPACT Full Audit (impact_full_audit): Complete positioning audit with scoring and recommendations
+
+## Questions and answers
+
+### What is IMPACT?
+
+IMPACT gives Claude eight positioning tools for B2B teams: identify champions, map alternatives, pinpoint value, anchor a market segment, craft the message, translate it into execution, run a full positioning audit, and read the IMPACT framework itself. Every tool turns the details you give it into a structured positioning draft with hypotheses to test.
+
+### How do I connect IMPACT to Claude?
+
+In Claude, open Customize, then Connectors, then Add custom connector. Name it IMPACT, paste the server URL https://impact-mcp.netlify.app/mcp, choose no sign-in and select Add. In Claude Code run: claude mcp add --transport http impact https://impact-mcp.netlify.app/mcp
+
+### Does IMPACT need an account, and what does it cost?
+
+No account or sign-in is needed, and there is no charge. The server is public and every tool is read-only.
+
+### Which tools does IMPACT include?
+
+8 tools: IMPACT Framework Guide, Identify Champions, Map Alternatives, Pinpoint Value, Anchor Market, Craft Message, Translate Execution, IMPACT Full Audit.
+
+### What data does IMPACT keep?
+
+None. Each call is answered from the inputs you give it, and the server stores and logs nothing. Netlify, the host, keeps its own request logs. See the privacy policy.
+
+### Can I run IMPACT on my own computer?
+
+Yes. Run npx -y @shashwatgtmalpha/impact-mcp to use the same tools locally over stdio; nothing is sent to us.
+
+### Who built IMPACT?
+
+Shashwat Ghosh, founder of Helix GTM Consulting, a GTM Alpha consultant, AI GTM expert and fractional CMO with 24+ years in B2B and 10+ years of fractional experience.
+
+## Other connectors by Helix GTM Consulting
+
+- GTM Alpha: https://gtmalpha.netlify.app/integration
+- CRAFT GTM: https://craft-gtm-mcp.netlify.app/
+- CRAFT Content: https://craft-content-mcp.netlify.app/
+- ICP Intelligence: https://icp-intelligence-mcp.netlify.app/
+- Revenue Enablement: https://revenue-enablement-mcp.netlify.app/

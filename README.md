@@ -220,7 +220,7 @@ Comprehensive positioning assessment with scoring.
 
 ## 📚 About the IMPACT Framework
 
-The IMPACT framework was developed by Shashwat Ghosh based on 24+ years of B2B marketing experience. It addresses the common failure mode of B2B positioning: starting with features instead of market hypotheses.
+The IMPACT framework was developed by Shashwat Ghosh based on 24+ years in B2B. It addresses the common failure mode of B2B positioning: starting with features instead of market hypotheses.
 
 **Key Principles:**
 - Hypothesis-driven: Test assumptions before committing
