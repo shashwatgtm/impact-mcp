@@ -19,7 +19,6 @@ https://impact-mcp.netlify.app/privacy.html  https://impact.gtmhelix.com/privacy
 https://impact-mcp.netlify.app/sitemap.xml  https://impact.gtmhelix.com/sitemap.xml  301!
 https://impact-mcp.netlify.app/llms.txt  https://impact.gtmhelix.com/llms.txt  301!
 
-# Old page address on the new site
+# Old page address on the new site (no rule for /privacy: Netlify treats /privacy and /privacy/ as one path, so it would loop)
 /privacy.html  /privacy/  301!
-/privacy  /privacy/  301!
 
