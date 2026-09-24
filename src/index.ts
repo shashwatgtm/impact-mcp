@@ -14,10 +14,6 @@ import {
 //          Anchor Market, Craft Message, Translate Execution
 // =============================================================================
 
-const server = new Server(
-  { name: 'impact-mcp', version: '2.0.0' },
-  { capabilities: { tools: {} } }
-);
 
 // =============================================================================
 // TOOL DEFINITIONS
@@ -1924,52 +1920,110 @@ Based on your scores, prioritize these tools:
 // SERVER HANDLERS
 // =============================================================================
 
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: Object.entries(tools).map(([name, config]) => ({
-    name,
-    description: config.description,
-    inputSchema: config.inputSchema
-  }))
-}));
+// =============================================================================
+// SERVER (shared by the stdio entry below and netlify/functions/mcp.mjs)
+// Added for the hosted connector: tool titles and annotations, and a clear
+// message when a required input is missing. Tool code above is unchanged.
+// =============================================================================
 
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const toolName = request.params.name as keyof typeof tools;
-  const tool = tools[toolName];
-  
+export const SERVER_NAME = 'impact-mcp';
+export const SERVER_VERSION = '2.1.0';
+
+// Every tool only builds text from its inputs: no storage, no network, no side effects.
+const TOOL_TITLES: Record<string, string> = {
+  "impact_get_framework": "IMPACT Framework Guide",
+  "impact_identify_champions": "Identify Champions",
+  "impact_map_alternatives": "Map Alternatives",
+  "impact_pinpoint_value": "Pinpoint Value",
+  "impact_anchor_market": "Anchor Market",
+  "impact_craft_message": "Craft Message",
+  "impact_translate_execution": "Translate Execution",
+  "impact_full_audit": "IMPACT Full Audit"
+};
+
+function withMeta<T extends { name: string }>(tool: T) {
+  const title = TOOL_TITLES[tool.name] ?? tool.name;
+  return {
+    ...tool,
+    title,
+    annotations: { title, readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+  };
+}
+
+function checkRequiredInputs(name: string, args: Record<string, unknown> | undefined): string | null {
+  const tool = (tools as Record<string, { inputSchema: { required?: string[] } }>)[name];
   if (!tool) {
-    return {
-      content: [{
-        type: 'text',
-        text: `Unknown tool: ${toolName}. Available tools: ${Object.keys(tools).join(', ')}`
-      }],
-      isError: true
-    };
+    return `Unknown tool: ${name}. Available tools: ${Object.keys(tools).join(', ')}.`;
   }
+  const required = tool.inputSchema.required ?? [];
+  const missing = required.filter((key) => args?.[key] === undefined || args?.[key] === null);
+  if (missing.length > 0) {
+    return `Missing required input for ${name}: ${missing.join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
+  }
+  return null;
+}
+
+export function createServer(): Server {
+  const server = new Server(
+    { name: SERVER_NAME, version: SERVER_VERSION },
+    { capabilities: { tools: {} } }
+  );
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: Object.entries(tools).map(([name, config]) => withMeta({ name, description: config.description, inputSchema: config.inputSchema })),
+  }));
+
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const problem = checkRequiredInputs(request.params.name, request.params.arguments as Record<string, unknown> | undefined);
+    if (problem) {
+      return { content: [{ type: 'text', text: problem }], isError: true };
+    }
+    const toolName = request.params.name as keyof typeof tools;
+    const tool = tools[toolName];
   
-  try {
-    const result = tool.execute(request.params.arguments as any);
-    return {
-      content: [{ type: 'text', text: result }]
-    };
-  } catch (error) {
-    return {
-      content: [{
-        type: 'text',
-        text: `Error executing ${toolName}: ${error instanceof Error ? error.message : 'Unknown error'}`
-      }],
-      isError: true
-    };
-  }
-});
+    if (!tool) {
+      return {
+        content: [{
+          type: 'text',
+          text: `Unknown tool: ${toolName}. Available tools: ${Object.keys(tools).join(', ')}`
+        }],
+        isError: true
+      };
+    }
+  
+    try {
+      const result = tool.execute(request.params.arguments as any);
+      return {
+        content: [{ type: 'text', text: result }]
+      };
+    } catch (error) {
+      return {
+        content: [{
+          type: 'text',
+          text: `Error executing ${toolName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }],
+        isError: true
+      };
+    }
+  });
+
+  return server;
+}
+
 
 // =============================================================================
 // MAIN
 // =============================================================================
 
 async function main() {
+  const server = createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('IMPACT MCP v2.0.0 running on stdio');
+  console.error(`IMPACT MCP v${SERVER_VERSION} running on stdio`);
 }
 
-main().catch(console.error);
+// Run over stdio only when started directly (npm bin). The hosted function imports this
+// file as an ES module bundle, where require is not defined.
+if (typeof module !== 'undefined' && typeof require !== 'undefined' && require.main === module) {
+  main().catch(console.error);
+}

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IMPACT MCP connector</title>
+<meta name="description" content="B2B positioning tools built on the IMPACT framework">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23C1121F'/%3E%3Ctext x='32' y='47' font-family='Georgia,serif' font-style='italic' font-size='46' fill='white' text-anchor='middle'%3E%CE%B1%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ox:#641220;--signal:#C1121F;--paper:#FAF8F6;--ink:#1A0E10;--clay:#EAD9D5;--rose:#E5A8AC;--smoke:#7A6669}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 'IBM Plex Sans',system-ui,sans-serif}
+a{color:var(--signal)}
+header{background:var(--ox);color:#fff;padding:28px 20px}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+header .wrap{display:flex;gap:16px;align-items:center}
+.mark{width:38px;height:38px;background:var(--signal);color:#fff;display:flex;align-items:center;justify-content:center;font:italic 24px Georgia,serif;flex:none}
+h1,h2,h3{font-family:Archivo,system-ui,sans-serif}
+h1{font-weight:900;margin:0;font-size:28px}
+header p{margin:4px 0 0;color:#F6ECE9}
+h2{font-weight:800;margin:36px 0 12px}
+.mono{font:600 11.5px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1.7px;color:var(--smoke)}
+code,pre{font-family:'IBM Plex Mono',monospace;font-size:14px}
+pre{background:#fff;border:1.5px solid var(--clay);padding:14px;overflow-x:auto}
+.card{background:#fff;border:1.5px solid var(--clay);padding:16px 18px;margin:12px 0}
+table{border-collapse:collapse;width:100%;background:#fff}
+th,td{border:1.5px solid var(--clay);padding:8px 10px;text-align:left;vertical-align:top}
+th{font:600 11.5px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1.2px;color:var(--smoke)}
+footer{margin:48px 0 24px;color:var(--smoke);font-size:14px}
+</style>
+</head>
+<body>
+<header><div class="wrap"><div class="mark" aria-hidden="true">&alpha;</div><div><h1>IMPACT</h1><p>B2B positioning tools built on the IMPACT framework</p></div></div></header>
+<main class="wrap">
+
+<p>IMPACT gives Claude eight positioning tools for B2B teams: identify champions, map alternatives, pinpoint value, anchor a market segment, craft the message, translate it into execution, run a full positioning audit, and read the IMPACT framework itself. Every tool turns the details you give it into a structured positioning draft with hypotheses to test.</p>
+
+<h2>Connect</h2>
+<div class="card">
+<p class="mono">Server URL</p>
+<pre>https://impact-mcp.netlify.app/mcp</pre>
+<p>Transport: Streamable HTTP (stateless, JSON responses). Authentication: none. Send MCP JSON-RPC messages with POST; other methods return 405, which is expected.</p>
+</div>
+
+<h3>Claude (web, desktop and mobile)</h3>
+<ol>
+<li>Open Customize, then Connectors, then Add custom connector.</li>
+<li>Name: IMPACT. MCP server URL: <code>https://impact-mcp.netlify.app/mcp</code>.</li>
+<li>Choose no sign-in, then Add. Turn the connector on for a chat with the + menu.</li>
+</ol>
+
+<h3>Claude Code</h3>
+<pre>claude mcp add --transport http impact https://impact-mcp.netlify.app/mcp</pre>
+
+<h3>Run it locally instead (npm, stdio)</h3>
+<pre>npx -y @shashwatgtmalpha/impact-mcp</pre>
+<p>The npm package and this hosted server run the same code.</p>
+
+<h2>Tools</h2>
+<p>All tools only build text from the inputs you give them. They are marked read-only: they store nothing, change nothing and call no outside service.</p>
+<table>
+<tr><th>Tool</th><th>Title</th><th>What it does</th><th>Required inputs</th></tr>
+<tr><td><code>impact_get_framework</code></td><td>IMPACT Framework Guide</td><td>Get complete IMPACT framework methodology with phase-by-phase guidance</td><td>none</td></tr>
+<tr><td><code>impact_identify_champions</code></td><td>Identify Champions</td><td>Generate champion hypotheses from company/product context - no blanks, actionable insights</td><td>product_description, problem_solved</td></tr>
+<tr><td><code>impact_map_alternatives</code></td><td>Map Alternatives</td><td>Analyze competitive landscape and find positioning whitespace</td><td>your_product, category</td></tr>
+<tr><td><code>impact_pinpoint_value</code></td><td>Pinpoint Value</td><td>Generate value proposition with quantification and proof points</td><td>target_customer, key_outcome, unique_capability</td></tr>
+<tr><td><code>impact_anchor_market</code></td><td>Anchor Market</td><td>Select beachhead market with scoring and TAM/SAM/SOM framework</td><td>product_description</td></tr>
+<tr><td><code>impact_craft_message</code></td><td>Craft Message</td><td>Build positioning statement and message hierarchy with variations</td><td>target_customer, key_benefit, differentiation</td></tr>
+<tr><td><code>impact_translate_execution</code></td><td>Translate Execution</td><td>Adapt positioning for specific channels and touchpoints</td><td>positioning_statement, target_customer, key_benefit</td></tr>
+<tr><td><code>impact_full_audit</code></td><td>IMPACT Full Audit</td><td>Complete positioning audit with scoring and recommendations</td><td>product_description, target_customer, problem_solved</td></tr>
+</table>
+
+<h2>Example prompts</h2>
+<ol>
+<li>Use IMPACT to identify likely champions for ClinicFlow, scheduling software for clinics that solves missed appointments.</li>
+<li>Map the alternatives for ClinicFlow in the clinic scheduling category, compared with Competitor A and Competitor B.</li>
+<li>Run an IMPACT full audit of our positioning: scheduling software for clinics, target customer clinic operations directors, problem solved missed appointments.</li>
+</ol>
+
+<h2>Troubleshooting</h2>
+<ul>
+<li><strong>405 Method not allowed:</strong> you opened the server URL in a browser or sent a GET. Use an MCP client, which sends POST.</li>
+<li><strong>429 Too many requests:</strong> the server allows 300 requests per minute from one address. Wait a minute and try again.</li>
+<li><strong>"Missing required input":</strong> the tool was called without one of the required inputs listed above.</li>
+</ul>
+
+<h2>Support</h2>
+<p>Email <a href="mailto:shashwat@gtmhelix.com">shashwat@gtmhelix.com</a> or open an issue at <a href="https://github.com/shashwatgtm/impact-mcp/issues">https://github.com/shashwatgtm/impact-mcp/issues</a>.</p>
+<p>Privacy: see the <a href="/privacy.html">privacy policy</a>. Licence: MIT.</p>
+
+<footer class="mono">IMPACT &middot; Shashwat Ghosh, Helix GTM Consulting &middot; <a href="/">Setup</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="https://github.com/shashwatgtm/impact-mcp">Source</a> &middot; Updated 24 September 2026</footer>
+</main>
+</body>
+</html>

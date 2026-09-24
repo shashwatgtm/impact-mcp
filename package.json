@@ -1,8 +1,8 @@
 {
   "name": "@shashwatgtmalpha/impact-mcp",
   "mcpName": "io.github.shashwatgtm/impact-mcp",
-  "version": "2.0.0",
-  "description": "IMPACT Framework - B2B positioning with hypothesis generation",
+  "version": "2.1.0",
+  "description": "IMPACT Framework MCP server for B2B positioning: champions, alternatives, value, market, message and execution. Runs locally over stdio (npm) or hosted over Streamable HTTP.",
   "main": "dist/index.js",
   "bin": {
     "impact-mcp": "dist/index.js"
@@ -28,7 +28,7 @@
     "url": "https://github.com/shashwatgtm/impact-mcp.git"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.6.0"
+    "@modelcontextprotocol/sdk": "^1.30.1"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

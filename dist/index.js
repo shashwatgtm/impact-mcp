@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.SERVER_VERSION = exports.SERVER_NAME = void 0;
+exports.createServer = createServer;
 const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
@@ -10,7 +12,6 @@ const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
 // IMPACT = Identify Champions, Map Alternatives, Pinpoint Value, 
 //          Anchor Market, Craft Message, Translate Execution
 // =============================================================================
-const server = new index_js_1.Server({ name: 'impact-mcp', version: '2.0.0' }, { capabilities: { tools: {} } });
 // =============================================================================
 // TOOL DEFINITIONS
 // =============================================================================
@@ -1846,48 +1847,95 @@ Based on your scores, prioritize these tools:
 // =============================================================================
 // SERVER HANDLERS
 // =============================================================================
-server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => ({
-    tools: Object.entries(tools).map(([name, config]) => ({
-        name,
-        description: config.description,
-        inputSchema: config.inputSchema
-    }))
-}));
-server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
-    const toolName = request.params.name;
-    const tool = tools[toolName];
+// =============================================================================
+// SERVER (shared by the stdio entry below and netlify/functions/mcp.mjs)
+// Added for the hosted connector: tool titles and annotations, and a clear
+// message when a required input is missing. Tool code above is unchanged.
+// =============================================================================
+exports.SERVER_NAME = 'impact-mcp';
+exports.SERVER_VERSION = '2.1.0';
+// Every tool only builds text from its inputs: no storage, no network, no side effects.
+const TOOL_TITLES = {
+    "impact_get_framework": "IMPACT Framework Guide",
+    "impact_identify_champions": "Identify Champions",
+    "impact_map_alternatives": "Map Alternatives",
+    "impact_pinpoint_value": "Pinpoint Value",
+    "impact_anchor_market": "Anchor Market",
+    "impact_craft_message": "Craft Message",
+    "impact_translate_execution": "Translate Execution",
+    "impact_full_audit": "IMPACT Full Audit"
+};
+function withMeta(tool) {
+    const title = TOOL_TITLES[tool.name] ?? tool.name;
+    return {
+        ...tool,
+        title,
+        annotations: { title, readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    };
+}
+function checkRequiredInputs(name, args) {
+    const tool = tools[name];
     if (!tool) {
-        return {
-            content: [{
-                    type: 'text',
-                    text: `Unknown tool: ${toolName}. Available tools: ${Object.keys(tools).join(', ')}`
-                }],
-            isError: true
-        };
+        return `Unknown tool: ${name}. Available tools: ${Object.keys(tools).join(', ')}.`;
     }
-    try {
-        const result = tool.execute(request.params.arguments);
-        return {
-            content: [{ type: 'text', text: result }]
-        };
+    const required = tool.inputSchema.required ?? [];
+    const missing = required.filter((key) => args?.[key] === undefined || args?.[key] === null);
+    if (missing.length > 0) {
+        return `Missing required input for ${name}: ${missing.join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
     }
-    catch (error) {
-        return {
-            content: [{
-                    type: 'text',
-                    text: `Error executing ${toolName}: ${error instanceof Error ? error.message : 'Unknown error'}`
-                }],
-            isError: true
-        };
-    }
-});
+    return null;
+}
+function createServer() {
+    const server = new index_js_1.Server({ name: exports.SERVER_NAME, version: exports.SERVER_VERSION }, { capabilities: { tools: {} } });
+    server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => ({
+        tools: Object.entries(tools).map(([name, config]) => withMeta({ name, description: config.description, inputSchema: config.inputSchema })),
+    }));
+    server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
+        const problem = checkRequiredInputs(request.params.name, request.params.arguments);
+        if (problem) {
+            return { content: [{ type: 'text', text: problem }], isError: true };
+        }
+        const toolName = request.params.name;
+        const tool = tools[toolName];
+        if (!tool) {
+            return {
+                content: [{
+                        type: 'text',
+                        text: `Unknown tool: ${toolName}. Available tools: ${Object.keys(tools).join(', ')}`
+                    }],
+                isError: true
+            };
+        }
+        try {
+            const result = tool.execute(request.params.arguments);
+            return {
+                content: [{ type: 'text', text: result }]
+            };
+        }
+        catch (error) {
+            return {
+                content: [{
+                        type: 'text',
+                        text: `Error executing ${toolName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+                    }],
+                isError: true
+            };
+        }
+    });
+    return server;
+}
 // =============================================================================
 // MAIN
 // =============================================================================
 async function main() {
+    const server = createServer();
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
-    console.error('IMPACT MCP v2.0.0 running on stdio');
+    console.error(`IMPACT MCP v${exports.SERVER_VERSION} running on stdio`);
 }
-main().catch(console.error);
+// Run over stdio only when started directly (npm bin). The hosted function imports this
+// file as an ES module bundle, where require is not defined.
+if (typeof module !== 'undefined' && typeof require !== 'undefined' && require.main === module) {
+    main().catch(console.error);
+}
 //# sourceMappingURL=index.js.map
