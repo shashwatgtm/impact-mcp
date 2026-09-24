@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /mcp
 
-Sitemap: https://impact-mcp.netlify.app/sitemap.xml
+Sitemap: https://impact.gtmhelix.com/sitemap.xml
