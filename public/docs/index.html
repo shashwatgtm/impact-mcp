@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IMPACT Docs: MCP Server and REST API | Helix GTM</title>
+<meta name="description" content="How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, generated from the server&#x27;s own schemas.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="Shashwat Ghosh, Helix GTM Consulting">
+<link rel="canonical" href="https://impact.gtmhelix.com/docs/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="IMPACT by Helix GTM Consulting">
+<meta property="og:title" content="IMPACT Docs: MCP Server and REST API | Helix GTM">
+<meta property="og:description" content="How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, generated from the server&#x27;s own schemas.">
+<meta property="og:url" content="https://impact.gtmhelix.com/docs/">
+<meta property="og:image" content="https://impact.gtmhelix.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="IMPACT by Helix GTM Consulting">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="IMPACT Docs: MCP Server and REST API | Helix GTM">
+<meta name="twitter:description" content="How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, generated from the server&#x27;s own schemas.">
+<meta name="twitter:image" content="https://impact.gtmhelix.com/og.png">
+<meta name="twitter:creator" content="@Shashwat_Ghosh">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/brand.css">
+<link rel="stylesheet" href="/assets/app.css">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "Organization",
+   "@id": "https://www.gtmexpert.com/#org",
+   "name": "Helix GTM Consulting",
+   "alternateName": [
+    "GTMExpert",
+    "Helix GTM"
+   ],
+   "url": "https://www.gtmexpert.com",
+   "foundingDate": "2016",
+   "founder": {
+    "@id": "https://www.gtmexpert.com/#shashwat"
+   },
+   "sameAs": [
+    "https://github.com/shashwatgtm"
+   ]
+  },
+  {
+   "@type": "Person",
+   "@id": "https://www.gtmexpert.com/#shashwat",
+   "name": "Shashwat Ghosh",
+   "jobTitle": "GTM Alpha Consultant, AI GTM Expert and Fractional CMO",
+   "description": "Founder of Helix GTM Consulting, with 24+ years in B2B and 10+ years of fractional experience. Creator of the EPIC, IMPACT and CRAFT frameworks.",
+   "worksFor": {
+    "@id": "https://www.gtmexpert.com/#org"
+   },
+   "url": "https://www.gtmexpert.com",
+   "award": [
+    "B2B Marketer of the Year 2020, Fintech (CMO Asia)",
+    "LinkedIn Top Product Marketing Voice, #10 India and #52 Worldwide (2024)"
+   ],
+   "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Bengaluru",
+    "addressRegion": "Karnataka",
+    "addressCountry": "IN"
+   },
+   "sameAs": [
+    "https://www.linkedin.com/in/shashwatghosh-ai-b2b-gtm-fractionalcmo/",
+    "https://x.com/Shashwat_Ghosh",
+    "https://github.com/shashwatgtm"
+   ]
+  },
+  {
+   "@type": "WebSite",
+   "@id": "https://impact.gtmhelix.com/#site",
+   "url": "https://impact.gtmhelix.com/",
+   "name": "IMPACT by Helix GTM Consulting",
+   "publisher": {
+    "@id": "https://www.gtmexpert.com/#org"
+   },
+   "inLanguage": "en"
+  },
+  {
+   "@type": "WebPage",
+   "@id": "https://impact.gtmhelix.com/docs/#page",
+   "url": "https://impact.gtmhelix.com/docs/",
+   "name": "IMPACT Docs: MCP Server and REST API | Helix GTM",
+   "description": "How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, generated from the server's own schemas.",
+   "isPartOf": {
+    "@id": "https://impact.gtmhelix.com/#site"
+   },
+   "about": {
+    "@id": "https://impact.gtmhelix.com/#app"
+   },
+   "dateModified": "2026-09-25",
+   "inLanguage": "en",
+   "primaryImageOfPage": "https://impact.gtmhelix.com/og.png"
+  },
+  {
+   "@type": "BreadcrumbList",
+   "@id": "https://impact.gtmhelix.com/docs/#breadcrumbs",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "Home",
+     "item": "https://impact.gtmhelix.com/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "Docs",
+     "item": "https://impact.gtmhelix.com/docs/"
+    }
+   ]
+  }
+ ]
+}
+</script>
+</head>
+<body>
+<a class="hx-skip" href="#main">Skip to content</a>
+<header class="hx-header">
+        <div class="hx-wrap hx-header-row">
+            <a class="hx-lockup" href="https://gtmalpha.gtmhelix.com/" aria-label="GTM Alpha home"><span class="hx-alpha" aria-hidden="true">&#945;</span><span class="hx-wordmark">GTM Alpha</span></a>
+            <nav class="hx-nav" aria-label="Main">
+                <a href="https://gtmalpha.gtmhelix.com/#features">Features</a>
+                <a href="https://gtmalpha.gtmhelix.com/#epic">EPIC Framework</a>
+                <a href="https://gtmalpha.gtmhelix.com/integration">Integration</a>
+                <a href="https://gtmalpha.gtmhelix.com/pricing">Pricing</a>
+                <a href="https://gtmalpha.gtmhelix.com/api-docs">API Docs</a>
+                <a href="https://gtmalpha.gtmhelix.com/consultation">Consultation</a>
+                <a href="https://gtmalpha.gtmhelix.com/#about">About Shashwat</a>
+                <a href="https://gtmexpert.com/" class="hx-cta">GTMExpert.com</a>
+            </nav>
+        </div>
+    </header>
+<nav class="hx-subnav" aria-label="IMPACT"><div class="hx-wrap hx-subnav-row"><span class="hx-subnav-name">IMPACT</span><div class="hx-subnav-links"><a href="/">Home</a><a href="/#tools">Tools</a><a href="/connect/">Connect</a><a href="/docs/" class="is-active" aria-current="page">Docs</a><a href="/faq/">FAQ</a><a href="/privacy/">Privacy</a><a href="https://tools.gtmhelix.com/" class="hx-subnav-hub">All tools and plugins</a></div></div></nav>
+<section class="hx-hero">
+  <div class="hx-wrap"><div class="hx-hero-inner">
+    <span class="hx-eyebrow">IMPACT · documentation</span>
+    <h1>IMPACT documentation</h1>
+    <p class="hx-lead">The MCP address, the REST API behind the web forms, and every field of all 8 tools.</p>
+  </div></div>
+</section>
+<main id="main" class="hx-body">
+
+<section class="hx-section" aria-labelledby="mcp-h">
+  <h2 id="mcp-h">MCP server</h2>
+  <ul class="hx-prose">
+    <li>Address: <code>https://impact.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
+    <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>impact-mcp</code> version 2.1.0.</li>
+    <li>Local use: <code>npx -y @shashwatgtmalpha/impact-mcp</code> runs the same tools over stdio.</li>
+  </ul>
+</section>
+
+<section class="hx-section" aria-labelledby="rest-h">
+  <h2 id="rest-h">REST API (used by the web forms)</h2>
+  <p class="hx-prose">Send <code>POST https://impact.gtmhelix.com/api/tools/&lt;tool name&gt;</code> with a JSON body <code>{"input": {...}}</code>. The answer is JSON: <code>{"ok": true, "tool": "...", "title": "...", "text": "..."}</code>, where <code>text</code> is the same Markdown the MCP tool returns. The endpoint calls the same server code as the MCP address.</p>
+  <pre class="hx-code-block">curl -s -X POST https://impact.gtmhelix.com/api/tools/impact_get_framework \
+  -H "Content-Type: application/json" \
+  -d '{&quot;input&quot;: {&quot;focus_phase&quot;: &quot;all&quot;}}'</pre>
+  <ul class="hx-prose">
+    <li>Errors: 400 with <code>errors</code> (missing or invalid fields), 404 for an unknown tool, 405 for methods other than POST, 413 above 32,000 bytes, 429 when the rate limit is reached, 500 if the tool fails.</li>
+    <li>Limits: 30 requests per minute per IP address; text fields up to 6,000 characters; lists up to 50 items.</li>
+    <li>Forms without JavaScript post <code>application/x-www-form-urlencoded</code> and get an HTML page back.</li>
+    <li>Nothing is stored and the input is not logged (see <a href="/privacy/">Privacy</a>).</li>
+  </ul>
+</section>
+
+<section class="hx-section" aria-labelledby="ref-h">
+  <h2 id="ref-h">Tool reference</h2>
+  <p class="hx-sub">Generated from the server's own input schemas on 25 September 2026.</p>
+</section>
+<section class="hx-section" id="impact-get-framework" aria-labelledby="d-impact-get-framework">
+  <h3 id="d-impact-get-framework">IMPACT Framework Guide <code>impact_get_framework</code></h3>
+  <p class="hx-prose">Get complete IMPACT framework methodology with phase-by-phase guidance <a href="/tools/impact-get-framework/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>focus_phase</code></td><td>string</td><td>no</td><td>identify, map, pinpoint, anchor, craft, translate, all</td><td>Optional: specific phase to focus on (identify/map/pinpoint/anchor/craft/translate)</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="impact-identify-champions" aria-labelledby="d-impact-identify-champions">
+  <h3 id="d-impact-identify-champions">Identify Champions <code>impact_identify_champions</code></h3>
+  <p class="hx-prose">Generate champion hypotheses from company/product context - no blanks, actionable insights <a href="/tools/impact-identify-champions/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>company_name</code></td><td>string</td><td>no</td><td></td><td>Your company name</td></tr>
+<tr><td><code>product_description</code></td><td>string</td><td>yes</td><td></td><td>What your product does (1-2 sentences)</td></tr>
+<tr><td><code>problem_solved</code></td><td>string</td><td>yes</td><td></td><td>The core problem you solve</td></tr>
+<tr><td><code>target_company_type</code></td><td>string</td><td>no</td><td></td><td>Type of companies you target (e.g., &quot;Series B SaaS&quot;, &quot;Enterprise manufacturing&quot;)</td></tr>
+<tr><td><code>price_point</code></td><td>string</td><td>no</td><td></td><td>Optional: ACV range (e.g., &quot;$50K-100K&quot;)</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="impact-map-alternatives" aria-labelledby="d-impact-map-alternatives">
+  <h3 id="d-impact-map-alternatives">Map Alternatives <code>impact_map_alternatives</code></h3>
+  <p class="hx-prose">Analyze competitive landscape and find positioning whitespace <a href="/tools/impact-map-alternatives/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>your_product</code></td><td>string</td><td>yes</td><td></td><td>What your product does</td></tr>
+<tr><td><code>category</code></td><td>string</td><td>yes</td><td></td><td>Your product category (e.g., &quot;Sales engagement&quot;, &quot;Data platform&quot;)</td></tr>
+<tr><td><code>competitors</code></td><td>list of strings</td><td>no</td><td></td><td>List of competitor names</td></tr>
+<tr><td><code>competitor_weaknesses</code></td><td>string</td><td>no</td><td></td><td>Optional: Known competitor weaknesses or customer complaints</td></tr>
+<tr><td><code>your_strengths</code></td><td>string</td><td>no</td><td></td><td>Optional: What you do better than competitors</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="impact-pinpoint-value" aria-labelledby="d-impact-pinpoint-value">
+  <h3 id="d-impact-pinpoint-value">Pinpoint Value <code>impact_pinpoint_value</code></h3>
+  <p class="hx-prose">Generate value proposition with quantification and proof points <a href="/tools/impact-pinpoint-value/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>product_name</code></td><td>string</td><td>no</td><td></td><td>Your product/company name</td></tr>
+<tr><td><code>category</code></td><td>string</td><td>no</td><td></td><td>Product category</td></tr>
+<tr><td><code>target_customer</code></td><td>string</td><td>yes</td><td></td><td>Who you serve (e.g., &quot;B2B sales teams&quot;)</td></tr>
+<tr><td><code>key_outcome</code></td><td>string</td><td>yes</td><td></td><td>The main result customers achieve</td></tr>
+<tr><td><code>unique_capability</code></td><td>string</td><td>yes</td><td></td><td>What you do that others cannot/don&#x27;t</td></tr>
+<tr><td><code>customer_metrics</code></td><td>string</td><td>no</td><td></td><td>Optional: Any customer results data (e.g., &quot;40% faster, 3x pipeline&quot;)</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="impact-anchor-market" aria-labelledby="d-impact-anchor-market">
+  <h3 id="d-impact-anchor-market">Anchor Market <code>impact_anchor_market</code></h3>
+  <p class="hx-prose">Select beachhead market with scoring and TAM/SAM/SOM framework <a href="/tools/impact-anchor-market/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>product_description</code></td><td>string</td><td>yes</td><td></td><td>What your product does</td></tr>
+<tr><td><code>potential_segments</code></td><td>list of strings</td><td>no</td><td></td><td>List of potential market segments (e.g., [&quot;Mid-market SaaS&quot;, &quot;Enterprise Finance&quot;, &quot;SMB Retail&quot;])</td></tr>
+<tr><td><code>current_customers</code></td><td>string</td><td>no</td><td></td><td>Optional: Description of your current/best customers</td></tr>
+<tr><td><code>average_deal_size</code></td><td>string</td><td>no</td><td></td><td>Optional: Your ACV (e.g., &quot;$50K&quot;)</td></tr>
+<tr><td><code>sales_cycle</code></td><td>string</td><td>no</td><td></td><td>Optional: Typical sales cycle length</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="impact-craft-message" aria-labelledby="d-impact-craft-message">
+  <h3 id="d-impact-craft-message">Craft Message <code>impact_craft_message</code></h3>
+  <p class="hx-prose">Build positioning statement and message hierarchy with variations <a href="/tools/impact-craft-message/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>product_name</code></td><td>string</td><td>no</td><td></td><td>Your product name</td></tr>
+<tr><td><code>target_customer</code></td><td>string</td><td>yes</td><td></td><td>Target customer description</td></tr>
+<tr><td><code>customer_need</code></td><td>string</td><td>no</td><td></td><td>The need or opportunity they have</td></tr>
+<tr><td><code>product_category</code></td><td>string</td><td>no</td><td></td><td>Your product category</td></tr>
+<tr><td><code>key_benefit</code></td><td>string</td><td>yes</td><td></td><td>Primary benefit/reason to buy</td></tr>
+<tr><td><code>competitor</code></td><td>string</td><td>no</td><td></td><td>Primary alternative/competitor</td></tr>
+<tr><td><code>differentiation</code></td><td>string</td><td>yes</td><td></td><td>Your unique differentiation</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="impact-translate-execution" aria-labelledby="d-impact-translate-execution">
+  <h3 id="d-impact-translate-execution">Translate Execution <code>impact_translate_execution</code></h3>
+  <p class="hx-prose">Adapt positioning for specific channels and touchpoints <a href="/tools/impact-translate-execution/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>positioning_statement</code></td><td>string</td><td>yes</td><td></td><td>Your core positioning statement</td></tr>
+<tr><td><code>target_customer</code></td><td>string</td><td>yes</td><td></td><td>Target customer profile</td></tr>
+<tr><td><code>key_benefit</code></td><td>string</td><td>yes</td><td></td><td>Primary benefit</td></tr>
+<tr><td><code>channels</code></td><td>list of strings</td><td>no</td><td></td><td>Channels to optimize for (e.g., [&quot;website&quot;, &quot;linkedin&quot;, &quot;email&quot;, &quot;sales_deck&quot;])</td></tr>
+<tr><td><code>product_name</code></td><td>string</td><td>no</td><td></td><td>Your product name</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="impact-full-audit" aria-labelledby="d-impact-full-audit">
+  <h3 id="d-impact-full-audit">IMPACT Full Audit <code>impact_full_audit</code></h3>
+  <p class="hx-prose">Complete positioning audit with scoring and recommendations <a href="/tools/impact-full-audit/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>company_name</code></td><td>string</td><td>no</td><td></td><td>Your company name</td></tr>
+<tr><td><code>product_description</code></td><td>string</td><td>yes</td><td></td><td>What your product does</td></tr>
+<tr><td><code>target_customer</code></td><td>string</td><td>yes</td><td></td><td>Who you serve</td></tr>
+<tr><td><code>problem_solved</code></td><td>string</td><td>yes</td><td></td><td>The problem you solve</td></tr>
+<tr><td><code>key_differentiation</code></td><td>string</td><td>no</td><td></td><td>What makes you unique</td></tr>
+<tr><td><code>competitors</code></td><td>list of strings</td><td>no</td><td></td><td>Main competitors</td></tr>
+<tr><td><code>current_positioning</code></td><td>string</td><td>no</td><td></td><td>Optional: Your current positioning statement or tagline</td></tr>
+<tr><td><code>customer_feedback</code></td><td>string</td><td>no</td><td></td><td>Optional: What customers say about you</td></tr>
+  </tbody></table></div>
+</section>
+
+</main>
+<footer class="hx-footer">
+        <div class="hx-wrap">
+            <div class="hx-footer-grid">
+                <div>
+                    <a class="hx-lockup" href="https://gtmalpha.gtmhelix.com/" aria-label="GTM Alpha home"><span class="hx-alpha" aria-hidden="true">&#945;</span><span class="hx-wordmark">GTM Alpha</span></a>
+                    <p>Professional go-to-market strategy consulting powered by Shashwat Ghosh's expertise and advanced AI integration.</p>
+                    <a href="https://www.linkedin.com/in/shashwatghosh-ai-b2b-gtm-fractionalcmo/">LinkedIn</a>
+                    <a href="https://x.com/Shashwat_Ghosh">X (Twitter)</a>
+                </div>
+                <div>
+                    <h4>Platform</h4>
+                    <a href="https://gtmalpha.gtmhelix.com/#features">Features</a>
+                    <a href="https://gtmalpha.gtmhelix.com/#epic">EPIC Framework</a>
+                    <a href="https://gtmalpha.gtmhelix.com/integration">Integration</a>
+                    <a href="https://gtmalpha.gtmhelix.com/pricing">Pricing</a>
+                    <a href="https://gtmalpha.gtmhelix.com/api-docs">API Docs</a>
+                    <a href="https://gtmalpha.gtmhelix.com/faq">FAQ</a>
+                </div>
+                <div>
+                    <h4>Connectors</h4>
+                    <a href="https://gtmalpha.gtmhelix.com/integration">GTM Alpha</a>
+                    <a href="https://craft-gtm.gtmhelix.com/">CRAFT GTM</a>
+                    <a href="https://craft-content.gtmhelix.com/">CRAFT Content</a>
+                    <a href="https://impact.gtmhelix.com/">IMPACT</a>
+                    <a href="https://icp-intelligence.gtmhelix.com/">ICP Intelligence</a>
+                    <a href="https://revenue-enablement.gtmhelix.com/">Revenue Enablement</a>
+                    <a href="https://tools.gtmhelix.com/">All tools and plugins</a>
+                </div>
+                <div>
+                    <h4>Connect</h4>
+                    <a href="https://gtmalpha.gtmhelix.com/consultation">Book Consultation</a>
+                    <a href="mailto:shashwat@hyperplays.in">Email Support</a>
+                    <a href="https://gtmexpert.com/">GTMExpert.com</a>
+                    <a href="https://gtmalpha.gtmhelix.com/privacy">Privacy</a>
+                    <a href="https://gtmalpha.gtmhelix.com/terms">Terms</a>
+                </div>
+            </div>
+            <div class="hx-footer-bottom">
+                <span>&copy; 2026 Helix GTM Consulting. GTM Alpha by Shashwat Ghosh.</span>
+                <span><a href="https://gtmalpha.gtmhelix.com/privacy">Privacy</a> &middot; <a href="https://gtmalpha.gtmhelix.com/terms">Terms</a> &middot; <a href="https://gtmalpha.gtmhelix.com/faq">FAQ</a></span>
+            </div>
+        </div>
+    </footer>
+<script src="/assets/app.js" defer></script>
+</body>
+</html>

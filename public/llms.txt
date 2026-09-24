@@ -1,54 +1,70 @@
-# IMPACT MCP connector
+# IMPACT
 
-> IMPACT gives Claude eight positioning tools for B2B teams: identify champions, map alternatives, pinpoint value, anchor a market segment, craft the message, translate it into execution, run a full positioning audit, and read the IMPACT framework itself. Every tool turns the details you give it into a structured positioning draft with hypotheses to test.
+> IMPACT is a free set of eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.
 
+- Web app (no sign-in): https://impact.gtmhelix.com/
 - MCP server URL (Streamable HTTP, no sign-in, read-only tools): https://impact.gtmhelix.com/mcp
-- Setup and tools: https://impact.gtmhelix.com/
-- Privacy policy: https://impact.gtmhelix.com/privacy.html
+- Connect to Claude, ChatGPT, Cursor, VS Code, Windsurf: https://impact.gtmhelix.com/connect/
+- Docs (MCP and REST, every field): https://impact.gtmhelix.com/docs/
+- FAQ: https://impact.gtmhelix.com/faq/
+- Privacy policy: https://impact.gtmhelix.com/privacy/
 - Local npm package: @shashwatgtmalpha/impact-mcp
 - Source code: https://github.com/shashwatgtm/impact-mcp
 - Built by: Shashwat Ghosh, Helix GTM Consulting (https://www.gtmexpert.com)
+- All connectors and Claude plugins: https://tools.gtmhelix.com/
 
 ## Tools
 
-- IMPACT Framework Guide (impact_get_framework): Get complete IMPACT framework methodology with phase-by-phase guidance
-- Identify Champions (impact_identify_champions): Generate champion hypotheses from company/product context - no blanks, actionable insights
-- Map Alternatives (impact_map_alternatives): Analyze competitive landscape and find positioning whitespace
-- Pinpoint Value (impact_pinpoint_value): Generate value proposition with quantification and proof points
-- Anchor Market (impact_anchor_market): Select beachhead market with scoring and TAM/SAM/SOM framework
-- Craft Message (impact_craft_message): Build positioning statement and message hierarchy with variations
-- Translate Execution (impact_translate_execution): Adapt positioning for specific channels and touchpoints
-- IMPACT Full Audit (impact_full_audit): Complete positioning audit with scoring and recommendations
+- [IMPACT Framework Guide](https://impact.gtmhelix.com/tools/impact-get-framework/) (`impact_get_framework`): Get complete IMPACT framework methodology with phase-by-phase guidance
+- [Identify Champions](https://impact.gtmhelix.com/tools/impact-identify-champions/) (`impact_identify_champions`): Generate champion hypotheses from company/product context - no blanks, actionable insights
+- [Map Alternatives](https://impact.gtmhelix.com/tools/impact-map-alternatives/) (`impact_map_alternatives`): Analyze competitive landscape and find positioning whitespace
+- [Pinpoint Value](https://impact.gtmhelix.com/tools/impact-pinpoint-value/) (`impact_pinpoint_value`): Generate value proposition with quantification and proof points
+- [Anchor Market](https://impact.gtmhelix.com/tools/impact-anchor-market/) (`impact_anchor_market`): Select beachhead market with scoring and TAM/SAM/SOM framework
+- [Craft Message](https://impact.gtmhelix.com/tools/impact-craft-message/) (`impact_craft_message`): Build positioning statement and message hierarchy with variations
+- [Translate Execution](https://impact.gtmhelix.com/tools/impact-translate-execution/) (`impact_translate_execution`): Adapt positioning for specific channels and touchpoints
+- [IMPACT Full Audit](https://impact.gtmhelix.com/tools/impact-full-audit/) (`impact_full_audit`): Complete positioning audit with scoring and recommendations
 
 ## Questions and answers
 
 ### What is IMPACT?
 
-IMPACT gives Claude eight positioning tools for B2B teams: identify champions, map alternatives, pinpoint value, anchor a market segment, craft the message, translate it into execution, run a full positioning audit, and read the IMPACT framework itself. Every tool turns the details you give it into a structured positioning draft with hypotheses to test.
+IMPACT is a free set of eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.
 
-### How do I connect IMPACT to Claude?
+### Is IMPACT free, and do I need an account?
 
-In Claude, open Customize, then Connectors, then Add custom connector. Name it IMPACT, paste the server URL https://impact.gtmhelix.com/mcp, choose no sign-in and select Add. In Claude Code run: claude mcp add --transport http impact https://impact.gtmhelix.com/mcp
+It is free, and there is no account or sign-in. Use the tools in your browser here, or connect the MCP server to your AI assistant.
 
-### Does IMPACT need an account, and what does it cost?
+### Does it use AI to write the answers?
 
-No account or sign-in is needed, and there is no charge. The server is public and every tool is read-only.
+No. Each tool applies fixed rules in the IMPACT code to the inputs you give it. It does not call an AI model and does not look anything up. When you use it from Claude or another assistant, that assistant writes around the tool's answer.
 
-### Which tools does IMPACT include?
+### What happens to what I type?
 
-8 tools: IMPACT Framework Guide, Identify Champions, Map Alternatives, Pinpoint Value, Anchor Market, Craft Message, Translate Execution, IMPACT Full Audit.
+It is sent to this site's server, used once to build the answer, and dropped when the answer is sent back. Nothing is stored and nothing you type is logged. The privacy page has the details.
 
-### What data does IMPACT keep?
+### How do I use IMPACT in Claude?
 
-None. Each call is answered from the inputs you give it, and the server stores and logs nothing. Netlify, the host, keeps its own request logs. See the privacy policy.
+In Claude, open Customize, then Connectors, then Add custom connector. Name it IMPACT, paste https://impact.gtmhelix.com/mcp and choose no sign-in. The Connect page covers Claude Code, ChatGPT, Cursor, VS Code and Windsurf too.
 
-### Can I run IMPACT on my own computer?
+### Who built it?
 
-Yes. Run npx -y @shashwatgtmalpha/impact-mcp to use the same tools locally over stdio; nothing is sent to us.
+Shashwat Ghosh, founder of Helix GTM Consulting: a GTM Alpha consultant, AI GTM expert and fractional CMO with 24+ years in B2B and 10+ years of fractional experience, based in Bengaluru.
 
-### Who built IMPACT?
+### Why do some answers look like templates?
 
-Shashwat Ghosh, founder of Helix GTM Consulting, a GTM Alpha consultant, AI GTM expert and fractional CMO with 24+ years in B2B and 10+ years of fractional experience.
+Several tools return a structured plan with placeholders where your inputs did not give a fact. That is deliberate: the tools do not invent numbers or names. Fill the placeholders in before you use the result.
+
+### Can I call the tools from my own code?
+
+Yes. Send POST https://impact.gtmhelix.com/api/tools/<tool name> with a JSON body {"input": {...}}. The Docs page lists every field. Please keep to the rate limit of 30 requests per minute.
+
+### Is the source code public?
+
+Yes, at https://github.com/shashwatgtm/impact-mcp under the MIT licence. The npm package @shashwatgtmalpha/impact-mcp runs the same tools locally.
+
+### How do I report a problem?
+
+Email shashwat@gtmhelix.com or open an issue at https://github.com/shashwatgtm/impact-mcp/issues.
 
 ## Other connectors by Helix GTM Consulting
 

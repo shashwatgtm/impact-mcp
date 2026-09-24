@@ -1,0 +1,25 @@
+# Old address: pages redirect to the gtmhelix.com address. /mcp and /api/* are NOT listed, so they keep answering directly.
+# These rules sit at the top because Netlify applies the first match.
+https://impact-mcp.netlify.app/  https://impact.gtmhelix.com/  301!
+https://impact-mcp.netlify.app/tools/impact-get-framework/  https://impact.gtmhelix.com/tools/impact-get-framework/  301!
+https://impact-mcp.netlify.app/tools/impact-identify-champions/  https://impact.gtmhelix.com/tools/impact-identify-champions/  301!
+https://impact-mcp.netlify.app/tools/impact-map-alternatives/  https://impact.gtmhelix.com/tools/impact-map-alternatives/  301!
+https://impact-mcp.netlify.app/tools/impact-pinpoint-value/  https://impact.gtmhelix.com/tools/impact-pinpoint-value/  301!
+https://impact-mcp.netlify.app/tools/impact-anchor-market/  https://impact.gtmhelix.com/tools/impact-anchor-market/  301!
+https://impact-mcp.netlify.app/tools/impact-craft-message/  https://impact.gtmhelix.com/tools/impact-craft-message/  301!
+https://impact-mcp.netlify.app/tools/impact-translate-execution/  https://impact.gtmhelix.com/tools/impact-translate-execution/  301!
+https://impact-mcp.netlify.app/tools/impact-full-audit/  https://impact.gtmhelix.com/tools/impact-full-audit/  301!
+https://impact-mcp.netlify.app/connect/  https://impact.gtmhelix.com/connect/  301!
+https://impact-mcp.netlify.app/docs/  https://impact.gtmhelix.com/docs/  301!
+https://impact-mcp.netlify.app/faq/  https://impact.gtmhelix.com/faq/  301!
+https://impact-mcp.netlify.app/privacy/  https://impact.gtmhelix.com/privacy/  301!
+https://impact-mcp.netlify.app/index.html  https://impact.gtmhelix.com/index.html  301!
+https://impact-mcp.netlify.app/privacy  https://impact.gtmhelix.com/privacy/  301!
+https://impact-mcp.netlify.app/privacy.html  https://impact.gtmhelix.com/privacy/  301!
+https://impact-mcp.netlify.app/sitemap.xml  https://impact.gtmhelix.com/sitemap.xml  301!
+https://impact-mcp.netlify.app/llms.txt  https://impact.gtmhelix.com/llms.txt  301!
+
+# Old page address on the new site
+/privacy.html  /privacy/  301!
+/privacy  /privacy/  301!
+
