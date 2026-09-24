@@ -127,7 +127,7 @@
      "name": "What is IMPACT?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "IMPACT is a free set of eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit."
+      "text": "IMPACT is a free MCP server and web app with eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit."
      }
     },
     {
@@ -196,6 +196,14 @@
     },
     {
      "@type": "Question",
+     "name": "Who is IMPACT not ideal for?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Teams that need buyer research done for them: IMPACT structures your positioning as hypotheses, and you test them with buyers. Anyone who needs live competitor data: the tools look nothing up and use only what you type about your market and rivals. Teams that need saved history: nothing is stored, so keep each draft where you keep your positioning work."
+     }
+    },
+    {
+     "@type": "Question",
      "name": "How do I report a problem?",
      "acceptedAnswer": {
       "@type": "Answer",
@@ -231,11 +239,12 @@
     <span class="hx-eyebrow">IMPACT · questions</span>
     <h1>IMPACT: questions and answers</h1>
     <p class="hx-lead">Short answers you can check against the code and the privacy policy.</p>
+    <p class="hx-byline">By <a href="https://www.gtmexpert.com/" rel="author">Shashwat Ghosh</a>, founder of Helix GTM Consulting · Last updated <time datetime="2026-09-25">25 September 2026</time></p>
   </div></div>
 </section>
 <main id="main" class="hx-body">
 <section class="hx-qa hx-section" id="questions" aria-labelledby="faq-h"><h2 id="faq-h">Questions and answers</h2>
-<details open><summary>What is IMPACT?</summary><p>IMPACT is a free set of eight positioning tools built on Shashwat Ghosh&#x27;s IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.</p></details>
+<details open><summary>What is IMPACT?</summary><p>IMPACT is a free MCP server and web app with eight positioning tools built on Shashwat Ghosh&#x27;s IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.</p></details>
 <details open><summary>Is IMPACT free, and do I need an account?</summary><p>It is free, and there is no account or sign-in. Use the tools in your browser here, or connect the MCP server to your AI assistant.</p></details>
 <details open><summary>Does it use AI to write the answers?</summary><p>No. Each tool applies fixed rules in the IMPACT code to the inputs you give it. It does not call an AI model and does not look anything up. When you use it from Claude or another assistant, that assistant writes around the tool&#x27;s answer.</p></details>
 <details open><summary>What happens to what I type?</summary><p>It is sent to this site&#x27;s server, used once to build the answer, and dropped when the answer is sent back. Nothing is stored and nothing you type is logged. The privacy page has the details.</p></details>
@@ -244,6 +253,7 @@
 <details open><summary>Why do some answers look like templates?</summary><p>Several tools return a structured plan with placeholders where your inputs did not give a fact. That is deliberate: the tools do not invent numbers or names. Fill the placeholders in before you use the result.</p></details>
 <details open><summary>Can I call the tools from my own code?</summary><p>Yes. Send POST https://impact.gtmhelix.com/api/tools/&lt;tool name&gt; with a JSON body {&quot;input&quot;: {...}}. The Docs page lists every field. Please keep to the rate limit of 30 requests per minute.</p></details>
 <details open><summary>Is the source code public?</summary><p>Yes, at https://github.com/shashwatgtm/impact-mcp under the MIT licence. The npm package @shashwatgtmalpha/impact-mcp runs the same tools locally.</p></details>
+<details open><summary>Who is IMPACT not ideal for?</summary><p>Teams that need buyer research done for them: IMPACT structures your positioning as hypotheses, and you test them with buyers. Anyone who needs live competitor data: the tools look nothing up and use only what you type about your market and rivals. Teams that need saved history: nothing is stored, so keep each draft where you keep your positioning work.</p></details>
 <details open><summary>How do I report a problem?</summary><p>Email shashwat@gtmhelix.com or open an issue at https://github.com/shashwatgtm/impact-mcp/issues.</p></details>
 </section>
 </main>
@@ -285,8 +295,8 @@
                 </div>
             </div>
             <div class="hx-footer-bottom">
-                <span>&copy; 2026 Helix GTM Consulting. GTM Alpha by Shashwat Ghosh.</span>
-                <span><a href="https://gtmalpha.gtmhelix.com/privacy">Privacy</a> &middot; <a href="https://gtmalpha.gtmhelix.com/terms">Terms</a> &middot; <a href="https://gtmalpha.gtmhelix.com/faq">FAQ</a></span>
+                <span>&copy; 2026 Helix GTM Consulting. IMPACT by Shashwat Ghosh.</span>
+                <span><a href="/privacy/">Privacy</a> &middot; <a href="/faq/">FAQ</a></span>
             </div>
         </div>
     </footer>

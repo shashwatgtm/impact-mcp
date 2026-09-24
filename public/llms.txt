@@ -1,6 +1,6 @@
 # IMPACT
 
-> IMPACT is a free set of eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.
+> IMPACT is a free MCP server and web app with eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.
 
 - Web app (no sign-in): https://impact.gtmhelix.com/
 - MCP server URL (Streamable HTTP, no sign-in, read-only tools): https://impact.gtmhelix.com/mcp
@@ -28,7 +28,7 @@
 
 ### What is IMPACT?
 
-IMPACT is a free set of eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.
+IMPACT is a free MCP server and web app with eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.
 
 ### Is IMPACT free, and do I need an account?
 
@@ -61,6 +61,10 @@ Yes. Send POST https://impact.gtmhelix.com/api/tools/<tool name> with a JSON bod
 ### Is the source code public?
 
 Yes, at https://github.com/shashwatgtm/impact-mcp under the MIT licence. The npm package @shashwatgtmalpha/impact-mcp runs the same tools locally.
+
+### Who is IMPACT not ideal for?
+
+Teams that need buyer research done for them: IMPACT structures your positioning as hypotheses, and you test them with buyers. Anyone who needs live competitor data: the tools look nothing up and use only what you type about your market and rivals. Teams that need saved history: nothing is stored, so keep each draft where you keep your positioning work.
 
 ### How do I report a problem?
 
