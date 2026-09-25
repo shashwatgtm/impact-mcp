@@ -173,7 +173,7 @@
     <li>Address: <code>https://impact.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
     <li>Rate limit: 300 requests per minute per IP address. Server: <code>impact-mcp</code> version 2.2.0.</li>
-    <li>Local use: <code>npx -y @shashwatgtmalpha/impact-mcp</code> runs the same tools over stdio.</li>
+    <li>Local use: <code>npx -y @shashwatgtmalpha/impact-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
   </ul>
 </section>
 
@@ -185,7 +185,7 @@
   -d '{&quot;input&quot;: {&quot;focus_phase&quot;: &quot;all&quot;}}'</pre>
   <ul class="hx-prose">
     <li>Errors: 400 with <code>errors</code> (missing or invalid fields), 404 for an unknown tool, 405 for methods other than POST, 413 above 32,000 bytes, 429 when the rate limit is reached, 500 if the tool fails.</li>
-    <li>Limits: 30 requests per minute per IP address; text fields up to 6,000 characters; lists up to 50 items.</li>
+    <li>Limits: 30 requests per minute per IP address; the whole request up to 32,000 bytes; top-level text fields up to 6,000 characters and top-level lists up to 50 items.</li>
     <li>Forms without JavaScript post <code>application/x-www-form-urlencoded</code> and get an HTML page back.</li>
     <li>Nothing is stored and the input is not logged (see <a href="/privacy/">Privacy</a>).</li>
   </ul>

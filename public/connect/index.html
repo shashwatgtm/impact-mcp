@@ -213,7 +213,7 @@
   <p class="hx-prose">All 8 tools are read-only: each one builds a text answer from the inputs you give it and changes nothing anywhere. What you type is used once to build the answer and is not stored or logged. It is not ideal for:</p>
   <ul class="hx-prose">
     <li>Teams that need buyer research done for them: IMPACT structures your positioning as hypotheses, and you test them with buyers.</li>
-    <li>Anyone who needs live competitor data: the tools look nothing up and use only what you type about your market and rivals.</li>
+    <li>Anyone who needs live competitor data: the tools look nothing up; they work from what you type about your market and rivals, and anything they add themselves (such as common complaints in a category) is marked as something to check with buyers.</li>
     <li>Teams that need saved history: nothing is stored, so keep each draft where you keep your positioning work.</li>
     <li>Writing to your CRM or other tools: no tool can.</li>
   </ul>
@@ -285,7 +285,7 @@
 
 <section class="hx-section" aria-labelledby="other-h">
   <h2 id="other-h">Other assistants, or no internet access</h2>
-  <p class="hx-prose">Any MCP client that supports Streamable HTTP can use the address above with no authentication. For a client that only runs local servers, use the npm package, which runs the same tools on your own computer over stdio:</p>
+  <p class="hx-prose">Any MCP client that supports Streamable HTTP can use the address above with no authentication. For a client that only runs local servers, use the npm package, which runs these tools on your own computer over stdio (npm can lag behind this site until a new version is published):</p>
   <pre class="hx-code-block">{
   &quot;mcpServers&quot;: {
     &quot;impact&quot;: {

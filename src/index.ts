@@ -628,13 +628,13 @@ ${SUGGESTED}
           common_complaints: ['Too complex to customize', 'Poor data quality', 'Low rep adoption', 'Expensive seat-based pricing', 'Integration headaches'],
           differentiation_axes: ['Ease of use', 'AI capabilities', 'Pricing model', 'Integration depth', 'Vertical specialization']
         };
-      } else if (categoryLower.includes('marketing') || categoryLower.includes('automation')) {
+      } else if (categoryLower.includes('marketing')) {
         marketContext = {
           typical_leaders: ['Marketo', 'HubSpot', 'Pardot', 'ActiveCampaign', 'Klaviyo'],
           common_complaints: ['Difficult to use without developer', 'Attribution is inaccurate', 'Limited personalization', 'Template constraints', 'Deliverability issues'],
           differentiation_axes: ['Ease of use', 'Attribution accuracy', 'Personalization depth', 'Channel coverage', 'Analytics sophistication']
         };
-      } else if (categoryLower.includes('data') || categoryLower.includes('analytics') || categoryLower.includes('bi')) {
+      } else if (categoryLower.includes('data') || categoryLower.includes('analytics') || /\bbi\b/.test(categoryLower)) {
         marketContext = {
           typical_leaders: ['Snowflake', 'Databricks', 'Tableau', 'Looker', 'dbt'],
           common_complaints: ['Requires data team', 'Slow queries', 'Expensive at scale', 'Learning curve', 'Data freshness issues'],
@@ -657,10 +657,10 @@ ${SUGGESTED}
       // Parse any provided weaknesses/strengths into insights
       let customInsights = '';
       if (weaknesses) {
-        customInsights += `\n**Customer-Reported Competitor Issues**:\n${weaknesses.split(',').map(w => `- ${w.trim()}`).join('\n')}\n`;
+        customInsights += `\n**Customer-Reported Competitor Issues**:\n${weaknesses.split(/\n|,(?!\d{3}(?!\d))/).map(w => `- ${w.trim()}`).join('\n')}\n`;
       }
       if (strengths) {
-        customInsights += `\n**Your Key Differentiators**:\n${strengths.split(',').map(s => `- ${s.trim()}`).join('\n')}\n`;
+        customInsights += `\n**Your Key Differentiators**:\n${strengths.split(/\n|,(?!\d{3}(?!\d))/).map(s => `- ${s.trim()}`).join('\n')}\n`;
       }
 
       return `# Competitive Landscape Analysis
@@ -677,8 +677,8 @@ ${SUGGESTED}
 ### 1. Direct Competitors (Same Solution, Same Problem)
 ${competitors.filter(c => c.toLowerCase() !== 'status quo' && c.toLowerCase() !== 'do nothing').map((c, i) => `
 **${c}**:
-- Positioning territory: ${marketContext.differentiation_axes[i % marketContext.differentiation_axes.length] || 'General market leader'}
-- Likely weakness: ${marketContext.common_complaints[i % marketContext.common_complaints.length]}
+- Positioning territory to check: ${marketContext.differentiation_axes[i % marketContext.differentiation_axes.length] || 'General market leader'} (a common axis in this category; nothing about ${c} was looked up)
+- Weakness to test with buyers: ${marketContext.common_complaints[i % marketContext.common_complaints.length]} (a common complaint in this category, not a known fact about ${c})
 - Best for: Their existing customer base, specific use cases
 - Your opportunity: Differentiate on ${marketContext.differentiation_axes[(i + 1) % marketContext.differentiation_axes.length]}`).join('\n')}
 
@@ -754,7 +754,7 @@ COMPLEX ────────────────┼───────
 
 ### Against ${competitors[0] || 'Market Leader'}
 **Their strength**: Established brand, large customer base
-**Their weakness**: ${marketContext.common_complaints[0]}
+**Weakness to test with buyers**: ${marketContext.common_complaints[0]} (a common complaint in this category, not a known fact about ${competitors[0] || 'them'})
 **Your attack angle**: "Unlike [them], we [your differentiation]"
 **Landmine question**: "How has [competitor weakness] impacted your results?"
 
@@ -932,7 +932,7 @@ Use these patterns to document customer success:
 > **"[Customer Name] achieved [specific metric] within [timeframe]"**
 
 Example templates:
-- "[Customer] increased [outcome] by ${quantifiedResults.primary}${!userPercent && userTime ? ` ${EXAMPLE}` : ''} in ${quantifiedResults.time}"${userTime ? '' : ` ${EXAMPLE}`}
+- "[Customer] increased [outcome] by ${quantifiedResults.primary} in [time frame]"${userPercent ? '' : ` ${EXAMPLE}`}
 - "[Customer] saved ${valueMetrics.time_savings} previously spent on [manual task]" ${EXAMPLE}
 - "[Customer] saw ${quantifiedResults.secondary} improvement in [metric]"${userMultiplier ? '' : ` ${EXAMPLE}`}
 
@@ -970,7 +970,7 @@ Example templates:
 > "Finally ${args.key_outcome} without [current pain point]. Our customers see ${valueMetrics.revenue_impact}." ${EXAMPLE}
 
 **For Economic Buyers (CFO/CEO)**:
-> "Drive ${valueMetrics.revenue_impact} with payback in ${quantifiedResults.time}. Lower TCO than alternatives." ${EXAMPLE}
+> "Drive ${valueMetrics.revenue_impact} with payback in [your payback period]. Lower TCO than alternatives." ${EXAMPLE}
 
 **For Technical Evaluators**:
 > "${args.unique_capability} through [technical approach]. Integrates with your existing stack in days, not months."
@@ -2005,6 +2005,30 @@ function withMeta<T extends { name: string }>(tool: T) {
   };
 }
 
+// Decision N2 (run 6, extended after the independent check): numbers inside lists and objects follow their schema's
+// minimum and maximum too, and a text field that holds one amount (AMOUNT_TEXT) cannot hold a negative amount.
+type SchemaNode = { type?: string; minimum?: number; maximum?: number; properties?: Record<string, SchemaNode>; items?: SchemaNode };
+const NEGATIVE_AMOUNT = /(^|[\s(:=])[-\u2212]\$\s*\d|\$\s*[-\u2212]\s*\d|^\s*[-\u2212]\s*\d/;
+function checkLimits(schema: SchemaNode, value: unknown, path: string, problems: string[]): void {
+  if (schema.properties && value && typeof value === "object" && !Array.isArray(value)) {
+    for (const [key, p] of Object.entries(schema.properties)) {
+      checkLimits(p, (value as Record<string, unknown>)[key], path ? `${path}.${key}` : key, problems);
+    }
+    return;
+  }
+  if (schema.items && Array.isArray(value)) {
+    value.forEach((item, i) => checkLimits(schema.items as SchemaNode, item, `${path}[${i}]`, problems));
+    return;
+  }
+  if (schema.type !== "number" && schema.type !== "integer") return;
+  const v = typeof value === "string" && value.trim() !== "" ? Number(value) : value;
+  if (typeof v !== "number" || !Number.isFinite(v)) return;
+  if (typeof schema.minimum === "number" && v < schema.minimum) problems.push(`${path} must be ${schema.minimum} or more`);
+  if (typeof schema.maximum === "number" && v > schema.maximum) problems.push(`${path} must be ${schema.maximum} or less`);
+}
+
+const AMOUNT_TEXT: Record<string, string[]> = { impact_anchor_market: ["average_deal_size"] };
+
 function checkRequiredInputs(name: string, args: Record<string, unknown> | undefined): string | null {
   const tool = (tools as Record<string, { inputSchema: { required?: string[] } }>)[name];
   if (!tool) {
@@ -2015,17 +2039,15 @@ function checkRequiredInputs(name: string, args: Record<string, unknown> | undef
   if (missing.length > 0) {
     return `Missing required input for ${name}: ${missing.join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
   }
-  // Decision N2 (run 6): amounts, counts and durations cannot be negative; the schema says which (minimum).
-  const props = ((tool.inputSchema as { properties?: Record<string, { minimum?: number }> }).properties ?? {});
-  const below = Object.entries(props)
-    .filter(([key, p]) => {
-      const raw = args?.[key];
-      const v = typeof raw === "string" && raw.trim() !== "" ? Number(raw) : raw;
-      return typeof p.minimum === "number" && typeof v === "number" && Number.isFinite(v) && v < p.minimum;
-    })
-    .map(([key, p]) => `${key} must be ${p.minimum} or more`);
-  if (below.length > 0) {
-    return `Invalid input for ${name}: ${below.join("; ")}.`;
+  // Decision N2 (run 6): amounts, counts and durations cannot be negative; the schema says which (minimum, maximum).
+  const problems: string[] = [];
+  checkLimits(tool.inputSchema as unknown as SchemaNode, args ?? {}, "", problems);
+  for (const key of AMOUNT_TEXT[name] ?? []) {
+    const raw = args?.[key];
+    if (typeof raw === "string" && NEGATIVE_AMOUNT.test(raw)) problems.push(`${key} must not contain a negative amount`);
+  }
+  if (problems.length > 0) {
+    return `Invalid input for ${name}: ${problems.join("; ")}.`;
   }
   return null;
 }
