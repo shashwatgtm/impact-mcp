@@ -1906,7 +1906,7 @@ ${SUGGESTED}
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'impact-mcp';
-exports.SERVER_VERSION = '2.1.0';
+exports.SERVER_VERSION = '2.2.0';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "impact_get_framework": "IMPACT Framework Guide",
@@ -1935,6 +1935,18 @@ function checkRequiredInputs(name, args) {
     const missing = required.filter((key) => args?.[key] === undefined || args?.[key] === null);
     if (missing.length > 0) {
         return `Missing required input for ${name}: ${missing.join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
+    }
+    // Decision N2 (run 6): amounts, counts and durations cannot be negative; the schema says which (minimum).
+    const props = (tool.inputSchema.properties ?? {});
+    const below = Object.entries(props)
+        .filter(([key, p]) => {
+        const raw = args?.[key];
+        const v = typeof raw === "string" && raw.trim() !== "" ? Number(raw) : raw;
+        return typeof p.minimum === "number" && typeof v === "number" && Number.isFinite(v) && v < p.minimum;
+    })
+        .map(([key, p]) => `${key} must be ${p.minimum} or more`);
+    if (below.length > 0) {
+        return `Invalid input for ${name}: ${below.join("; ")}.`;
     }
     return null;
 }
