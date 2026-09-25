@@ -14,6 +14,13 @@ import {
 //          Anchor Market, Craft Message, Translate Execution
 // =============================================================================
 
+// Output labels (run 5, owner decision 1). A figure that is not the user's input, and not computed only
+// from it, carries EXAMPLE on its own line, or sits under an EXAMPLES line placed directly above its table,
+// list or code block. SUGGESTED closes outputs that suggest lengths, timings or counts.
+const EXAMPLE = '(Example figure: replace with your own)';
+const EXAMPLES = 'Example figures: replace with your own.';
+const SUGGESTED = 'Suggested timings, lengths and counts: adjust them to your own.';
+
 
 // =============================================================================
 // TOOL DEFINITIONS
@@ -122,6 +129,7 @@ COMPLEX ----------------+---------------- SIMPLE
 "We are the ONLY [category] that [unique capability] so that [target customer] can [key outcome]."
 
 **Value Quantification Matrix:**
+${EXAMPLES}
 | Value Driver | Metric | Before | After | Improvement |
 |--------------|--------|--------|-------|-------------|
 | Time Savings | Hours/week | 20 | 5 | 75% reduction |
@@ -172,6 +180,7 @@ SOM = Serviceable obtainable market (realistic capture)
 \`\`\`
 
 ### Beachhead Market Selection Matrix
+${EXAMPLES}
 | Segment | Pain (1-5) | Budget (1-5) | Access (1-5) | Reference (1-5) | Total |
 |---------|------------|--------------|--------------|-----------------|-------|
 | Mid-market SaaS | 5 | 4 | 5 | 5 | 19 |
@@ -203,10 +212,11 @@ Example: "The AI that closes deals"
 
 **Level 2 - Value Proposition (1-2 sentences)**
 The promise you make to customers.
-Example: "We help B2B sales teams close 40% more deals by automating discovery and follow-up."
+Example: "We help B2B sales teams close 40% more deals by automating discovery and follow-up." ${EXAMPLE}
 
 **Level 3 - Supporting Messages (3 pillars)**
 The proof points that support your promise.
+${EXAMPLES}
 1. Speed: "10x faster prospecting"
 2. Accuracy: "AI-qualified leads only"
 3. Scale: "Handle 100x more conversations"
@@ -226,6 +236,7 @@ The proof points that support your promise.
 
 ### Channel Adaptation Matrix
 
+${EXAMPLES}
 | Channel | Format | Length | CTA Focus | Key Message |
 |---------|--------|--------|-----------|-------------|
 | LinkedIn | Text + Image | 150 words | Engage | Problem awareness |
@@ -283,10 +294,17 @@ ${Object.values(phases).join('\n---\n')}
 6. Finish with \`impact_translate_execution\` - channel adaptation
 
 Or run \`impact_full_audit\` for a complete scored assessment.
+
+${SUGGESTED}
 `;
       }
-      
-      return phases[phase as keyof typeof phases] || 'Phase not found. Use: identify, map, pinpoint, anchor, craft, translate, or all';
+
+      const single = phases[phase as keyof typeof phases];
+      // The craft phase suggests text lengths, so it ends with the suggestions footer.
+      if (single && phase === 'craft') {
+        return `${single}\n${SUGGESTED}\n`;
+      }
+      return single || 'Phase not found. Use: identify, map, pinpoint, anchor, craft, translate, or all';
     }
   },
 
@@ -294,7 +312,7 @@ Or run \`impact_full_audit\` for a complete scored assessment.
   // Tool 2: Identify Champions
   // ---------------------------------------------------------------------------
   impact_identify_champions: {
-    description: 'Generate champion hypotheses from company/product context - no blanks, actionable insights',
+    description: 'Generate champion hypotheses from your company and product context',
     inputSchema: {
       type: 'object',
       properties: {
@@ -328,7 +346,7 @@ Or run \`impact_full_audit\` for a complete scored assessment.
       target_company_type?: string;
       price_point?: string;
     }) => {
-      const company = args.company_name || 'Your company';
+      const company = args.company_name || 'not supplied';
       const targetType = args.target_company_type || 'B2B companies';
       const pricePoint = args.price_point || 'mid-market';
       
@@ -547,6 +565,8 @@ Once you identify your champion, they'll need:
 4. **Risk Mitigation**: Implementation plan, support structure, success metrics
 
 **Next Step**: Use \`impact_map_alternatives\` to analyze competitive landscape
+
+${SUGGESTED}
 `;
     }
   },
@@ -748,7 +768,7 @@ COMPLEX ────────────────┼───────
 **Their strength**: Zero effort, zero risk
 **Their weakness**: Competitive disadvantage, compounding problem
 **Your attack angle**: "Your competitors are already solving this"
-**Landmine question**: "What happens to your metrics if this problem grows 2x next year?"
+**Landmine question**: "What happens to your metrics if this problem grows 2x next year?" ${EXAMPLE}
 
 ---
 
@@ -830,6 +850,10 @@ Ask prospects these questions to understand their competitive context:
         if (multiplierMatch) quantifiedResults.secondary = multiplierMatch[1] + 'x';
         if (timeMatch) quantifiedResults.time = timeMatch[0];
       }
+      // Labels only: a figure found in customer_metrics is the user's own; the preset ones are examples.
+      const userPercent = /(\d+)%/.test(metrics);
+      const userMultiplier = /(\d+)x/.test(metrics);
+      const userTime = /(\d+)\s*(days?|weeks?|months?)/i.test(metrics);
 
       // Generate outcome-based value metrics
       const outcomeLower = args.key_outcome.toLowerCase();
@@ -866,7 +890,7 @@ Ask prospects these questions to understand their competitive context:
       return `# Value Proposition Analysis
 
 ## Positioning Inputs
-**Product**: ${product}
+**Product**: ${args.product_name || 'not supplied'}
 **Category**: ${category}
 **Target Customer**: ${args.target_customer}
 **Key Outcome**: ${args.key_outcome}
@@ -890,6 +914,7 @@ ${metrics ? `**Reported Metrics**: ${metrics}` : ''}
 
 ## 📊 Value Quantification Matrix
 
+${EXAMPLES}
 | Value Driver | Metric | Typical Before | With ${product} | Improvement |
 |--------------|--------|----------------|-----------------|-------------|
 | **Time Savings** | Hours saved | Manual effort | Automated | ${valueMetrics.time_savings} |
@@ -907,9 +932,9 @@ Use these patterns to document customer success:
 > **"[Customer Name] achieved [specific metric] within [timeframe]"**
 
 Example templates:
-- "[Customer] increased [outcome] by ${quantifiedResults.primary} in ${quantifiedResults.time}"
-- "[Customer] saved ${valueMetrics.time_savings} previously spent on [manual task]"
-- "[Customer] saw ${quantifiedResults.secondary} improvement in [metric]"
+- "[Customer] increased [outcome] by ${quantifiedResults.primary}${!userPercent && userTime ? ` ${EXAMPLE}` : ''} in ${quantifiedResults.time}"${userTime ? '' : ` ${EXAMPLE}`}
+- "[Customer] saved ${valueMetrics.time_savings} previously spent on [manual task]" ${EXAMPLE}
+- "[Customer] saw ${quantifiedResults.secondary} improvement in [metric]"${userMultiplier ? '' : ` ${EXAMPLE}`}
 
 **Proof Collection Questions** (ask your existing customers):
 1. "What metric improved most after implementing us?"
@@ -918,7 +943,7 @@ Example templates:
 4. "What was the ROI payback period?"
 
 ### Tier 2: Third-Party Validation
-- **Analyst Recognition**: Gartner, Forrester, G2 rankings
+- **Analyst Recognition**: industry analyst reports, G2 rankings
 - **Awards**: Industry awards, innovation recognition
 - **Certifications**: SOC 2, ISO 27001, industry-specific
 - **Media Coverage**: Press mentions, thought leadership
@@ -942,10 +967,10 @@ Example templates:
 ### For Different Audiences
 
 **For Champions (${args.target_customer})**:
-> "Finally ${args.key_outcome} without [current pain point]. Our customers see ${valueMetrics.revenue_impact}."
+> "Finally ${args.key_outcome} without [current pain point]. Our customers see ${valueMetrics.revenue_impact}." ${EXAMPLE}
 
 **For Economic Buyers (CFO/CEO)**:
-> "Drive ${valueMetrics.revenue_impact} with payback in ${quantifiedResults.time}. Lower TCO than alternatives."
+> "Drive ${valueMetrics.revenue_impact} with payback in ${quantifiedResults.time}. Lower TCO than alternatives." ${EXAMPLE}
 
 **For Technical Evaluators**:
 > "${args.unique_capability} through [technical approach]. Integrates with your existing stack in days, not months."
@@ -953,13 +978,13 @@ Example templates:
 ### For Different Channels
 
 **Website Hero** (15 words max):
-> "${args.key_outcome.split(' ').slice(0, 3).join(' ')} for ${args.target_customer.split(' ').slice(0, 2).join(' ')}. ${quantifiedResults.primary} better results."
+> "${args.key_outcome.split(' ').slice(0, 3).join(' ')} for ${args.target_customer.split(' ').slice(0, 2).join(' ')}. ${quantifiedResults.primary} better results."${userPercent ? '' : ` ${EXAMPLE}`}
 
 **LinkedIn Post** (Hook):
 > "Most ${args.target_customer} struggle with [problem]. We built something different: ${args.unique_capability}."
 
 **Cold Email** (Value prop):
-> "We help companies like yours ${args.key_outcome}. Recent customer achieved ${valueMetrics.revenue_impact}."
+> "We help companies like yours ${args.key_outcome}. Recent customer achieved ${valueMetrics.revenue_impact}." ${EXAMPLE}
 
 **Sales Deck** (Slide title):
 > "The only ${category} that ${args.unique_capability}"
@@ -976,6 +1001,8 @@ Before finalizing, validate with prospects:
 4. **Believability**: "What would you need to see to believe this?"
 
 **Next Step**: Use \`impact_anchor_market\` to select your beachhead market segment
+
+${SUGGESTED}
 `;
     }
   },
@@ -984,7 +1011,7 @@ Before finalizing, validate with prospects:
   // Tool 5: Anchor in Right Market
   // ---------------------------------------------------------------------------
   impact_anchor_market: {
-    description: 'Select beachhead market with scoring and TAM/SAM/SOM framework',
+    description: 'Select a beachhead market: keyword-based segment scores and a TAM/SAM/SOM framework whose preset figures are labelled for you to replace',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1003,7 +1030,7 @@ Before finalizing, validate with prospects:
         },
         average_deal_size: {
           type: 'string',
-          description: 'Optional: Your ACV (e.g., "$50K")'
+          description: 'Optional: Your ACV as a full amount (e.g., "$50,000"). Shorthand such as "$50K" is read as 50'
         },
         sales_cycle: {
           type: 'string',
@@ -1067,12 +1094,18 @@ Before finalizing, validate with prospects:
       const sam = tam * 0.3; // 30% serviceable
       const som = sam * 0.05; // 5% obtainable year 1
 
+      // Labels only: values the user did not supply are preset examples.
+      const acvEx = args.average_deal_size ? '' : ` ${EXAMPLE}`;
+      const cycleEx = args.sales_cycle ? '' : ` ${EXAMPLE}`;
+      const segEx = args.potential_segments ? '' : ` ${EXAMPLE}`;
+      const sizeIsUsers = !!args.potential_segments && beachhead.name.includes('(') && !!beachhead.name.match(/\(([^)]+)\)/)?.[1];
+
       return `# Beachhead Market Selection
 
 ## Market Context
 **Product**: ${args.product_description}
-**Average Deal Size**: ${acv}
-**Sales Cycle**: ${cycle}
+**Average Deal Size**: ${acv}${acvEx}
+**Sales Cycle**: ${cycle}${cycleEx}
 ${args.current_customers ? `**Current Customers**: ${args.current_customers}` : ''}
 
 ---
@@ -1088,16 +1121,19 @@ ${args.current_customers ? `**Current Customers**: ${args.current_customers}` : 
 
 ### Segment Scores
 
+These scores are presets, not research on your market: each segment is scored from keywords in its name (enterprise, mid-market, SMB, small, SaaS, tech, finance), and a segment with none of these keywords gets the middle score on every criterion.${args.potential_segments ? '' : ' You supplied no segments, so the segments are examples too.'}
+${EXAMPLES}
 | Segment | Pain | Budget | Access | Reference | Competition | **TOTAL** |
 |---------|------|--------|--------|-----------|-------------|-----------|
 ${segmentScores.map((s, i) => `| ${i === 0 ? '**' + s.name + '** ⭐' : s.name} | ${s.pain} | ${s.budget} | ${s.access} | ${s.reference} | ${s.competition} | **${s.total}** |`).join('\n')}
 
 ---
 
-## 🎯 Recommended Beachhead: ${beachhead.name}
+## 🎯 Recommended Beachhead: ${beachhead.name}${segEx}
 
 ### Why This Segment Wins
 
+${EXAMPLES}
 **Highest Score (${beachhead.total}/25)** based on:
 ${beachhead.pain >= 4 ? `- ✅ **High Pain Intensity** (${beachhead.pain}/5): Urgent problem that demands solution` : `- ⚠️ Pain Level (${beachhead.pain}/5): May need more urgency creation`}
 ${beachhead.budget >= 4 ? `- ✅ **Strong Budget** (${beachhead.budget}/5): Can afford ${acv} ACV` : `- ⚠️ Budget (${beachhead.budget}/5): May need pricing flexibility`}
@@ -1109,16 +1145,20 @@ ${beachhead.competition >= 4 ? `- ✅ **Low Competition** (${beachhead.competiti
 
 ## 📈 Market Sizing (Bottom-Up Calculation)
 
-### TAM/SAM/SOM for ${beachhead.name}
+### TAM/SAM/SOM for ${beachhead.name}${segEx}
+
+The company count, ICP share and market share below are presets for this type of segment, not research on your market, so every total computed from them is an example.
 
 **Total Addressable Market (TAM)**
+${EXAMPLES}
 \`\`\`
 TAM = Total potential customers × ACV
-TAM = ~${(tamMultiplier).toLocaleString()} companies × ${acv}
+TAM = ~${(tamMultiplier).toLocaleString('en-US')} companies × ${acv}
 TAM = $${(tam / 1000000).toFixed(1)}M
 \`\`\`
 
 **Serviceable Addressable Market (SAM)**
+${EXAMPLES}
 \`\`\`
 SAM = TAM × % that match your ICP
 SAM = $${(tam / 1000000).toFixed(1)}M × 30% (have the problem + right profile)
@@ -1126,6 +1166,7 @@ SAM = $${(sam / 1000000).toFixed(1)}M
 \`\`\`
 
 **Serviceable Obtainable Market (SOM)**
+${EXAMPLES}
 \`\`\`
 SOM = SAM × Expected market share (Year 1)
 SOM = $${(sam / 1000000).toFixed(1)}M × 5%
@@ -1133,15 +1174,16 @@ SOM = $${(som / 1000000).toFixed(2)}M
 \`\`\`
 
 ### Market Sizing Assumptions
-| Assumption | Value | Source/Validation |
-|------------|-------|-------------------|
-| Total companies in segment | ~${tamMultiplier.toLocaleString()} | Industry databases, LinkedIn |
+${EXAMPLES}${args.average_deal_size ? ' The average deal size is your input.' : ''}
+| Assumption | Value | How to check it |
+|------------|-------|-----------------|
+| Total companies in segment | ~${tamMultiplier.toLocaleString('en-US')} | Industry databases, LinkedIn |
 | % with problem | 30% | Customer research |
-| Year 1 market share | 5% | Conservative estimate |
+| Year 1 market share | 5% | Your sales capacity and win rate |
 | Average deal size | ${acv} | Current pipeline data |
 
 **⚠️ Validation Required**: These are hypothesis numbers. Validate with:
-1. Industry reports (Gartner, Forrester)
+1. Industry analyst reports
 2. LinkedIn Sales Navigator company counts
 3. Customer interviews on market size perception
 
@@ -1149,37 +1191,38 @@ SOM = $${(som / 1000000).toFixed(2)}M
 
 ## 🗺️ Beachhead Expansion Path
 
-### Year 1: Dominate ${beachhead.name}
+### Year 1: Dominate ${beachhead.name}${segEx}
+${EXAMPLES}
 - Focus: 100% of GTM on this segment
 - Goal: ${Math.round(som / acvNumber)} customers
 - Revenue: $${(som / 1000000).toFixed(2)}M ARR
 
 ### Year 2: Adjacent Expansion
-- Add: ${segmentScores[1]?.name || 'Next highest-scoring segment'}
+- Add: ${segmentScores[1]?.name || 'Next highest-scoring segment'}${segmentScores[1] ? segEx : ''}
 - Leverage: References from beachhead customers
-- Goal: 2x customer base
+- Goal: 2x customer base ${EXAMPLE}
 
 ### Year 3: Market Leadership
 - Expand: Full SAM coverage
-- Position: Category leader in ${beachhead.name}
-- Goal: 10% market share
+- Position: Category leader in ${beachhead.name}${segEx}
+- Goal: 10% market share ${EXAMPLE}
 
 ---
 
-## 💡 ICP Hypothesis for ${beachhead.name}
+## 💡 ICP Hypothesis for ${beachhead.name}${segEx}
 
 Based on beachhead selection, your ICP likely includes:
 
 **Company Characteristics**:
 - Industry: ${beachhead.name.split('(')[0].trim()}
-- Size: ${beachhead.name.includes('(') ? beachhead.name.match(/\(([^)]+)\)/)?.[1] || '50-500 employees' : '50-500 employees'}
+- Size: ${beachhead.name.includes('(') ? beachhead.name.match(/\(([^)]+)\)/)?.[1] || '50-500 employees' : '50-500 employees'}${sizeIsUsers ? '' : ` ${EXAMPLE}`}
 - Tech stack: Modern, willing to adopt new tools
 - Growth stage: Series B+ or established
 
 **Buying Characteristics**:
-- Budget: ${acv}+ available
+- Budget: ${acv}+ available${acvEx}
 - Decision maker: ${beachhead.budget >= 4 ? 'VP/C-level accessible' : 'Manager-level start'}
-- Sales cycle: ${cycle}
+- Sales cycle: ${cycle}${cycleEx}
 - Buying trigger: Growth pressure, competitive threat
 
 **Next Step**: Use \`impact_craft_message\` to build positioning for this beachhead
@@ -1243,7 +1286,7 @@ Based on beachhead selection, your ICP likely includes:
       return `# Positioning & Messaging Framework
 
 ## Positioning Inputs
-- **Product**: ${product}
+- **Product**: ${args.product_name || 'not supplied'}
 - **Target Customer**: ${args.target_customer}
 - **Need/Opportunity**: ${need}
 - **Category**: ${category}
@@ -1318,7 +1361,7 @@ Choose the style that fits your brand:
 > "Unlike ${competitor}, ${product} ${args.differentiation}. Finally, ${args.key_benefit}."
 
 **Variation D - Lead with Social Proof**:
-> "Join 100+ ${args.target_customer.split(' ').slice(-1)[0]} who ${args.key_benefit} with ${product}."
+> "Join 100+ ${args.target_customer.split(' ').slice(-1)[0]} who ${args.key_benefit} with ${product}." ${EXAMPLE}
 
 ### Audience-Specific Messaging
 
@@ -1363,6 +1406,8 @@ Before finalizing, test each message for:
 | "Need to think about it" | "Absolutely. While you're evaluating, here's a case study of how [similar company] achieved ${args.key_benefit}." |
 
 **Next Step**: Use \`impact_translate_execution\` to adapt these messages for each channel
+
+${SUGGESTED}
 `;
     }
   },
@@ -1390,7 +1435,7 @@ Before finalizing, test each message for:
         channels: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Channels to optimize for (e.g., ["website", "linkedin", "email", "sales_deck"])'
+          description: 'Accepted but not used yet: the output always covers website, LinkedIn, email, sales deck and demo'
         },
         product_name: {
           type: 'string',
@@ -1452,7 +1497,7 @@ Before finalizing, test each message for:
 \`\`\`
 Most ${args.target_customer} think [common belief].
 
-But here's what we've learned from 100+ customers:
+But here's what we've learned from 100+ customers: ${EXAMPLE}
 
 [Counterintuitive insight about ${args.key_benefit}]
 
@@ -1515,7 +1560,7 @@ I'm reaching out because ${args.target_customer} often struggle with [specific p
 
 We help companies like [similar company] ${args.key_benefit.toLowerCase()}.
 
-Would it make sense to show you how in 15 minutes?
+Would it make sense to show you how in 15 minutes? ${EXAMPLE}
 
 [Signature]
 \`\`\`
@@ -1590,20 +1635,20 @@ Result: [Quantified outcome]
 
 ### Demo Script Structure (15 minutes)
 
-**0-2 min: Context Setting**
+**0-2 min: Context Setting** ${EXAMPLE}
 > "Based on our conversation, you mentioned [their specific pain]. Let me show you exactly how ${product} helps ${args.target_customer} ${args.key_benefit.toLowerCase()}."
 
-**2-8 min: Core Value Demonstration**
+**2-8 min: Core Value Demonstration** ${EXAMPLE}
 Show 2-3 features that directly address their stated needs:
 1. Feature A → Outcome A
 2. Feature B → Outcome B
 3. Feature C → Outcome C
 
-**8-12 min: Differentiation Proof**
+**8-12 min: Differentiation Proof** ${EXAMPLE}
 > "You might be wondering how this compares to [competitor]. Watch this..."
 [Show specific capability they can't match]
 
-**12-15 min: Close & Next Steps**
+**12-15 min: Close & Next Steps** ${EXAMPLE}
 > "So you've seen how [recap 3 key outcomes]. What questions do you have?"
 > "What would success look like for you in the first 90 days?"
 
@@ -1634,6 +1679,8 @@ Show 2-3 features that directly address their stated needs:
 4. Sales Deck (conversion)
 
 **Next Step**: Use \`impact_full_audit\` for a complete positioning assessment
+
+${SUGGESTED}
 `;
     }
   },
@@ -1783,11 +1830,16 @@ Show 2-3 features that directly address their stated needs:
       const sortedScores = Object.entries(scores).sort((a, b) => a[1] - b[1]);
       const weakest = sortedScores.slice(0, 2);
       const strongest = sortedScores.slice(-2).reverse();
+      // Tool name for each phase key (the tool list below names real tools, not phase keys).
+      const phaseTool: Record<string, string> = {
+        identify: 'impact_identify_champions', map: 'impact_map_alternatives', pinpoint: 'impact_pinpoint_value',
+        anchor: 'impact_anchor_market', craft: 'impact_craft_message', translate: 'impact_translate_execution'
+      };
 
       return `# IMPACT Positioning Audit
 
 ## Company Overview
-**Company**: ${company}
+**Company**: ${args.company_name || 'not supplied'}
 **Product**: ${args.product_description}
 **Target**: ${args.target_customer}
 **Problem**: ${args.problem_solved}
@@ -1816,7 +1868,7 @@ ${args.customer_feedback ? `**Customer Feedback**: ${args.customer_feedback}` : 
 ${strongest.map(([phase, score]) => `
 ### ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
 ${phase === 'identify' ? `Your target customer definition ("${args.target_customer}") provides good specificity for champion identification.` : ''}
-${phase === 'map' ? `You have ${competitors.length} competitors identified, enabling competitive positioning.` : ''}
+${phase === 'map' ? `You have ${competitors.length} competitor${competitors.length === 1 ? '' : 's'} identified, enabling competitive positioning.` : ''}
 ${phase === 'pinpoint' ? `Your differentiation ("${differentiation}") provides a foundation for value articulation.` : ''}
 ${phase === 'anchor' ? `Your market definition includes specific criteria for targeting.` : ''}
 ${phase === 'craft' ? `You have a positioning statement foundation to build upon.` : ''}
@@ -1840,7 +1892,7 @@ ${weakest.map(([phase, score]) => `
 
 **Action**: Run \`impact_${phase === 'identify' ? 'identify_champions' : phase === 'map' ? 'map_alternatives' : phase === 'pinpoint' ? 'pinpoint_value' : phase === 'anchor' ? 'anchor_market' : phase === 'craft' ? 'craft_message' : 'translate_execution'}\` to address this gap.
 
-**Expected Improvement**: +${20 - Math.floor(score / 10)} points with focused work
+**Expected Improvement**: +${20 - Math.floor(score / 10)} points with focused work ${EXAMPLE}
 `).join('')}
 
 ---
@@ -1891,15 +1943,16 @@ Based on your inputs, here's a generated positioning statement:
 
 With focused positioning work:
 
-| Metric | Current (Estimated) | Target | Improvement |
+${EXAMPLES}
+| Metric | Current (example) | Target | Improvement |
 |--------|---------------------|--------|-------------|
 | Website conversion | 1-2% | 3-5% | 2-3x |
 | Email reply rate | 2-5% | 8-15% | 3x |
 | Sales cycle | Average | -20% | Faster |
 | Win rate | Average | +15% | Higher |
 
-**Investment**: 20-30 hours of positioning work
-**Expected ROI**: 2-3x improvement in GTM metrics
+**Investment**: 20-30 hours of positioning work ${EXAMPLE}
+**Expected ROI**: 2-3x improvement in GTM metrics ${EXAMPLE}
 
 ---
 
@@ -1907,10 +1960,12 @@ With focused positioning work:
 
 Based on your scores, prioritize these tools:
 
-1. **\`impact_${weakest[0][0]}\`** - Address your lowest-scoring area first
-2. **\`impact_${weakest[1][0]}\`** - Then tackle the second-weakest
+1. **\`${phaseTool[weakest[0][0]]}\`** - Address your lowest-scoring area first
+2. **\`${phaseTool[weakest[1][0]]}\`** - Then tackle the second-weakest
 3. **\`impact_craft_message\`** - Synthesize into final positioning
 4. **\`impact_translate_execution\`** - Activate across channels
+
+${SUGGESTED}
 `;
     }
   }

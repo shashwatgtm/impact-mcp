@@ -1,5 +1,4 @@
-# IMPACT MCP v2.0.0
-
+# IMPACT MCP v2.1.0
 **Hypothesis-Driven B2B Positioning Engine** - 8 tools implementing the IMPACT framework for strategic positioning and go-to-market messaging.
 
 [![NPM Version](https://img.shields.io/npm/v/@shashwatgtmalpha/impact-mcp)](https://www.npmjs.com/package/@shashwatgtmalpha/impact-mcp)
@@ -45,20 +44,104 @@ Add to your `claude_desktop_config.json`:
 
 ---
 
-## 🛠️ Tools Overview
+## Tools and inputs
 
-| Tool | Purpose | Primary Output |
-|------|---------|----------------|
-| `impact_get_framework` | Complete IMPACT methodology reference | Full framework documentation |
-| `impact_identify_champions` | Champion persona hypothesis | Buyer personas with pain points |
-| `impact_map_alternatives` | Competitive landscape analysis | Whitespace identification |
-| `impact_pinpoint_value` | Value proposition development | "Only Statement" generator |
-| `impact_anchor_market` | Beachhead market selection | TAM/SAM/SOM analysis |
-| `impact_craft_message` | Positioning statement creation | Message hierarchy |
-| `impact_translate_execution` | Channel-specific adaptation | Website/LinkedIn/email/deck/demo versions |
-| `impact_full_audit` | Complete positioning assessment | Comprehensive scoring & recommendations |
+Generated on 25 September 2026 from the server's own tool list (`tools/list` of impact-mcp 2.1.0, the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
 
----
+| # | Tool | Title | What it does |
+|---|---|---|---|
+| 1 | `impact_get_framework` | IMPACT Framework Guide | Get complete IMPACT framework methodology with phase-by-phase guidance |
+| 2 | `impact_identify_champions` | Identify Champions | Generate champion hypotheses from your company and product context |
+| 3 | `impact_map_alternatives` | Map Alternatives | Analyze competitive landscape and find positioning whitespace |
+| 4 | `impact_pinpoint_value` | Pinpoint Value | Generate value proposition with quantification and proof points |
+| 5 | `impact_anchor_market` | Anchor Market | Select a beachhead market: keyword-based segment scores and a TAM/SAM/SOM framework whose preset figures are labelled for you to replace |
+| 6 | `impact_craft_message` | Craft Message | Build positioning statement and message hierarchy with variations |
+| 7 | `impact_translate_execution` | Translate Execution | Adapt positioning for specific channels and touchpoints |
+| 8 | `impact_full_audit` | IMPACT Full Audit | Complete positioning audit with scoring and recommendations |
+
+### Inputs of each tool
+
+#### 1. IMPACT Framework Guide (`impact_get_framework`)
+
+| Input | Required | Type | Description |
+|---|---|---|---|
+| `focus_phase` | No | one of: `identify`, `map`, `pinpoint`, `anchor`, `craft`, `translate`, `all` | Optional: specific phase to focus on (identify/map/pinpoint/anchor/craft/translate) |
+
+#### 2. Identify Champions (`impact_identify_champions`)
+
+| Input | Required | Type | Description |
+|---|---|---|---|
+| `product_description` | Yes | string | What your product does (1-2 sentences) |
+| `problem_solved` | Yes | string | The core problem you solve |
+| `company_name` | No | string | Your company name |
+| `target_company_type` | No | string | Type of companies you target (e.g., "Series B SaaS", "Enterprise manufacturing") |
+| `price_point` | No | string | Optional: ACV range (e.g., "$50K-100K") |
+
+#### 3. Map Alternatives (`impact_map_alternatives`)
+
+| Input | Required | Type | Description |
+|---|---|---|---|
+| `your_product` | Yes | string | What your product does |
+| `category` | Yes | string | Your product category (e.g., "Sales engagement", "Data platform") |
+| `competitors` | No | array of string | List of competitor names |
+| `competitor_weaknesses` | No | string | Optional: Known competitor weaknesses or customer complaints |
+| `your_strengths` | No | string | Optional: What you do better than competitors |
+
+#### 4. Pinpoint Value (`impact_pinpoint_value`)
+
+| Input | Required | Type | Description |
+|---|---|---|---|
+| `target_customer` | Yes | string | Who you serve (e.g., "B2B sales teams") |
+| `key_outcome` | Yes | string | The main result customers achieve |
+| `unique_capability` | Yes | string | What you do that others cannot/don't |
+| `product_name` | No | string | Your product/company name |
+| `category` | No | string | Product category |
+| `customer_metrics` | No | string | Optional: Any customer results data (e.g., "40% faster, 3x pipeline") |
+
+#### 5. Anchor Market (`impact_anchor_market`)
+
+| Input | Required | Type | Description |
+|---|---|---|---|
+| `product_description` | Yes | string | What your product does |
+| `potential_segments` | No | array of string | List of potential market segments (e.g., ["Mid-market SaaS", "Enterprise Finance", "SMB Retail"]) |
+| `current_customers` | No | string | Optional: Description of your current/best customers |
+| `average_deal_size` | No | string | Optional: Your ACV as a full amount (e.g., "$50,000"). Shorthand such as "$50K" is read as 50 |
+| `sales_cycle` | No | string | Optional: Typical sales cycle length |
+
+#### 6. Craft Message (`impact_craft_message`)
+
+| Input | Required | Type | Description |
+|---|---|---|---|
+| `target_customer` | Yes | string | Target customer description |
+| `key_benefit` | Yes | string | Primary benefit/reason to buy |
+| `differentiation` | Yes | string | Your unique differentiation |
+| `product_name` | No | string | Your product name |
+| `customer_need` | No | string | The need or opportunity they have |
+| `product_category` | No | string | Your product category |
+| `competitor` | No | string | Primary alternative/competitor |
+
+#### 7. Translate Execution (`impact_translate_execution`)
+
+| Input | Required | Type | Description |
+|---|---|---|---|
+| `positioning_statement` | Yes | string | Your core positioning statement |
+| `target_customer` | Yes | string | Target customer profile |
+| `key_benefit` | Yes | string | Primary benefit |
+| `channels` | No | array of string | Accepted but not used yet: the output always covers website, LinkedIn, email, sales deck and demo |
+| `product_name` | No | string | Your product name |
+
+#### 8. IMPACT Full Audit (`impact_full_audit`)
+
+| Input | Required | Type | Description |
+|---|---|---|---|
+| `product_description` | Yes | string | What your product does |
+| `target_customer` | Yes | string | Who you serve |
+| `problem_solved` | Yes | string | The problem you solve |
+| `company_name` | No | string | Your company name |
+| `key_differentiation` | No | string | What makes you unique |
+| `competitors` | No | array of string | Main competitors |
+| `current_positioning` | No | string | Optional: Your current positioning statement or tagline |
+| `customer_feedback` | No | string | Optional: What customers say about you |
 
 ## 👤 Who Is This For?
 
@@ -95,115 +178,6 @@ This MCP is included in these user-focused Agent bundles:
 | **🎯 Product Marketing Engine** | 12 tools | PMMs, product marketers |
 | **🔬 GTM Consultant Suite** | 12 tools | Fractional CMOs, advisors |
 | **📞 SDR Toolkit** | 8 tools | SDRs, BDRs |
-
----
-
-## 📖 Tool Details
-
-### 1. IMPACT Get Framework (`impact_get_framework`)
-
-Get the complete IMPACT methodology reference.
-
-**Inputs:** None required
-
-**Output:** Full 6-phase framework documentation with examples and best practices.
-
-### 2. IMPACT Identify Champions (`impact_identify_champions`)
-
-Generate champion persona hypothesis from product/problem context.
-
-**Inputs:**
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `product` | ✅ | Your product/service description |
-| `problem_solved` | ✅ | Core problem you solve |
-| `current_customers` | ❌ | Description of existing customers |
-
-**Output:** Champion profiles with titles, pain points, success metrics, and buying triggers.
-
-### 3. IMPACT Map Alternatives (`impact_map_alternatives`)
-
-Analyze competitive landscape and identify whitespace.
-
-**Inputs:**
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `product` | ✅ | Your product/service |
-| `known_competitors` | ❌ | List of known competitors |
-| `customer_alternatives` | ❌ | What customers do instead |
-
-**Output:** Competitive matrix, status quo analysis, whitespace opportunities.
-
-### 4. IMPACT Pinpoint Value (`impact_pinpoint_value`)
-
-Develop value proposition with "Only Statement" generator.
-
-**Inputs:**
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `product` | ✅ | Your product/service |
-| `target_champion` | ✅ | Primary buyer persona |
-| `competitive_context` | ❌ | Key differentiators |
-| `proof_points` | ❌ | Evidence supporting claims |
-
-**Output:** Only Statement, value hierarchy, proof point framework.
-
-### 5. IMPACT Anchor Market (`impact_anchor_market`)
-
-Select beachhead market with TAM/SAM/SOM analysis.
-
-**Inputs:**
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `product` | ✅ | Your product/service |
-| `value_proposition` | ✅ | Core value prop |
-| `potential_segments` | ❌ | Market segments to evaluate |
-| `constraints` | ❌ | Resources, geography, etc. |
-
-**Output:** Beachhead recommendation, market sizing, expansion roadmap.
-
-### 6. IMPACT Craft Message (`impact_craft_message`)
-
-Create positioning statement and message hierarchy.
-
-**Inputs:**
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `product` | ✅ | Your product/service |
-| `target_market` | ✅ | Who you serve |
-| `value_proposition` | ✅ | Core value |
-| `key_differentiators` | ✅ | What makes you different |
-| `proof_points` | ❌ | Supporting evidence |
-
-**Output:** Positioning statement, tagline options, message pillars, elevator pitch.
-
-### 7. IMPACT Translate Execution (`impact_translate_execution`)
-
-Adapt positioning for specific channels.
-
-**Inputs:**
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `positioning` | ✅ | Core positioning statement |
-| `channel` | ✅ | website, linkedin, email, pitch_deck, demo_script |
-| `target_persona` | ❌ | Specific audience for this channel |
-
-**Output:** Channel-optimized messaging with format-specific guidelines.
-
-### 8. IMPACT Full Audit (`impact_full_audit`)
-
-Comprehensive positioning assessment with scoring.
-
-**Inputs:**
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `company` | ✅ | Company name |
-| `product` | ✅ | Product/service description |
-| `current_positioning` | ❌ | Existing positioning materials |
-| `target_market` | ❌ | Current target market definition |
-| `competitors` | ❌ | Known competitors |
-
-**Output:** Phase-by-phase scoring, gap analysis, prioritized recommendations, action plan.
 
 ---
 
@@ -246,7 +220,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-*Part of the GTM Helix MCP Suite - AI-powered B2B go-to-market tools*
+*Part of the Helix GTM Consulting MCP suite: rule-based B2B go-to-market tools (no AI model runs inside them)*
 
 
 ## Hosted connector (Streamable HTTP)

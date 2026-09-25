@@ -16,10 +16,10 @@
 ## Tools
 
 - [IMPACT Framework Guide](https://impact.gtmhelix.com/tools/impact-get-framework/) (`impact_get_framework`): Get complete IMPACT framework methodology with phase-by-phase guidance
-- [Identify Champions](https://impact.gtmhelix.com/tools/impact-identify-champions/) (`impact_identify_champions`): Generate champion hypotheses from company/product context - no blanks, actionable insights
+- [Identify Champions](https://impact.gtmhelix.com/tools/impact-identify-champions/) (`impact_identify_champions`): Generate champion hypotheses from your company and product context
 - [Map Alternatives](https://impact.gtmhelix.com/tools/impact-map-alternatives/) (`impact_map_alternatives`): Analyze competitive landscape and find positioning whitespace
 - [Pinpoint Value](https://impact.gtmhelix.com/tools/impact-pinpoint-value/) (`impact_pinpoint_value`): Generate value proposition with quantification and proof points
-- [Anchor Market](https://impact.gtmhelix.com/tools/impact-anchor-market/) (`impact_anchor_market`): Select beachhead market with scoring and TAM/SAM/SOM framework
+- [Anchor Market](https://impact.gtmhelix.com/tools/impact-anchor-market/) (`impact_anchor_market`): Select a beachhead market: keyword-based segment scores and a TAM/SAM/SOM framework whose preset figures are labelled for you to replace
 - [Craft Message](https://impact.gtmhelix.com/tools/impact-craft-message/) (`impact_craft_message`): Build positioning statement and message hierarchy with variations
 - [Translate Execution](https://impact.gtmhelix.com/tools/impact-translate-execution/) (`impact_translate_execution`): Adapt positioning for specific channels and touchpoints
 - [IMPACT Full Audit](https://impact.gtmhelix.com/tools/impact-full-audit/) (`impact_full_audit`): Complete positioning audit with scoring and recommendations
@@ -52,7 +52,7 @@ Shashwat Ghosh, Co-Founder and Fractional CMO of Helix GTM Consulting, a busines
 
 ### Why do some answers look like templates?
 
-Several tools return a structured plan with placeholders where your inputs did not give a fact. That is deliberate: the tools do not invent numbers or names. Fill the placeholders in before you use the result.
+Several tools return a structured plan with [placeholders] where your inputs did not give a fact. When an answer shows a benchmark, target, rate, weight or other figure you did not supply, it is labelled "Example figure: replace with your own". Figures calculated from your inputs are not labelled. Suggested lengths, timings and counts are marked as suggestions. Replace every example and placeholder before you use the result.
 
 ### Can I call the tools from my own code?
 

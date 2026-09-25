@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IMPACT Docs: MCP Server and REST API | Helix GTM</title>
-<meta name="description" content="How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, generated from the server&#x27;s own schemas.">
+<meta name="description" content="How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas. Free, with no sign-in.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="author" content="Shashwat Ghosh, Helix GTM Consulting">
 <link rel="canonical" href="https://impact.gtmhelix.com/docs/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="IMPACT by Helix GTM Consulting">
 <meta property="og:title" content="IMPACT Docs: MCP Server and REST API | Helix GTM">
-<meta property="og:description" content="How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, generated from the server&#x27;s own schemas.">
+<meta property="og:description" content="How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas. Free, with no sign-in.">
 <meta property="og:url" content="https://impact.gtmhelix.com/docs/">
 <meta property="og:image" content="https://impact.gtmhelix.com/og.png">
 <meta property="og:image:width" content="1200">
@@ -19,7 +19,7 @@
 <meta property="og:image:alt" content="IMPACT by Helix GTM Consulting">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="IMPACT Docs: MCP Server and REST API | Helix GTM">
-<meta name="twitter:description" content="How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, generated from the server&#x27;s own schemas.">
+<meta name="twitter:description" content="How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas. Free, with no sign-in.">
 <meta name="twitter:image" content="https://impact.gtmhelix.com/og.png">
 <meta name="twitter:creator" content="@Shashwat_Ghosh">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -108,7 +108,7 @@
    "@id": "https://impact.gtmhelix.com/docs/#page",
    "url": "https://impact.gtmhelix.com/docs/",
    "name": "IMPACT Docs: MCP Server and REST API | Helix GTM",
-   "description": "How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, generated from the server's own schemas.",
+   "description": "How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, from the server's own schemas. Free, with no sign-in.",
    "isPartOf": {
     "@id": "https://impact.gtmhelix.com/#site"
    },
@@ -204,7 +204,7 @@
 </section>
 <section class="hx-section" id="impact-identify-champions" aria-labelledby="d-impact-identify-champions">
   <h3 id="d-impact-identify-champions">Identify Champions <code>impact_identify_champions</code></h3>
-  <p class="hx-prose">Generate champion hypotheses from company/product context - no blanks, actionable insights <a href="/tools/impact-identify-champions/">Open the form</a>.</p>
+  <p class="hx-prose">Generate champion hypotheses from your company and product context <a href="/tools/impact-identify-champions/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>company_name</code></td><td>string</td><td>no</td><td></td><td>Your company name</td></tr>
 <tr><td><code>product_description</code></td><td>string</td><td>yes</td><td></td><td>What your product does (1-2 sentences)</td></tr>
@@ -238,12 +238,12 @@
 </section>
 <section class="hx-section" id="impact-anchor-market" aria-labelledby="d-impact-anchor-market">
   <h3 id="d-impact-anchor-market">Anchor Market <code>impact_anchor_market</code></h3>
-  <p class="hx-prose">Select beachhead market with scoring and TAM/SAM/SOM framework <a href="/tools/impact-anchor-market/">Open the form</a>.</p>
+  <p class="hx-prose">Select a beachhead market: keyword-based segment scores and a TAM/SAM/SOM framework whose preset figures are labelled for you to replace <a href="/tools/impact-anchor-market/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>product_description</code></td><td>string</td><td>yes</td><td></td><td>What your product does</td></tr>
 <tr><td><code>potential_segments</code></td><td>list of strings</td><td>no</td><td></td><td>List of potential market segments (e.g., [&quot;Mid-market SaaS&quot;, &quot;Enterprise Finance&quot;, &quot;SMB Retail&quot;])</td></tr>
 <tr><td><code>current_customers</code></td><td>string</td><td>no</td><td></td><td>Optional: Description of your current/best customers</td></tr>
-<tr><td><code>average_deal_size</code></td><td>string</td><td>no</td><td></td><td>Optional: Your ACV (e.g., &quot;$50K&quot;)</td></tr>
+<tr><td><code>average_deal_size</code></td><td>string</td><td>no</td><td></td><td>Optional: Your ACV as a full amount (e.g., &quot;$50,000&quot;). Shorthand such as &quot;$50K&quot; is read as 50</td></tr>
 <tr><td><code>sales_cycle</code></td><td>string</td><td>no</td><td></td><td>Optional: Typical sales cycle length</td></tr>
   </tbody></table></div>
 </section>
@@ -267,7 +267,7 @@
 <tr><td><code>positioning_statement</code></td><td>string</td><td>yes</td><td></td><td>Your core positioning statement</td></tr>
 <tr><td><code>target_customer</code></td><td>string</td><td>yes</td><td></td><td>Target customer profile</td></tr>
 <tr><td><code>key_benefit</code></td><td>string</td><td>yes</td><td></td><td>Primary benefit</td></tr>
-<tr><td><code>channels</code></td><td>list of strings</td><td>no</td><td></td><td>Channels to optimize for (e.g., [&quot;website&quot;, &quot;linkedin&quot;, &quot;email&quot;, &quot;sales_deck&quot;])</td></tr>
+<tr><td><code>channels</code></td><td>list of strings</td><td>no</td><td></td><td>Accepted but not used yet: the output always covers website, LinkedIn, email, sales deck and demo</td></tr>
 <tr><td><code>product_name</code></td><td>string</td><td>no</td><td></td><td>Your product name</td></tr>
   </tbody></table></div>
 </section>
