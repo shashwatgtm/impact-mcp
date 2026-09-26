@@ -1,6 +1,6 @@
 # IMPACT
 
-> IMPACT is a free MCP server and web app with eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.
+> IMPACT is a free web app and AI connector with eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.
 
 - Web app (no sign-in): https://impact.gtmhelix.com/
 - MCP server URL (Streamable HTTP, no sign-in, read-only tools): https://impact.gtmhelix.com/mcp
@@ -28,11 +28,11 @@
 
 ### What is IMPACT?
 
-IMPACT is a free MCP server and web app with eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.
+IMPACT is a free web app and AI connector with eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.
 
 ### Is IMPACT free, and do I need an account?
 
-It is free, and there is no account or sign-in. Use the tools in your browser here, or connect the MCP server to your AI assistant.
+It is free, and there is no account or sign-in. Use the tools in your browser here, or add them to Claude or ChatGPT as a connector.
 
 ### Does it use AI to write the answers?
 
