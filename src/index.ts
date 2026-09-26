@@ -927,7 +927,7 @@ ${metrics ? `**Reported Metrics**: ${metrics}` : ''}
 > We help **${args.target_customer}** achieve **${mid(args.key_outcome)}** through **${mid(args.unique_capability)}**, something no other ${category} can deliver.
 
 ### Version 3 (Problem-focused)
-> Unlike traditional ${category}s, **${product}** offers **${mid(args.unique_capability)}**, which means **${args.target_customer}** finally get **${mid(args.key_outcome)}**.
+> Unlike traditional ${/s$/i.test(category.trim()) ? category.trim() : `${category}s`}, **${product}** offers **${mid(args.unique_capability)}**, which means **${args.target_customer}** finally get **${mid(args.key_outcome)}**.
 
 ---
 
