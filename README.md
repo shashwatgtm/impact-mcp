@@ -1,4 +1,4 @@
-# IMPACT MCP v2.2.0
+# IMPACT MCP v2.2.1
 **Hypothesis-Driven B2B Positioning Engine** - 8 tools implementing the IMPACT framework for strategic positioning and go-to-market messaging.
 
 [![NPM Version](https://img.shields.io/npm/v/@shashwatgtmalpha/impact-mcp)](https://www.npmjs.com/package/@shashwatgtmalpha/impact-mcp)
@@ -46,7 +46,7 @@ Add to your `claude_desktop_config.json`:
 
 ## Tools and inputs
 
-Generated on 26 September 2026 from the server's own tool list (`tools/list` of impact-mcp 2.2.0, the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
+Generated on 26 September 2026 from the server's own tool list (`tools/list` of impact-mcp 2.2.1, the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
 
 | # | Tool | Title | What it does |
 |---|---|---|---|
@@ -105,7 +105,7 @@ Generated on 26 September 2026 from the server's own tool list (`tools/list` of 
 | `product_description` | Yes | string | What your product does |
 | `potential_segments` | No | array of string | List of potential market segments (e.g., ["Mid-market SaaS", "Enterprise Finance", "SMB Retail"]) |
 | `current_customers` | No | string | Optional: Description of your current/best customers |
-| `average_deal_size` | No | string | Optional: Your ACV as a full amount (e.g., "$50,000"). Shorthand such as "$50K" is read as 50 |
+| `average_deal_size` | No | string | Optional: Your ACV as one amount (e.g., "$50,000", "$50K" or "$1.5M"); a range is refused |
 | `sales_cycle` | No | string | Optional: Typical sales cycle length |
 
 #### 6. Craft Message (`impact_craft_message`)
@@ -194,7 +194,7 @@ This MCP is included in these user-focused Agent bundles:
 
 ## 📚 About the IMPACT Framework
 
-The IMPACT framework was developed by Shashwat Ghosh based on 24+ years in B2B. It addresses the common failure mode of B2B positioning: starting with features instead of market hypotheses.
+The IMPACT framework was developed by Shashwat Ghosh based on 24+ years in B2B and 10+ years of fractional experience. It addresses the common failure mode of B2B positioning: starting with features instead of market hypotheses.
 
 **Key Principles:**
 - Hypothesis-driven: Test assumptions before committing
@@ -206,7 +206,7 @@ The IMPACT framework was developed by Shashwat Ghosh based on 24+ years in B2B. 
 
 ## 👨‍💻 Author
 
-**Shashwat Ghosh**, Co-Founder and Fractional CMO, Helix GTM Consulting
+**Shashwat Ghosh**, Co-Founder and Fractional CMO, Helix GTM Consulting, with 24+ years in B2B and 10+ years of fractional experience
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://linkedin.com/in/shashwatghosh)
 [![Twitter](https://img.shields.io/badge/Twitter-Follow-1DA1F2)](https://twitter.com/Shashwat_Ghosh)

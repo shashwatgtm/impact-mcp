@@ -727,7 +727,7 @@ COMPLEX ────────────────┼───────
 ## 🗡️ Competitive Battle Strategy
 
 ### Against ${competitors[0] || 'Market Leader'}
-**Their strength**: Established brand, large customer base
+**Their strength (an assumption to check with buyers)**: Established brand, large customer base
 **Weakness to test with buyers**: ${marketContext.common_complaints[0]} (a common complaint in this category, not a known fact about ${competitors[0] || 'them'})
 **Your attack angle**: "Unlike [them], we [your differentiation]"
 **Landmine question**: "How has [competitor weakness] impacted your results?"
@@ -994,7 +994,7 @@ ${SUGGESTED}
                 },
                 average_deal_size: {
                     type: 'string',
-                    description: 'Optional: Your ACV as a full amount (e.g., "$50,000"). Shorthand such as "$50K" is read as 50'
+                    description: 'Optional: Your ACV as one amount (e.g., "$50,000", "$50K" or "$1.5M"); a range is refused'
                 },
                 sales_cycle: {
                     type: 'string',
@@ -1008,7 +1008,7 @@ ${SUGGESTED}
             const acv = args.average_deal_size || '$30,000';
             const cycle = args.sales_cycle || '3-6 months';
             // Parse ACV for calculations
-            const acvNumber = parseInt(acv.replace(/[^0-9]/g, '')) || 30000;
+            const acvNumber = readAmount(acv) || 30000;
             // Generate segment scores (these would be based on analysis in real implementation)
             const segmentScores = segments.map((segment, index) => {
                 const segmentLower = segment.toLowerCase();
@@ -1276,7 +1276,7 @@ Choose the style that fits your brand:
 > "${args.target_customer} struggle with ${need}. ${product} ${args.differentiation}, so you can finally ${args.key_benefit}."
 
 **Option B - Outcome-First**:
-> "Achieve ${args.key_benefit} without the complexity of ${competitor}. ${product} ${args.differentiation}."
+> "Achieve ${args.key_benefit} [Only if true and provable: without the complexity of ${competitor}]. ${product} ${args.differentiation}."
 
 **Option C - Unique Mechanism**:
 > "The only ${category} that ${args.differentiation}. That's how ${args.target_customer} ${args.key_benefit}."
@@ -1310,10 +1310,10 @@ Choose the style that fits your brand:
 ### Audience-Specific Messaging
 
 **For Champions (${args.target_customer})**:
-> "We built ${product} because ${competitor} wasn't cutting it. Now you can ${args.key_benefit} without the usual headaches."
+> "We built ${product} because [Only if true and provable: ${competitor} wasn't cutting it for teams like yours]. Now you can ${args.key_benefit} without the usual headaches."
 
 **For Economic Buyers (Executives)**:
-> "Drive measurable ${args.key_benefit.includes('revenue') || args.key_benefit.includes('growth') ? 'growth' : 'ROI'} with ${product}. Lower TCO than ${competitor}."
+> "Drive measurable ${args.key_benefit.includes('revenue') || args.key_benefit.includes('growth') ? 'growth' : 'ROI'} with ${product}. [Only if true and provable: lower TCO than ${competitor}]"
 
 **For Technical Evaluators**:
 > "${product} ${args.differentiation} through a ${category} architecture designed for ${args.target_customer}."
@@ -1344,7 +1344,7 @@ Before finalizing, test each message for:
 
 | Objection | Response Message |
 |-----------|------------------|
-| "We use ${competitor}" | "Many of our customers switched from ${competitor}. They found that ${args.differentiation} delivered ${args.key_benefit}." |
+| "We use ${competitor}" | "[Only if true and provable: many of our customers switched from ${competitor}.] They found that ${args.differentiation} delivered ${args.key_benefit}." |
 | "Too expensive" | "Consider the cost of NOT ${args.key_benefit.toLowerCase()}. Our customers typically see ROI in X months." |
 | "We're not ready" | "That's exactly when our best customers started. ${product} is designed for ${args.target_customer} at your stage." |
 | "Need to think about it" | "Absolutely. While you're evaluating, here's a case study of how [similar company] achieved ${args.key_benefit}." |
@@ -1569,7 +1569,7 @@ Result: [Quantified outcome]
 
 ## 🎬 Product Demo Execution
 
-### Demo Script Structure (15 minutes)
+### Demo Script Structure (15 minutes, Example figure: replace with your own)
 
 **0-2 min: Context Setting** ${EXAMPLE}
 > "Based on our conversation, you mentioned [their specific pain]. Let me show you exactly how ${product} helps ${args.target_customer} ${args.key_benefit.toLowerCase()}."
@@ -1829,14 +1829,14 @@ ${weakest.map(([phase, score]) => `
 Based on your inputs, here's a generated positioning statement:
 
 > **For** ${args.target_customer}
-> **Who** need to ${args.problem_solved.toLowerCase()}
+> **Who** struggle with ${args.problem_solved.toLowerCase()}
 > **${company}** **is a** solution
 > **That** ${args.product_description.toLowerCase().includes('helps') ? args.product_description.split('helps')[1]?.trim() || 'delivers results' : 'delivers results'}
 > **Unlike** ${competitors[0] || 'alternatives'}
 > **We** ${differentiation}
 
 ### Tagline Options
-1. "${args.problem_solved.split(' ').slice(0, 4).join(' ')}"
+1. "No more ${args.problem_solved.split(' ').slice(0, 4).join(' ').toLowerCase()}"
 2. "The ${differentiation.split(' ').slice(0, 3).join(' ')} solution"
 3. "Built for ${args.target_customer.split(' ').slice(-2).join(' ')}"
 
@@ -1906,7 +1906,7 @@ ${SUGGESTED}
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'impact-mcp';
-exports.SERVER_VERSION = '2.2.0';
+exports.SERVER_VERSION = '2.2.1';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "impact_get_framework": "IMPACT Framework Guide",
@@ -1926,29 +1926,53 @@ function withMeta(tool) {
         annotations: { title, readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     };
 }
-const NEGATIVE_AMOUNT = /(^|[\s(:=])[-\u2212]\$\s*\d|\$\s*[-\u2212]\s*\d|^\s*[-\u2212]\s*\d/;
-function checkLimits(schema, value, path, problems) {
-    if (schema.properties && value && typeof value === "object" && !Array.isArray(value)) {
-        for (const [key, p] of Object.entries(schema.properties)) {
-            checkLimits(p, value[key], path ? `${path}.${key}` : key, problems);
-        }
+const NEGATIVE_AMOUNT = /\$\s*[-\u2212]\s*\d|(^|[\s(:=,;])[-\u2212](?:\$|usd|inr|eur|gbp|rs\.?|\u20b9|\u20ac|\u00a3)?\s?\d[\d,]*(?:\.\d+)?(?![\d,.]|\s*%)/i;
+const NEGATIVE_MONEY = /[-−]\s?[$₹€£]\s*\d|[$₹€£]\s*[-−]\s*\d|\b(?:mrr|arr|cac|ltv|acv)\b[:\s]*[-−]\s*\d/i;
+const AMOUNT_RANGE = /\d\s*[kmb]?\s*(?:-|\u2013|\u2014|to)\s*[$\u20b9\u20ac\u00a3]?\s*\d/i;
+function checkValue(schema, holder, key, path, problems) {
+    const box = holder;
+    const value = box[key];
+    if (value === undefined || value === null)
+        return;
+    if (schema.properties && typeof value === "object" && !Array.isArray(value)) {
+        for (const [k, p] of Object.entries(schema.properties))
+            checkValue(p, value, k, path ? `${path}.${k}` : k, problems);
         return;
     }
     if (schema.items && Array.isArray(value)) {
-        value.forEach((item, i) => checkLimits(schema.items, item, `${path}[${i}]`, problems));
+        value.forEach((_, i) => checkValue(schema.items, value, i, `${path}[${i}]`, problems));
+        return;
+    }
+    if (Array.isArray(schema.enum) && typeof value === "string" && !schema.enum.includes(value)) {
+        problems.push(`${path} must be one of: ${schema.enum.join(", ")}`);
         return;
     }
     if (schema.type !== "number" && schema.type !== "integer")
         return;
-    const v = typeof value === "string" && value.trim() !== "" ? Number(value) : value;
-    if (typeof v !== "number" || !Number.isFinite(v))
+    let v = value;
+    if (typeof v === "string") {
+        const n = v.trim() === "" ? NaN : Number(v.replace(/,/g, "").trim());
+        if (!Number.isFinite(n)) {
+            problems.push(`${path} must be a number, written with digits only (for example 220000)`);
+            return;
+        }
+        box[key] = n;
+        v = n;
+    }
+    if (typeof v !== "number" || !Number.isFinite(v)) {
+        problems.push(`${path} must be a number`);
         return;
+    }
     if (typeof schema.minimum === "number" && v < schema.minimum)
         problems.push(`${path} must be ${schema.minimum} or more`);
+    if (typeof schema.exclusiveMinimum === "number" && v <= schema.exclusiveMinimum)
+        problems.push(`${path} must be more than ${schema.exclusiveMinimum}`);
     if (typeof schema.maximum === "number" && v > schema.maximum)
         problems.push(`${path} must be ${schema.maximum} or less`);
 }
-const AMOUNT_TEXT = { impact_anchor_market: ["average_deal_size"] };
+const MONEY_TEXT = { impact_anchor_market: ["average_deal_size"], impact_identify_champions: ["price_point"] };
+const METRIC_TEXT = {};
+const ONE_AMOUNT = { impact_anchor_market: ["average_deal_size"] };
 function checkRequiredInputs(name, args) {
     const tool = tools[name];
     if (!tool) {
@@ -1959,13 +1983,26 @@ function checkRequiredInputs(name, args) {
     if (missing.length > 0) {
         return `Missing required input for ${name}: ${missing.join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
     }
-    // Decision N2 (run 6): amounts, counts and durations cannot be negative; the schema says which (minimum, maximum).
+    // Decision N2 (run 6) and run 7: schema limits at any depth, choices, money text and single amounts.
     const problems = [];
-    checkLimits(tool.inputSchema, args ?? {}, "", problems);
-    for (const key of AMOUNT_TEXT[name] ?? []) {
+    if (args) {
+        for (const [k, p] of Object.entries(tool.inputSchema.properties ?? {}))
+            checkValue(p, args, k, k, problems);
+    }
+    for (const key of MONEY_TEXT[name] ?? []) {
         const raw = args?.[key];
         if (typeof raw === "string" && NEGATIVE_AMOUNT.test(raw))
             problems.push(`${key} must not contain a negative amount`);
+    }
+    for (const key of METRIC_TEXT[name] ?? []) {
+        const raw = args?.[key];
+        if (typeof raw === "string" && NEGATIVE_MONEY.test(raw))
+            problems.push(`${key} must not contain a negative amount of money`);
+    }
+    for (const key of ONE_AMOUNT[name] ?? []) {
+        const raw = args?.[key];
+        if (typeof raw === "string" && AMOUNT_RANGE.test(raw))
+            problems.push(`${key} must be one amount, not a range (for example $75,000)`);
     }
     if (problems.length > 0) {
         return `Invalid input for ${name}: ${problems.join("; ")}.`;
@@ -2024,5 +2061,13 @@ async function main() {
 // file as an ES module bundle, where require is not defined.
 if (typeof module !== 'undefined' && typeof require !== 'undefined' && require.main === module) {
     main().catch(console.error);
+}
+// Reads one amount from text: "$5,000", "$50K" and "$1.5M" give 5000, 50000 and 1500000 (run 7, T5).
+function readAmount(text) {
+    const m = text.replace(/,/g, '').match(/(\d+(?:\.\d+)?)\s*([kmb])?\b/i);
+    if (!m)
+        return null;
+    const mult = { k: 1e3, m: 1e6, b: 1e9 };
+    return Math.round(parseFloat(m[1]) * (mult[(m[2] || '').toLowerCase()] ?? 1));
 }
 //# sourceMappingURL=index.js.map

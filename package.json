@@ -1,7 +1,7 @@
 {
   "name": "@shashwatgtmalpha/impact-mcp",
   "mcpName": "io.github.shashwatgtm/impact-mcp",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "IMPACT Framework MCP server for B2B positioning: champions, alternatives, value, market, message and execution. Runs locally over stdio (npm) or hosted over Streamable HTTP.",
   "main": "dist/index.js",
   "bin": {

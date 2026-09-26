@@ -172,7 +172,7 @@
   <ul class="hx-prose">
     <li>Address: <code>https://impact.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
-    <li>Rate limit: 300 requests per minute per IP address. Server: <code>impact-mcp</code> version 2.2.0.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>impact-mcp</code> version 2.2.1.</li>
     <li>Local use: <code>npx -y @shashwatgtmalpha/impact-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
   </ul>
 </section>
@@ -243,7 +243,7 @@
 <tr><td><code>product_description</code></td><td>string</td><td>yes</td><td></td><td>What your product does</td></tr>
 <tr><td><code>potential_segments</code></td><td>list of strings</td><td>no</td><td></td><td>List of potential market segments (e.g., [&quot;Mid-market SaaS&quot;, &quot;Enterprise Finance&quot;, &quot;SMB Retail&quot;])</td></tr>
 <tr><td><code>current_customers</code></td><td>string</td><td>no</td><td></td><td>Optional: Description of your current/best customers</td></tr>
-<tr><td><code>average_deal_size</code></td><td>string</td><td>no</td><td></td><td>Optional: Your ACV as a full amount (e.g., &quot;$50,000&quot;). Shorthand such as &quot;$50K&quot; is read as 50</td></tr>
+<tr><td><code>average_deal_size</code></td><td>string</td><td>no</td><td></td><td>Optional: Your ACV as one amount (e.g., &quot;$50,000&quot;, &quot;$50K&quot; or &quot;$1.5M&quot;); a range is refused</td></tr>
 <tr><td><code>sales_cycle</code></td><td>string</td><td>no</td><td></td><td>Optional: Typical sales cycle length</td></tr>
   </tbody></table></div>
 </section>
