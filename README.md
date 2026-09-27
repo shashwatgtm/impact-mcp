@@ -1,6 +1,13 @@
 # IMPACT MCP v2.2.4
 **Hypothesis-Driven B2B Positioning Engine** - 8 tools implementing the IMPACT framework for strategic positioning and go-to-market messaging.
 
+## Use it hosted (no install)
+
+Add `https://impact.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector. It needs no sign-in and always runs the newest version (2.2.4). The same tools run as a free web app with a form per tool at https://impact.gtmhelix.com/, and the setup steps are at https://impact.gtmhelix.com/connect/.
+
+The npm package below is an older version (2.0.0 on npm on 27 September 2026) until the next npm release. Use it only if you need a local stdio server.
+
+
 [![NPM Version](https://img.shields.io/npm/v/@shashwatgtmalpha/impact-mcp)](https://www.npmjs.com/package/@shashwatgtmalpha/impact-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Registry](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io)
