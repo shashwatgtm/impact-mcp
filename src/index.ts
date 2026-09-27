@@ -649,7 +649,7 @@ ${SUGGESTED}
 - Has organizational credibility to advocate for change
 
 **Champion Validation Questions**:
-1. "Who's currently responsible for solving ${args.problem_solved}?"
+1. "Who's currently responsible for solving ${mid(args.problem_solved)}?"
 2. "Who brought this initiative to leadership's attention?"
 3. "Who would be promoted/recognized if this problem was solved?"
 4. "Who's actively researching solutions in this space?"
@@ -1061,13 +1061,13 @@ ${metrics ? `**Reported Metrics**: ${metrics}` : ''}
 ## 🎯 The Only Statement
 
 ### Version 1 (Category-focused)
-> **${product}** is the **only ${category}** with **${mid(args.unique_capability)}**, giving **${args.target_customer}** **${mid(args.key_outcome)}**.
+> **${product}** is the **only ${mid(category)}** with **${mid(args.unique_capability)}**, giving **${args.target_customer}** **${mid(args.key_outcome)}**.
 
 ### Version 2 (Outcome-focused)
-> We help **${args.target_customer}** achieve **${mid(args.key_outcome)}** through **${mid(args.unique_capability)}**, something no other ${category} can deliver.
+> We help **${args.target_customer}** achieve **${mid(args.key_outcome)}** through **${mid(args.unique_capability)}**, something no other ${mid(category)} can deliver.
 
 ### Version 3 (Problem-focused)
-> Unlike traditional ${/s$/i.test(category.trim()) ? category.trim() : `${category}s`}, **${product}** offers **${mid(args.unique_capability)}**, which means **${args.target_customer}** finally get **${mid(args.key_outcome)}**.
+> Unlike traditional ${mid(/s$/i.test(category.trim()) ? category.trim() : `${category}s`)}, **${product}** offers **${mid(args.unique_capability)}**, which means **${args.target_customer}** finally get **${mid(args.key_outcome)}**.
 
 ---
 
@@ -1146,7 +1146,7 @@ Example templates:
 > "We help companies like yours get ${mid(args.key_outcome)}. Recent customer achieved ${valueMetrics.revenue_impact}." ${EXAMPLE}
 
 **Sales Deck** (Slide title):
-> "The only ${category} with ${mid(args.unique_capability)}"
+> "The only ${mid(category)} with ${mid(args.unique_capability)}"
 
 ---
 
@@ -1463,13 +1463,13 @@ Based on beachhead selection, your ICP likely includes:
 
 > **For** ${args.target_customer}
 > **Who** ${need}
-> **${product}** **is a** ${category}
+> **${product}** **is ${aOrAn(category)}** ${mid(category)}
 > **That** delivers ${benefit}
 > **Unlike** ${competitor}
 > **We** offer ${diff}
 
 ### One-Paragraph Version
-> ${product} is the ${category} for ${args.target_customer} who ${need}. Unlike ${competitor}, we offer ${diff}, which means you get ${benefit}.
+> ${product} is the ${mid(category)} for ${args.target_customer} who ${need}. Unlike ${competitor}, we offer ${diff}, which means you get ${benefit}.
 
 ### One-Sentence Version
 > ${product} gives ${args.target_customer} ${benefit} through ${diff}.
@@ -1484,7 +1484,7 @@ Choose the style that fits your brand:
 | Style | Tagline | Best For |
 |-------|---------|----------|
 | **Outcome** | "${cap(firstWords(args.key_benefit, 4))}" | Clarity |
-| **Differentiator** | "The only ${category} with ${firstWords(diff, 3)}" | Uniqueness |
+| **Differentiator** | "The only ${mid(category)} with ${firstWords(diff, 3)}" | Uniqueness |
 | **Audience** | "Built for ${firstWords(args.target_customer, 3)}" | Targeting |
 | **Provocative** | "Stop ${args.key_benefit.includes('increase') ? 'losing' : 'wasting'}. Start winning." | Attention |
 
@@ -1496,7 +1496,7 @@ Choose the style that fits your brand:
 > "Get ${benefit} [Only if true and provable: without the complexity of ${competitor}]. ${product} offers ${diff}."
 
 **Option C - Unique Mechanism**:
-> "The only ${category} with ${diff}. That's how ${args.target_customer} get ${benefit}."
+> "The only ${mid(category)} with ${diff}. That's how ${args.target_customer} get ${benefit}."
 
 ### Level 3: Supporting Pillars (3 proof points)
 
@@ -1533,7 +1533,7 @@ Choose the style that fits your brand:
 > "Drive measurable ${args.key_benefit.includes('revenue') || args.key_benefit.includes('growth') ? 'growth' : 'ROI'} with ${product}. [Only if true and provable: lower TCO than ${competitor}]"
 
 **For Technical Evaluators**:
-> "${product} offers ${diff}, in ${aOrAn(category)} ${category} designed for ${args.target_customer}."
+> "${product} offers ${diff}, in ${aOrAn(category)} ${mid(category)} designed for ${args.target_customer}."
 
 ---
 
@@ -2144,7 +2144,7 @@ ${SUGGESTED}
 // =============================================================================
 
 export const SERVER_NAME = 'impact-mcp';
-export const SERVER_VERSION = '2.2.4';
+export const SERVER_VERSION = '2.2.5';
 
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES: Record<string, string> = {
