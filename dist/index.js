@@ -18,22 +18,119 @@ const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
 const EXAMPLE = '(Example figure: replace with your own)';
 const EXAMPLES = 'Example figures: replace with your own.';
 const SUGGESTED = 'Suggested timings, lengths and counts: adjust them to your own.';
-// Text only (run 8): an input phrase placed mid-sentence starts in lower case ("That Fewer no-shows" becomes
-// "That delivers fewer no-shows"), unless its first word is an acronym or a name with inner capitals (SMS, ExampleCo).
-function mid(phrase) {
+// Text only (run 9): common words that may open an input phrase. Mid-sentence, only these are lowered
+// ("Fewer no-shows" becomes "fewer no-shows"). Any other capitalised word is kept as typed, because it may be a
+// name or an acronym ("Salesforce data you can trust", "Microsoft Teams approvals", "AI deal scoring", "CRM hygiene").
+const COMMON_WORDS = new Set(('a an the this that these those our your their my its his her we you they it me us them all any each every ' +
+    'both either neither no not none some many much more most less least fewer few several other another such ' +
+    'same own only just even also still very too so as than then there here what which who whom whose when where ' +
+    'why how whether if because while until unless though although since once after before during about above ' +
+    'across against along among around at by for from in into inside near of off on onto out outside over past ' +
+    'per through throughout to toward towards under underneath up upon via with within without is are was were be ' +
+    'been being am do does did done doing have has had having can could will would shall should may might must ' +
+    'need needs needed get gets got getting give gives gave make makes made let lets keep keeps put puts take ' +
+    'takes took see sees show shows find finds know knows think go goes going come comes one two three four five ' +
+    'six seven eight nine ten first second third last next new old big small large tiny long short high low full ' +
+    'half whole top bottom early late fast faster fastest quick quicker quickest slow slower easy easier easiest ' +
+    'simple simpler hard harder better best good great strong stronger weak weaker clear clearer real true right ' +
+    'wrong free open closed live smart smarter lean cheaper cheap safe safer secure accurate reliable consistent ' +
+    'predictable visible instant instantly automatic automatically manual custom modern legacy digital online ' +
+    'offline mobile remote local global central single multiple multi daily weekly monthly quarterly yearly ' +
+    'annual real-time realtime end self self-serve self-service one-tap one-click two-way no-code low-code always ' +
+    'never often sometimes usually now today tomorrow soon yet again ever already almost nearly exactly directly ' +
+    'fully truly entirely highly deeply readily cut cuts reduce reduces reduction lower lowers raise raises boost ' +
+    'boosts grow grows growth increase increases improve improves save saves saving savings win wins earn earns ' +
+    'drive drives drove speed speeds scale scales help helps support supports enable enables deliver delivers ' +
+    'offer offers provide provides build builds create creates launch launches ship ships track tracks measure ' +
+    'measures manage manages plan plans run runs start starts stop stops ends avoid avoids prevent prevents ' +
+    'remove removes replace replaces fix fixes solve solves close closes book books send sends share shares sync ' +
+    'syncs connect connects integrate integrates automate automates simplify simplifies streamline streamlines ' +
+    'centralise centralize unify unifies align aligns turn turns spend spends lose loses miss misses waste wastes ' +
+    'struggle struggles fail fails hit hits meet meets reach reaches use uses sell sells buy buys pay pays charge ' +
+    'charges hire hires onboard onboards train trains coach coaches forecast forecasts prioritise prioritize ' +
+    'qualify qualifies convert converts retain retains renew renews expand expands upsell engage engages nurture ' +
+    'nurtures personalise personalize target targets segment segments score scores rank ranks route routes assign ' +
+    'assigns approve approves review reviews report reports alert alerts notify notifies remind reminds schedule ' +
+    'schedules reschedule reschedules capture captures collect collects clean cleans enrich enriches verify ' +
+    'verifies protect protects comply complies audit audits monitor monitors test tests learn learns understand ' +
+    'understands explain explains answer answers ask asks call calls email emails text texts chat message ' +
+    'messages post posts publish publishes write writes read reads edit edits search searches data insights ' +
+    'insight analytics reporting dashboards dashboard pipeline pipelines revenue revenues sales marketing success ' +
+    'service services product products platform platforms software tool tools app apps system systems process ' +
+    'processes workflow workflows team teams people customers customer clients client users user buyers buyer ' +
+    'prospects prospect leads lead accounts account deals deal opportunities opportunity contracts contract ' +
+    'renewals renewal churn retention onboarding adoption activation engagement conversion conversions demand ' +
+    'cost costs price prices pricing budget budgets value roi time times hours days weeks months minutes setup ' +
+    'set-up implementation integration integrations security compliance privacy risk risks errors error mistakes ' +
+    'issues issue problems problem pain pains gaps gap delays delay bottlenecks friction complexity visibility ' +
+    'control access approvals approval handoffs handoff meetings meeting appointments appointment bookings ' +
+    'booking reminders reminder no-shows cancellations patients patient staff employees employee managers manager ' +
+    'leaders leader executives reps rep agents agent partners partner vendors vendor suppliers supplier companies ' +
+    'company businesses business organisations organizations enterprises enterprise startups startup founders ' +
+    'founder owners owner operations operators finance hr legal procurement engineering developers developer ' +
+    'admins admin inbound outbound content campaigns campaign ads events event webinars webinar messaging ' +
+    'positioning brand trust quality accuracy efficiency productivity performance results outcomes outcome impact ' +
+    'coverage capacity forecasting planning scheduling tracking billing invoicing payments payment payroll hiring ' +
+    'recruiting training coaching selling buying spending waiting missing losing paper spreadsheets spreadsheet ' +
+    'phone inboxes inbox documents document files file forms form tasks task projects project orders order ' +
+    'inventory shipping delivery deliveries returns tickets ticket cases case questions question requests request ' +
+    'feedback surveys survey notes note records record lists list numbers number figures figure metrics metric ' +
+    'goals goal quotas quota territory territories regions region markets market industry industries verticals ' +
+    'vertical category categories competitors competitor alternatives alternative options option features feature ' +
+    'modules module add-ons tiers tier seats seat licenses license usage traffic visits visitors signups signup ' +
+    'trials trial demos demo proposals proposal quotes quote invoices invoice common key main core major minor ' +
+    'basic advanced practical proven essential critical important urgent hidden obvious step steps step-by-step ' +
+    'approach approaches guide guides framework frameworks strategy strategies playbook playbooks checklist ' +
+    'checklists practice practices trend trends future state lesson lessons tip tips way ways idea ideas reason ' +
+    'reasons sign signs rule rules example examples mistake myth myths truth truths secret secrets habit habits ' +
+    'principle principles pattern patterns everything nothing something anything everyone nobody someone work ' +
+    'world life thing things part parts point points story stories change changes shift shifts move moves loss ' +
+    'losses level levels stage stages phase phases week month year day higher bigger smaller larger shorter ' +
+    'longer greater happier healthier cleaner smooth smoother seamless effortless painless hassle-free ' +
+    'frictionless repeatable scalable flexible affordable transparent unified zero unlimited endless entire ' +
+    'complete total actionable measurable shorten shortens stay stays handle handles prove proves focus focuses ' +
+    'switch switches eliminate eliminates minimise minimize maximise maximize accelerate accelerates ensure ' +
+    'ensures empower empowers unlock unlocks discover discovers spot spots catch catches detect detects predict ' +
+    'predicts recover recovers resolve resolves respond responds reply replies follow follows hear hears worst ' +
+    'lost won ').split(/\s+/).filter(Boolean));
+// A word counts as common when it is in the list, or ends in -ing or -ed ("Automated", "Missing"). A hyphenated
+// word counts by its first part ("Two-way", "No-shows").
+function isCommonWord(word) {
+    const head = word.split('-')[0].replace(/[^A-Za-z']+$/, '');
+    if (!/^[A-Z][a-z']*$/.test(head) || head === 'I' || /[A-Z]/.test(word.slice(1)))
+        return false;
+    const w = head.toLowerCase();
+    return COMMON_WORDS.has(w) || (w.length > 4 && /(?:ing|ed)$/.test(w));
+}
+// An input phrase placed mid-sentence: its first word is lowered only when it is a common word.
+function lowerFirstIfCommon(phrase) {
     const t = phrase.trim();
     const first = t.split(/\s+/)[0] || '';
-    return /^[A-Z][a-z'-]*$/.test(first) && first !== 'I' ? t.charAt(0).toLowerCase() + t.slice(1) : t;
+    return isCommonWord(first) ? t.charAt(0).toLowerCase() + t.slice(1) : t;
 }
-// Text only: an input phrase that starts a sentence or a headline starts with a capital.
+// The same for every word of a phrase (this replaces a plain toLowerCase(), which also lowered names and acronyms).
+function lowerCommonWords(phrase) {
+    return phrase.trim().split(/(\s+)/).map(w => (isCommonWord(w) ? w.charAt(0).toLowerCase() + w.slice(1) : w)).join('');
+}
+// Text only (run 8, run 9): an input phrase placed mid-sentence starts in lower case ("That Fewer no-shows" becomes
+// "That delivers fewer no-shows") only when its first word is a common word; names and acronyms keep their capitals.
+function mid(phrase) {
+    return lowerFirstIfCommon(phrase);
+}
+// Text only: an input phrase that starts a sentence or a headline starts with a capital. A first word written with
+// a small letter and an inner capital (iPhone, eBay) is a name and is kept as typed.
 function cap(phrase) {
     const t = phrase.trim();
+    if (/^[a-z]+[A-Z]/.test(t.split(/\s+/)[0] || ''))
+        return t;
     return t.charAt(0).toUpperCase() + t.slice(1);
 }
-// Text only: the first words of a phrase for a short tagline, without a dangling joining word at the end.
+// Text only: the first words of a phrase for a short tagline, without a dangling joining word at the end (run 9: also
+// no dangling pronoun or helper verb, so "Salesforce data you can trust" gives "Salesforce data", not "Salesforce data you can").
+// It never changes capitals.
 function firstWords(phrase, n) {
     const w = phrase.trim().split(/\s+/).slice(0, n);
-    while (w.length > 1 && /^(with|and|or|of|for|to|the|a|an|in|on|by|that|from)$/i.test(w[w.length - 1]))
+    while (w.length > 1 && /^(with|and|or|of|for|to|the|a|an|in|on|by|that|from|you|your|we|our|they|their|it|its|who|which|can|will|is|are)$/i.test(w[w.length - 1]))
         w.pop();
     return w.join(' ');
 }
@@ -916,7 +1013,7 @@ Use these patterns to document customer success:
 > **"[Customer Name] achieved [specific metric] within [timeframe]"**
 
 Example templates:
-- "[Customer] increased [outcome] by ${quantifiedResults.primary} in [time frame]"${userPercent ? '' : ` ${EXAMPLE}`}
+- "[Customer] improved [outcome] by ${quantifiedResults.primary} in [time frame]"${userPercent ? '' : ` ${EXAMPLE}`}
 - "[Customer] saved ${valueMetrics.time_savings} previously spent on [manual task]" ${EXAMPLE}
 - "[Customer] saw ${quantifiedResults.secondary} improvement in [metric]"${userMultiplier ? '' : ` ${EXAMPLE}`}
 
@@ -962,7 +1059,7 @@ Example templates:
 ### For Different Channels
 
 **Website Hero** (15 words max):
-> "${args.key_outcome.split(' ').slice(0, 3).join(' ')} for ${args.target_customer.split(' ').slice(0, 2).join(' ')}. ${quantifiedResults.primary} better results."${userPercent ? '' : ` ${EXAMPLE}`}
+> "${cap(firstWords(args.key_outcome, 3))} for ${args.target_customer}. ${quantifiedResults.primary} improvement in [key metric]."${userPercent ? '' : ` ${EXAMPLE}`}
 
 **LinkedIn Post** (Hook):
 > "Most ${args.target_customer} struggle with [problem]. We built something different: ${mid(args.unique_capability)}."
@@ -1109,7 +1206,7 @@ ${segmentScores.map((s, i) => `| ${i === 0 ? '**' + s.name + '** ⭐' : s.name} 
 ${EXAMPLES}
 **Highest Score (${beachhead.total}/25)** based on:
 ${beachhead.pain >= 4 ? `- ✅ **High Pain Intensity** (${beachhead.pain}/5): Urgent problem that demands solution` : `- ⚠️ Pain Level (${beachhead.pain}/5): May need more urgency creation`}
-${beachhead.budget >= 4 ? `- ✅ **Strong Budget** (${beachhead.budget}/5): Can afford ${acv} ACV` : `- ⚠️ Budget (${beachhead.budget}/5): May need pricing flexibility`}
+${beachhead.budget >= 4 ? `- ✅ **Strong Budget** (${beachhead.budget}/5): Can afford ${acv}${/\bACV\b/i.test(acv) ? '' : ' ACV'}` : `- ⚠️ Budget (${beachhead.budget}/5): May need pricing flexibility`}
 ${beachhead.access >= 4 ? `- ✅ **Easy Access** (${beachhead.access}/5): Can reach through existing channels` : `- ⚠️ Accessibility (${beachhead.access}/5): May need channel development`}
 ${beachhead.reference >= 4 ? `- ✅ **High Reference Value** (${beachhead.reference}/5): Great logos for expansion` : `- ⚠️ Reference Value (${beachhead.reference}/5): May need additional segments for logos`}
 ${beachhead.competition >= 4 ? `- ✅ **Low Competition** (${beachhead.competition}/5): White space opportunity` : `- ⚠️ Competition (${beachhead.competition}/5): Need clear differentiation`}
@@ -1193,7 +1290,7 @@ Based on beachhead selection, your ICP likely includes:
 - Growth stage: Series B+ or established
 
 **Buying Characteristics**:
-- Budget: ${acv}+ available${acvEx}
+- Budget: can pay ${acv} or more${acvEx}
 - Decision maker: ${beachhead.budget >= 4 ? 'VP/C-level accessible' : 'Manager-level start'}
 - Sales cycle: ${cycle}${cycleEx}
 - Buying trigger: Growth pressure, competitive threat
@@ -1317,7 +1414,7 @@ Choose the style that fits your brand:
 ### A/B Testing Options
 
 **Variation A - Lead with Pain**:
-> "Tired of ${competitor.toLowerCase().replace('traditional ', '')}? ${product} offers ${diff}."
+> "Tired of ${lowerCommonWords(competitor).replace('traditional ', '')}? ${product} offers ${diff}."
 
 **Variation B - Lead with Outcome**:
 > "${cap(args.key_benefit)}. That's what ${args.target_customer} get with ${product}."
@@ -1331,13 +1428,13 @@ Choose the style that fits your brand:
 ### Audience-Specific Messaging
 
 **For Champions (${args.target_customer})**:
-> "We built ${product} because [Only if true and provable: ${competitor} wasn't cutting it for teams like yours]. Now you can get ${benefit} without the usual headaches."
+> "We built ${product} because [Only if true and provable: ${competitor} fell short for teams like yours]. Now you can get ${benefit} without the usual headaches."
 
 **For Economic Buyers (Executives)**:
 > "Drive measurable ${args.key_benefit.includes('revenue') || args.key_benefit.includes('growth') ? 'growth' : 'ROI'} with ${product}. [Only if true and provable: lower TCO than ${competitor}]"
 
 **For Technical Evaluators**:
-> "${product} offers ${diff} through a ${category} architecture designed for ${args.target_customer}."
+> "${product} offers ${diff}, in a ${category} designed for ${args.target_customer}."
 
 ---
 
@@ -1427,7 +1524,7 @@ ${SUGGESTED}
 > "${cap(firstWords(args.key_benefit, 5))}"
 
 **Subheadline (15-20 words)**:
-> "The platform that helps ${args.target_customer} ${args.key_benefit.toLowerCase()}. No complexity. No consultants. Just results."
+> "The platform that helps ${args.target_customer} ${lowerCommonWords(args.key_benefit)}. No complexity. No consultants. Just results."
 
 **CTA Options**:
 - Primary: "Start Free Trial" / "Get a Demo"
@@ -1456,7 +1553,7 @@ Most ${args.target_customer} think [common belief].
 
 But here's what we've learned from 100+ customers: ${EXAMPLE}
 
-[Counterintuitive insight about ${mid(args.key_benefit)}]
+[Counterintuitive insight on your key benefit: ${mid(args.key_benefit)}]
 
 The data shows:
 → Companies doing X see [positive outcome]
@@ -1487,7 +1584,7 @@ Full case study in comments 👇
 \`\`\`
 Stop if this sounds familiar:
 
-You're a [target customer title] trying to ${args.key_benefit.toLowerCase()}.
+You're a [target customer title] trying to ${lowerCommonWords(args.key_benefit)}.
 
 But you're stuck with:
 ❌ [Pain point 1]
@@ -1515,7 +1612,7 @@ Hi [First name],
 
 I'm reaching out because ${args.target_customer} often struggle with [specific pain].
 
-We help companies like [similar company] ${args.key_benefit.toLowerCase()}.
+We help companies like [similar company] ${lowerCommonWords(args.key_benefit)}.
 
 Would it make sense to show you how in 15 minutes? ${EXAMPLE}
 
@@ -1547,7 +1644,7 @@ Worth a conversation?
 \`\`\`
 Hi [First name],
 
-I've reached out a few times about helping [Company] ${args.key_benefit.toLowerCase()}.
+I've reached out a few times about helping [Company] ${lowerCommonWords(args.key_benefit)}.
 
 If the timing isn't right, no worries at all.
 
@@ -1593,7 +1690,7 @@ Result: [Quantified outcome]
 ### Demo Script Structure (15 minutes, Example figure: replace with your own)
 
 **0-2 min: Context Setting** ${EXAMPLE}
-> "Based on our conversation, you mentioned [their specific pain]. Let me show you exactly how ${product} helps ${args.target_customer} ${args.key_benefit.toLowerCase()}."
+> "Based on our conversation, you mentioned [their specific pain]. Let me show you exactly how ${product} helps ${args.target_customer} ${lowerCommonWords(args.key_benefit)}."
 
 **2-8 min: Core Value Demonstration** ${EXAMPLE}
 Show 2-3 features that directly address their stated needs:
@@ -1823,13 +1920,13 @@ ${phase === 'pinpoint' ? `Your differentiation ("${differentiation}") provides a
 ${phase === 'anchor' ? `Your market definition includes specific criteria for targeting.` : ''}
 ${phase === 'craft' ? `You have a positioning statement foundation to build upon.` : ''}
 ${phase === 'translate' ? `Customer feedback indicates market traction and positioning resonance.` : ''}
-`).join('')}
+`.replace(/\n{2,}/g, '\n')).join('')}
 
 ---
 
-## ⚠️ Areas for Improvement
+## ⚠️ Lowest-scoring areas
 ${weakest.map(([phase, score]) => `
-### ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100) - Priority: HIGH
+### ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
 
 **Issue**: ${phase === 'identify' ? 'Champion identification needs more specificity. Who exactly is your buyer?' :
                 phase === 'map' ? 'Competitive landscape needs deeper analysis. What are the alternatives customers consider?' :
@@ -1849,15 +1946,15 @@ ${weakest.map(([phase, score]) => `
 
 Based on your inputs, here's a generated positioning statement:
 
-> **For** ${args.target_customer}
-> **Who** struggle with ${args.problem_solved.toLowerCase()}
+> **For** ${mid(args.target_customer)}
+> **Who** struggle with ${lowerCommonWords(args.problem_solved)}
 > **${company}** **is a** solution
 > **That** ${args.product_description.toLowerCase().includes('helps') ? args.product_description.split('helps')[1]?.trim() || 'delivers results' : 'delivers results'}
 > **Unlike** ${competitors[0] || 'alternatives'}
 > **We** offer ${mid(differentiation)}
 
 ### Tagline Options
-1. "No more ${args.problem_solved.split(' ').slice(0, 4).join(' ').toLowerCase()}"
+1. "No more ${lowerCommonWords(args.problem_solved.split(' ').slice(0, 4).join(' '))}"
 2. "The ${firstWords(mid(differentiation), 3)} solution"
 3. "Built for ${args.target_customer.split(' ').slice(-2).join(' ')}"
 
@@ -1928,7 +2025,7 @@ ${SUGGESTED}
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'impact-mcp';
-exports.SERVER_VERSION = '2.2.2';
+exports.SERVER_VERSION = '2.2.3';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "impact_get_framework": "IMPACT Framework Guide",
