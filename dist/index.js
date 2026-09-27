@@ -109,8 +109,16 @@ function lowerFirstIfCommon(phrase) {
     return isCommonWord(first) ? t.charAt(0).toLowerCase() + t.slice(1) : t;
 }
 // The same for every word of a phrase (this replaces a plain toLowerCase(), which also lowered names and acronyms).
+// A capitalised word straight after a kept name stays too, so a name of two words keeps both ("Microsoft Teams approvals").
 function lowerCommonWords(phrase) {
-    return phrase.trim().split(/(\s+)/).map(w => (isCommonWord(w) ? w.charAt(0).toLowerCase() + w.slice(1) : w)).join('');
+    let afterName = false;
+    return phrase.trim().split(/(\s+)/).map(w => {
+        if (!w.trim())
+            return w;
+        const lower = !afterName && isCommonWord(w);
+        afterName = !lower && /^[A-Z]/.test(w);
+        return lower ? w.charAt(0).toLowerCase() + w.slice(1) : w;
+    }).join('');
 }
 // Text only (run 8, run 9): an input phrase placed mid-sentence starts in lower case ("That Fewer no-shows" becomes
 // "That delivers fewer no-shows") only when its first word is a common word; names and acronyms keep their capitals.
