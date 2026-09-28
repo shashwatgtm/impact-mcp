@@ -111,7 +111,9 @@ function isCommonWord(word: string): boolean {
 const KNOWN_NAMES = new Set((
   'Salesforce Microsoft Slack HubSpot LinkedIn Google Gmail Outlook Excel Zoom Zendesk Jira Notion Shopify Stripe ' +
   'Marketo Pardot Gong Intercom Freshworks Oracle SAP Workday ServiceNow Snowflake Tableau Asana Trello Dropbox ' +
-  'Apple Amazon AWS Azure Facebook Instagram WhatsApp YouTube Acme ExampleCo Sam'
+  'Apple Amazon AWS Azure Facebook Instagram WhatsApp YouTube Acme ExampleCo Sam ' +
+  // Run 11: the company and competitor names in the test inputs and the page examples.
+  'Clausewise Bengaluru Clari Northwind ClinicFlow Metricly'
 ).split(/\s+/).filter(Boolean));
 function bareWord(word: string): string {
   return word.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '');
@@ -120,22 +122,50 @@ function isKnownName(word: string): boolean {
   const w = bareWord(word);
   return KNOWN_NAMES.has(w) || KNOWN_NAMES.has(w.split(/['-]/)[0]);
 }
+// Run 11: a known name typed in lower case gets its capitals back ("bengaluru teams" becomes "Bengaluru teams"). Names
+// that are also ordinary words (Slack, Zoom, Notion, Gong, Sam ...) are kept when typed with a capital, never raised.
+const PLAIN_WORDS = new Set('slack zoom notion excel oracle stripe apple amazon gong sam outlook workday snowflake asana tableau intercom acme sap azure'.split(' '));
+const NAME_BY_LOWER = new Map([...KNOWN_NAMES].filter(n => !PLAIN_WORDS.has(n.toLowerCase())).map(n => [n.toLowerCase(), n] as [string, string]));
+function fixNames(phrase: string): string {
+  return phrase.replace(/[A-Za-z]+/g, w => (w === w.toLowerCase() && NAME_BY_LOWER.get(w)) || w);
+}
+// Run 11: a job title in running text is all lower case ("head of marketing", "operations director"); names and
+// acronyms in it keep their capitals ("VP of sales", "director of Salesforce operations").
+const JOB_WORD = /^(?:head|directors?|managers?|chief|officers?|president|coordinators?|supervisors?|specialists?|administrators?)$/i;
+function isJobTitle(phrase: string): boolean {
+  const w = phrase.trim().split(/\s+/).map(bareWord);
+  return w.length <= 6 && w.some((x, i) => JOB_WORD.test(x) && (x.toLowerCase() !== 'head' || (w[i + 1] || '').toLowerCase() === 'of'));
+}
+function lowerJobTitle(phrase: string): string {
+  return phrase.trim().split(/(\s+)/).map(w => (/^[A-Z][a-z'-]+\W*$/.test(w) && !isKnownName(w) ? w.charAt(0).toLowerCase() + w.slice(1) : w)).join('');
+}
 // Run 10: the first word of an input phrase keeps its capital only when it is a known name, has an inner capital or is
 // all capitals (HubSpot, AI, CRM), holds a digit (B2B, Q4), or starts a name of two words: the next word is capitalised
 // too (New York, Clinic Group A, Competitor A) and is not a known name on its own ("Native Salesforce" is not a name).
-function keepsFirstCapital(word: string, next: string): boolean {
+// Run 11: a one-letter word keeps its capital (I, X), and a common first word never makes the next word a name ("For
+// Clausewise contract review" becomes "for Clausewise contract review"), unless the next word is a one-letter label after
+// a noun (Competitor A) or the phrase opens with three capitalised words (Example Clinic Group).
+function keepsFirstCapital(word: string, next: string, third = ''): boolean {
   const w = bareWord(word);
-  if (!/^[A-Z]/.test(w) || w === 'I' || isKnownName(w)) return true;
+  if (!/^[A-Z]/.test(w) || (w.length === 1 && !(w === 'A' && next)) || isKnownName(w)) return true; // the article A is not a one-letter name
   if (/[A-Z0-9]/.test(w.slice(1))) return true;
   const n = bareWord(next || '');
-  return /^[A-Z](?:[a-z]+(?:['-][a-z]+)*)?$/.test(n) && !isKnownName(n);
+  if (!/^[A-Z](?:[a-z]+(?:['-][a-z]+)*)?$/.test(n) || isKnownName(n)) return false;
+  if (!isCommonWord(w) || w === 'New') return true; // New York, New Delhi
+  if (n.length === 1) return !/^(?:for|with|from|to|of|in|on|at|by|and|or|the|a|an|into|about|why|how|what|when|where|who|your|our|their|my|this|that)$/i.test(w);
+  return /^[A-Z][a-z]/.test(bareWord(third || ''));
 }
 // An input phrase placed mid-sentence: its first word is lowered unless keepsFirstCapital() keeps it
 // ("Native Salesforce integration" becomes "native Salesforce integration"; "Salesforce data you can trust" stays).
 function lowerFirstIfCommon(phrase: string): string {
-  const t = phrase.trim();
-  const [first = '', next = ''] = t.split(/\s+/);
-  return keepsFirstCapital(first, next) ? t : t.replace(/[A-Z]/, c => c.toLowerCase());
+  const t = fixNames(phrase.trim());
+  if (isJobTitle(t)) return lowerJobTitle(t);
+  const parts = t.split(/(\s+)/);
+  if (keepsFirstCapital(parts[0] || '', parts[2] || '', parts[4] || '')) return t;
+  parts[0] = parts[0].replace(/[A-Z]/, c => c.toLowerCase());
+  // Run 11: after a lowered first word, a capitalised common second word is lowered too ("why forecasting matters now").
+  if (parts[2] && isCommonWord(parts[2])) parts[2] = parts[2].charAt(0).toLowerCase() + parts[2].slice(1);
+  return parts.join('');
 }
 // The same for a whole phrase (this replaces a plain toLowerCase(), which also lowered names and acronyms): the first
 // word follows the rule above, and a later word is lowered only when it is a common word. A capitalised word straight
@@ -143,10 +173,12 @@ function lowerFirstIfCommon(phrase: string): string {
 function lowerCommonWords(phrase: string): string {
   let afterName = false;
   let first = true;
-  const parts = phrase.trim().split(/(\s+)/);
+  const t = fixNames(phrase.trim());
+  if (isJobTitle(t)) return lowerJobTitle(t);
+  const parts = t.split(/(\s+)/);
   return parts.map((w, i) => {
     if (!w.trim()) return w;
-    const lower = first ? !keepsFirstCapital(w, parts[i + 2] || '') : !afterName && isCommonWord(w);
+    const lower = first ? !keepsFirstCapital(w, parts[i + 2] || '', parts[i + 4] || '') : !afterName && isCommonWord(w);
     first = false;
     afterName = !lower && /^[A-Z]/.test(w);
     return lower ? w.replace(/[A-Z]/, c => c.toLowerCase()) : w;
@@ -167,17 +199,31 @@ function aOrAn(phrase: string): string {
   return /^[aeiou]/i.test(w) && !/^(uni|use|usu|uti|eu|one|once)/i.test(w) ? 'an' : 'a';
 }
 function cap(phrase: string): string {
-  const t = phrase.trim();
+  const t = fixNames(phrase.trim());
   if (/^[a-z]+[A-Z]/.test(t.split(/\s+/)[0] || '')) return t;
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 // Text only: the first words of a phrase for a short tagline, without a dangling joining word at the end (run 9: also
 // no dangling pronoun or helper verb, so "Salesforce data you can trust" gives "Salesforce data", not "Salesforce data you can").
 // It never changes capitals.
+// Run 11 (R11-07): a tagline never stops inside a phrase ("two-way SMS" from "two-way SMS reminders"). When the cut falls
+// mid-phrase, it goes back to before the last joining word, or, when there is none, on to the end of the phrase (at most
+// 3 more words).
+const JOINING_WORD = /^(with|and|or|of|for|to|the|a|an|in|on|by|that|from|you|your|we|our|they|their|it|its|who|which|can|will|is|are)$/i;
 function firstWords(phrase: string, n: number): string {
-  const w = phrase.trim().split(/\s+/).slice(0, n);
-  while (w.length > 1 && /^(with|and|or|of|for|to|the|a|an|in|on|by|that|from|you|your|we|our|they|their|it|its|who|which|can|will|is|are)$/i.test(w[w.length - 1])) w.pop();
-  return w.join(' ');
+  const all = phrase.trim().split(/\s+/);
+  let w = all.slice(0, n);
+  if (all.length > n && !JOINING_WORD.test(all[n]) && !/[,.;:!?]$/.test(w[w.length - 1])) {
+    const back = w.map(x => JOINING_WORD.test(x)).lastIndexOf(true);
+    if (back > 0) w = w.slice(0, back);
+    else {
+      let i = n;
+      while (i < all.length && i < n + 3 && !JOINING_WORD.test(all[i]) && !/[,.;:!?]$/.test(all[i - 1])) i++;
+      w = all.slice(0, i);
+    }
+  }
+  while (w.length > 1 && JOINING_WORD.test(w[w.length - 1])) w.pop();
+  return w.join(' ').replace(/[,;:]$/, '');
 }
 
 
@@ -1407,7 +1453,7 @@ Based on beachhead selection, your ICP likely includes:
         },
         customer_need: {
           type: 'string',
-          description: 'The need or opportunity they have'
+          description: 'The need they have, written as an action (for example "lose revenue to missed appointments")'
         },
         product_category: {
           type: 'string',
@@ -1513,7 +1559,7 @@ Choose the style that fits your brand:
 ### A/B Testing Options
 
 **Variation A - Lead with Pain**:
-> "Tired of ${lowerCommonWords(competitor).replace('traditional ', '')}? ${product} offers ${diff}."
+> "Tired of ${competitor.trim().replace(/^traditional /, '')}? ${product} offers ${diff}."
 
 **Variation B - Lead with Outcome**:
 > "${cap(args.key_benefit)}. That's what ${args.target_customer} get with ${product}."
@@ -2144,7 +2190,7 @@ ${SUGGESTED}
 // =============================================================================
 
 export const SERVER_NAME = 'impact-mcp';
-export const SERVER_VERSION = '2.2.5';
+export const SERVER_VERSION = '2.2.6';
 
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES: Record<string, string> = {
@@ -2273,7 +2319,11 @@ export function createServer(): Server {
     }
   
     try {
-      const result = tool.execute(request.params.arguments as any);
+      // Text only (run 11, R11-06): a target customer that is a job title reads in lower case in running text
+      // ("head of marketing"); names and acronyms in it keep their capitals. Any other target customer stays as typed.
+      const callArgs = { ...((request.params.arguments || {}) as Record<string, unknown>) };
+      if (typeof callArgs.target_customer === 'string' && isJobTitle(callArgs.target_customer)) callArgs.target_customer = lowerJobTitle(callArgs.target_customer);
+      const result = tool.execute(callArgs as any);
       return {
         content: [{ type: 'text', text: result }]
       };
