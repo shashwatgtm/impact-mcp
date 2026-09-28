@@ -307,10 +307,10 @@ const tools = {
 ### Alternative Analysis Framework
 
 **Four Categories of Alternatives:**
-1. **Direct Competitors** - Same solution, same problem
-2. **Indirect Competitors** - Different solution, same problem
-3. **Status Quo** - Current manual/DIY approach
-4. **Do Nothing** - Accept the problem exists
+1. **Direct Competitors**: Same solution, same problem
+2. **Indirect Competitors**: Different solution, same problem
+3. **Status Quo**: Current manual/DIY approach
+4. **Do Nothing**: Accept the problem exists
 
 ### Competitive Whitespace Analysis
 
@@ -359,10 +359,10 @@ ${EXAMPLES}
 
 ### Proof Point Categories
 
-1. **Customer Results** - Specific outcomes achieved
-2. **Third-Party Validation** - Analyst recognition, awards
-3. **Technical Proof** - Benchmarks, certifications
-4. **Social Proof** - Logo wall, case studies, reviews
+1. **Customer Results**: Specific outcomes achieved
+2. **Third-Party Validation**: Analyst recognition, awards
+3. **Technical Proof**: Benchmarks, certifications
+4. **Social Proof**: Logo wall, case studies, reviews
 
 ### Value Hypothesis Generator
 
@@ -380,11 +380,11 @@ ${EXAMPLES}
 ### Beachhead Selection Criteria
 
 **Score each segment (1-5) on:**
-1. **Pain Intensity** - How urgent is the problem?
-2. **Budget Availability** - Can they pay your price?
-3. **Accessibility** - Can you reach them?
-4. **Reference Value** - Will they help you expand?
-5. **Competition** - Is the segment contested?
+1. **Pain Intensity**: How urgent is the problem?
+2. **Budget Availability**: Can they pay your price?
+3. **Accessibility**: Can you reach them?
+4. **Reference Value**: Will they help you expand?
+5. **Competition**: Is the segment contested?
 
 ### Market Sizing (Bottom-Up)
 
@@ -2078,12 +2078,12 @@ ${args.customer_feedback ? `**Customer Feedback**: ${args.customer_feedback}` : 
 
 | Phase | Score | Status | Priority |
 |-------|-------|--------|----------|
-| **I** - Identify Champions | ${scores.identify}/100 | ${scores.identify >= 70 ? '✅ Strong' : scores.identify >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.identify < 60 ? 'High' : 'Low'} |
-| **M** - Map Alternatives | ${scores.map}/100 | ${scores.map >= 70 ? '✅ Strong' : scores.map >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.map < 60 ? 'High' : 'Low'} |
-| **P** - Pinpoint Value | ${scores.pinpoint}/100 | ${scores.pinpoint >= 70 ? '✅ Strong' : scores.pinpoint >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.pinpoint < 60 ? 'High' : 'Low'} |
-| **A** - Anchor Market | ${scores.anchor}/100 | ${scores.anchor >= 70 ? '✅ Strong' : scores.anchor >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.anchor < 60 ? 'High' : 'Low'} |
-| **C** - Craft Message | ${scores.craft}/100 | ${scores.craft >= 70 ? '✅ Strong' : scores.craft >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.craft < 60 ? 'High' : 'Low'} |
-| **T** - Translate Execution | ${scores.translate}/100 | ${scores.translate >= 70 ? '✅ Strong' : scores.translate >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.translate < 60 ? 'High' : 'Low'} |
+| **I**: Identify Champions | ${scores.identify}/100 | ${scores.identify >= 70 ? '✅ Strong' : scores.identify >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.identify < 60 ? 'High' : 'Low'} |
+| **M**: Map Alternatives | ${scores.map}/100 | ${scores.map >= 70 ? '✅ Strong' : scores.map >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.map < 60 ? 'High' : 'Low'} |
+| **P**: Pinpoint Value | ${scores.pinpoint}/100 | ${scores.pinpoint >= 70 ? '✅ Strong' : scores.pinpoint >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.pinpoint < 60 ? 'High' : 'Low'} |
+| **A**: Anchor Market | ${scores.anchor}/100 | ${scores.anchor >= 70 ? '✅ Strong' : scores.anchor >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.anchor < 60 ? 'High' : 'Low'} |
+| **C**: Craft Message | ${scores.craft}/100 | ${scores.craft >= 70 ? '✅ Strong' : scores.craft >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.craft < 60 ? 'High' : 'Low'} |
+| **T**: Translate Execution | ${scores.translate}/100 | ${scores.translate >= 70 ? '✅ Strong' : scores.translate >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.translate < 60 ? 'High' : 'Low'} |
 
 ---
 
@@ -2183,11 +2183,11 @@ ${EXAMPLES}
 
 Based on your scores, prioritize these tools:
 
-1. **\`${phaseTool[weakest[0][0]]}\`** - Address your lowest-scoring area first
-2. **\`${phaseTool[weakest[1][0]]}\`** - Then tackle the second-weakest
+1. **\`${phaseTool[weakest[0][0]]}\`**: Address your lowest-scoring area first
+2. **\`${phaseTool[weakest[1][0]]}\`**: Then tackle the second-weakest
 ${[['impact_craft_message', 'Synthesize into final positioning'], ['impact_translate_execution', 'Activate across channels']]
   .filter(([t]) => t !== phaseTool[weakest[0][0]] && t !== phaseTool[weakest[1][0]])
-  .map(([t, what], i) => `${i + 3}. **\`${t}\`** - ${what}`).join('\n')}
+  .map(([t, what], i) => `${i + 3}. **\`${t}\`**: ${what}`).join('\n')}
 
 ${SUGGESTED}
 `;
