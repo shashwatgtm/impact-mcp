@@ -217,6 +217,24 @@ function cap(phrase) {
 // mid-phrase, it goes back to before the last joining word, or, when there is none, on to the end of the phrase (at most
 // 3 more words).
 const JOINING_WORD = /^(with|and|or|of|for|to|the|a|an|in|on|by|that|from|you|your|we|our|they|their|it|its|who|which|can|will|is|are)$/i;
+// Run 11 addendum 1 (R11-A1-1): the short audience of a tagline ("Built for ...", "Join 100+ ..."), in running-text case:
+// the whole target customer when it has at most 4 words, otherwise its last two words, stepping back over a joining word
+// so the slice never opens with one ("head of marketing", never "of marketing").
+function shortAudience(phrase) {
+    const w = mid(phrase).split(/\s+/);
+    if (w.length <= 4)
+        return w.join(' ');
+    let i = w.length - 2;
+    while (i > 0 && JOINING_WORD.test(w[i]))
+        i--;
+    return w.slice(i).join(' ');
+}
+// The same as a plural for "Join 100+ ...": a job title of the form "head of marketing" becomes "heads of marketing".
+function pluralAudience(phrase) {
+    const a = shortAudience(phrase);
+    const m = a.match(/^([A-Za-z]+)( of .+)$/);
+    return m && !/s$/i.test(m[1]) ? `${m[1]}s${m[2]}` : a;
+}
 function firstWords(phrase, n) {
     const all = phrase.trim().split(/\s+/);
     let w = all.slice(0, n);
@@ -1084,13 +1102,13 @@ ${metrics ? `**Reported Metrics**: ${metrics}` : ''}
 ## 🎯 The Only Statement
 
 ### Version 1 (Category-focused)
-> **${product}** is the **only ${mid(category)}** with **${mid(args.unique_capability)}**, giving **${args.target_customer}** **${mid(args.key_outcome)}**.
+> **${product}** is the **only ${mid(category)}** with **${mid(args.unique_capability)}**, giving **${mid(args.target_customer)}** **${mid(args.key_outcome)}**.
 
 ### Version 2 (Outcome-focused)
-> We help **${args.target_customer}** achieve **${mid(args.key_outcome)}** through **${mid(args.unique_capability)}**, something no other ${mid(category)} can deliver.
+> We help **${mid(args.target_customer)}** achieve **${mid(args.key_outcome)}** through **${mid(args.unique_capability)}**, something no other ${mid(category)} can deliver.
 
 ### Version 3 (Problem-focused)
-> Unlike traditional ${mid(/s$/i.test(category.trim()) ? category.trim() : `${category}s`)}, **${product}** offers **${mid(args.unique_capability)}**, which means **${args.target_customer}** finally get **${mid(args.key_outcome)}**.
+> Unlike traditional ${mid(/s$/i.test(category.trim()) ? category.trim() : `${category}s`)}, **${product}** offers **${mid(args.unique_capability)}**, which means **${mid(args.target_customer)}** finally get **${mid(args.key_outcome)}**.
 
 ---
 
@@ -1160,10 +1178,10 @@ Example templates:
 ### For Different Channels
 
 **Website Hero** (15 words max):
-> "${cap(firstWords(args.key_outcome, 3))} for ${args.target_customer}. ${quantifiedResults.primary} improvement in [key metric]."${userPercent ? '' : ` ${EXAMPLE}`}
+> "${cap(firstWords(args.key_outcome, 3))} for ${mid(args.target_customer)}. ${quantifiedResults.primary} improvement in [key metric]."${userPercent ? '' : ` ${EXAMPLE}`}
 
 **LinkedIn Post** (Hook):
-> "Most ${args.target_customer} struggle with [problem]. We built something different: ${mid(args.unique_capability)}."
+> "Most ${mid(args.target_customer)} struggle with [problem]. We built something different: ${mid(args.unique_capability)}."
 
 **Cold Email** (Value prop):
 > "We help companies like yours get ${mid(args.key_outcome)}. Recent customer achieved ${valueMetrics.revenue_impact}." ${EXAMPLE}
@@ -1463,7 +1481,7 @@ Based on beachhead selection, your ICP likely includes:
 
 ### Complete Positioning Statement
 
-> **For** ${args.target_customer}
+> **For** ${mid(args.target_customer)}
 > **Who** ${need}
 > **${product}** **is ${aOrAn(category)}** ${mid(category)}
 > **That** delivers ${benefit}
@@ -1471,10 +1489,10 @@ Based on beachhead selection, your ICP likely includes:
 > **We** offer ${diff}
 
 ### One-Paragraph Version
-> ${product} is the ${mid(category)} for ${args.target_customer} who ${need}. Unlike ${competitor}, we offer ${diff}, which means you get ${benefit}.
+> ${product} is the ${mid(category)} for ${mid(args.target_customer)} who ${need}. Unlike ${competitor}, we offer ${diff}, which means you get ${benefit}.
 
 ### One-Sentence Version
-> ${product} gives ${args.target_customer} ${benefit} through ${diff}.
+> ${product} gives ${mid(args.target_customer)} ${benefit} through ${diff}.
 
 ---
 
@@ -1487,7 +1505,7 @@ Choose the style that fits your brand:
 |-------|---------|----------|
 | **Outcome** | "${cap(firstWords(args.key_benefit, 4))}" | Clarity |
 | **Differentiator** | "The only ${mid(category)} with ${firstWords(diff, 3)}" | Uniqueness |
-| **Audience** | "Built for ${firstWords(args.target_customer, 3)}" | Targeting |
+| **Audience** | "Built for ${firstWords(mid(args.target_customer), 3)}" | Targeting |
 | **Provocative** | "Stop ${args.key_benefit.includes('increase') ? 'losing' : 'wasting'}. Start winning." | Attention |
 
 ### Level 2: Value Proposition (1-2 sentences)
@@ -1498,7 +1516,7 @@ Choose the style that fits your brand:
 > "Get ${benefit} [Only if true and provable: without the complexity of ${competitor}]. ${product} offers ${diff}."
 
 **Option C - Unique Mechanism**:
-> "The only ${mid(category)} with ${diff}. That's how ${args.target_customer} get ${benefit}."
+> "The only ${mid(category)} with ${diff}. That's how ${mid(args.target_customer)} get ${benefit}."
 
 ### Level 3: Supporting Pillars (3 proof points)
 
@@ -1518,13 +1536,13 @@ Choose the style that fits your brand:
 > "Tired of ${competitor.trim().replace(/^traditional /, '')}? ${product} offers ${diff}."
 
 **Variation B - Lead with Outcome**:
-> "${cap(args.key_benefit)}. That's what ${args.target_customer} get with ${product}."
+> "${cap(args.key_benefit)}. That's what ${mid(args.target_customer)} get with ${product}."
 
 **Variation C - Lead with Differentiation**:
 > "Unlike ${competitor}, ${product} offers ${diff}. Finally, ${benefit}."
 
 **Variation D - Lead with Social Proof**:
-> "Join 100+ ${args.target_customer.split(' ').slice(-1)[0]} who get ${benefit} with ${product}." ${EXAMPLE}
+> "Join 100+ ${pluralAudience(args.target_customer)} who get ${benefit} with ${product}." ${EXAMPLE}
 
 ### Audience-Specific Messaging
 
@@ -1535,7 +1553,7 @@ Choose the style that fits your brand:
 > "Drive measurable ${args.key_benefit.includes('revenue') || args.key_benefit.includes('growth') ? 'growth' : 'ROI'} with ${product}. [Only if true and provable: lower TCO than ${competitor}]"
 
 **For Technical Evaluators**:
-> "${product} offers ${diff}, in ${aOrAn(category)} ${mid(category)} designed for ${args.target_customer}."
+> "${product} offers ${diff}, in ${aOrAn(category)} ${mid(category)} designed for ${mid(args.target_customer)}."
 
 ---
 
@@ -1565,7 +1583,7 @@ Before finalizing, test each message for:
 |-----------|------------------|
 | "We use ${competitor}" | "[Only if true and provable: many of our customers switched from ${competitor}.] They found that ${diff} delivered ${benefit}." |
 | "Too expensive" | "Consider the cost of doing nothing about it. Our customers typically see ROI in [X] months." |
-| "We're not ready" | "That's exactly when our best customers started. ${product} is designed for ${args.target_customer} at your stage." |
+| "We're not ready" | "That's exactly when our best customers started. ${product} is designed for ${mid(args.target_customer)} at your stage." |
 | "Need to think about it" | "Absolutely. While you're evaluating, here's a case study of how [similar company] achieved ${benefit}." |
 
 **Next Step**: Use \`impact_translate_execution\` to adapt these messages for each channel
@@ -1625,7 +1643,7 @@ ${SUGGESTED}
 > "${cap(firstWords(args.key_benefit, 5))}"
 
 **Subheadline (15-20 words)**:
-> "The platform that helps ${args.target_customer} ${lowerCommonWords(args.key_benefit)}. No complexity. No consultants. Just results."
+> "The platform that helps ${mid(args.target_customer)} ${lowerCommonWords(args.key_benefit)}. No complexity. No consultants. Just results."
 
 **CTA Options**:
 - Primary: "Start Free Trial" / "Get a Demo"
@@ -1644,13 +1662,13 @@ ${SUGGESTED}
 ## 💼 LinkedIn Execution
 
 ### Profile/Company Page Tagline
-> "Helping ${args.target_customer} ${mid(args.key_benefit)}"
+> "Helping ${mid(args.target_customer)} ${mid(args.key_benefit)}"
 
 ### Post Templates
 
 **Thought Leadership Post**:
 \`\`\`
-Most ${args.target_customer} think [common belief].
+Most ${mid(args.target_customer)} think [common belief].
 
 But here's what we've learned from 100+ customers: ${EXAMPLE}
 
@@ -1711,7 +1729,7 @@ Hi [First name],
 
 [Trigger/reason for outreach - personalized]
 
-I'm reaching out because ${args.target_customer} often struggle with [specific pain].
+I'm reaching out because ${mid(args.target_customer)} often struggle with [specific pain].
 
 We help companies like [similar company] ${lowerCommonWords(args.key_benefit)}.
 
@@ -1764,7 +1782,7 @@ Best,
 | Slide | Title | Content |
 |-------|-------|---------|
 | 1 | Title | ${product} - ${args.key_benefit} |
-| 2 | The Problem | Why ${args.target_customer} struggle today |
+| 2 | The Problem | Why ${mid(args.target_customer)} struggle today |
 | 3 | Cost of Inaction | What happens if this doesn't get solved |
 | 4 | The Solution | Introducing ${product} |
 | 5 | How It Works | 3-step process / key features |
@@ -1791,7 +1809,7 @@ Result: [Quantified outcome]
 ### Demo Script Structure (15 minutes, Example figure: replace with your own)
 
 **0-2 min: Context Setting** ${EXAMPLE}
-> "Based on our conversation, you mentioned [their specific pain]. Let me show you exactly how ${product} helps ${args.target_customer} ${lowerCommonWords(args.key_benefit)}."
+> "Based on our conversation, you mentioned [their specific pain]. Let me show you exactly how ${product} helps ${mid(args.target_customer)} ${lowerCommonWords(args.key_benefit)}."
 
 **2-8 min: Core Value Demonstration** ${EXAMPLE}
 Show 2-3 features that directly address their stated needs:
@@ -2057,7 +2075,7 @@ Based on your inputs, here's a generated positioning statement:
 ### Tagline Options
 1. "No more ${lowerCommonWords(args.problem_solved.split(' ').slice(0, 4).join(' '))}"
 2. "The ${firstWords(mid(differentiation), 3)} solution"
-3. "Built for ${args.target_customer.split(' ').slice(-2).join(' ')}"
+3. "Built for ${shortAudience(args.target_customer)}"
 
 ---
 
@@ -2126,7 +2144,7 @@ ${SUGGESTED}
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'impact-mcp';
-exports.SERVER_VERSION = '2.2.6';
+exports.SERVER_VERSION = '2.2.7';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "impact_get_framework": "IMPACT Framework Guide",
