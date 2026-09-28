@@ -218,15 +218,27 @@ function cap(phrase) {
 // 3 more words).
 const JOINING_WORD = /^(with|and|or|of|for|to|the|a|an|in|on|by|that|from|you|your|we|our|they|their|it|its|who|which|can|will|is|are)$/i;
 // Run 11 addendum 1 (R11-A1-1): the short audience of a tagline ("Built for ...", "Join 100+ ..."), in running-text case:
-// the whole target customer when it has at most 4 words, otherwise its last two words, stepping back over a joining word
+// the whole target customer when it is short (see below), otherwise its last two words, stepping back over a joining word
 // so the slice never opens with one ("head of marketing", never "of marketing").
+// Run 11 addendum 2 (R11-A2-4): the whole target customer when it has at most 5 words ("B2B CMOs in the US", "SaaS CFOs
+// at HubSpot partners"). A last-two-words slice that follows a place word ("at", "in", "of" ...) names where the audience
+// works or lives, not the audience, so the words before that place word are used instead ("VP of RevOps", never
+// "HubSpot partners" or "the US").
+const PLACE_WORD = /^(at|in|on|of|for|from|with|by|to|the|a|an|and|or)$/i;
 function shortAudience(phrase) {
     const w = mid(phrase).split(/\s+/);
-    if (w.length <= 4)
+    if (w.length <= 5)
         return w.join(' ');
     let i = w.length - 2;
     while (i > 0 && JOINING_WORD.test(w[i]))
         i--;
+    if (i > 1 && PLACE_WORD.test(w[i - 1])) {
+        let j = i - 1;
+        while (j > 0 && PLACE_WORD.test(w[j - 1]))
+            j--;
+        if (j > 0 && j <= 5)
+            return w.slice(0, j).join(' ');
+    }
     return w.slice(i).join(' ');
 }
 // The same as a plural for "Join 100+ ...": a job title of the form "head of marketing" becomes "heads of marketing".
@@ -2144,7 +2156,7 @@ ${SUGGESTED}
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'impact-mcp';
-exports.SERVER_VERSION = '2.2.7';
+exports.SERVER_VERSION = '2.2.8';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "impact_get_framework": "IMPACT Framework Guide",
