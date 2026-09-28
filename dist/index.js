@@ -288,7 +288,7 @@ const tools = {
             const phase = args.focus_phase || 'all';
             const phases = {
                 identify: `
-## I - IDENTIFY CHAMPIONS
+## I: IDENTIFY CHAMPIONS
 
 **Purpose**: Find the internal advocates who will champion your solution
 
@@ -320,7 +320,7 @@ const tools = {
 - Can't articulate the business impact
 `,
                 map: `
-## M - MAP ALTERNATIVES
+## M: MAP ALTERNATIVES
 
 **Purpose**: Understand competitive landscape and find whitespace
 
@@ -360,7 +360,7 @@ COMPLEX ----------------+---------------- SIMPLE
 \`\`\`
 `,
                 pinpoint: `
-## P - PINPOINT UNIQUE VALUE
+## P: PINPOINT UNIQUE VALUE
 
 **Purpose**: Articulate your differentiated value with quantification
 
@@ -393,7 +393,7 @@ ${EXAMPLES}
 - Integration → "X hours saved on [task]"
 `,
                 anchor: `
-## A - ANCHOR IN RIGHT MARKET
+## A: ANCHOR IN RIGHT MARKET
 
 **Purpose**: Select your beachhead market for focused go-to-market
 
@@ -431,7 +431,7 @@ ${EXAMPLES}
 **Select highest score as beachhead.**
 `,
                 craft: `
-## C - CRAFT CORE MESSAGE
+## C: CRAFT CORE MESSAGE
 
 **Purpose**: Build positioning statement and messaging hierarchy
 
@@ -471,7 +471,7 @@ ${EXAMPLES}
 - Believability (do people trust it?)
 `,
                 translate: `
-## T - TRANSLATE TO EXECUTION
+## T: TRANSLATE TO EXECUTION
 
 **Purpose**: Adapt positioning for each channel and touchpoint
 
@@ -1517,7 +1517,7 @@ Choose the style that fits your brand:
 |-------|---------|----------|
 | **Outcome** | "${cap(firstWords(args.key_benefit, 4))}" | Clarity |
 | **Differentiator** | "The only ${mid(category)} with ${firstWords(diff, 3)}" | Uniqueness |
-| **Audience** | "Built for ${firstWords(mid(args.target_customer), 3)}" | Targeting |
+| **Audience** | "Built for ${shortAudience(args.target_customer)}" | Targeting |
 | **Provocative** | "Stop ${args.key_benefit.includes('increase') ? 'losing' : 'wasting'}. Start winning." | Attention |
 
 ### Level 2: Value Proposition (1-2 sentences)
@@ -2156,7 +2156,7 @@ ${SUGGESTED}
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'impact-mcp';
-exports.SERVER_VERSION = '2.2.8';
+exports.SERVER_VERSION = '2.2.9';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "impact_get_framework": "IMPACT Framework Guide",
