@@ -707,7 +707,7 @@ ${SUGGESTED}
 
 ---
 
-## 🎯 Champion Hypothesis
+## Champion Hypothesis
 
 ### Primary Champion (Your Internal Advocate)
 **Most Likely Role**: ${primaryChampion.role}
@@ -749,7 +749,7 @@ ${SUGGESTED}
 
 ---
 
-## ⚠️ Anti-Champion Warning Signs
+## Anti-Champion Warning Signs
 
 Watch for these red flags that indicate you're talking to the wrong person:
 
@@ -762,7 +762,7 @@ Watch for these red flags that indicate you're talking to the wrong person:
 
 ---
 
-## 🔄 Champion Development Path
+## Champion Development Path
 
 If you're starting without an identified champion:
 
@@ -783,7 +783,7 @@ If you're starting without an identified champion:
 
 ---
 
-## 💡 Champion Enablement Hypothesis
+## Champion Enablement Hypothesis
 
 Once you identify your champion, they'll need:
 
@@ -893,7 +893,7 @@ ${SUGGESTED}
 
 ---
 
-## 🏢 Alternative Categories
+## Alternative Categories
 
 ### 1. Direct Competitors (Same Solution, Same Problem)
 ${competitors.filter(c => c.toLowerCase() !== 'status quo' && c.toLowerCase() !== 'do nothing').map((c, i) => `
@@ -932,7 +932,7 @@ ${competitors.filter(c => c.toLowerCase() !== 'status quo' && c.toLowerCase() !=
 
 ---
 
-## 🎯 Competitive Whitespace Analysis
+## Competitive Whitespace Analysis
 
 ### Common Market Complaints (Opportunity Areas)
 ${marketContext.common_complaints.map((c, i) => `${i + 1}. **${c}** → Your opportunity to excel here`).join('\n')}
@@ -945,7 +945,7 @@ ${marketContext.differentiation_axes.map((axis, i) => `| ${axis} | Average | ${m
 
 ---
 
-## 📊 Positioning Territory Map
+## Positioning Territory Map
 
 \`\`\`
                     ENTERPRISE
@@ -971,7 +971,7 @@ COMPLEX ────────────────┼───────
 
 ---
 
-## 🗡️ Competitive Battle Strategy
+## Competitive Battle Strategy
 
 ### Against ${competitors[0] || 'Market Leader'}
 **Their strength (an assumption to check with buyers)**: Established brand, large customer base
@@ -993,7 +993,7 @@ COMPLEX ────────────────┼───────
 
 ---
 
-## 💡 Discovery Questions for Competitive Intel
+## Discovery Questions for Competitive Intel
 
 Ask prospects these questions to understand their competitive context:
 
@@ -1114,7 +1114,7 @@ ${metrics ? `**Reported Metrics**: ${metrics}` : ''}
 
 ---
 
-## 🎯 The Only Statement
+## The Only Statement
 
 ### Version 1 (Category-focused)
 > **${product}** is the **only ${mid(category)}** with **${mid(args.unique_capability)}**, giving **${mid(args.target_customer)}** **${mid(args.key_outcome)}**.
@@ -1127,7 +1127,7 @@ ${metrics ? `**Reported Metrics**: ${metrics}` : ''}
 
 ---
 
-## 📊 Value Quantification Matrix
+## Value Quantification Matrix
 
 ${EXAMPLES}
 | Value Driver | Metric | Typical Before | With ${product} | Improvement |
@@ -1139,7 +1139,7 @@ ${EXAMPLES}
 
 ---
 
-## 🏆 Proof Point Framework
+## Proof Point Framework
 
 ### Tier 1: Customer Results (Strongest)
 Use these patterns to document customer success:
@@ -1177,7 +1177,7 @@ Example templates:
 
 ---
 
-## 💬 Value Statement Variations
+## Value Statement Variations
 
 ### For Different Audiences
 
@@ -1206,7 +1206,7 @@ Example templates:
 
 ---
 
-## 🔍 Value Validation Questions
+## Value Validation Questions
 
 Before finalizing, validate with prospects:
 
@@ -1314,7 +1314,7 @@ ${args.current_customers ? `**Current Customers**: ${args.current_customers}` : 
 
 ---
 
-## 📊 Segment Scoring Matrix
+## Segment Scoring Matrix
 
 ### Scoring Criteria (1-5 scale)
 - **Pain Intensity**: How urgent is the problem?
@@ -1329,25 +1329,25 @@ These scores are presets, not research on your market: each segment is scored fr
 ${EXAMPLES}
 | Segment | Pain | Budget | Access | Reference | Competition | **TOTAL** |
 |---------|------|--------|--------|-----------|-------------|-----------|
-${segmentScores.map((s, i) => `| ${i === 0 ? '**' + s.name + '** ⭐' : s.name} | ${s.pain} | ${s.budget} | ${s.access} | ${s.reference} | ${s.competition} | **${s.total}** |`).join('\n')}
+${segmentScores.map((s, i) => `| ${i === 0 ? '**' + s.name + '** (beachhead)' : s.name} | ${s.pain} | ${s.budget} | ${s.access} | ${s.reference} | ${s.competition} | **${s.total}** |`).join('\n')}
 
 ---
 
-## 🎯 Recommended Beachhead: ${beachhead.name}${segEx}
+## Recommended Beachhead: ${beachhead.name}${segEx}
 
 ### Why This Segment Wins
 
 ${EXAMPLES}
 **Highest Score (${beachhead.total}/25)** based on:
-${beachhead.pain >= 4 ? `- ✅ **High Pain Intensity** (${beachhead.pain}/5): Urgent problem that demands solution` : `- ⚠️ Pain Level (${beachhead.pain}/5): May need more urgency creation`}
-${beachhead.budget >= 4 ? `- ✅ **Strong Budget** (${beachhead.budget}/5): Can afford ${acv}${/\bACV\b/i.test(acv) ? '' : ' ACV'}` : `- ⚠️ Budget (${beachhead.budget}/5): May need pricing flexibility`}
-${beachhead.access >= 4 ? `- ✅ **Easy Access** (${beachhead.access}/5): Can reach through existing channels` : `- ⚠️ Accessibility (${beachhead.access}/5): May need channel development`}
-${beachhead.reference >= 4 ? `- ✅ **High Reference Value** (${beachhead.reference}/5): Great logos for expansion` : `- ⚠️ Reference Value (${beachhead.reference}/5): May need additional segments for logos`}
-${beachhead.competition >= 4 ? `- ✅ **Low Competition** (${beachhead.competition}/5): White space opportunity` : `- ⚠️ Competition (${beachhead.competition}/5): Need clear differentiation`}
+${beachhead.pain >= 4 ? `- **High Pain Intensity** (${beachhead.pain}/5): Urgent problem that demands solution` : `- Note: Pain Level (${beachhead.pain}/5): May need more urgency creation`}
+${beachhead.budget >= 4 ? `- **Strong Budget** (${beachhead.budget}/5): Can afford ${acv}${/\bACV\b/i.test(acv) ? '' : ' ACV'}` : `- Note: Budget (${beachhead.budget}/5): May need pricing flexibility`}
+${beachhead.access >= 4 ? `- **Easy Access** (${beachhead.access}/5): Can reach through existing channels` : `- Note: Accessibility (${beachhead.access}/5): May need channel development`}
+${beachhead.reference >= 4 ? `- **High Reference Value** (${beachhead.reference}/5): Great logos for expansion` : `- Note: Reference Value (${beachhead.reference}/5): May need additional segments for logos`}
+${beachhead.competition >= 4 ? `- **Low Competition** (${beachhead.competition}/5): White space opportunity` : `- Note: Competition (${beachhead.competition}/5): Need clear differentiation`}
 
 ---
 
-## 📈 Market Sizing (Bottom-Up Calculation)
+## Market Sizing (Bottom-Up Calculation)
 
 ### TAM/SAM/SOM for ${beachhead.name}${segEx}
 
@@ -1386,14 +1386,14 @@ ${EXAMPLES}${args.average_deal_size ? ' The average deal size is your input.' : 
 | Year 1 market share | 5% | Your sales capacity and win rate |
 | Average deal size | ${acv} | Current pipeline data |
 
-**⚠️ Validation Required**: These are hypothesis numbers. Validate with:
+**Validation Required**: These are hypothesis numbers. Validate with:
 1. Industry analyst reports
 2. LinkedIn Sales Navigator company counts
 3. Customer interviews on market size perception
 
 ---
 
-## 🗺️ Beachhead Expansion Path
+## Beachhead Expansion Path
 
 ### Year 1: Dominate ${beachhead.name}${segEx}
 ${EXAMPLES}
@@ -1413,7 +1413,7 @@ ${EXAMPLES}
 
 ---
 
-## 💡 ICP Hypothesis for ${beachhead.name}${segEx}
+## ICP Hypothesis for ${beachhead.name}${segEx}
 
 Based on beachhead selection, your ICP likely includes:
 
@@ -1492,7 +1492,7 @@ Based on beachhead selection, your ICP likely includes:
 
 ---
 
-## 🎯 Positioning Statement
+## Positioning Statement
 
 ### Complete Positioning Statement
 
@@ -1511,7 +1511,7 @@ Based on beachhead selection, your ICP likely includes:
 
 ---
 
-## 📋 Message Hierarchy
+## Message Hierarchy
 
 ### Level 1: Tagline (3-7 words)
 Choose the style that fits your brand:
@@ -1545,7 +1545,7 @@ Example pillars: replace with your own.
 
 ---
 
-## 🔄 Message Variations
+## Message Variations
 
 ### A/B Testing Options
 
@@ -1574,17 +1574,17 @@ Example pillars: replace with your own.
 
 ---
 
-## ✅ Message Testing Checklist
+## Message Testing Checklist
 
 Before finalizing, test each message for:
 
 | Criterion | Question | Pass/Fail |
 |-----------|----------|-----------|
-| **Clarity** | Do people understand what you do? | ☐ |
-| **Relevance** | Do people care about this? | ☐ |
-| **Differentiation** | Does this sound unique? | ☐ |
-| **Believability** | Do people trust this claim? | ☐ |
-| **Memorability** | Can people repeat it back? | ☐ |
+| **Clarity** | Do people understand what you do? | [ ] |
+| **Relevance** | Do people care about this? | [ ] |
+| **Differentiation** | Does this sound unique? | [ ] |
+| **Believability** | Do people trust this claim? | [ ] |
+| **Memorability** | Can people repeat it back? | [ ] |
 
 ### Testing Methods
 1. **5-Second Test**: Show homepage, ask what you do
@@ -1594,7 +1594,7 @@ Before finalizing, test each message for:
 
 ---
 
-## 💬 Objection Handling Messages
+## Objection Handling Messages
 
 | Objection | Response Message |
 |-----------|------------------|
@@ -1653,7 +1653,7 @@ ${SUGGESTED}
 
 ---
 
-## 🌐 Website Execution
+## Website Execution
 
 ### Homepage Hero
 **Headline (5-8 words)**:
@@ -1676,7 +1676,7 @@ ${SUGGESTED}
 
 ---
 
-## 💼 LinkedIn Execution
+## LinkedIn Execution
 
 ### Profile/Company Page Tagline
 > "Helping ${mid(args.target_customer)} ${mid(args.key_benefit)}"
@@ -1713,7 +1713,7 @@ After: [metric after]
 
 The key? [Your differentiation]
 
-Full case study in comments 👇
+Full case study in comments
 \`\`\`
 
 **Problem-Agitation Post**:
@@ -1723,9 +1723,9 @@ Stop if this sounds familiar:
 You're a [target customer title] trying to ${lowerCommonWords(args.key_benefit)}.
 
 But you're stuck with:
-❌ [Pain point 1]
-❌ [Pain point 2]
-❌ [Pain point 3]
+- [Pain point 1]
+- [Pain point 2]
+- [Pain point 3]
 
 There's a better way.
 
@@ -1736,7 +1736,7 @@ DM me "GUIDE" for our free playbook.
 
 ---
 
-## 📧 Cold Email Execution
+## Cold Email Execution
 
 ### Email 1 - Problem-focused
 **Subject**: [Pain point] at [Company]?
@@ -1792,7 +1792,7 @@ Best,
 
 ---
 
-## 🎤 Sales Deck Execution
+## Sales Deck Execution
 
 ### Slide Structure (10 slides)
 
@@ -1813,15 +1813,15 @@ Best,
 \`\`\`
 Unlike [Competitor Category]...
 
-❌ They do: [Competitor approach]
-✅ We do: [Your approach]
+They do: [Competitor approach]
+We do: [Your approach]
 
 Result: [Quantified outcome]
 \`\`\`
 
 ---
 
-## 🎬 Product Demo Execution
+## Product Demo Execution
 
 ### Demo Script Structure (15 minutes, Example figure: replace with your own)
 
@@ -1851,18 +1851,18 @@ Show 2-3 features that directly address their stated needs:
 
 ---
 
-## 📊 Channel Priority Matrix
+## Channel Priority Matrix
 
 Example priorities: replace with your own.
 
 | Channel | ICP Match | Effort | Expected CAC | Priority |
 |---------|-----------|--------|--------------|----------|
-| LinkedIn Organic | High | Medium | Low | ⭐⭐⭐⭐⭐ |
-| Cold Email | High | Low | Medium | ⭐⭐⭐⭐ |
-| Website SEO | Medium | High | Low | ⭐⭐⭐⭐ |
-| Paid LinkedIn | High | Medium | High | ⭐⭐⭐ |
-| Events | High | High | High | ⭐⭐⭐ |
-| Content Marketing | Medium | High | Low | ⭐⭐⭐⭐ |
+| LinkedIn Organic | High | Medium | Low | Five stars |
+| Cold Email | High | Low | Medium | Four stars |
+| Website SEO | Medium | High | Low | Four stars |
+| Paid LinkedIn | High | Medium | High | Three stars |
+| Events | High | High | High | Three stars |
+| Content Marketing | Medium | High | Low | Four stars |
 
 **Recommended Priority Order**:
 1. Website + SEO (foundation)
@@ -2036,23 +2036,23 @@ ${args.customer_feedback ? `**Customer Feedback**: ${args.customer_feedback}` : 
 
 ---
 
-## 📊 IMPACT Scorecard
+## IMPACT Scorecard
 
 ### Overall Score: ${overallScore}/100 (Grade: ${grade})
 **Assessment**: ${gradeDescription}
 
 | Phase | Score | Status | Priority |
 |-------|-------|--------|----------|
-| **I**: Identify Champions | ${scores.identify}/100 | ${scores.identify >= 70 ? '✅ Strong' : scores.identify >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.identify < 60 ? 'High' : 'Low'} |
-| **M**: Map Alternatives | ${scores.map}/100 | ${scores.map >= 70 ? '✅ Strong' : scores.map >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.map < 60 ? 'High' : 'Low'} |
-| **P**: Pinpoint Value | ${scores.pinpoint}/100 | ${scores.pinpoint >= 70 ? '✅ Strong' : scores.pinpoint >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.pinpoint < 60 ? 'High' : 'Low'} |
-| **A**: Anchor Market | ${scores.anchor}/100 | ${scores.anchor >= 70 ? '✅ Strong' : scores.anchor >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.anchor < 60 ? 'High' : 'Low'} |
-| **C**: Craft Message | ${scores.craft}/100 | ${scores.craft >= 70 ? '✅ Strong' : scores.craft >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.craft < 60 ? 'High' : 'Low'} |
-| **T**: Translate Execution | ${scores.translate}/100 | ${scores.translate >= 70 ? '✅ Strong' : scores.translate >= 50 ? '⚠️ Needs Work' : '❌ Critical'} | ${scores.translate < 60 ? 'High' : 'Low'} |
+| **I**: Identify Champions | ${scores.identify}/100 | ${scores.identify >= 70 ? 'Strong' : scores.identify >= 50 ? 'Needs Work' : 'Critical'} | ${scores.identify < 60 ? 'High' : 'Low'} |
+| **M**: Map Alternatives | ${scores.map}/100 | ${scores.map >= 70 ? 'Strong' : scores.map >= 50 ? 'Needs Work' : 'Critical'} | ${scores.map < 60 ? 'High' : 'Low'} |
+| **P**: Pinpoint Value | ${scores.pinpoint}/100 | ${scores.pinpoint >= 70 ? 'Strong' : scores.pinpoint >= 50 ? 'Needs Work' : 'Critical'} | ${scores.pinpoint < 60 ? 'High' : 'Low'} |
+| **A**: Anchor Market | ${scores.anchor}/100 | ${scores.anchor >= 70 ? 'Strong' : scores.anchor >= 50 ? 'Needs Work' : 'Critical'} | ${scores.anchor < 60 ? 'High' : 'Low'} |
+| **C**: Craft Message | ${scores.craft}/100 | ${scores.craft >= 70 ? 'Strong' : scores.craft >= 50 ? 'Needs Work' : 'Critical'} | ${scores.craft < 60 ? 'High' : 'Low'} |
+| **T**: Translate Execution | ${scores.translate}/100 | ${scores.translate >= 70 ? 'Strong' : scores.translate >= 50 ? 'Needs Work' : 'Critical'} | ${scores.translate < 60 ? 'High' : 'Low'} |
 
 ---
 
-## 💪 Strengths
+## Strengths
 ${strongest.map(([phase, score]) => score < 50 ? `
 ### Least weak area: ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
 Rated Critical: it is listed here only because the other areas scored lower.
@@ -2068,7 +2068,7 @@ ${phase === 'translate' ? `Customer feedback indicates market traction and posit
 
 ---
 
-## ⚠️ Areas to work on next
+## Areas to work on next
 ${weakest.map(([phase, score]) => `
 ### ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
 
@@ -2086,7 +2086,7 @@ ${score >= 70 ? 'Already strong: sharpen it next.' : `**Issue**: ${phase === 'id
 
 ---
 
-## 🎯 Recommended Positioning
+## Recommended Positioning
 
 Based on your inputs, here's a generated positioning statement:
 
@@ -2104,7 +2104,7 @@ Based on your inputs, here's a generated positioning statement:
 
 ---
 
-## 📋 30-Day Action Plan
+## 30-Day Action Plan
 
 ### Week 1: Foundation
 - [ ] Complete champion identification exercise
@@ -2128,7 +2128,7 @@ Based on your inputs, here's a generated positioning statement:
 
 ---
 
-## 📈 Expected Outcomes
+## Expected Outcomes
 
 With focused positioning work:
 
@@ -2145,7 +2145,7 @@ ${EXAMPLES}
 
 ---
 
-## 🔧 Tools to Use Next
+## Tools to Use Next
 
 Based on your scores, prioritize these tools:
 
