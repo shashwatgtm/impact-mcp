@@ -916,11 +916,11 @@ ${competitors.filter(c => c.toLowerCase() !== 'status quo' && c.toLowerCase() !=
 **${c}**:
 - Positioning territory to check: ${marketContext.differentiation_axes[i % marketContext.differentiation_axes.length] || 'General market leader'} (a common axis in this category; nothing about ${c} was looked up)
 - Weakness to test with buyers: ${marketContext.common_complaints[i % marketContext.common_complaints.length]} (a common complaint in this category, not a known fact about ${c})
-- Best for: Their existing customer base, specific use cases
+- Best for: [who they serve best, from what buyers tell you]
 - Your opportunity: Differentiate on ${marketContext.differentiation_axes[(i + 1) % marketContext.differentiation_axes.length]}`).join('\n')}
 
 ### 2. Status Quo (Current Manual/DIY Approach)
-**What they're doing instead**: 
+**What they may be doing instead** (common patterns to check with buyers):
 - Spreadsheets and manual processes
 - Existing tools cobbled together
 - Junior staff doing the work manually
@@ -957,7 +957,7 @@ ${customInsights}
 ### Differentiation Axes
 | Axis | Market Standard | Your Potential Position |
 |------|-----------------|------------------------|
-${marketContext.differentiation_axes.map((axis) => `| ${axis} | Average | Leader opportunity |`).join('\n')}
+${marketContext.differentiation_axes.map((axis) => `| ${axis} | [How the market does it today] | [Lead, match or skip] |`).join('\n')}
 
 ---
 
@@ -1006,7 +1006,7 @@ COMPLEX ────────────────┼───────
 ### Against Do Nothing
 **Their strength**: Zero effort, zero risk
 **Their weakness**: Competitive disadvantage, compounding problem
-**Your attack angle**: "Your competitors are already solving this"
+**Your attack angle**: [Only if true and provable: "Your competitors are already solving this"]
 **Landmine question**: "What happens to your metrics if this problem grows 2x next year?" ${EXAMPLE}
 
 ---
@@ -1144,10 +1144,10 @@ ${metrics ? `**Reported Metrics**: ${metrics}` : ''}
 ## The Only Statement
 
 ### Version 1 (Category-focused)
-> **${product}** is the **only ${mid(category)}** with **${mid(args.unique_capability)}**, giving **${mid(args.target_customer)}** **${mid(args.key_outcome)}**.
+> [Only if true and provable: **${product}** is the **only ${mid(category)}** with **${mid(args.unique_capability)}**, giving **${mid(args.target_customer)}** **${mid(args.key_outcome)}**.]
 
 ### Version 2 (Outcome-focused)
-> We help **${mid(args.target_customer)}** achieve **${mid(args.key_outcome)}** through **${mid(args.unique_capability)}**, something no other ${mid(category)} can deliver.
+> We help **${mid(args.target_customer)}** achieve **${mid(args.key_outcome)}** through **${mid(args.unique_capability)}**. [Only if true and provable: something no other ${mid(category)} can deliver.]
 
 ### Version 3 (Problem-focused)
 > Unlike traditional ${mid(/s$/i.test(category.trim()) ? category.trim() : `${category}s`)}, **${product}** offers **${mid(args.unique_capability)}**, which means **${mid(args.target_customer)}** finally get **${mid(args.key_outcome)}**.
@@ -1209,7 +1209,7 @@ Example templates:
 ### For Different Audiences
 
 **For Champions (${args.target_customer})**:
-> "Finally, ${mid(args.key_outcome)} without [current pain point]. ${metrics ? `Our customers report: ${metricsText}."` : `Our customers see ${valueMetrics.revenue_impact}." ${EXAMPLE}`}
+> "Finally, ${mid(args.key_outcome)} without [current pain point]. ${metrics ? `Our customers report: ${metricsText}."` : `[Only if true and provable: our customers see ${valueMetrics.revenue_impact}.]" ${EXAMPLE}`}
 
 **For Economic Buyers (CFO/CEO)**:
 > "Drive ${valueMetrics.revenue_impact} with payback in [your payback period]. [Only if true and provable: lower TCO than alternatives.]" ${EXAMPLE}
@@ -1223,13 +1223,13 @@ Example templates:
 > "${cap(firstWords(args.key_outcome, 3))} for ${mid(args.target_customer)}. ${userPercent ? `${cap(userPercentWords)}.` : `${quantifiedResults.primary} improvement in [key metric].`}"${userPercent ? '' : ` ${EXAMPLE}`}
 
 **LinkedIn Post** (Hook):
-> "Most ${mid(args.target_customer)} struggle with [problem]. We built something different: ${mid(args.unique_capability)}."
+> "${cap(args.target_customer)}: does [the problem you solve] sound familiar? We built something different: ${mid(args.unique_capability)}."
 
 **Cold Email** (Value prop):
-> "We help companies like yours get ${mid(args.key_outcome)}. ${metrics ? `Recent customer results: ${metricsText}."` : `Recent customer achieved ${valueMetrics.revenue_impact}." ${EXAMPLE}`}
+> "We help companies like yours get ${mid(args.key_outcome)}. ${metrics ? `Recent customer results: ${metricsText}."` : `[Only if true and provable: a recent customer achieved ${valueMetrics.revenue_impact}.]" ${EXAMPLE}`}
 
 **Sales Deck** (Slide title):
-> "The only ${mid(category)} with ${mid(args.unique_capability)}"
+> [Only if true and provable: "The only ${mid(category)} with ${mid(args.unique_capability)}"]
 
 ---
 
@@ -1472,14 +1472,14 @@ Based on beachhead selection, your ICP likely includes:
 **Company Characteristics**:
 - Industry: ${beachhead.name.split('(')[0].trim()}
 - Size: ${beachhead.name.includes('(') ? beachhead.name.match(/\(([^)]+)\)/)?.[1] || '50-500 employees' : '50-500 employees'}${sizeIsUsers ? '' : ` ${EXAMPLE}`}
-- Tech stack: Modern, willing to adopt new tools
-- Growth stage: ${beachhead.keyword ? 'Series B+ or established' : '[fill in]'}
+- Tech stack: [fill in from your best customers, for example modern and willing to adopt new tools]
+- Growth stage: ${beachhead.keyword ? '[fill in, for example Series B+ or established]' : '[fill in]'}
 
 **Buying Characteristics**:
 - Budget: can pay ${acv} or more${acvEx}
 - Decision maker: ${beachhead.budget >= 4 ? 'VP/C-level accessible' : 'Manager-level start'}
 - Sales cycle: ${cycle}${cycleEx}
-- Buying trigger: Growth pressure, competitive threat
+- Buying trigger: [fill in from your best customers, for example growth pressure or a competitive threat]
 
 **Next Step**: Use \`impact_craft_message\` to build positioning for this beachhead
 `;
@@ -1581,7 +1581,7 @@ Choose the style that fits your brand:
 | Style | Tagline | Best For |
 |-------|---------|----------|
 | **Outcome** | "${cap(firstWords(args.key_benefit, 4))}" | Clarity |
-| **Differentiator** | "The only ${mid(category)} with ${firstWords(diff, 3)}" | Uniqueness |
+| **Differentiator** | [Only if true and provable: "The only ${mid(category)} with ${firstWords(diff, 3)}"] | Uniqueness |
 | **Audience** | "Built for ${shortAudience(args.target_customer)}" | Targeting |
 | **Provocative** | "Stop ${args.key_benefit.includes('increase') ? 'losing' : 'wasting'}. Start winning." | Attention |
 
@@ -1593,7 +1593,7 @@ Choose the style that fits your brand:
 > "Get ${benefit} [Only if true and provable: without the complexity of ${competitor}]. ${product} offers ${diff}."
 
 **Option C: unique mechanism**
-> "The only ${mid(category)} with ${diff}. That's how ${mid(args.target_customer)} get ${benefit}."
+> "[Only if true and provable: The only ${mid(category)} with ${diff}.] That's how ${mid(args.target_customer)} get ${benefit}."
 
 ### Level 3: Supporting Pillars (3 proof points)
 
@@ -1629,7 +1629,7 @@ Example pillars: replace with your own.
 > "We built ${product} because [Only if true and provable: ${competitor} fell short for teams like yours]. Now you can get ${benefit} without the usual headaches."
 
 **For Economic Buyers (Executives)**:
-> "Drive measurable ${args.key_benefit.includes('revenue') || args.key_benefit.includes('growth') ? 'growth' : 'ROI'} with ${product}. [Only if true and provable: lower TCO than ${competitor}]"
+> "Drive [the ${args.key_benefit.includes('revenue') || args.key_benefit.includes('growth') ? 'growth' : 'ROI'} you can prove, with a real customer figure] with ${product}. [Only if true and provable: lower TCO than ${competitor}]"
 
 **For Technical Evaluators**:
 > "${product} offers ${diff}, in ${aOrAn(category)} ${mid(category)} designed for ${mid(args.target_customer)}."
@@ -1660,10 +1660,10 @@ Before finalizing, test each message for:
 
 | Objection | Response Message |
 |-----------|------------------|
-| "We use ${competitor}" | "[Only if true and provable: many of our customers switched from ${competitor}.] They found that ${diff} delivered ${benefit}." |
-| "Too expensive" | "Consider the cost of doing nothing about it. Our customers typically see ROI in [X] months." |
+| "We use ${competitor}" | "[Only if true and provable: many of our customers switched from ${competitor} and found that ${diff} delivered ${benefit}.]" |
+| "Too expensive" | "Consider the cost of doing nothing about it. [Only if true and provable: the payback time your customers have seen, in months.]" |
 | "We're not ready" | "[Only if true and provable: that's exactly when our best customers started.] ${product} is designed for ${mid(args.target_customer)} at your stage." |
-| "Need to think about it" | "Absolutely. While you're evaluating, here's a case study of how [similar company] achieved ${benefit}." |
+| "Need to think about it" | "Absolutely. While you're evaluating, [Only if true and provable: here's a case study of how a similar company achieved ${benefit}.]" |
 
 **Next Step**: Use \`impact_translate_execution\` to adapt these messages for each channel
 
@@ -1730,9 +1730,9 @@ ${SUGGESTED}
 > "${cap(firstWords(args.key_benefit, 5))} for ${shortAudience(args.target_customer)}"
 
 **Subheadline (15-20 words)**:
-> "The platform that helps ${mid(args.target_customer)} ${lowerCommonWords(args.key_benefit)}. [Add one line of proof you can back up]"
+> "${product} helps ${mid(args.target_customer)} ${lowerCommonWords(args.key_benefit)}. [Add one line of proof you can back up]"
 
-**CTA Options**:
+**CTA Options** (examples: keep only the ones you offer):
 - Primary: "Start Free Trial" / "Get a Demo"
 - Secondary: "See How It Works" / "View Case Studies"
 
@@ -1757,11 +1757,11 @@ ${SUGGESTED}
 \`\`\`
 Most ${mid(args.target_customer)} think [common belief].
 
-But here's what we've learned from 100+ customers: ${EXAMPLE}
+[Only if true and provable: but here's what we've learned from 100+ customers:] ${EXAMPLE}
 
 [Counterintuitive insight on your key benefit: ${mid(args.key_benefit)}]
 
-The data shows:
+[Only if your data shows it:]
 → Companies doing X see [positive outcome]
 → Companies doing Y see [negative outcome]
 
@@ -1801,7 +1801,7 @@ There's a better way.
 
 [One sentence about your solution]
 
-DM me "GUIDE" for our free playbook.
+DM me "GUIDE" for [the guide or resource you actually offer].
 \`\`\`
 
 ---
@@ -1816,7 +1816,7 @@ Hi [First name],
 
 [Trigger/reason for outreach, personalized]
 
-I'm reaching out because ${mid(args.target_customer)} often struggle with [specific pain].
+I'm reaching out because [the specific pain you have seen ${mid(args.target_customer)} face].
 
 We help companies like [similar company] ${lowerCommonWords(args.key_benefit)}.
 
@@ -1837,7 +1837,7 @@ Quick follow-up with a relevant data point:
 - [Metric 1 improvement]
 - [Metric 2 improvement]
 
-Given what I see at [Their Company], you could likely see similar results.
+[Only if true and provable: given what I see at [Their Company], you could see similar results.]
 
 Worth a conversation?
 
@@ -2140,7 +2140,7 @@ ${phase === 'map' ? `You have ${competitors.length} competitor${competitors.leng
 ${phase === 'pinpoint' ? (args.key_differentiation ? `Your differentiation ("${args.key_differentiation}") provides a foundation for value articulation.` : 'No differentiation supplied yet.') : ''}
 ${phase === 'anchor' ? `Your market definition includes specific criteria for targeting.` : ''}
 ${phase === 'craft' ? `You have a positioning statement foundation to build upon.` : ''}
-${phase === 'translate' ? `Customer feedback indicates market traction and positioning resonance.` : ''}
+${phase === 'translate' ? `You supplied customer feedback, which this score reads as a sign of market presence (it scores by length, not by what the feedback says).` : ''}
 `.replace(/\n{2,}/g, '\n')).join('')}
 
 ---
@@ -2177,7 +2177,7 @@ Based on your inputs, here's a generated positioning statement:
 > **We** offer ${diffShown}
 
 ### Tagline Options
-1. "No more ${lowerCommonWords(args.problem_solved.split(' ').slice(0, 4).join(' '))}"
+1. [Only if true and provable: "No more ${lowerCommonWords(args.problem_solved.split(' ').slice(0, 4).join(' '))}"]
 2. "The ${firstWords(diffShown, 3)} solution"
 3. "Built for ${shortAudience(args.target_customer)}"
 
