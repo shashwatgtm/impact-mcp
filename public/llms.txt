@@ -1,6 +1,6 @@
 # IMPACT
 
-> IMPACT is a free web app and AI connector with eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.
+> IMPACT is a free web app and AI connector with eight positioning tools built on Shashwat Ghosh's IMPACT framework, for CMOs and marketing teams. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit. Add https://impact.gtmhelix.com/mcp in Claude or ChatGPT, no sign-in.
 
 - Web app (no sign-in): https://impact.gtmhelix.com/
 - MCP server URL (Streamable HTTP, no sign-in, read-only tools): https://impact.gtmhelix.com/mcp
@@ -28,7 +28,7 @@
 
 ### What is IMPACT?
 
-IMPACT is a free web app and AI connector with eight positioning tools built on Shashwat Ghosh's IMPACT framework: Identify champions, Map alternatives, Pinpoint value, Anchor market, Craft message, Translate execution. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit.
+IMPACT is a free web app and AI connector with eight positioning tools built on Shashwat Ghosh's IMPACT framework, for CMOs and marketing teams. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit. Add https://impact.gtmhelix.com/mcp in Claude or ChatGPT, no sign-in.
 
 ### Is IMPACT free, and do I need an account?
 
@@ -48,7 +48,7 @@ In Claude, open Customize, then Connectors, select + and then Add custom connect
 
 ### Who built it?
 
-Shashwat Ghosh, Co-Founder and Fractional CMO of Helix GTM Consulting, a business consulting firm founded in 2022 in Bengaluru. He has 24+ years in B2B and 10+ years of fractional experience, and created the EPIC, IMPACT and CRAFT frameworks and the Hub-Spoke Messaging Methodology.
+Shashwat Ghosh, Co-Founder and Fractional CMO of Helix GTM Consulting, founded in 2022 in Bengaluru. He has 24+ years in B2B and 10+ years of fractional experience, and created the EPIC, IMPACT and CRAFT frameworks and the Hub-Spoke Messaging Methodology.
 
 ### Why do some answers look like templates?
 
