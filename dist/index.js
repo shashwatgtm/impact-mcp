@@ -1197,7 +1197,7 @@ Example templates:
 > "Finally, ${mid(args.key_outcome)} without [current pain point]. ${metrics ? `Our customers report: ${metricsText}."` : `[Only if true and provable: our customers see ${valueMetrics.revenue_impact}.]" ${EXAMPLE}`}
 
 **For Economic Buyers (CFO/CEO)**:
-> "Drive ${valueMetrics.revenue_impact} with payback in [your payback period]. [Only if true and provable: lower TCO than alternatives.]"${metrics ? '' : ` ${EXAMPLE}`}
+> "${metrics ? `Our customers report ${metricsText}, with payback in [your payback period].` : `Drive ${valueMetrics.revenue_impact} with payback in [your payback period].`} [Only if true and provable: lower TCO than alternatives.]"${metrics ? '' : ` ${EXAMPLE}`}
 
 **For Technical Evaluators**:
 > "${cap(args.unique_capability)}, delivered through [technical approach]. [Only if true and provable: integrates with your existing stack in days, not months.]"
@@ -2195,7 +2195,7 @@ ${SUGGESTED}
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'impact-mcp';
-exports.SERVER_VERSION = '2.2.14';
+exports.SERVER_VERSION = '2.2.15';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "impact_get_framework": "IMPACT Framework Guide",
