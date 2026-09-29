@@ -1110,6 +1110,10 @@ Ask prospects these questions to understand their competitive context:
                     efficiency_gain: '10x faster incident response'
                 };
             }
+            // R13-20f: with customer_metrics given, the Revenue Impact row is the user's own reported metrics, not a preset.
+            if (metrics) {
+                valueMetrics.revenue_impact = metricsText;
+            }
             return `# Value Proposition Analysis
 
 ## Positioning Inputs
@@ -1137,7 +1141,7 @@ ${metrics ? `**Reported Metrics**: ${metrics}` : ''}
 
 ## Value Quantification Matrix
 
-${EXAMPLES}
+${EXAMPLES}${metrics ? ' The Revenue Impact figure is your input.' : ''}
 | Value Driver | Metric | Typical Before | With ${product} | Improvement |
 |--------------|--------|----------------|-----------------|-------------|
 | **Time Savings** | Hours saved | Manual effort | Automated | ${valueMetrics.time_savings} |
@@ -1193,7 +1197,7 @@ Example templates:
 > "Finally, ${mid(args.key_outcome)} without [current pain point]. ${metrics ? `Our customers report: ${metricsText}."` : `[Only if true and provable: our customers see ${valueMetrics.revenue_impact}.]" ${EXAMPLE}`}
 
 **For Economic Buyers (CFO/CEO)**:
-> "Drive ${valueMetrics.revenue_impact} with payback in [your payback period]. [Only if true and provable: lower TCO than alternatives.]" ${EXAMPLE}
+> "Drive ${valueMetrics.revenue_impact} with payback in [your payback period]. [Only if true and provable: lower TCO than alternatives.]"${metrics ? '' : ` ${EXAMPLE}`}
 
 **For Technical Evaluators**:
 > "${cap(args.unique_capability)}, delivered through [technical approach]. [Only if true and provable: integrates with your existing stack in days, not months.]"
@@ -2191,7 +2195,7 @@ ${SUGGESTED}
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'impact-mcp';
-exports.SERVER_VERSION = '2.2.13';
+exports.SERVER_VERSION = '2.2.14';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "impact_get_framework": "IMPACT Framework Guide",
