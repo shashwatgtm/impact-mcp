@@ -1797,7 +1797,7 @@ But you're stuck with:
 - [Pain point 2]
 - [Pain point 3]
 
-There's a better way.
+[Only if true: "There's a better way."]
 
 [One sentence about your solution]
 
