@@ -1150,7 +1150,7 @@ ${metrics ? `**Reported Metrics**: ${metrics}` : ''}
 > We help **${mid(args.target_customer)}** achieve **${mid(args.key_outcome)}** through **${mid(args.unique_capability)}**. [Only if true and provable: something no other ${mid(category)} can deliver.]
 
 ### Version 3 (Problem-focused)
-> Unlike traditional ${mid(/s$/i.test(category.trim()) ? category.trim() : `${category}s`)}, **${product}** offers **${mid(args.unique_capability)}**, which means **${mid(args.target_customer)}** finally get **${mid(args.key_outcome)}**.
+> [Only if true and provable: Unlike traditional ${mid(/s$/i.test(category.trim()) ? category.trim() : `${category}s`)},] **${product}** offers **${mid(args.unique_capability)}**, which means **${mid(args.target_customer)}** finally get **${mid(args.key_outcome)}**.
 
 ---
 
@@ -1477,7 +1477,7 @@ Based on beachhead selection, your ICP likely includes:
 
 **Buying Characteristics**:
 - Budget: can pay ${acv} or more${acvEx}
-- Decision maker: ${beachhead.budget >= 4 ? 'VP/C-level accessible' : 'Manager-level start'}
+- Decision maker: [fill in, for example ${beachhead.budget >= 4 ? 'VP/C-level accessible' : 'Manager-level start'}]
 - Sales cycle: ${cycle}${cycleEx}
 - Buying trigger: [fill in from your best customers, for example growth pressure or a competitive threat]
 
@@ -1626,7 +1626,7 @@ Example pillars: replace with your own.
 ### Audience-Specific Messaging
 
 **For Champions (${args.target_customer})**:
-> "We built ${product} because [Only if true and provable: ${competitor} fell short for teams like yours]. Now you can get ${benefit} without the usual headaches."
+> "We built ${product} because [Only if true and provable: ${competitor} fell short for teams like yours]. Now you can get ${benefit}."
 
 **For Economic Buyers (Executives)**:
 > "Drive [the ${args.key_benefit.includes('revenue') || args.key_benefit.includes('growth') ? 'growth' : 'ROI'} you can prove, with a real customer figure] with ${product}. [Only if true and provable: lower TCO than ${competitor}]"
@@ -1662,7 +1662,7 @@ Before finalizing, test each message for:
 |-----------|------------------|
 | "We use ${competitor}" | "[Only if true and provable: many of our customers switched from ${competitor} and found that ${diff} delivered ${benefit}.]" |
 | "Too expensive" | "Consider the cost of doing nothing about it. [Only if true and provable: the payback time your customers have seen, in months.]" |
-| "We're not ready" | "[Only if true and provable: that's exactly when our best customers started.] ${product} is designed for ${mid(args.target_customer)} at your stage." |
+| "We're not ready" | "[Only if true and provable: that's exactly when our best customers started.] [Only if true: ${product} is designed for ${mid(args.target_customer)} at your stage.]" |
 | "Need to think about it" | "Absolutely. While you're evaluating, [Only if true and provable: here's a case study of how a similar company achieved ${benefit}.]" |
 
 **Next Step**: Use \`impact_translate_execution\` to adapt these messages for each channel
@@ -2251,7 +2251,7 @@ ${SUGGESTED}
 // =============================================================================
 
 export const SERVER_NAME = 'impact-mcp';
-export const SERVER_VERSION = '2.2.11';
+export const SERVER_VERSION = '2.2.12';
 
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES: Record<string, string> = {
