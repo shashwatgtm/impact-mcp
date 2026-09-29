@@ -1043,7 +1043,7 @@ Ask prospects these questions to understand their competitive context:
             required: ['target_customer', 'key_outcome', 'unique_capability']
         },
         execute: (args) => {
-            const product = args.product_name || 'Your product';
+            const product = args.product_name || '[Your product]';
             const category = args.category || 'solution';
             const metrics = args.customer_metrics || '';
             // Parse any provided metrics
@@ -1067,6 +1067,9 @@ Ask prospects these questions to understand their competitive context:
             const userPercent = /(\d+)%/.test(metrics);
             const userMultiplier = /(\d+)x/.test(metrics);
             const userTime = /(\d+)\s*(days?|weeks?|months?)/i.test(metrics);
+            // Text only (run 12): the user's own words for a percent result ("40% faster"), for the website hero line.
+            const userPercentWords = (metrics.split(/[,;]/).find(p => /\d+%/.test(p)) || '').trim().replace(/[.!]+$/, '');
+            const metricsText = metrics.trim().replace(/[.!]+$/, '');
             // Generate outcome-based value metrics
             const outcomeLower = args.key_outcome.toLowerCase();
             let valueMetrics = {
@@ -1179,24 +1182,24 @@ Example templates:
 ### For Different Audiences
 
 **For Champions (${args.target_customer})**:
-> "Finally, ${mid(args.key_outcome)} without [current pain point]. Our customers see ${valueMetrics.revenue_impact}." ${EXAMPLE}
+> "Finally, ${mid(args.key_outcome)} without [current pain point]. ${metrics ? `Our customers report: ${metricsText}."` : `Our customers see ${valueMetrics.revenue_impact}." ${EXAMPLE}`}
 
 **For Economic Buyers (CFO/CEO)**:
-> "Drive ${valueMetrics.revenue_impact} with payback in [your payback period]. Lower TCO than alternatives." ${EXAMPLE}
+> "Drive ${valueMetrics.revenue_impact} with payback in [your payback period]. [Only if true and provable: lower TCO than alternatives.]" ${EXAMPLE}
 
 **For Technical Evaluators**:
-> "${cap(args.unique_capability)}, delivered through [technical approach]. Integrates with your existing stack in days, not months."
+> "${cap(args.unique_capability)}, delivered through [technical approach]. [Only if true and provable: integrates with your existing stack in days, not months.]"
 
 ### For Different Channels
 
 **Website Hero** (15 words max):
-> "${cap(firstWords(args.key_outcome, 3))} for ${mid(args.target_customer)}. ${quantifiedResults.primary} improvement in [key metric]."${userPercent ? '' : ` ${EXAMPLE}`}
+> "${cap(firstWords(args.key_outcome, 3))} for ${mid(args.target_customer)}. ${userPercent ? `${cap(userPercentWords)}.` : `${quantifiedResults.primary} improvement in [key metric].`}"${userPercent ? '' : ` ${EXAMPLE}`}
 
 **LinkedIn Post** (Hook):
 > "Most ${mid(args.target_customer)} struggle with [problem]. We built something different: ${mid(args.unique_capability)}."
 
 **Cold Email** (Value prop):
-> "We help companies like yours get ${mid(args.key_outcome)}. Recent customer achieved ${valueMetrics.revenue_impact}." ${EXAMPLE}
+> "We help companies like yours get ${mid(args.key_outcome)}. ${metrics ? `Recent customer results: ${metricsText}."` : `Recent customer achieved ${valueMetrics.revenue_impact}." ${EXAMPLE}`}
 
 **Sales Deck** (Slide title):
 > "The only ${mid(category)} with ${mid(args.unique_capability)}"
@@ -1452,7 +1455,7 @@ Based on beachhead selection, your ICP likely includes:
                 },
                 product_category: {
                     type: 'string',
-                    description: 'Your product category'
+                    description: 'Your product category, written as a noun phrase (for example "analytics platform")'
                 },
                 key_benefit: {
                     type: 'string',
@@ -1473,7 +1476,7 @@ Based on beachhead selection, your ICP likely includes:
             const product = args.product_name || '[Your Product]';
             const category = args.product_category || 'solution';
             const competitor = args.competitor || 'traditional alternatives';
-            const need = mid(args.customer_need || `need ${mid(args.key_benefit)}`);
+            const need = args.customer_need ? mid(args.customer_need) : '[their need]';
             const benefit = mid(args.key_benefit);
             const diff = mid(args.differentiation);
             return `# Positioning & Messaging Framework
@@ -1521,7 +1524,7 @@ Choose the style that fits your brand:
 | **Provocative** | "Stop ${args.key_benefit.includes('increase') ? 'losing' : 'wasting'}. Start winning." | Attention |
 
 ### Level 2: Value Proposition (1-2 sentences)
-**Option A - Problem-Solution**:
+**Option A: problem to solution**
 > "If you ${need}, ${product} offers ${diff}, so you finally get ${benefit}."
 
 **Option B - Outcome-First**:
@@ -1531,6 +1534,8 @@ Choose the style that fits your brand:
 > "The only ${mid(category)} with ${diff}. That's how ${mid(args.target_customer)} get ${benefit}."
 
 ### Level 3: Supporting Pillars (3 proof points)
+
+Example pillars: replace with your own.
 
 | Pillar | Message | Proof Point |
 |--------|---------|-------------|
@@ -1595,7 +1600,7 @@ Before finalizing, test each message for:
 |-----------|------------------|
 | "We use ${competitor}" | "[Only if true and provable: many of our customers switched from ${competitor}.] They found that ${diff} delivered ${benefit}." |
 | "Too expensive" | "Consider the cost of doing nothing about it. Our customers typically see ROI in [X] months." |
-| "We're not ready" | "That's exactly when our best customers started. ${product} is designed for ${mid(args.target_customer)} at your stage." |
+| "We're not ready" | "[Only if true and provable: that's exactly when our best customers started.] ${product} is designed for ${mid(args.target_customer)} at your stage." |
 | "Need to think about it" | "Absolutely. While you're evaluating, here's a case study of how [similar company] achieved ${benefit}." |
 
 **Next Step**: Use \`impact_translate_execution\` to adapt these messages for each channel
@@ -1622,7 +1627,7 @@ ${SUGGESTED}
                 },
                 key_benefit: {
                     type: 'string',
-                    description: 'Primary benefit'
+                    description: 'Primary benefit, written as an action (for example "cut no-shows")'
                 },
                 channels: {
                     type: 'array',
@@ -1637,7 +1642,7 @@ ${SUGGESTED}
             required: ['positioning_statement', 'target_customer', 'key_benefit']
         },
         execute: (args) => {
-            const product = args.product_name || 'Your Product';
+            const product = args.product_name || '[Your product]';
             const channels = args.channels || ['website', 'linkedin', 'cold_email', 'sales_deck', 'product_demo'];
             return `# Channel Execution Playbook
 
@@ -1652,10 +1657,10 @@ ${SUGGESTED}
 
 ### Homepage Hero
 **Headline (5-8 words)**:
-> "${cap(firstWords(args.key_benefit, 5))}"
+> "${cap(firstWords(args.key_benefit, 5))} for ${shortAudience(args.target_customer)}"
 
 **Subheadline (15-20 words)**:
-> "The platform that helps ${mid(args.target_customer)} ${lowerCommonWords(args.key_benefit)}. No complexity. No consultants. Just results."
+> "The platform that helps ${mid(args.target_customer)} ${lowerCommonWords(args.key_benefit)}. [Add one line of proof you can back up]"
 
 **CTA Options**:
 - Primary: "Start Free Trial" / "Get a Demo"
@@ -1848,6 +1853,8 @@ Show 2-3 features that directly address their stated needs:
 
 ## 📊 Channel Priority Matrix
 
+Example priorities: replace with your own.
+
 | Channel | ICP Match | Effort | Expected CAC | Priority |
 |---------|-----------|--------|--------------|----------|
 | LinkedIn Organic | High | Medium | Low | ⭐⭐⭐⭐⭐ |
@@ -1914,9 +1921,12 @@ ${SUGGESTED}
             required: ['product_description', 'target_customer', 'problem_solved']
         },
         execute: (args) => {
-            const company = args.company_name || 'Your Company';
+            const company = args.company_name || '[Your company]';
             const competitors = args.competitors || ['Status quo', 'DIY solutions'];
             const differentiation = args.key_differentiation || 'unique approach';
+            // Text only (run 12): the words shown for the differentiation and the main alternative; a default is never quoted as the user's words.
+            const diffShown = args.key_differentiation ? mid(args.key_differentiation) : '[your differentiation]';
+            const alternativeShown = args.competitors && args.competitors.length ? `[the alternative your buyers use most, for example ${args.competitors[0]}]` : '[the alternative your buyers use most]';
             // Calculate scores based on input completeness and clarity
             const scores = {
                 identify: 0,
@@ -2043,11 +2053,14 @@ ${args.customer_feedback ? `**Customer Feedback**: ${args.customer_feedback}` : 
 ---
 
 ## 💪 Strengths
-${strongest.map(([phase, score]) => `
+${strongest.map(([phase, score]) => score < 50 ? `
+### Least weak area: ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
+Rated Critical: it is listed here only because the other areas scored lower.
+` : `
 ### ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
 ${phase === 'identify' ? `Your target customer definition ("${args.target_customer}") provides good specificity for champion identification.` : ''}
 ${phase === 'map' ? `You have ${competitors.length} competitor${competitors.length === 1 ? '' : 's'} identified, enabling competitive positioning.` : ''}
-${phase === 'pinpoint' ? `Your differentiation ("${differentiation}") provides a foundation for value articulation.` : ''}
+${phase === 'pinpoint' ? (args.key_differentiation ? `Your differentiation ("${args.key_differentiation}") provides a foundation for value articulation.` : 'No differentiation supplied yet.') : ''}
 ${phase === 'anchor' ? `Your market definition includes specific criteria for targeting.` : ''}
 ${phase === 'craft' ? `You have a positioning statement foundation to build upon.` : ''}
 ${phase === 'translate' ? `Customer feedback indicates market traction and positioning resonance.` : ''}
@@ -2055,16 +2068,16 @@ ${phase === 'translate' ? `Customer feedback indicates market traction and posit
 
 ---
 
-## ⚠️ Lowest-scoring areas
+## ⚠️ Areas to work on next
 ${weakest.map(([phase, score]) => `
 ### ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
 
-**Issue**: ${phase === 'identify' ? 'Champion identification needs more specificity. Who exactly is your buyer?' :
+${score >= 70 ? 'Already strong: sharpen it next.' : `**Issue**: ${phase === 'identify' ? 'Champion identification needs more specificity. Who exactly is your buyer?' :
                 phase === 'map' ? 'Competitive landscape needs deeper analysis. What are the alternatives customers consider?' :
                     phase === 'pinpoint' ? 'Value proposition needs quantification. What specific outcomes do customers achieve?' :
                         phase === 'anchor' ? 'Market definition needs tighter criteria. What makes a company ideal for you?' :
                             phase === 'craft' ? 'Positioning statement is missing or incomplete. How do you articulate your unique value?' :
-                                'Execution translation is weak. How does positioning show up in your channels?'}
+                                'Execution translation is weak. How does positioning show up in your channels?'}`}
 
 **Action**: Run \`impact_${phase === 'identify' ? 'identify_champions' : phase === 'map' ? 'map_alternatives' : phase === 'pinpoint' ? 'pinpoint_value' : phase === 'anchor' ? 'anchor_market' : phase === 'craft' ? 'craft_message' : 'translate_execution'}\` to address this gap.
 
@@ -2080,13 +2093,13 @@ Based on your inputs, here's a generated positioning statement:
 > **For** ${mid(args.target_customer)}
 > **Who** struggle with ${lowerCommonWords(args.problem_solved)}
 > **${company}** **is a** solution
-> **That** ${args.product_description.toLowerCase().includes('helps') ? args.product_description.split('helps')[1]?.trim() || 'delivers results' : 'delivers results'}
-> **Unlike** ${competitors[0] || 'alternatives'}
-> **We** offer ${mid(differentiation)}
+> **That** ${args.product_description.toLowerCase().includes('helps') ? args.product_description.split('helps')[1]?.trim() || '[delivers the result you promise]' : '[delivers the result you promise]'}
+> **Unlike** ${alternativeShown}
+> **We** offer ${diffShown}
 
 ### Tagline Options
 1. "No more ${lowerCommonWords(args.problem_solved.split(' ').slice(0, 4).join(' '))}"
-2. "The ${firstWords(mid(differentiation), 3)} solution"
+2. "The ${firstWords(diffShown, 3)} solution"
 3. "Built for ${shortAudience(args.target_customer)}"
 
 ---
