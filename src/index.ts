@@ -437,15 +437,15 @@ ${EXAMPLES}
 
 ### Message Hierarchy
 
-**Level 1 - Tagline (3-7 words)**
+**Level 1: tagline (3 to 7 words)**
 The memorable hook that captures your essence.
 Example: "The AI that closes deals"
 
-**Level 2 - Value Proposition (1-2 sentences)**
+**Level 2: value proposition (1 to 2 sentences)**
 The promise you make to customers.
 Example: "We help B2B sales teams close 40% more deals by automating discovery and follow-up." ${EXAMPLE}
 
-**Level 3 - Supporting Messages (3 pillars)**
+**Level 3: supporting messages (3 pillars)**
 The proof points that support your promise.
 ${EXAMPLES}
 1. Speed: "10x faster prospecting"
@@ -505,7 +505,7 @@ Based on your ICP, prioritize channels by:
       };
 
       if (phase === 'all') {
-        return `# IMPACT FRAMEWORK - Complete Methodology
+        return `# IMPACT framework: complete methodology
 
 The IMPACT framework is a systematic approach to B2B positioning that generates actionable outputs from minimal input.
 
@@ -517,12 +517,12 @@ ${Object.values(phases).join('\n---\n')}
 
 ## Getting Started
 
-1. Start with \`impact_identify_champions\` - provide company context
-2. Use \`impact_map_alternatives\` - add competitor info
-3. Run \`impact_pinpoint_value\` - define differentiation
-4. Execute \`impact_anchor_market\` - select beachhead
-5. Call \`impact_craft_message\` - build messaging
-6. Finish with \`impact_translate_execution\` - channel adaptation
+1. Start with \`impact_identify_champions\`: provide company context
+2. Use \`impact_map_alternatives\`: add competitor info
+3. Run \`impact_pinpoint_value\`: define differentiation
+4. Execute \`impact_anchor_market\`: select beachhead
+5. Call \`impact_craft_message\`: build messaging
+6. Finish with \`impact_translate_execution\`: channel adaptation
 
 Or run \`impact_full_audit\` for a complete scored assessment.
 
@@ -578,8 +578,8 @@ ${SUGGESTED}
       price_point?: string;
     }) => {
       const company = args.company_name || 'not supplied';
-      const targetType = args.target_company_type || 'B2B companies';
-      const pricePoint = args.price_point || 'mid-market';
+      const targetType = args.target_company_type || 'B2B companies (assumed, not supplied)';
+      const pricePoint = args.price_point || 'mid-market (assumed, not supplied)';
       
       // Analyze problem to generate champion hypotheses
       const problemLower = args.problem_solved.toLowerCase();
@@ -683,8 +683,8 @@ ${SUGGESTED}
       // Default/generic
       else {
         primaryChampion = {
-          role: 'Department Head (based on problem domain)',
-          pain: 'The specific problem you solve',
+          role: `Department head who owns ${mid(args.problem_solved)}`,
+          pain: mid(args.problem_solved),
           motivation: 'KPIs directly tied to problem resolution'
         };
         economicBuyer = {
@@ -844,6 +844,12 @@ ${SUGGESTED}
       const competitors = args.competitors || ['Competitor A', 'Competitor B', 'Status Quo'];
       const weaknesses = args.competitor_weaknesses || '';
       const strengths = args.your_strengths || '';
+      // Text only (run 12): a map cell is padded to the box width; a name is printed only when one was given (or is the example list).
+      const mapCell = (name?: string) => {
+        const t = name ? `[${name}]` : '';
+        const left = Math.max(1, Math.floor((19 - t.length) / 2));
+        return (' '.repeat(left) + t).padEnd(19, ' ') + (t.length > 17 ? ' ' : '');
+      };
       
       // Generate competitive insights based on category
       const categoryLower = args.category.toLowerCase();
@@ -949,9 +955,9 @@ ${marketContext.common_complaints.map((c, i) => `${i + 1}. **${c}** → Your opp
 ${customInsights}
 
 ### Differentiation Axes
-| Axis | Market Standard | Underserved Need | Your Potential Position |
-|------|-----------------|------------------|------------------------|
-${marketContext.differentiation_axes.map((axis, i) => `| ${axis} | Average | ${marketContext.common_complaints[i] || 'Room for improvement'} | Leader opportunity |`).join('\n')}
+| Axis | Market Standard | Your Potential Position |
+|------|-----------------|------------------------|
+${marketContext.differentiation_axes.map((axis) => `| ${axis} | Average | Leader opportunity |`).join('\n')}
 
 ---
 
@@ -962,16 +968,18 @@ ${marketContext.differentiation_axes.map((axis, i) => `| ${axis} | Average | ${m
                         │
     ┌───────────────────┼───────────────────┐
     │                   │                   │
-    │  [${competitors[0] || 'Competitor A'}]  │  [YOUR WHITESPACE] │
+    │${mapCell(competitors[0])}│${mapCell('YOUR WHITESPACE')}│
     │                   │                   │
 COMPLEX ────────────────┼──────────────────── SIMPLE
     │                   │                   │
-    │  [${competitors[1] || 'Competitor B'}]  │  [${competitors[2] || 'Competitor C'}]  │
+    │${mapCell(competitors[1])}│${mapCell(competitors[2])}│
     │                   │                   │
     └───────────────────┼───────────────────┘
                         │
                       SMB
 \`\`\`
+
+(placement is a placeholder: move each name to where buyers put it)
 
 **Whitespace Identification Questions**:
 1. Which quadrant has the fewest strong competitors?
@@ -986,7 +994,7 @@ COMPLEX ────────────────┼───────
 ### Against ${competitors[0] || 'Market Leader'}
 **Their strength (an assumption to check with buyers)**: Established brand, large customer base
 **Weakness to test with buyers**: ${marketContext.common_complaints[0]} (a common complaint in this category, not a known fact about ${competitors[0] || 'them'})
-**Your attack angle**: "Unlike [them], we [your differentiation]"
+**Your attack angle**: ${strengths ? `"Unlike ${competitors[0] || '[them]'}, we offer ${mid(strengths)}"` : '"Unlike [them], we [your differentiation]"'}
 **Landmine question**: "How has [competitor weakness] impacted your results?"
 
 ### Against Status Quo
@@ -1310,8 +1318,11 @@ ${SUGGESTED}
           scores = { pain: 4, budget: 5, access: 3, reference: 4, competition: 2 };
         }
         
+        // Text only (run 12): whether a keyword set the scores (a segment with none gets the middle score on every criterion).
+        const keyword = /enterprise|mid-market|mid market|smb|small|saas|tech|finance|fintech/.test(segmentLower);
         return {
           name: segment,
+          keyword,
           ...scores,
           total: scores.pain + scores.budget + scores.access + scores.reference + scores.competition
         };
@@ -1333,6 +1344,17 @@ ${SUGGESTED}
       const cycleEx = args.sales_cycle ? '' : ` ${EXAMPLE}`;
       const segEx = args.potential_segments ? '' : ` ${EXAMPLE}`;
       const sizeIsUsers = !!args.potential_segments && beachhead.name.includes('(') && !!beachhead.name.match(/\(([^)]+)\)/)?.[1];
+      // Text only (run 12): a tie at the top is said plainly; the first-listed segment stays first (stable sort), no score changes.
+      const tied = segmentScores.filter(s => s.total === beachhead.total);
+      const tieLine = tied.length > 1
+        ? `\nTie: ${tied.length === 2 ? 'both segments have' : 'the top segments have'} the same total score${beachhead.keyword ? '' : ' (the preset middle score)'}. ${beachhead.name} is listed first: choose using your own data.\n`
+        : '';
+      // One label line under a heading, instead of a label inside the heading.
+      const segLine = args.potential_segments ? '' : '\nExample segment: replace with your own.\n';
+      // Millions with a thousands separator; billions when that loses no digit of the millions figure.
+      const money = (v: number) => v >= 1e9 && Math.round(v / 1e5) % 1000 === 0
+        ? `$${(v / 1e9).toFixed(1)}B`
+        : `$${(v / 1e6).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
 
       return `# Beachhead Market Selection
 
@@ -1363,12 +1385,12 @@ ${segmentScores.map((s, i) => `| ${i === 0 ? '**' + s.name + '** (beachhead)' : 
 
 ---
 
-## Recommended Beachhead: ${beachhead.name}${segEx}
-
-### Why This Segment Wins
+## Recommended Beachhead: ${beachhead.name}
+${segLine}${tieLine}
+### ${tied.length > 1 ? 'How This Segment Scored' : 'Why This Segment Wins'}
 
 ${EXAMPLES}
-**Highest Score (${beachhead.total}/25)** based on:
+**${tied.length > 1 ? 'Joint Highest Score' : 'Highest Score'} (${beachhead.total}/25)** based on:
 ${beachhead.pain >= 4 ? `- **High Pain Intensity** (${beachhead.pain}/5): Urgent problem that demands solution` : `- Note: Pain Level (${beachhead.pain}/5): May need more urgency creation`}
 ${beachhead.budget >= 4 ? `- **Strong Budget** (${beachhead.budget}/5): Can afford ${acv}${/\bACV\b/i.test(acv) ? '' : ' ACV'}` : `- Note: Budget (${beachhead.budget}/5): May need pricing flexibility`}
 ${beachhead.access >= 4 ? `- **Easy Access** (${beachhead.access}/5): Can reach through existing channels` : `- Note: Accessibility (${beachhead.access}/5): May need channel development`}
@@ -1379,8 +1401,8 @@ ${beachhead.competition >= 4 ? `- **Low Competition** (${beachhead.competition}/
 
 ## Market Sizing (Bottom-Up Calculation)
 
-### TAM/SAM/SOM for ${beachhead.name}${segEx}
-
+### TAM/SAM/SOM for ${beachhead.name}
+${segLine}
 The company count, ICP share and market share below are presets for this type of segment, not research on your market, so every total computed from them is an example.
 
 **Total Addressable Market (TAM)**
@@ -1388,23 +1410,23 @@ ${EXAMPLES}
 \`\`\`
 TAM = Total potential customers × ACV
 TAM = ~${(tamMultiplier).toLocaleString('en-US')} companies × ${acv}
-TAM = $${(tam / 1000000).toFixed(1)}M
+TAM = ${money(tam)}
 \`\`\`
 
 **Serviceable Addressable Market (SAM)**
 ${EXAMPLES}
 \`\`\`
 SAM = TAM × % that match your ICP
-SAM = $${(tam / 1000000).toFixed(1)}M × 30% (have the problem + right profile)
-SAM = $${(sam / 1000000).toFixed(1)}M
+SAM = ${money(tam)} × 30% (have the problem + right profile)
+SAM = ${money(sam)}
 \`\`\`
 
 **Serviceable Obtainable Market (SOM)**
 ${EXAMPLES}
 \`\`\`
 SOM = SAM × Expected market share (Year 1)
-SOM = $${(sam / 1000000).toFixed(1)}M × 5%
-SOM = $${(som / 1000000).toFixed(2)}M
+SOM = ${money(sam)} × 5%
+SOM = $${(som / 1000000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}M
 \`\`\`
 
 ### Market Sizing Assumptions
@@ -1425,11 +1447,11 @@ ${EXAMPLES}${args.average_deal_size ? ' The average deal size is your input.' : 
 
 ## Beachhead Expansion Path
 
-### Year 1: Dominate ${beachhead.name}${segEx}
-${EXAMPLES}
+### Year 1: Dominate ${beachhead.name}
+${segLine}${EXAMPLES}
 - Focus: 100% of GTM on this segment
-- Goal: ${Math.round(som / acvNumber)} customers
-- Revenue: $${(som / 1000000).toFixed(2)}M ARR
+- Goal: ${Math.round(som / acvNumber).toLocaleString('en-US')} customers
+- Revenue: $${(som / 1000000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}M ARR
 
 ### Year 2: Adjacent Expansion
 - Add: ${segmentScores[1]?.name || 'Next highest-scoring segment'}${segmentScores[1] ? segEx : ''}
@@ -1443,15 +1465,15 @@ ${EXAMPLES}
 
 ---
 
-## ICP Hypothesis for ${beachhead.name}${segEx}
-
+## ICP Hypothesis for ${beachhead.name}
+${segLine}
 Based on beachhead selection, your ICP likely includes:
 
 **Company Characteristics**:
 - Industry: ${beachhead.name.split('(')[0].trim()}
 - Size: ${beachhead.name.includes('(') ? beachhead.name.match(/\(([^)]+)\)/)?.[1] || '50-500 employees' : '50-500 employees'}${sizeIsUsers ? '' : ` ${EXAMPLE}`}
 - Tech stack: Modern, willing to adopt new tools
-- Growth stage: Series B+ or established
+- Growth stage: ${beachhead.keyword ? 'Series B+ or established' : '[fill in]'}
 
 **Buying Characteristics**:
 - Budget: can pay ${acv} or more${acvEx}
@@ -1567,10 +1589,10 @@ Choose the style that fits your brand:
 **Option A: problem to solution**
 > "If you ${need}, ${product} offers ${diff}, so you finally get ${benefit}."
 
-**Option B - Outcome-First**:
+**Option B: outcome first**
 > "Get ${benefit} [Only if true and provable: without the complexity of ${competitor}]. ${product} offers ${diff}."
 
-**Option C - Unique Mechanism**:
+**Option C: unique mechanism**
 > "The only ${mid(category)} with ${diff}. That's how ${mid(args.target_customer)} get ${benefit}."
 
 ### Level 3: Supporting Pillars (3 proof points)
@@ -1589,16 +1611,16 @@ Example pillars: replace with your own.
 
 ### A/B Testing Options
 
-**Variation A - Lead with Pain**:
+**Variation A: lead with pain**
 > "Tired of ${competitor.trim().replace(/^traditional /, '')}? ${product} offers ${diff}."
 
-**Variation B - Lead with Outcome**:
+**Variation B: lead with outcome**
 > "${cap(args.key_benefit)}. That's what ${mid(args.target_customer)} get with ${product}."
 
-**Variation C - Lead with Differentiation**:
+**Variation C: lead with differentiation**
 > "Unlike ${competitor}, ${product} offers ${diff}. Finally, ${benefit}."
 
-**Variation D - Lead with Social Proof**:
+**Variation D: lead with social proof**
 > "Join 100+ ${pluralAudience(args.target_customer)} who get ${benefit} with ${product}." ${EXAMPLE}
 
 ### Audience-Specific Messaging
@@ -1786,13 +1808,13 @@ DM me "GUIDE" for our free playbook.
 
 ## Cold Email Execution
 
-### Email 1 - Problem-focused
+### Email 1: problem-focused
 **Subject**: [Pain point] at [Company]?
 
 \`\`\`
 Hi [First name],
 
-[Trigger/reason for outreach - personalized]
+[Trigger/reason for outreach, personalized]
 
 I'm reaching out because ${mid(args.target_customer)} often struggle with [specific pain].
 
@@ -1803,7 +1825,7 @@ Would it make sense to show you how in 15 minutes? ${EXAMPLE}
 [Signature]
 \`\`\`
 
-### Email 2 - Value-focused
+### Email 2: value-focused
 **Subject**: How [Similar Company] achieved [Outcome]
 
 \`\`\`
@@ -1822,7 +1844,7 @@ Worth a conversation?
 [Signature]
 \`\`\`
 
-### Email 3 - Breakup
+### Email 3: breakup
 **Subject**: Closing the loop
 
 \`\`\`
@@ -1846,7 +1868,7 @@ Best,
 
 | Slide | Title | Content |
 |-------|-------|---------|
-| 1 | Title | ${product} - ${args.key_benefit} |
+| 1 | Title | ${product}: ${args.key_benefit} |
 | 2 | The Problem | Why ${mid(args.target_customer)} struggle today |
 | 3 | Cost of Inaction | What happens if this doesn't get solved |
 | 4 | The Solution | Introducing ${product} |
@@ -2054,19 +2076,19 @@ ${SUGGESTED}
       let gradeDescription = '';
       if (overallScore >= 85) {
         grade = 'A';
-        gradeDescription = 'Excellent - Ready to scale';
+        gradeDescription = 'Excellent: ready to scale';
       } else if (overallScore >= 75) {
         grade = 'B';
-        gradeDescription = 'Good - Minor refinements needed';
+        gradeDescription = 'Good: minor refinements needed';
       } else if (overallScore >= 65) {
         grade = 'C';
-        gradeDescription = 'Fair - Significant improvements possible';
+        gradeDescription = 'Fair: significant improvements possible';
       } else if (overallScore >= 50) {
         grade = 'D';
-        gradeDescription = 'Weak - Major gaps to address';
+        gradeDescription = 'Weak: major gaps to address';
       } else {
         grade = 'F';
-        gradeDescription = 'Critical - Positioning overhaul needed';
+        gradeDescription = 'Critical: positioning overhaul needed';
       }
       
       // Find weakest areas
