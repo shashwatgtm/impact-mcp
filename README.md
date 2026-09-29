@@ -1,5 +1,5 @@
 # IMPACT MCP v2.2.9
-**Hypothesis-Driven B2B Positioning Engine** - 8 tools implementing the IMPACT framework for strategic positioning and go-to-market messaging.
+**Hypothesis-Driven B2B Positioning Engine**: 8 tools implementing the IMPACT framework for strategic positioning and go-to-market messaging.
 
 ## Use it hosted (no install)
 
@@ -12,7 +12,7 @@ The npm package below is an older version (2.0.0 on npm on 27 September 2026) un
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Registry](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io)
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # Run directly with npx
@@ -36,7 +36,7 @@ Add to your `claude_desktop_config.json`:
 
 ---
 
-## 🎯 The IMPACT Framework
+## The IMPACT Framework
 
 **IMPACT** is a hypothesis-driven positioning methodology for B2B companies:
 
@@ -53,7 +53,7 @@ Add to your `claude_desktop_config.json`:
 
 ## Tools and inputs
 
-Generated on 27 September 2026 from the server's own tool list (`tools/list` of impact-mcp 2.2.6, the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
+Generated on 27 September 2026 from the server's own tool list and checked again on 29 September 2026 against `tools/list` of impact-mcp 2.2.9 (the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
 
 | # | Tool | Title | What it does |
 |---|---|---|---|
@@ -150,7 +150,7 @@ Generated on 27 September 2026 from the server's own tool list (`tools/list` of 
 | `current_positioning` | No | string | Optional: Your current positioning statement or tagline |
 | `customer_feedback` | No | string | Optional: What customers say about you |
 
-## 👤 Who Is This For?
+## Who Is This For?
 
 ### Primary Users
 
@@ -181,14 +181,14 @@ This MCP is included in these user-focused Agent bundles:
 
 | Agent Bundle | Tools Count | Best For |
 |--------------|-------------|----------|
-| **🎯 Founder GTM Copilot** | 10 tools | Founders, early-stage CEOs |
-| **🎯 Product Marketing Engine** | 12 tools | PMMs, product marketers |
-| **🔬 GTM Consultant Suite** | 12 tools | Fractional CMOs, advisors |
-| **📞 SDR Toolkit** | 8 tools | SDRs, BDRs |
+| **Founder GTM Copilot** | 10 tools | Founders, early-stage CEOs |
+| **Product Marketing Engine** | 12 tools | PMMs, product marketers |
+| **GTM Consultant Suite** | 12 tools | Fractional CMOs, advisors |
+| **SDR Toolkit** | 8 tools | SDRs, BDRs |
 
 ---
 
-## 🔗 Related MCPs
+## Related MCPs
 
 | MCP | Focus | Tools | Link |
 |-----|-------|-------|------|
@@ -199,7 +199,7 @@ This MCP is included in these user-focused Agent bundles:
 
 ---
 
-## 📚 About the IMPACT Framework
+## About the IMPACT Framework
 
 The IMPACT framework was developed by Shashwat Ghosh based on 24+ years in B2B and 10+ years of fractional experience. It addresses the common failure mode of B2B positioning: starting with features instead of market hypotheses.
 
@@ -211,7 +211,7 @@ The IMPACT framework was developed by Shashwat Ghosh based on 24+ years in B2B a
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 **Shashwat Ghosh**, Co-Founder and Fractional CMO, Helix GTM Consulting, with 24+ years in B2B and 10+ years of fractional experience
 
@@ -221,9 +221,9 @@ The IMPACT framework was developed by Shashwat Ghosh based on 24+ years in B2B a
 
 ---
 
-## 📄 License
+## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License: see [LICENSE](LICENSE) for details.
 
 ---
 
@@ -236,20 +236,20 @@ The same tools are also available as a hosted MCP server, so they work in Claude
 
 - Server URL: `https://impact.gtmhelix.com/mcp`
 - Transport: Streamable HTTP (stateless, JSON responses). Authentication: none.
-- Setup guide: https://impact.gtmhelix.com/
+- Setup guide: https://impact.gtmhelix.com/connect/
 - In Claude: Customize, then Connectors, then Add custom connector, and paste the server URL.
 - In Claude Code: `claude mcp add --transport http impact https://impact.gtmhelix.com/mcp`
 
 The npm package (stdio) and the hosted server run the same `createServer()` code in `src/index.ts`.
 
-The tool reference on the setup page (https://impact.gtmhelix.com/) is generated from the code. Where it differs from the parameter tables earlier in this README, the setup page is correct.
+The tool reference (https://impact.gtmhelix.com/docs/) is generated from the code. Where it differs from the parameter tables earlier in this README, the tool reference is correct.
 
 ## Privacy Policy
 
-Full policy: https://impact.gtmhelix.com/privacy.html (also in [PRIVACY.md](PRIVACY.md)).
+Full policy: https://impact.gtmhelix.com/privacy/ (also in [PRIVACY.md](PRIVACY.md)).
 
 - **Data collection:** the hosted server receives only the tool name and the inputs of each tool call. The npm package runs on your computer and sends nothing to us.
 - **Use and storage:** inputs are used only to build that call's reply. Nothing is stored: no database, no files, no cache, no logging of inputs or outputs by our code.
-- **Third-party sharing:** none by us. Netlify hosts the server and processes requests under its own policy (https://www.netlify.com/privacy/). The web pages load fonts from Google Fonts.
+- **Third-party sharing:** none by us. Netlify hosts the server and processes requests under its own policy (https://www.netlify.com/privacy/). Fonts are served from this site, so loading a page contacts no one else.
 - **Retention:** we keep no tool inputs or outputs. Netlify keeps its own platform logs under its policy.
 - **Contact:** shashwat@gtmhelix.com
