@@ -1,9 +1,9 @@
-# IMPACT MCP v2.2.9
+# IMPACT MCP v2.2.10
 **Hypothesis-Driven B2B Positioning Engine**: 8 tools implementing the IMPACT framework for strategic positioning and go-to-market messaging.
 
 ## Use it hosted (no install)
 
-Add `https://impact.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector. It needs no sign-in and always runs the newest version (2.2.9). The same tools run as a free web app with a form per tool at https://impact.gtmhelix.com/, and the setup steps are at https://impact.gtmhelix.com/connect/.
+Add `https://impact.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector. It needs no sign-in and always runs the newest version (2.2.10). The same tools run as a free web app with a form per tool at https://impact.gtmhelix.com/, and the setup steps are at https://impact.gtmhelix.com/connect/.
 
 The npm package below is an older version (2.0.0 on npm on 27 September 2026) until the next npm release. Use it only if you need a local stdio server.
 
@@ -53,7 +53,7 @@ Add to your `claude_desktop_config.json`:
 
 ## Tools and inputs
 
-Generated on 27 September 2026 from the server's own tool list and checked again on 29 September 2026 against `tools/list` of impact-mcp 2.2.9 (the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
+Generated on 27 September 2026 from the server's own tool list and checked again on 29 September 2026 against `tools/list` of impact-mcp 2.2.10 (the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
 
 | # | Tool | Title | What it does |
 |---|---|---|---|
@@ -124,7 +124,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | `differentiation` | Yes | string | Your unique differentiation |
 | `product_name` | No | string | Your product name |
 | `customer_need` | No | string | The need they have, written as an action (for example "lose revenue to missed appointments") |
-| `product_category` | No | string | Your product category |
+| `product_category` | No | string | Your product category, written as a noun phrase (for example "analytics platform") |
 | `competitor` | No | string | Primary alternative/competitor |
 
 #### 7. Translate Execution (`impact_translate_execution`)
@@ -133,7 +133,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 |---|---|---|---|
 | `positioning_statement` | Yes | string | Your core positioning statement |
 | `target_customer` | Yes | string | Target customer profile |
-| `key_benefit` | Yes | string | Primary benefit |
+| `key_benefit` | Yes | string | Primary benefit, written as an action (for example "cut no-shows") |
 | `channels` | No | array of string | Accepted but not used yet: the output always covers website, LinkedIn, email, sales deck and demo |
 | `product_name` | No | string | Your product name |
 
