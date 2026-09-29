@@ -1749,7 +1749,7 @@ But you're stuck with:
 - [Pain point 2]
 - [Pain point 3]
 
-There's a better way.
+[Only if true: "There's a better way."]
 
 [One sentence about your solution]
 
@@ -2191,7 +2191,7 @@ ${SUGGESTED}
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'impact-mcp';
-exports.SERVER_VERSION = '2.2.12';
+exports.SERVER_VERSION = '2.2.13';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "impact_get_framework": "IMPACT Framework Guide",
