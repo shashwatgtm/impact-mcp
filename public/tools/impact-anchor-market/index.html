@@ -142,7 +142,7 @@
    "about": {
     "@id": "https://impact.gtmhelix.com/#app"
    },
-   "dateModified": "2026-09-29",
+   "dateModified": "2026-09-30",
    "inLanguage": "en",
    "primaryImageOfPage": "https://impact.gtmhelix.com/og.png"
   },
@@ -242,7 +242,7 @@
     <div class="hero-grid"><div class="hx10-split-text">
       <p class="sub">Give it what your product does and the segments you are weighing. Get a score per segment, a recommended first market, a market sizing framework and a three-year expansion path.</p>
       <p class="hx10-actions hx11-tool-acts"><a class="hx-btn" href="?example=1#run">Try it with an example</a><a class="slink" href="#run">Use your own details</a></p>
-      <p class="hx-byline">Last updated <time datetime="2026-09-29">29 September 2026</time></p>
+      <p class="hx-byline">Last updated <time datetime="2026-09-30">30 September 2026</time></p>
     </div><figure class="hx8-vis hx10-split-vis "><svg viewBox="0 0 360 266" width="360" height="266" role="img" aria-labelledby="v5t v5d" class="hx8-svg"><title id="v5t">Recommended Beachhead</title><desc id="v5d">Recommended Beachhead: TAM for the chosen segment, inside SAM the part you can serve, inside SOM what you can win first. Not to scale.</desc><text x="0" y="16" class="v-k" text-anchor="start">Recommended Beachhead</text><rect x="0" y="30" width="360" height="208" class="v-clay v-pop d1"/><text x="10" y="48" class="v-ts v-fade d2" text-anchor="start">TAM  for the chosen segment</text><rect x="36" y="66" width="288" height="136" class="v-clayd v-pop d2"/><text x="46" y="84" class="v-ts v-fade d3" text-anchor="start">SAM  the part you can serve</text><rect x="72" y="102" width="216" height="64" class="v-ink7 v-pop d3"/><text x="82" y="120" class="v-tp v-fade d4" text-anchor="start">SOM  what you can win first</text><text x="360" y="258" class="v-tm" text-anchor="end">Not to scale</text></svg></figure></div>
   </div>
 </section>
@@ -252,9 +252,9 @@
   <div class="win hx-form-win"><div class="win-bar"><span class="t">Run Anchor Market</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/impact_anchor_market" data-tool="impact_anchor_market" data-title="Anchor Market"><p class="hx-help">You need: Product description. You can add: Potential segments, Current customers, Average deal size, Sales cycle.</p>
 <div class="hx-field"><label for="f-product_description">Product description <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-product_description" name="product_description" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-product_description-help"></textarea><p class="hx-help" id="f-product_description-help">What your product does</p></div>
 <div class="hx-field"><label for="f-potential_segments">Potential segments <span class="hx-opt">(optional)</span></label><textarea id="f-potential_segments" name="potential_segments" rows="4" data-kind="lines" aria-describedby="f-potential_segments-help"></textarea><p class="hx-help" id="f-potential_segments-help">List of potential market segments (e.g., [&quot;Mid-market SaaS&quot;, &quot;Enterprise Finance&quot;, &quot;SMB Retail&quot;]). One item per line.</p></div>
-<div class="hx-field"><label for="f-current_customers">Current customers <span class="hx-opt">(optional)</span></label><textarea id="f-current_customers" name="current_customers" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-current_customers-help"></textarea><p class="hx-help" id="f-current_customers-help">Optional: Description of your current/best customers</p></div>
+<div class="hx-field"><label for="f-current_customers">Current customers <span class="hx-opt">(optional)</span></label><textarea id="f-current_customers" name="current_customers" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-current_customers-help"></textarea><p class="hx-help" id="f-current_customers-help">Optional: Description of your current/best customers. Shown in the output; not used in the scoring</p></div>
 <div class="hx-field"><label for="f-average_deal_size">Average deal size <span class="hx-opt">(optional)</span></label><input id="f-average_deal_size" name="average_deal_size" type="text" maxlength="6000" data-kind="string" aria-describedby="f-average_deal_size-help"><p class="hx-help" id="f-average_deal_size-help">Optional: Your ACV as one amount (e.g., &quot;$50,000&quot;, &quot;$50K&quot; or &quot;$1.5M&quot;); a range is refused</p></div>
-<div class="hx-field"><label for="f-sales_cycle">Sales cycle <span class="hx-opt">(optional)</span></label><textarea id="f-sales_cycle" name="sales_cycle" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-sales_cycle-help"></textarea><p class="hx-help" id="f-sales_cycle-help">Optional: Typical sales cycle length</p></div>
+<div class="hx-field"><label for="f-sales_cycle">Sales cycle <span class="hx-opt">(optional)</span></label><textarea id="f-sales_cycle" name="sales_cycle" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-sales_cycle-help"></textarea><p class="hx-help" id="f-sales_cycle-help">Optional: Typical sales cycle length. Shown in the output; not used in the scoring</p></div>
     <div class="hx-hp" aria-hidden="true"><label for="hp-impact_anchor_market">Leave this empty</label><input id="hp-impact_anchor_market" name="leave_this_empty" type="text" tabindex="-1" autocomplete="off"></div>
     <div class="hx-actions">
       <button type="submit" class="hx-btn">Run Anchor Market</button>
@@ -284,7 +284,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 2.2.15 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 2.2.16 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">IMPACT report</p>
@@ -308,7 +308,7 @@
 <li><strong>Competition</strong>: Is the segment less contested?</li>
 </ul>
 <h6 class="hxr-h4">Segment Scores</h6>
-<p>These scores are presets, not research on your market: each segment is scored from keywords in its name (enterprise, mid-market, SMB, small, SaaS, tech, finance), and a segment with none of these keywords gets the middle score on every criterion.</p>
+<p>These scores are presets, not research on your market: each segment is scored from keywords in its name (enterprise, mid-market, SMB, small, SaaS, tech, finance), and a segment with none of these keywords gets the middle score on every criterion. Your current customers and sales cycle are shown for context; they do not change the scores or the market sizes.</p>
 <p>Example figures: replace with your own.</p>
 <div class="hx-table"><table><thead><tr><th>Segment</th><th>Pain</th><th>Budget</th><th>Access</th><th>Reference</th><th>Competition</th><th><strong>TOTAL</strong></th></tr></thead><tbody><tr><td><strong>Mid-market dental groups</strong> (beachhead)</td><td>5</td><td>4</td><td>4</td><td>4</td><td>3</td><td><strong>20</strong></td></tr><tr><td>Enterprise hospital networks</td><td>4</td><td>5</td><td>2</td><td>5</td><td>2</td><td><strong>18</strong></td></tr><tr><td>Small physiotherapy practices</td><td>4</td><td>2</td><td>5</td><td>2</td><td>4</td><td><strong>17</strong></td></tr></tbody></table></div>
 <hr>

@@ -22,7 +22,7 @@
 - [Anchor Market](https://impact.gtmhelix.com/tools/impact-anchor-market/) (`impact_anchor_market`): Select a beachhead market: keyword-based segment scores and a TAM/SAM/SOM framework whose preset figures are labelled for you to replace
 - [Craft Message](https://impact.gtmhelix.com/tools/impact-craft-message/) (`impact_craft_message`): Build positioning statement and message hierarchy with variations
 - [Translate Execution](https://impact.gtmhelix.com/tools/impact-translate-execution/) (`impact_translate_execution`): Adapt positioning for specific channels and touchpoints
-- [IMPACT Full Audit](https://impact.gtmhelix.com/tools/impact-full-audit/) (`impact_full_audit`): Complete positioning audit with scoring and recommendations
+- [IMPACT Full Audit](https://impact.gtmhelix.com/tools/impact-full-audit/) (`impact_full_audit`): Positioning audit with an input completeness score and recommendations
 
 ## Questions and answers
 
