@@ -218,9 +218,29 @@ const JOINING_WORD = /^(with|and|or|of|for|to|the|a|an|in|on|by|that|from|you|yo
 // works or lives, not the audience, so the words before that place word are used instead ("VP of RevOps", never
 // "HubSpot partners" or "the US").
 const PLACE_WORD = /^(at|in|on|of|for|from|with|by|to|the|a|an|and|or)$/i;
+// Run 15 R15-32 (edge-case matrix): a long target customer names its audience first ("CFOs of US and European mid-market
+// companies with 200 to 2,000 employees"); its last words are often a size ("2,000 employees") or who the audience serves
+// ("hourly staff"). So the audience is the words before the first place or clause word (at, in, for, from, with, who, that,
+// which, across, serving, selling, using, or a comma); when that is still over 5 words and holds "of", the role before "of".
+const AUDIENCE_STOP = /^(at|in|for|from|with|who|that|which|across|serving|selling|using|between|within|based)$/i;
+function leadAudience(words: string[]): string[] | null {
+  let end = words.length;
+  for (let i = 1; i < words.length; i++) {
+    if (AUDIENCE_STOP.test(words[i])) { end = i; break; }
+    if (/[,;:(]$/.test(words[i])) { end = i + 1; break; }
+  }
+  let lead = words.slice(0, end).map((x, k) => (k === end - 1 ? x.replace(/[,;:(]+$/, '') : x));
+  if (lead.length > 5) {
+    const of = lead.findIndex((x, k) => k > 0 && /^of$/i.test(x));
+    lead = of > 0 ? lead.slice(0, of) : lead.slice(0, 0);
+  }
+  return lead.length && lead.length <= 5 && !/\d/.test(lead.join(' ')) ? lead : null;
+}
 function shortAudience(phrase: string): string {
   const w = mid(phrase).split(/\s+/);
   if (w.length <= 5) return w.join(' ');
+  const lead = leadAudience(w);
+  if (lead) return lead.join(' ');
   let i = w.length - 2;
   while (i > 0 && JOINING_WORD.test(w[i])) i--;
   if (i > 1 && PLACE_WORD.test(w[i - 1])) {
@@ -841,7 +861,9 @@ ${SUGGESTED}
       competitor_weaknesses?: string;
       your_strengths?: string;
     }) => {
-      const competitors = args.competitors || ['Competitor A', 'Competitor B', 'Status Quo'];
+      // Run 15 R15-32: an empty list is treated like no list, and the placeholder names say they are examples
+      const competitorsGiven = !!(args.competitors && args.competitors.length);
+      const competitors = competitorsGiven ? args.competitors as string[] : ['Competitor A', 'Competitor B', 'Status Quo'];
       const weaknesses = args.competitor_weaknesses || '';
       const strengths = args.your_strengths || '';
       // Text only (run 12): a map cell is padded to the box width; a name is printed only when one was given (or is the example list).
@@ -905,7 +927,7 @@ ${SUGGESTED}
 ## Market Context
 **Your Product**: ${args.your_product}
 **Category**: ${args.category}
-**Analyzed Competitors**: ${competitors.join(', ')}
+**Analyzed Competitors**: ${competitors.join(', ')}${competitorsGiven ? '' : ' (examples: you supplied no competitors; replace them with your own)'}
 
 ---
 
@@ -1292,7 +1314,9 @@ ${SUGGESTED}
       average_deal_size?: string;
       sales_cycle?: string;
     }) => {
-      const segments = args.potential_segments || ['Mid-market SaaS (50-500 employees)', 'Enterprise Tech (500+ employees)', 'SMB (10-50 employees)'];
+      // Run 15 R15-32: an empty list is treated like no list (it was a tool error)
+      const segGiven = !!(args.potential_segments && args.potential_segments.length);
+      const segments = segGiven ? args.potential_segments as string[] : ['Mid-market SaaS (50-500 employees)', 'Enterprise Tech (500+ employees)', 'SMB (10-50 employees)'];
       const acv = args.average_deal_size || '$30,000';
       const cycle = args.sales_cycle || '3-6 months';
       
@@ -1346,15 +1370,15 @@ ${SUGGESTED}
       // Labels only: values the user did not supply are preset examples.
       const acvEx = args.average_deal_size ? '' : ` ${EXAMPLE}`;
       const cycleEx = args.sales_cycle ? '' : ` ${EXAMPLE}`;
-      const segEx = args.potential_segments ? '' : ` ${EXAMPLE}`;
-      const sizeIsUsers = !!args.potential_segments && beachhead.name.includes('(') && !!beachhead.name.match(/\(([^)]+)\)/)?.[1];
+      const segEx = segGiven ? '' : ` ${EXAMPLE}`;
+      const sizeIsUsers = segGiven && beachhead.name.includes('(') && !!beachhead.name.match(/\(([^)]+)\)/)?.[1];
       // Text only (run 12): a tie at the top is said plainly; the first-listed segment stays first (stable sort), no score changes.
       const tied = segmentScores.filter(s => s.total === beachhead.total);
       const tieLine = tied.length > 1
         ? `\nTie: ${tied.length === 2 ? 'both segments have' : 'the top segments have'} the same total score${beachhead.keyword ? '' : ' (the preset middle score)'}. ${beachhead.name} is listed first: choose using your own data.\n`
         : '';
       // One label line under a heading, instead of a label inside the heading.
-      const segLine = args.potential_segments ? '' : '\nExample segment: replace with your own.\n';
+      const segLine = segGiven ? '' : '\nExample segment: replace with your own.\n';
       // Millions with a thousands separator; billions when that loses no digit of the millions figure.
       const money = (v: number) => v >= 1e9 && Math.round(v / 1e5) % 1000 === 0
         ? `$${(v / 1e9).toFixed(1)}B`
@@ -1381,7 +1405,7 @@ ${args.current_customers ? `**Current Customers**: ${args.current_customers}` : 
 
 ### Segment Scores
 
-These scores are presets, not research on your market: each segment is scored from keywords in its name (enterprise, mid-market, SMB, small, SaaS, tech, finance), and a segment with none of these keywords gets the middle score on every criterion.${args.potential_segments ? '' : ' You supplied no segments, so the segments are examples too.'} Your current customers and sales cycle are shown for context; they do not change the scores or the market sizes.
+These scores are presets, not research on your market: each segment is scored from keywords in its name (enterprise, mid-market, SMB, small, SaaS, tech, finance), and a segment with none of these keywords gets the middle score on every criterion.${segGiven ? '' : ' You supplied no segments, so the segments are examples too.'} Your current customers and sales cycle are shown for context; they do not change the scores or the market sizes.
 ${EXAMPLES}
 | Segment | Pain | Budget | Access | Reference | Competition | **TOTAL** |
 |---------|------|--------|--------|-----------|-------------|-----------|
@@ -2256,7 +2280,7 @@ ${SUGGESTED}
 // =============================================================================
 
 export const SERVER_NAME = 'impact-mcp';
-export const SERVER_VERSION = '2.2.16';
+export const SERVER_VERSION = '2.2.17';
 
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES: Record<string, string> = {
