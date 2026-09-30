@@ -1252,7 +1252,7 @@ ${SUGGESTED}
                 },
                 current_customers: {
                     type: 'string',
-                    description: 'Optional: Description of your current/best customers'
+                    description: 'Optional: Description of your current/best customers. Shown in the output; not used in the scoring'
                 },
                 average_deal_size: {
                     type: 'string',
@@ -1260,7 +1260,7 @@ ${SUGGESTED}
                 },
                 sales_cycle: {
                     type: 'string',
-                    description: 'Optional: Typical sales cycle length'
+                    description: 'Optional: Typical sales cycle length. Shown in the output; not used in the scoring'
                 }
             },
             required: ['product_description']
@@ -1351,7 +1351,7 @@ ${args.current_customers ? `**Current Customers**: ${args.current_customers}` : 
 
 ### Segment Scores
 
-These scores are presets, not research on your market: each segment is scored from keywords in its name (enterprise, mid-market, SMB, small, SaaS, tech, finance), and a segment with none of these keywords gets the middle score on every criterion.${args.potential_segments ? '' : ' You supplied no segments, so the segments are examples too.'}
+These scores are presets, not research on your market: each segment is scored from keywords in its name (enterprise, mid-market, SMB, small, SaaS, tech, finance), and a segment with none of these keywords gets the middle score on every criterion.${args.potential_segments ? '' : ' You supplied no segments, so the segments are examples too.'} Your current customers and sales cycle are shown for context; they do not change the scores or the market sizes.
 ${EXAMPLES}
 | Segment | Pain | Budget | Access | Reference | Competition | **TOTAL** |
 |---------|------|--------|--------|-----------|-------------|-----------|
@@ -1906,7 +1906,7 @@ ${SUGGESTED}
     // Tool 8: Full Positioning Audit
     // ---------------------------------------------------------------------------
     impact_full_audit: {
-        description: 'Complete positioning audit with scoring and recommendations',
+        description: 'Positioning audit with an input completeness score and recommendations',
         inputSchema: {
             type: 'object',
             properties: {
@@ -2023,23 +2023,23 @@ ${SUGGESTED}
             let gradeDescription = '';
             if (overallScore >= 85) {
                 grade = 'A';
-                gradeDescription = 'Excellent: ready to scale';
+                gradeDescription = 'Very complete: every area has detailed input';
             }
             else if (overallScore >= 75) {
                 grade = 'B';
-                gradeDescription = 'Good: minor refinements needed';
+                gradeDescription = 'Mostly complete: a few inputs could be more specific';
             }
             else if (overallScore >= 65) {
                 grade = 'C';
-                gradeDescription = 'Fair: significant improvements possible';
+                gradeDescription = 'Partly complete: several inputs are short or missing';
             }
             else if (overallScore >= 50) {
                 grade = 'D';
-                gradeDescription = 'Weak: major gaps to address';
+                gradeDescription = 'Thin: many inputs are short or missing';
             }
             else {
                 grade = 'F';
-                gradeDescription = 'Critical: positioning overhaul needed';
+                gradeDescription = 'Very thin: most inputs are short or missing';
             }
             // Find weakest areas
             const sortedScores = Object.entries(scores).sort((a, b) => a[1] - b[1]);
@@ -2064,32 +2064,33 @@ ${args.customer_feedback ? `**Customer Feedback**: ${args.customer_feedback}` : 
 
 ## IMPACT Scorecard
 
-### Overall Score: ${overallScore}/100 (Grade: ${grade})
-**Assessment**: ${gradeDescription}
+### Input completeness score: ${overallScore}/100 (Grade: ${grade})
+**Inputs**: ${gradeDescription}
+**What this score measures**: how complete and specific your inputs are, not whether your positioning is right. Longer inputs and certain words (such as only, unique, unlike, employees, revenue and Series) raise it.
 
-| Phase | Score | Status | Priority |
+| Phase | Score | Input detail | Priority |
 |-------|-------|--------|----------|
-| **I**: Identify Champions | ${scores.identify}/100 | ${scores.identify >= 70 ? 'Strong' : scores.identify >= 50 ? 'Needs Work' : 'Critical'} | ${scores.identify < 60 ? 'High' : 'Low'} |
-| **M**: Map Alternatives | ${scores.map}/100 | ${scores.map >= 70 ? 'Strong' : scores.map >= 50 ? 'Needs Work' : 'Critical'} | ${scores.map < 60 ? 'High' : 'Low'} |
-| **P**: Pinpoint Value | ${scores.pinpoint}/100 | ${scores.pinpoint >= 70 ? 'Strong' : scores.pinpoint >= 50 ? 'Needs Work' : 'Critical'} | ${scores.pinpoint < 60 ? 'High' : 'Low'} |
-| **A**: Anchor Market | ${scores.anchor}/100 | ${scores.anchor >= 70 ? 'Strong' : scores.anchor >= 50 ? 'Needs Work' : 'Critical'} | ${scores.anchor < 60 ? 'High' : 'Low'} |
-| **C**: Craft Message | ${scores.craft}/100 | ${scores.craft >= 70 ? 'Strong' : scores.craft >= 50 ? 'Needs Work' : 'Critical'} | ${scores.craft < 60 ? 'High' : 'Low'} |
-| **T**: Translate Execution | ${scores.translate}/100 | ${scores.translate >= 70 ? 'Strong' : scores.translate >= 50 ? 'Needs Work' : 'Critical'} | ${scores.translate < 60 ? 'High' : 'Low'} |
+| **I**: Identify Champions | ${scores.identify}/100 | ${scores.identify >= 70 ? 'Detailed' : scores.identify >= 50 ? 'Partial' : 'Thin'} | ${scores.identify < 60 ? 'High' : 'Low'} |
+| **M**: Map Alternatives | ${scores.map}/100 | ${scores.map >= 70 ? 'Detailed' : scores.map >= 50 ? 'Partial' : 'Thin'} | ${scores.map < 60 ? 'High' : 'Low'} |
+| **P**: Pinpoint Value | ${scores.pinpoint}/100 | ${scores.pinpoint >= 70 ? 'Detailed' : scores.pinpoint >= 50 ? 'Partial' : 'Thin'} | ${scores.pinpoint < 60 ? 'High' : 'Low'} |
+| **A**: Anchor Market | ${scores.anchor}/100 | ${scores.anchor >= 70 ? 'Detailed' : scores.anchor >= 50 ? 'Partial' : 'Thin'} | ${scores.anchor < 60 ? 'High' : 'Low'} |
+| **C**: Craft Message | ${scores.craft}/100 | ${scores.craft >= 70 ? 'Detailed' : scores.craft >= 50 ? 'Partial' : 'Thin'} | ${scores.craft < 60 ? 'High' : 'Low'} |
+| **T**: Translate Execution | ${scores.translate}/100 | ${scores.translate >= 70 ? 'Detailed' : scores.translate >= 50 ? 'Partial' : 'Thin'} | ${scores.translate < 60 ? 'High' : 'Low'} |
 
 ---
 
-## Strengths
+## Most detailed inputs
 ${strongest.map(([phase, score]) => score < 50 ? `
-### Least weak area: ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
-Rated Critical: it is listed here only because the other areas scored lower.
+### Least thin input: ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
+Rated Thin: it is listed here only because the other areas scored lower.
 ` : `
 ### ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
-${phase === 'identify' ? `Your target customer definition ("${args.target_customer}") provides good specificity for champion identification.` : ''}
-${phase === 'map' ? `You have ${competitors.length} competitor${competitors.length === 1 ? '' : 's'} identified, enabling competitive positioning.` : ''}
-${phase === 'pinpoint' ? (args.key_differentiation ? `Your differentiation ("${args.key_differentiation}") provides a foundation for value articulation.` : 'No differentiation supplied yet.') : ''}
-${phase === 'anchor' ? `Your market definition includes specific criteria for targeting.` : ''}
-${phase === 'craft' ? `You have a positioning statement foundation to build upon.` : ''}
-${phase === 'translate' ? `You supplied customer feedback, which this score reads as a sign of market presence (it scores by length, not by what the feedback says).` : ''}
+${phase === 'identify' ? `Your target customer ("${args.target_customer}") is long and specific enough for a high score in this area.` : ''}
+${phase === 'map' ? `You named ${competitors.length} competitor${competitors.length === 1 ? '' : 's'}; this area counts how many you name, not who they are.` : ''}
+${phase === 'pinpoint' ? (args.key_differentiation ? `Your differentiation ("${args.key_differentiation}") is long enough for a high score in this area${score >= 85 ? ' and uses the word "only" or "unique"' : ''}.` : 'No differentiation supplied yet.') : ''}
+${phase === 'anchor' ? (score >= 80 ? `Your target customer mentions employees, revenue or a funding series.` : `Your target customer is several words long.`) : ''}
+${phase === 'craft' ? (score >= 85 ? `Your current positioning is long and uses the word "unlike" or "only".` : score >= 70 ? `Your current positioning is long.` : `You supplied a current positioning statement.`) : ''}
+${phase === 'translate' ? `You supplied customer feedback; this area scores its length, not what it says.` : ''}
 `.replace(/\n{2,}/g, '\n')).join('')}
 
 ---
@@ -2098,16 +2099,16 @@ ${phase === 'translate' ? `You supplied customer feedback, which this score read
 ${weakest.map(([phase, score]) => `
 ### ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
 
-${score >= 70 ? 'Already strong: sharpen it next.' : `**Issue**: ${phase === 'identify' ? 'Champion identification needs more specificity. Who exactly is your buyer?' :
-                phase === 'map' ? 'Competitive landscape needs deeper analysis. What are the alternatives customers consider?' :
-                    phase === 'pinpoint' ? 'Value proposition needs quantification. What specific outcomes do customers achieve?' :
-                        phase === 'anchor' ? 'Market definition needs tighter criteria. What makes a company ideal for you?' :
-                            phase === 'craft' ? 'Positioning statement is missing or incomplete. How do you articulate your unique value?' :
-                                'Execution translation is weak. How does positioning show up in your channels?'}`}
+${score >= 70 ? 'This input is already detailed: sharpen it next.' : `**Input**: ${phase === 'identify' ? 'Your target customer is short. Who exactly is your buyer?' :
+                phase === 'map' ? 'This area counts the competitors you name, and you named few or none. What are the alternatives customers consider?' :
+                    phase === 'pinpoint' ? `${args.key_differentiation ? 'Your differentiation is short.' : 'You supplied no differentiation.'} What specific outcomes do customers achieve?` :
+                        phase === 'anchor' ? 'Your target customer does not mention employees, revenue or a funding series. What makes a company ideal for you?' :
+                            phase === 'craft' ? `${args.current_positioning ? 'Your current positioning is short.' : 'You supplied no current positioning statement.'} How do you articulate your unique value?` :
+                                `${args.customer_feedback ? 'Your customer feedback is short.' : 'You supplied no customer feedback.'} How does positioning show up in your channels?`}`}
 
-**Action**: Run \`impact_${phase === 'identify' ? 'identify_champions' : phase === 'map' ? 'map_alternatives' : phase === 'pinpoint' ? 'pinpoint_value' : phase === 'anchor' ? 'anchor_market' : phase === 'craft' ? 'craft_message' : 'translate_execution'}\` to address this gap.
+**Action**: Run \`impact_${phase === 'identify' ? 'identify_champions' : phase === 'map' ? 'map_alternatives' : phase === 'pinpoint' ? 'pinpoint_value' : phase === 'anchor' ? 'anchor_market' : phase === 'craft' ? 'craft_message' : 'translate_execution'}\` to add this detail.
 
-**Expected Improvement**: +${20 - Math.floor(score / 10)} points with focused work ${EXAMPLE}
+**Possible input score change**: +${20 - Math.floor(score / 10)} points to this area when you add the detail above ${EXAMPLE}
 `).join('')}
 
 ---
@@ -2176,7 +2177,7 @@ ${EXAMPLES}
 Based on your scores, prioritize these tools:
 
 1. **\`${phaseTool[weakest[0][0]]}\`**: Address your lowest-scoring area first
-2. **\`${phaseTool[weakest[1][0]]}\`**: Then tackle the second-weakest
+2. **\`${phaseTool[weakest[1][0]]}\`**: Then the second-lowest-scoring area
 ${[['impact_craft_message', 'Synthesize into final positioning'], ['impact_translate_execution', 'Activate across channels']]
                 .filter(([t]) => t !== phaseTool[weakest[0][0]] && t !== phaseTool[weakest[1][0]])
                 .map(([t, what], i) => `${i + 3}. **\`${t}\`**: ${what}`).join('\n')}
@@ -2195,7 +2196,7 @@ ${SUGGESTED}
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'impact-mcp';
-exports.SERVER_VERSION = '2.2.15';
+exports.SERVER_VERSION = '2.2.16';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "impact_get_framework": "IMPACT Framework Guide",

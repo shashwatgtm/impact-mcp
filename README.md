@@ -1,9 +1,9 @@
-# IMPACT MCP v2.2.13
+# IMPACT MCP v2.2.16
 **Hypothesis-Driven B2B Positioning Engine**: 8 tools implementing the IMPACT framework for strategic positioning and go-to-market messaging.
 
 ## Use it hosted (no install)
 
-Add `https://impact.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector. It needs no sign-in and always runs the newest version (2.2.13). The same tools run as a free web app with a form per tool at https://impact.gtmhelix.com/, and the setup steps are at https://impact.gtmhelix.com/connect/.
+Add `https://impact.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector. It needs no sign-in and always runs the newest version (2.2.16). The same tools run as a free web app with a form per tool at https://impact.gtmhelix.com/, and the setup steps are at https://impact.gtmhelix.com/connect/.
 
 The npm package below is an older version (2.0.0 on npm on 27 September 2026) until the next npm release. Use it only if you need a local stdio server.
 
@@ -53,7 +53,7 @@ Add to your `claude_desktop_config.json`:
 
 ## Tools and inputs
 
-Generated on 27 September 2026 from the server's own tool list and checked again on 29 September 2026 against `tools/list` of impact-mcp 2.2.13 (the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
+Generated on 27 September 2026 from the server's own tool list and checked again on 30 September 2026 against `tools/list` of impact-mcp 2.2.16 (the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
 
 | # | Tool | Title | What it does |
 |---|---|---|---|
@@ -64,7 +64,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | 5 | `impact_anchor_market` | Anchor Market | Select a beachhead market: keyword-based segment scores and a TAM/SAM/SOM framework whose preset figures are labelled for you to replace |
 | 6 | `impact_craft_message` | Craft Message | Build positioning statement and message hierarchy with variations |
 | 7 | `impact_translate_execution` | Translate Execution | Adapt positioning for specific channels and touchpoints |
-| 8 | `impact_full_audit` | IMPACT Full Audit | Complete positioning audit with scoring and recommendations |
+| 8 | `impact_full_audit` | IMPACT Full Audit | Positioning audit with an input completeness score and recommendations |
 
 ### Inputs of each tool
 
@@ -111,9 +111,9 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 |---|---|---|---|
 | `product_description` | Yes | string | What your product does |
 | `potential_segments` | No | array of string | List of potential market segments (e.g., ["Mid-market SaaS", "Enterprise Finance", "SMB Retail"]) |
-| `current_customers` | No | string | Optional: Description of your current/best customers |
+| `current_customers` | No | string | Optional: Description of your current/best customers. Shown in the output; not used in the scoring |
 | `average_deal_size` | No | string | Optional: Your ACV as one amount (e.g., "$50,000", "$50K" or "$1.5M"); a range is refused |
-| `sales_cycle` | No | string | Optional: Typical sales cycle length |
+| `sales_cycle` | No | string | Optional: Typical sales cycle length. Shown in the output; not used in the scoring |
 
 #### 6. Craft Message (`impact_craft_message`)
 
