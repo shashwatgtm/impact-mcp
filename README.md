@@ -64,7 +64,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | 5 | `impact_anchor_market` | Anchor Market | Select a beachhead market: keyword-based segment scores and a TAM/SAM/SOM framework whose preset figures are labelled for you to replace |
 | 6 | `impact_craft_message` | Craft Message | Build positioning statement and message hierarchy with variations |
 | 7 | `impact_translate_execution` | Translate Execution | Adapt positioning for specific channels and touchpoints |
-| 8 | `impact_full_audit` | IMPACT Full Audit | Positioning audit with an input completeness score and recommendations |
+| 8 | `impact_full_audit` | IMPACT Full Audit | Positioning audit with an input completeness checklist and recommendations |
 
 ### Inputs of each tool
 
