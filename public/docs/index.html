@@ -232,7 +232,7 @@
   <ul class="hx-prose">
     <li>Address: <code>https://impact.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
-    <li>Rate limit: 300 requests per minute per IP address. Server: <code>impact-mcp</code> version 2.2.18.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>impact-mcp</code> version 2.2.19.</li>
     <li>Limits: 262,144 bytes per call; text fields up to 4,000 characters; one call per request (no batches). A call over a limit is refused before the tool runs.</li>
     <li>Local use: <code>npx -y @shashwatgtmalpha/impact-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
   </ul>
@@ -278,95 +278,103 @@
 <tr><td>2.2.15</td><td>29 September 2026</td><td>GitHub, commit 3d02ede (@shashwatgtmalpha/impact-mcp)</td></tr>
 <tr><td>2.2.16</td><td>30 September 2026</td><td>GitHub, commit 1dc422e (@shashwatgtmalpha/impact-mcp)</td></tr>
 <tr><td>2.2.17</td><td>30 September 2026</td><td>GitHub, commit f58512f (@shashwatgtmalpha/impact-mcp)</td></tr>
-<tr><td>2.2.18 (this site)</td><td>30 September 2026</td><td>GitHub, commit a2706f7 (@shashwatgtmalpha/impact-mcp)</td></tr>
+<tr><td>2.2.18</td><td>30 September 2026</td><td>GitHub, commit a2706f7 (@shashwatgtmalpha/impact-mcp)</td></tr>
+<tr><td>2.2.19 (this site)</td><td>2 October 2026</td><td>GitHub, commit 1d4801f (@shashwatgtmalpha/impact-mcp)</td></tr>
   </tbody></table></div>
 </section>
 
 <section class="hx-section" aria-labelledby="ref-h">
   <h2 id="ref-h">Tool reference</h2>
-  <p class="hx-sub">Generated from the server's own input schemas, version 2.2.18.</p>
+  <p class="hx-sub">Generated from the server's own input schemas, version 2.2.19.</p>
 </section>
 <section class="hx-section" id="impact-get-framework" aria-labelledby="d-impact-get-framework">
   <h3 id="d-impact-get-framework">IMPACT Framework Guide</h3>
   <p><code>impact_get_framework</code></p>
-  <p class="hx-prose">Get complete IMPACT framework methodology with phase-by-phase guidance. <a href="/tools/impact-get-framework/">Open the form</a>.</p>
+  <p class="hx-prose">Get the IMPACT framework method phase by phase, optionally with your sector&#x27;s buyer roles, measures and proof points. <a href="/tools/impact-get-framework/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>focus_phase</code></td><td>string</td><td>no</td><td>identify, map, pinpoint, anchor, craft, translate, all</td><td>Optional: specific phase to focus on (identify/map/pinpoint/anchor/craft/translate)</td></tr>
+<tr><td><code>sector</code></td><td>string</td><td>no</td><td></td><td>Optional: your sector in your own words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity). Adds how the six steps read in that sector</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-identify-champions" aria-labelledby="d-impact-identify-champions">
   <h3 id="d-impact-identify-champions">Identify Champions</h3>
   <p><code>impact_identify_champions</code></p>
-  <p class="hx-prose">Generate champion hypotheses from your company and product context. <a href="/tools/impact-identify-champions/">Open the form</a>.</p>
+  <p class="hx-prose">Generate champion, economic buyer and technical influencer hypotheses from your product context, using the buying roles of your sector. <a href="/tools/impact-identify-champions/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>company_name</code></td><td>string</td><td>no</td><td></td><td>Your company name</td></tr>
 <tr><td><code>product_description</code></td><td>string</td><td>yes</td><td></td><td>What your product does (1-2 sentences)</td></tr>
 <tr><td><code>problem_solved</code></td><td>string</td><td>yes</td><td></td><td>The core problem you solve</td></tr>
-<tr><td><code>target_company_type</code></td><td>string</td><td>no</td><td></td><td>Type of companies you target (e.g., &quot;Series B SaaS&quot;, &quot;Enterprise manufacturing&quot;)</td></tr>
+<tr><td><code>target_company_type</code></td><td>string</td><td>no</td><td></td><td>Type of companies you target (e.g., &quot;mid-size fintech companies&quot;, &quot;enterprise manufacturers&quot;)</td></tr>
 <tr><td><code>price_point</code></td><td>string</td><td>no</td><td></td><td>Optional: ACV range (e.g., &quot;$50K-100K&quot;)</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-map-alternatives" aria-labelledby="d-impact-map-alternatives">
   <h3 id="d-impact-map-alternatives">Map Alternatives</h3>
   <p><code>impact_map_alternatives</code></p>
-  <p class="hx-prose">Analyze competitive landscape and find positioning whitespace. <a href="/tools/impact-map-alternatives/">Open the form</a>.</p>
+  <p class="hx-prose">Map your alternatives: one card per named competitor, plus the status-quo options you list, using the weaknesses and strengths you give, with the questions and objections of your sector. <a href="/tools/impact-map-alternatives/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>your_product</code></td><td>string</td><td>yes</td><td></td><td>What your product does</td></tr>
-<tr><td><code>category</code></td><td>string</td><td>yes</td><td></td><td>Your product category (e.g., &quot;Sales engagement&quot;, &quot;Data platform&quot;)</td></tr>
-<tr><td><code>competitors</code></td><td>list of strings</td><td>no</td><td></td><td>List of competitor names</td></tr>
-<tr><td><code>competitor_weaknesses</code></td><td>string</td><td>no</td><td></td><td>Optional: Known competitor weaknesses or customer complaints</td></tr>
-<tr><td><code>your_strengths</code></td><td>string</td><td>no</td><td></td><td>Optional: What you do better than competitors</td></tr>
+<tr><td><code>category</code></td><td>string</td><td>yes</td><td></td><td>Your product category (e.g., &quot;cloud security monitoring&quot;, &quot;last-mile delivery software&quot;)</td></tr>
+<tr><td><code>competitors</code></td><td>list of strings</td><td>no</td><td></td><td>List of competitor names, and the status-quo options your buyers use (for example &quot;spreadsheets&quot;). A description in brackets after a name is kept</td></tr>
+<tr><td><code>competitor_weaknesses</code></td><td>string</td><td>no</td><td></td><td>Optional: Known competitor weaknesses or customer complaints, one per line or separated by semicolons. A weakness that names a competitor is shown on its card</td></tr>
+<tr><td><code>your_strengths</code></td><td>string</td><td>no</td><td></td><td>Optional: What you do better than competitors, one per line or separated by semicolons</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-pinpoint-value" aria-labelledby="d-impact-pinpoint-value">
   <h3 id="d-impact-pinpoint-value">Pinpoint Value</h3>
   <p><code>impact_pinpoint_value</code></p>
-  <p class="hx-prose">Generate value proposition with quantification and proof points. <a href="/tools/impact-pinpoint-value/">Open the form</a>.</p>
+  <p class="hx-prose">Generate value proposition statements, a value matrix for your own figures and proof points that fit your business model. <a href="/tools/impact-pinpoint-value/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>product_name</code></td><td>string</td><td>no</td><td></td><td>Your product/company name</td></tr>
 <tr><td><code>category</code></td><td>string</td><td>no</td><td></td><td>Product category</td></tr>
-<tr><td><code>target_customer</code></td><td>string</td><td>yes</td><td></td><td>Who you serve (e.g., &quot;B2B sales teams&quot;)</td></tr>
+<tr><td><code>target_customer</code></td><td>string</td><td>yes</td><td></td><td>Who you serve (e.g., &quot;cloud security leads at mid-size fintech companies&quot;)</td></tr>
 <tr><td><code>key_outcome</code></td><td>string</td><td>yes</td><td></td><td>The main result customers achieve</td></tr>
 <tr><td><code>unique_capability</code></td><td>string</td><td>yes</td><td></td><td>What you do that others cannot/don&#x27;t</td></tr>
-<tr><td><code>customer_metrics</code></td><td>string</td><td>no</td><td></td><td>Optional: Any customer results data (e.g., &quot;40% faster, 3x pipeline&quot;)</td></tr>
+<tr><td><code>customer_metrics</code></td><td>string</td><td>no</td><td></td><td>Optional: Any customer results data (e.g., &quot;critical exposures down 70% in one quarter; audit preparation from 3 weeks to 4 days&quot;)</td></tr>
+<tr><td><code>business_model</code></td><td>string</td><td>no</td><td>saas, services, connectivity, transactions, marketplace, hardware_software, investment</td><td>Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose proof types; read from your inputs when not given</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-anchor-market" aria-labelledby="d-impact-anchor-market">
   <h3 id="d-impact-anchor-market">Anchor Market</h3>
   <p><code>impact_anchor_market</code></p>
-  <p class="hx-prose">Select a beachhead market: keyword-based segment scores and a TAM/SAM/SOM framework whose preset figures are labelled for you to replace. <a href="/tools/impact-anchor-market/">Open the form</a>.</p>
+  <p class="hx-prose">Select a beachhead market: keyword-based segment scores (presets), and a TAM/SAM/SOM calculation that uses only the company counts, deal size and percentages you give. <a href="/tools/impact-anchor-market/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>product_description</code></td><td>string</td><td>yes</td><td></td><td>What your product does</td></tr>
-<tr><td><code>potential_segments</code></td><td>list of strings</td><td>no</td><td></td><td>List of potential market segments (e.g., [&quot;Mid-market SaaS&quot;, &quot;Enterprise Finance&quot;, &quot;SMB Retail&quot;])</td></tr>
+<tr><td><code>potential_segments</code></td><td>list of strings</td><td>no</td><td></td><td>List of potential market segments (e.g., [&quot;Mid-market fintech&quot;, &quot;Enterprise banks&quot;, &quot;Small retail chains&quot;])</td></tr>
 <tr><td><code>current_customers</code></td><td>string</td><td>no</td><td></td><td>Optional: Description of your current/best customers. Shown in the output; not used in the scoring</td></tr>
 <tr><td><code>average_deal_size</code></td><td>string</td><td>no</td><td></td><td>Optional: Your ACV as one amount (e.g., &quot;$50,000&quot;, &quot;$50K&quot; or &quot;$1.5M&quot;); a range is refused</td></tr>
 <tr><td><code>sales_cycle</code></td><td>string</td><td>no</td><td></td><td>Optional: Typical sales cycle length. Shown in the output; not used in the scoring</td></tr>
+<tr><td><code>company_counts</code></td><td>string</td><td>no</td><td></td><td>Optional: how many companies you could sell to in each segment, one per line or separated by semicolons (for example &quot;Mid-market fintech: 3,200; Enterprise banks: 600&quot;). A single number is read as the count for the recommended segment. Needed for market sizing</td></tr>
+<tr><td><code>percent_matching_icp</code></td><td>number (more than 0)</td><td>no</td><td></td><td>Optional: the percent of those companies that match your ideal customer profile (for example 25). Needed for SAM</td></tr>
+<tr><td><code>year_one_share_percent</code></td><td>number (more than 0)</td><td>no</td><td></td><td>Optional: the share of the matching companies you expect to win in year one, in percent (for example 1). Needed for SOM</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-craft-message" aria-labelledby="d-impact-craft-message">
   <h3 id="d-impact-craft-message">Craft Message</h3>
   <p><code>impact_craft_message</code></p>
-  <p class="hx-prose">Build positioning statement and message hierarchy with variations. <a href="/tools/impact-craft-message/">Open the form</a>.</p>
+  <p class="hx-prose">Build a positioning statement and message hierarchy from your own words, in whole sentences, with proof and objections that fit your sector and business model. <a href="/tools/impact-craft-message/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>product_name</code></td><td>string</td><td>no</td><td></td><td>Your product name</td></tr>
 <tr><td><code>target_customer</code></td><td>string</td><td>yes</td><td></td><td>Target customer description</td></tr>
-<tr><td><code>customer_need</code></td><td>string</td><td>no</td><td></td><td>The need they have, written as an action (for example &quot;lose revenue to missed appointments&quot;)</td></tr>
-<tr><td><code>product_category</code></td><td>string</td><td>no</td><td></td><td>Your product category, written as a noun phrase (for example &quot;analytics platform&quot;)</td></tr>
+<tr><td><code>customer_need</code></td><td>string</td><td>no</td><td></td><td>The need they have, written as an action (for example &quot;lose days chasing low-risk cloud alerts&quot;)</td></tr>
+<tr><td><code>product_category</code></td><td>string</td><td>no</td><td></td><td>Your product category, written as a noun phrase (for example &quot;cloud security monitoring platform&quot;)</td></tr>
 <tr><td><code>key_benefit</code></td><td>string</td><td>yes</td><td></td><td>Primary benefit/reason to buy</td></tr>
 <tr><td><code>competitor</code></td><td>string</td><td>no</td><td></td><td>Primary alternative/competitor</td></tr>
 <tr><td><code>differentiation</code></td><td>string</td><td>yes</td><td></td><td>Your unique differentiation</td></tr>
+<tr><td><code>business_model</code></td><td>string</td><td>no</td><td>saas, services, connectivity, transactions, marketplace, hardware_software, investment</td><td>Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose the cost and proof lines; read from your inputs when not given</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-translate-execution" aria-labelledby="d-impact-translate-execution">
   <h3 id="d-impact-translate-execution">Translate Execution</h3>
   <p><code>impact_translate_execution</code></p>
-  <p class="hx-prose">Adapt positioning for specific channels and touchpoints. <a href="/tools/impact-translate-execution/">Open the form</a>.</p>
+  <p class="hx-prose">Adapt a positioning statement for the channels you choose (website, LinkedIn, cold email, sales deck, demo), with calls to action that fit your business model. <a href="/tools/impact-translate-execution/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>positioning_statement</code></td><td>string</td><td>yes</td><td></td><td>Your core positioning statement</td></tr>
 <tr><td><code>target_customer</code></td><td>string</td><td>yes</td><td></td><td>Target customer profile</td></tr>
-<tr><td><code>key_benefit</code></td><td>string</td><td>yes</td><td></td><td>Primary benefit, written as an action (for example &quot;cut no-shows&quot;)</td></tr>
-<tr><td><code>channels</code></td><td>list of strings</td><td>no</td><td></td><td>Accepted but not used yet: the output always covers website, LinkedIn, email, sales deck and demo</td></tr>
+<tr><td><code>key_benefit</code></td><td>string</td><td>yes</td><td></td><td>Primary benefit, written as an action (for example &quot;fix critical exposures first&quot;)</td></tr>
+<tr><td><code>channels</code></td><td>list of strings</td><td>no</td><td></td><td>Optional: which channels to cover, from website, linkedin, cold_email, sales_deck and product_demo. Others are listed as not covered; with none, all five are covered</td></tr>
 <tr><td><code>product_name</code></td><td>string</td><td>no</td><td></td><td>Your product name</td></tr>
+<tr><td><code>business_model</code></td><td>string</td><td>no</td><td>saas, services, connectivity, transactions, marketplace, hardware_software, investment</td><td>Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose calls to action and commercial terms; read from your inputs when not given</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-full-audit" aria-labelledby="d-impact-full-audit">
@@ -382,6 +390,7 @@
 <tr><td><code>competitors</code></td><td>list of strings</td><td>no</td><td></td><td>Main competitors</td></tr>
 <tr><td><code>current_positioning</code></td><td>string</td><td>no</td><td></td><td>Optional: Your current positioning statement or tagline</td></tr>
 <tr><td><code>customer_feedback</code></td><td>string</td><td>no</td><td></td><td>Optional: What customers say about you</td></tr>
+<tr><td><code>business_model</code></td><td>string</td><td>no</td><td>saas, services, connectivity, transactions, marketplace, hardware_software, investment</td><td>Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the score</td></tr>
   </tbody></table></div>
 </section>
 </div>

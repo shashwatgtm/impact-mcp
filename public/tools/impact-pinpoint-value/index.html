@@ -211,7 +211,7 @@
    "@type": "WebApplication",
    "@id": "https://impact.gtmhelix.com/tools/impact-pinpoint-value/#app",
    "name": "Pinpoint Value (IMPACT)",
-   "description": "Generate value proposition with quantification and proof points",
+   "description": "Generate value proposition statements, a value matrix for your own figures and proof points that fit your business model",
    "url": "https://impact.gtmhelix.com/tools/impact-pinpoint-value/",
    "applicationCategory": "BusinessApplication",
    "browserRequirements": "Any modern browser; works without JavaScript",
@@ -280,13 +280,14 @@
 
 <div class="hx-body">
 <section class="hx-section hx-run-sec" id="run" aria-label="Run Pinpoint Value">
-  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run Pinpoint Value</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/impact_pinpoint_value" data-tool="impact_pinpoint_value" data-title="Pinpoint Value"><p class="hx-help">You need: Target customer, Key outcome, Unique capability. You can add: Product name, Category, Customer metrics.</p>
+  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run Pinpoint Value</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/impact_pinpoint_value" data-tool="impact_pinpoint_value" data-title="Pinpoint Value"><p class="hx-help">You need: Target customer, Key outcome, Unique capability. You can add: Product name, Category, Customer metrics, Business model.</p>
 <div class="hx-field"><label for="f-product_name">Product name <span class="hx-opt">(optional)</span></label><input id="f-product_name" name="product_name" type="text" maxlength="6000" data-kind="string" aria-describedby="f-product_name-help"><p class="hx-help" id="f-product_name-help">Your product/company name</p></div>
 <div class="hx-field"><label for="f-category">Category <span class="hx-opt">(optional)</span></label><textarea id="f-category" name="category" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-category-help"></textarea><p class="hx-help" id="f-category-help">Product category</p></div>
-<div class="hx-field"><label for="f-target_customer">Target customer <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-target_customer" name="target_customer" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-target_customer-help"></textarea><p class="hx-help" id="f-target_customer-help">Who you serve (e.g., &quot;B2B sales teams&quot;)</p></div>
+<div class="hx-field"><label for="f-target_customer">Target customer <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-target_customer" name="target_customer" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-target_customer-help"></textarea><p class="hx-help" id="f-target_customer-help">Who you serve (e.g., &quot;cloud security leads at mid-size fintech companies&quot;)</p></div>
 <div class="hx-field"><label for="f-key_outcome">Key outcome <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-key_outcome" name="key_outcome" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-key_outcome-help"></textarea><p class="hx-help" id="f-key_outcome-help">The main result customers achieve</p></div>
 <div class="hx-field"><label for="f-unique_capability">Unique capability <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-unique_capability" name="unique_capability" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-unique_capability-help"></textarea><p class="hx-help" id="f-unique_capability-help">What you do that others cannot/don&#x27;t</p></div>
-<div class="hx-field"><label for="f-customer_metrics">Customer metrics <span class="hx-opt">(optional)</span></label><textarea id="f-customer_metrics" name="customer_metrics" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-customer_metrics-help"></textarea><p class="hx-help" id="f-customer_metrics-help">Optional: Any customer results data (e.g., &quot;40% faster, 3x pipeline&quot;)</p></div>
+<div class="hx-field"><label for="f-customer_metrics">Customer metrics <span class="hx-opt">(optional)</span></label><textarea id="f-customer_metrics" name="customer_metrics" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-customer_metrics-help"></textarea><p class="hx-help" id="f-customer_metrics-help">Optional: Any customer results data (e.g., &quot;critical exposures down 70% in one quarter; audit preparation from 3 weeks to 4 days&quot;)</p></div>
+<div class="hx-field"><label for="f-business_model">Business model <span class="hx-opt">(optional)</span></label><select id="f-business_model" name="business_model" data-kind="string" aria-describedby="f-business_model-help"><option value="">Not specified</option><option value="saas">SaaS</option><option value="services">Services</option><option value="connectivity">Connectivity</option><option value="transactions">Transactions</option><option value="marketplace">Marketplace</option><option value="hardware_software">Hardware software</option><option value="investment">Investment</option></select><p class="hx-help" id="f-business_model-help">Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose proof types; read from your inputs when not given</p></div>
     <div class="hx-hp" aria-hidden="true"><label for="hp-impact_pinpoint_value">Leave this empty</label><input id="hp-impact_pinpoint_value" name="leave_this_empty" type="text" tabindex="-1" autocomplete="off"></div>
     <div class="hx-actions">
       <button type="submit" class="hx-btn">Run Pinpoint Value</button>
@@ -316,7 +317,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 2.2.18 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 2.2.19 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">IMPACT report</p>
@@ -331,74 +332,66 @@
 <p><strong>Target Customer</strong>: cloud security leads at mid-size fintech companies</p>
 <p><strong>Key Outcome</strong>: Fewer critical exposures</p>
 <p><strong>Unique Capability</strong>: Exposure-based ranking of every misconfiguration</p>
-<p><strong>Reported Metrics</strong>: critical exposures down 70% in one quarter</p>
+<p><strong>Reported Metrics</strong>: critical exposures down 70% in one quarter (supplied by you: use only what is real and you can show)</p>
+<p><em>Sector: read from your inputs as cybersecurity. Business model: software subscription (read from your inputs; set Business model to change it).</em></p>
 <hr>
 <h5 class="hxr-h3">The Only Statement</h5>
+<p>The "only" claim stays inside brackets until it is true and you can prove it.</p>
 <h6 class="hxr-h4">Version 1 (Category-focused)</h6>
-<blockquote>[Only if true and provable: <strong>Cloudmoat</strong> is the <strong>only cloud security monitoring platform</strong> with <strong>exposure-based ranking of every misconfiguration</strong>, giving <strong>cloud security leads at mid-size fintech companies</strong> <strong>fewer critical exposures</strong>.]</blockquote>
+<blockquote>[Only if true and provable: <strong>Cloudmoat</strong> is the only cloud security monitoring platform with exposure-based ranking of every misconfiguration. It gives cloud security leads at mid-size fintech companies this result: "Fewer critical exposures".]</blockquote>
 <h6 class="hxr-h4">Version 2 (Outcome-focused)</h6>
-<blockquote>We help <strong>cloud security leads at mid-size fintech companies</strong> achieve <strong>fewer critical exposures</strong> through <strong>exposure-based ranking of every misconfiguration</strong>. [Only if true and provable: something no other cloud security monitoring platform can deliver.]</blockquote>
+<blockquote>We help <strong>cloud security leads at mid-size fintech companies</strong> get fewer critical exposures. Cloudmoat offers exposure-based ranking of every misconfiguration. [Only if true and provable: no other cloud security monitoring platform can say the same.]</blockquote>
 <h6 class="hxr-h4">Version 3 (Problem-focused)</h6>
-<blockquote>[Only if true and provable: Unlike traditional cloud security monitoring platforms,] <strong>Cloudmoat</strong> offers <strong>exposure-based ranking of every misconfiguration</strong>, which means <strong>cloud security leads at mid-size fintech companies</strong> finally get <strong>fewer critical exposures</strong>.</blockquote>
+<blockquote>[Only if true and provable: Unlike traditional cloud security monitoring platforms,] Cloudmoat offers exposure-based ranking of every misconfiguration, so cloud security leads at mid-size fintech companies can get fewer critical exposures.</blockquote>
 <hr>
 <h5 class="hxr-h3">Value Quantification Matrix</h5>
-<p>Example figures: replace with your own. The Revenue Impact figure is your input.</p>
-<div class="hx-table"><table><thead><tr><th>Value Driver</th><th>Metric</th><th>Typical Before</th><th>With Cloudmoat</th><th>Improvement</th></tr></thead><tbody><tr><td><strong>Time Savings</strong></td><td>Hours saved</td><td>Manual effort</td><td>Automated</td><td>10 hours/week</td></tr><tr><td><strong>Error Reduction</strong></td><td>Accuracy</td><td>Error-prone</td><td>Reliable</td><td>80%</td></tr><tr><td><strong>Revenue Impact</strong></td><td>Business outcome</td><td>Baseline</td><td>Optimized</td><td>critical exposures down 70% in one quarter</td></tr><tr><td><strong>Efficiency</strong></td><td>Productivity</td><td>1x</td><td>Accelerated</td><td>3x</td></tr></tbody></table></div>
+<p>This tool adds no figure of its own. The rows are the measures buyers in cybersecurity already watch; the cells are for your numbers, and the results you supplied are listed first.</p>
+<div class="hx-table"><table><thead><tr><th>What to measure</th><th>Before (their number)</th><th>With Cloudmoat (their number)</th><th>Source</th></tr></thead><tbody><tr><td>critical exposures down 70% in one quarter</td><td></td><td></td><td>Supplied by you</td></tr><tr><td>mean time to detect</td><td></td><td></td><td>Fill from the customer's own data</td></tr><tr><td>mean time to respond</td><td></td><td></td><td>Fill from the customer's own data</td></tr><tr><td>critical exposures open</td><td></td><td></td><td>Fill from the customer's own data</td></tr><tr><td>alerts per analyst</td><td></td><td></td><td>Fill from the customer's own data</td></tr><tr><td>audit findings</td><td></td><td></td><td>Fill from the customer's own data</td></tr></tbody></table></div>
 <hr>
 <h5 class="hxr-h3">Proof Point Framework</h5>
 <h6 class="hxr-h4">Tier 1: Customer Results (Strongest)</h6>
 <p>Use these patterns to document customer success:</p>
-<blockquote><strong>"[Customer Name] achieved [specific metric] within [timeframe]"</strong></blockquote>
-<p>Example templates:</p>
+<blockquote><strong>"[Customer name] improved [the measure] from [before] to [after] within [time frame]"</strong></blockquote>
+<p><strong>Results you supplied</strong> (use one only if it is real and you can show it):</p>
 <ul>
-<li>"[Customer] improved [outcome] by 70% in [time frame]"</li>
-<li>"[Customer] saved 10 hours/week previously spent on [manual task]" (Example figure: replace with your own)</li>
-<li>"[Customer] saw 3x improvement in [metric]" (Example figure: replace with your own)</li>
+<li>critical exposures down 70% in one quarter</li>
 </ul>
 <p><strong>Proof Collection Questions</strong> (ask your existing customers):</p>
 <ol>
-<li value="1">"What metric improved most after implementing us?"</li>
-<li value="2">"How much time does your team save weekly?"</li>
+<li value="1">"What measure improved most after implementing us?"</li>
+<li value="2">"How much time does your team save, and on what?"</li>
 <li value="3">"What would you have to spend to achieve this otherwise?"</li>
-<li value="4">"What was the ROI payback period?"</li>
+<li value="4">"What was the payback period?"</li>
 </ol>
+<p><strong>What a good proof point looks like in cybersecurity:</strong> Exposures found and closed during the proof of value, with the time it took to fix them.</p>
 <h6 class="hxr-h4">Tier 2: Third-Party Validation</h6>
 <ul>
-<li><strong>Analyst Recognition</strong>: industry analyst reports, G2 rankings</li>
-<li><strong>Awards</strong>: Industry awards, innovation recognition</li>
-<li><strong>Certifications</strong>: SOC 2, ISO 27001, industry-specific</li>
-<li><strong>Media Coverage</strong>: Press mentions, thought leadership</li>
+<li>Analyst coverage, review sites such as G2, Capterra or TrustRadius, awards, and certifications such as SOC 2 or ISO 27001 if you hold them</li>
 </ul>
-<h6 class="hxr-h4">Tier 3: Technical Proof</h6>
+<h6 class="hxr-h4">Tier 3: Technical or Operational Proof</h6>
 <ul>
-<li><strong>Benchmarks</strong>: Performance metrics vs. alternatives</li>
-<li><strong>Integrations</strong>: Ecosystem partner certifications</li>
-<li><strong>Case Studies</strong>: Detailed implementation stories</li>
-<li><strong>Demos</strong>: Live proof of capability</li>
+<li>Benchmarks against alternatives, integrations, live demos</li>
 </ul>
 <h6 class="hxr-h4">Tier 4: Social Proof</h6>
 <ul>
-<li><strong>Logo Wall</strong>: Recognizable customer brands</li>
-<li><strong>Reviews</strong>: G2, Capterra, TrustRadius ratings</li>
-<li><strong>Testimonials</strong>: Customer quotes and videos</li>
-<li><strong>Community</strong>: User group size, engagement</li>
+<li>Logo wall, case studies, reviews, user community</li>
 </ul>
 <hr>
 <h5 class="hxr-h3">Value Statement Variations</h5>
 <h6 class="hxr-h4">For Different Audiences</h6>
 <p><strong>For Champions (cloud security leads at mid-size fintech companies)</strong>:</p>
-<blockquote>"Finally, fewer critical exposures without [current pain point]. Our customers report: critical exposures down 70% in one quarter."</blockquote>
-<p><strong>For Economic Buyers (CFO/CEO)</strong>:</p>
-<blockquote>"Our customers report critical exposures down 70% in one quarter, with payback in [your payback period]. [Only if true and provable: lower TCO than alternatives.]"</blockquote>
+<blockquote>"Cloudmoat helps you get fewer critical exposures, without [the current pain point]. A result to cite (yours, only if real): critical exposures down 70% in one quarter."</blockquote>
+<p><strong>For Economic Buyers (CISO)</strong>:</p>
+<blockquote>"Cloudmoat helps cloud security leads at mid-size fintech companies get fewer critical exposures. A result to cite (yours, only if real): critical exposures down 70% in one quarter. Payback: [your payback period, if you can show it]. [Only if true and provable: lower total cost of ownership than the alternatives.]"</blockquote>
 <p><strong>For Technical Evaluators</strong>:</p>
-<blockquote>"Exposure-based ranking of every misconfiguration, delivered through [technical approach]. [Only if true and provable: integrates with your existing stack in days, not months.]"</blockquote>
+<blockquote>"Cloudmoat offers exposure-based ranking of every misconfiguration, delivered through [technical approach]. [Only if true and provable: how it works with the systems the buyer already runs.]"</blockquote>
 <h6 class="hxr-h4">For Different Channels</h6>
 <p><strong>Website Hero</strong> (15 words max):</p>
-<blockquote>"Fewer critical exposures for cloud security leads at mid-size fintech companies. Critical exposures down 70% in one quarter."</blockquote>
+<blockquote>"Fewer critical exposures for cloud security leads."</blockquote>
 <p><strong>LinkedIn Post</strong> (Hook):</p>
-<blockquote>"Cloud security leads at mid-size fintech companies: does [the problem you solve] sound familiar? We built something different: exposure-based ranking of every misconfiguration."</blockquote>
+<blockquote>"Cloud security leads: does [the problem you solve] sound familiar? Cloudmoat offers exposure-based ranking of every misconfiguration."</blockquote>
 <p><strong>Cold Email</strong> (Value prop):</p>
-<blockquote>"We help companies like yours get fewer critical exposures. Recent customer results: critical exposures down 70% in one quarter."</blockquote>
+<blockquote>"We help companies like yours get fewer critical exposures. A recent result (yours, only if real): critical exposures down 70% in one quarter."</blockquote>
 <p><strong>Sales Deck</strong> (Slide title):</p>
 <blockquote>[Only if true and provable: "The only cloud security monitoring platform with exposure-based ranking of every misconfiguration"]</blockquote>
 <hr>
@@ -406,10 +399,15 @@
 <p>Before finalizing, validate with prospects:</p>
 <ol>
 <li value="1"><strong>Clarity</strong>: "After hearing this, what do you think we do?"</li>
-<li value="2"><strong>Relevance</strong>: "How important is [key outcome] to you right now?"</li>
+<li value="2"><strong>Relevance</strong>: "How important is this result to you right now?"</li>
 <li value="3"><strong>Differentiation</strong>: "Have you heard anything like this from other vendors?"</li>
 <li value="4"><strong>Believability</strong>: "What would you need to see to believe this?"</li>
 </ol>
+<h6 class="hxr-h4">Sector view: cybersecurity</h6>
+<ul>
+<li><strong>Who usually buys:</strong> The CISO signs; the SOC or cloud security lead champions; security engineers use it; risk, compliance and audit review the evidence it produces; the CIO or CTO checks integration.</li>
+<li><strong>Objections this sector often raises:</strong> "We already have a tool for this"; "We have too many alerts already"; "Integration with our SIEM and ticketing"; "We need proof before budget".</li>
+</ul>
 <p><strong>Next Step</strong>: Use Anchor Market to select your beachhead market segment</p>
 <p>Suggested timings, lengths and counts: adjust them to your own.</p></div></details>
     <footer class="hxr-foot"><span>Built by Shashwat Ghosh</span><span>https://impact.gtmhelix.com/tools/impact-pinpoint-value/</span></footer>

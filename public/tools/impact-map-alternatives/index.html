@@ -211,7 +211,7 @@
    "@type": "WebApplication",
    "@id": "https://impact.gtmhelix.com/tools/impact-map-alternatives/#app",
    "name": "Map Alternatives (IMPACT)",
-   "description": "Analyze competitive landscape and find positioning whitespace",
+   "description": "Map your alternatives: one card per named competitor, plus the status-quo options you list, using the weaknesses and strengths you give, with the questions and objections of your sector",
    "url": "https://impact.gtmhelix.com/tools/impact-map-alternatives/",
    "applicationCategory": "BusinessApplication",
    "browserRequirements": "Any modern browser; works without JavaScript",
@@ -282,10 +282,10 @@
 <section class="hx-section hx-run-sec" id="run" aria-label="Run Map Alternatives">
   <div class="win hx-form-win"><div class="win-bar"><span class="t">Run Map Alternatives</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/impact_map_alternatives" data-tool="impact_map_alternatives" data-title="Map Alternatives"><p class="hx-help">You need: Your product, Category. You can add: Competitors, Competitor weaknesses, Your strengths.</p>
 <div class="hx-field"><label for="f-your_product">Your product <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-your_product" name="your_product" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-your_product-help"></textarea><p class="hx-help" id="f-your_product-help">What your product does</p></div>
-<div class="hx-field"><label for="f-category">Category <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-category" name="category" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-category-help"></textarea><p class="hx-help" id="f-category-help">Your product category (e.g., &quot;Sales engagement&quot;, &quot;Data platform&quot;)</p></div>
-<div class="hx-field"><label for="f-competitors">Competitors <span class="hx-opt">(optional)</span></label><textarea id="f-competitors" name="competitors" rows="4" data-kind="lines" aria-describedby="f-competitors-help"></textarea><p class="hx-help" id="f-competitors-help">List of competitor names. One item per line.</p></div>
-<div class="hx-field"><label for="f-competitor_weaknesses">Competitor weaknesses <span class="hx-opt">(optional)</span></label><textarea id="f-competitor_weaknesses" name="competitor_weaknesses" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-competitor_weaknesses-help"></textarea><p class="hx-help" id="f-competitor_weaknesses-help">Optional: Known competitor weaknesses or customer complaints</p></div>
-<div class="hx-field"><label for="f-your_strengths">Your strengths <span class="hx-opt">(optional)</span></label><textarea id="f-your_strengths" name="your_strengths" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-your_strengths-help"></textarea><p class="hx-help" id="f-your_strengths-help">Optional: What you do better than competitors</p></div>
+<div class="hx-field"><label for="f-category">Category <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-category" name="category" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-category-help"></textarea><p class="hx-help" id="f-category-help">Your product category (e.g., &quot;cloud security monitoring&quot;, &quot;last-mile delivery software&quot;)</p></div>
+<div class="hx-field"><label for="f-competitors">Competitors <span class="hx-opt">(optional)</span></label><textarea id="f-competitors" name="competitors" rows="4" data-kind="lines" aria-describedby="f-competitors-help"></textarea><p class="hx-help" id="f-competitors-help">List of competitor names, and the status-quo options your buyers use (for example &quot;spreadsheets&quot;). A description in brackets after a name is kept. One item per line.</p></div>
+<div class="hx-field"><label for="f-competitor_weaknesses">Competitor weaknesses <span class="hx-opt">(optional)</span></label><textarea id="f-competitor_weaknesses" name="competitor_weaknesses" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-competitor_weaknesses-help"></textarea><p class="hx-help" id="f-competitor_weaknesses-help">Optional: Known competitor weaknesses or customer complaints, one per line or separated by semicolons. A weakness that names a competitor is shown on its card</p></div>
+<div class="hx-field"><label for="f-your_strengths">Your strengths <span class="hx-opt">(optional)</span></label><textarea id="f-your_strengths" name="your_strengths" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-your_strengths-help"></textarea><p class="hx-help" id="f-your_strengths-help">Optional: What you do better than competitors, one per line or separated by semicolons</p></div>
     <div class="hx-hp" aria-hidden="true"><label for="hp-impact_map_alternatives">Leave this empty</label><input id="hp-impact_map_alternatives" name="leave_this_empty" type="text" tabindex="-1" autocomplete="off"></div>
     <div class="hx-actions">
       <button type="submit" class="hx-btn">Run Map Alternatives</button>
@@ -315,7 +315,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 2.2.18 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 2.2.19 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">IMPACT report</p>
@@ -328,22 +328,27 @@
 <p><strong>Your Product</strong>: Cloudmoat</p>
 <p><strong>Category</strong>: cloud security monitoring</p>
 <p><strong>Analyzed Competitors</strong>: Competitor A, Competitor B</p>
+<p><em>Sector: not clear from your inputs, so no sector notes are added. Name the industry in plain words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity).</em></p>
 <hr>
 <h5 class="hxr-h3">Alternative Categories</h5>
 <h6 class="hxr-h4">1. Direct Competitors (Same Solution, Same Problem)</h6>
 <p><strong>Competitor A</strong>:</p>
 <ul>
-<li>Positioning territory to check: Alert quality (a common axis in this category; nothing about Competitor A was looked up)</li>
-<li>Weakness to test with buyers: Alert fatigue (a common complaint in this category, not a known fact about Competitor A)</li>
-<li>Best for: [who they serve best, from what buyers tell you]</li>
-<li>Your opportunity: Differentiate on Deployment ease</li>
+<li>What you told us about them: only the name; nothing else was looked up</li>
+<li>Weaknesses you reported (notes for you to test with buyers, not verified facts): none supplied for this competitor</li>
+<li>Where you can lead:</li>
+<li>exposure-based ranking</li>
+<li>one view across three clouds</li>
+<li>A neutral question to ask a buyer about them: "What have you tried before to solve this, and what did not work?"</li>
 </ul>
 <p><strong>Competitor B</strong>:</p>
 <ul>
-<li>Positioning territory to check: Deployment ease (a common axis in this category; nothing about Competitor B was looked up)</li>
-<li>Weakness to test with buyers: False positives (a common complaint in this category, not a known fact about Competitor B)</li>
-<li>Best for: [who they serve best, from what buyers tell you]</li>
-<li>Your opportunity: Differentiate on Coverage breadth</li>
+<li>What you told us about them: only the name; nothing else was looked up</li>
+<li>Weaknesses you reported (notes for you to test with buyers, not verified facts): none supplied for this competitor</li>
+<li>Where you can lead:</li>
+<li>exposure-based ranking</li>
+<li>one view across three clouds</li>
+<li>A neutral question to ask a buyer about them: "What have you tried before to solve this, and what did not work?"</li>
 </ul>
 <h6 class="hxr-h4">2. Status Quo (Current Manual/DIY Approach)</h6>
 <p><strong>What they may be doing instead</strong> (common patterns to check with buyers):</p>
@@ -360,9 +365,9 @@
 </ul>
 <p><strong>Breaking status quo</strong>:</p>
 <ul>
-<li>Quantify cost of manual approach</li>
-<li>Show what competitors are doing</li>
-<li>Create urgency with market trends</li>
+<li>Quantify cost of the current approach in the buyer's own figures</li>
+<li>Show what the alternatives cannot do</li>
+<li>Create urgency with a dated event (a renewal, an audit, a season, a target)</li>
 </ul>
 <h6 class="hxr-h4">3. Do Nothing (Accept the Problem)</h6>
 <p><strong>Why they might do nothing</strong>:</p>
@@ -379,21 +384,13 @@
 </ul>
 <hr>
 <h5 class="hxr-h3">Competitive Whitespace Analysis</h5>
-<h6 class="hxr-h4">Common Market Complaints (Opportunity Areas)</h6>
-<ol>
-<li value="1"><strong>Alert fatigue</strong> → Your opportunity to excel here</li>
-<li value="2"><strong>False positives</strong> → Your opportunity to excel here</li>
-<li value="3"><strong>Complex deployment</strong> → Your opportunity to excel here</li>
-<li value="4"><strong>Tool sprawl</strong> → Your opportunity to excel here</li>
-<li value="5"><strong>Pricing complexity</strong> → Your opportunity to excel here</li>
-</ol>
 <p><strong>Your Key Differentiators</strong>:</p>
 <ul>
 <li>exposure-based ranking</li>
 <li>one view across three clouds</li>
 </ul>
 <h6 class="hxr-h4">Differentiation Axes</h6>
-<div class="hx-table"><table><thead><tr><th>Axis</th><th>Market Standard</th><th>Your Potential Position</th></tr></thead><tbody><tr><td>Alert quality</td><td>[How the market does it today]</td><td>[Lead, match or skip]</td></tr><tr><td>Deployment ease</td><td>[How the market does it today]</td><td>[Lead, match or skip]</td></tr><tr><td>Coverage breadth</td><td>[How the market does it today]</td><td>[Lead, match or skip]</td></tr><tr><td>Integration ecosystem</td><td>[How the market does it today]</td><td>[Lead, match or skip]</td></tr><tr><td>Pricing transparency</td><td>[How the market does it today]</td><td>[Lead, match or skip]</td></tr></tbody></table></div>
+<div class="hx-table"><table><thead><tr><th>Axis</th><th>How alternatives handle it today (ask buyers)</th><th>Your potential position</th></tr></thead><tbody><tr><td>exposure-based ranking (your strength)</td><td>ask buyers</td><td>Lead, match or skip</td></tr><tr><td>one view across three clouds (your strength)</td><td>ask buyers</td><td>Lead, match or skip</td></tr></tbody></table></div>
 <hr>
 <h5 class="hxr-h3">Positioning Territory Map</h5>
 <pre><code>                    ENTERPRISE
@@ -420,29 +417,35 @@ COMPLEX ────────────────┼───────
 <hr>
 <h5 class="hxr-h3">Competitive Battle Strategy</h5>
 <h6 class="hxr-h4">Against Competitor A</h6>
-<p><strong>Their strength (an assumption to check with buyers)</strong>: Established brand, large customer base</p>
-<p><strong>Weakness to test with buyers</strong>: Alert fatigue (a common complaint in this category, not a known fact about Competitor A)</p>
-<p><strong>Your attack angle</strong>: "Unlike Competitor A, we offer exposure-based ranking, one view across three clouds"</p>
-<p><strong>Landmine question</strong>: "How has [competitor weakness] impacted your results?"</p>
+<p><strong>Their likely strength (an assumption to check with buyers)</strong>: what made buyers shortlist Competitor A in the first place</p>
+<p><strong>Weakness to test with buyers</strong>: none supplied for this competitor</p>
+<p><strong>Your attack angle</strong>: lead with one of your own strengths: "exposure-based ranking", "one view across three clouds"</p>
+<p><strong>Landmine question</strong>: ask the buyer to describe the last time the points above came up with Competitor A, and what it cost them</p>
+<h6 class="hxr-h4">Against Competitor B</h6>
+<p><strong>Their likely strength (an assumption to check with buyers)</strong>: what made buyers shortlist Competitor B in the first place</p>
+<p><strong>Weakness to test with buyers</strong>: none supplied for this competitor</p>
+<p><strong>Your attack angle</strong>: lead with one of your own strengths: "exposure-based ranking", "one view across three clouds"</p>
+<p><strong>Landmine question</strong>: ask the buyer to describe the last time the points above came up with Competitor B, and what it cost them</p>
 <h6 class="hxr-h4">Against Status Quo</h6>
 <p><strong>Their strength</strong>: No change required, no budget needed</p>
-<p><strong>Their weakness</strong>: Doesn't scale, manual errors, opportunity cost</p>
-<p><strong>Your attack angle</strong>: "What's the cost of continuing this way for another year?"</p>
+<p><strong>Their weakness</strong>: Does not scale, manual errors, opportunity cost</p>
+<p><strong>Your attack angle</strong>: "What is the cost of continuing this way for another year?"</p>
 <p><strong>Landmine question</strong>: "How many hours per week does your team spend on this manually?"</p>
 <h6 class="hxr-h4">Against Do Nothing</h6>
 <p><strong>Their strength</strong>: Zero effort, zero risk</p>
 <p><strong>Their weakness</strong>: Competitive disadvantage, compounding problem</p>
 <p><strong>Your attack angle</strong>: [Only if true and provable: "Your competitors are already solving this"]</p>
-<p><strong>Landmine question</strong>: "What happens to your metrics if this problem grows 2x next year?" (Example figure: replace with your own)</p>
+<p><strong>Landmine question</strong>: "What happens to your results if this problem grows next year?"</p>
 <hr>
 <h5 class="hxr-h3">Discovery Questions for Competitive Intel</h5>
 <p>Ask prospects these questions to understand their competitive context:</p>
 <ol>
 <li value="1">"What have you tried before to solve this?"</li>
 <li value="2">"What other solutions are you evaluating?"</li>
-<li value="3">"What would make you choose [competitor] over us?"</li>
-<li value="4">"What didn't work about your previous approach?"</li>
-<li value="5">"What's missing from solutions you've seen?"</li>
+<li value="3">"What would make you choose Competitor A over us?"</li>
+<li value="4">"What would make you choose Competitor B over us?"</li>
+<li value="5">"What didn't work about your previous approach?"</li>
+<li value="6">"What's missing from solutions you've seen?"</li>
 </ol>
 <p><strong>Next Step</strong>: Use Pinpoint Value to articulate your unique differentiation</p></div></details>
     <footer class="hxr-foot"><span>Built by Shashwat Ghosh</span><span>https://impact.gtmhelix.com/tools/impact-map-alternatives/</span></footer>

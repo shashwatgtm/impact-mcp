@@ -280,7 +280,7 @@
 
 <div class="hx-body">
 <section class="hx-section hx-run-sec" id="run" aria-label="Run IMPACT Full Audit">
-  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run IMPACT Full Audit</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/impact_full_audit" data-tool="impact_full_audit" data-title="IMPACT Full Audit"><p class="hx-help">You need: Product description, Target customer, Problem solved. You can add: Company name, Key differentiation, Competitors, Current positioning, Customer feedback.</p>
+  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run IMPACT Full Audit</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/impact_full_audit" data-tool="impact_full_audit" data-title="IMPACT Full Audit"><p class="hx-help">You need: Product description, Target customer, Problem solved. You can add: Company name, Key differentiation, Competitors, Current positioning, Customer feedback, Business model.</p>
 <div class="hx-field"><label for="f-company_name">Company name <span class="hx-opt">(optional)</span></label><input id="f-company_name" name="company_name" type="text" maxlength="6000" data-kind="string" aria-describedby="f-company_name-help"><p class="hx-help" id="f-company_name-help">Your company name</p></div>
 <div class="hx-field"><label for="f-product_description">Product description <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-product_description" name="product_description" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-product_description-help"></textarea><p class="hx-help" id="f-product_description-help">What your product does</p></div>
 <div class="hx-field"><label for="f-target_customer">Target customer <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-target_customer" name="target_customer" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-target_customer-help"></textarea><p class="hx-help" id="f-target_customer-help">Who you serve</p></div>
@@ -289,6 +289,7 @@
 <div class="hx-field"><label for="f-competitors">Competitors <span class="hx-opt">(optional)</span></label><textarea id="f-competitors" name="competitors" rows="4" data-kind="lines" aria-describedby="f-competitors-help"></textarea><p class="hx-help" id="f-competitors-help">Main competitors. One item per line.</p></div>
 <div class="hx-field"><label for="f-current_positioning">Current positioning <span class="hx-opt">(optional)</span></label><textarea id="f-current_positioning" name="current_positioning" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-current_positioning-help"></textarea><p class="hx-help" id="f-current_positioning-help">Optional: Your current positioning statement or tagline</p></div>
 <div class="hx-field"><label for="f-customer_feedback">Customer feedback <span class="hx-opt">(optional)</span></label><textarea id="f-customer_feedback" name="customer_feedback" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-customer_feedback-help"></textarea><p class="hx-help" id="f-customer_feedback-help">Optional: What customers say about you</p></div>
+<div class="hx-field"><label for="f-business_model">Business model <span class="hx-opt">(optional)</span></label><select id="f-business_model" name="business_model" data-kind="string" aria-describedby="f-business_model-help"><option value="">Not specified</option><option value="saas">SaaS</option><option value="services">Services</option><option value="connectivity">Connectivity</option><option value="transactions">Transactions</option><option value="marketplace">Marketplace</option><option value="hardware_software">Hardware software</option><option value="investment">Investment</option></select><p class="hx-help" id="f-business_model-help">Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the score</p></div>
     <div class="hx-hp" aria-hidden="true"><label for="hp-impact_full_audit">Leave this empty</label><input id="hp-impact_full_audit" name="leave_this_empty" type="text" tabindex="-1" autocomplete="off"></div>
     <div class="hx-actions">
       <button type="submit" class="hx-btn">Run IMPACT Full Audit</button>
@@ -318,7 +319,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 2.2.18 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 2.2.19 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">IMPACT report</p>
@@ -332,8 +333,11 @@
 <p><strong>Product</strong>: Cloud security monitoring for companies on AWS, Azure and Google Cloud</p>
 <p><strong>Target</strong>: CISOs at mid-size fintech and SaaS companies running on two or more clouds</p>
 <p><strong>Problem</strong>: Too many cloud alerts with no clear order to fix them</p>
+<p><strong>Differentiation</strong>: Exposure-based ranking of every misconfiguration, across AWS, Azure and Google Cloud</p>
+<p><strong>Competitors</strong>: Competitor A; Competitor B; periodic manual audits</p>
 <p><strong>Current Positioning</strong>: Cloudmoat shows which cloud risks matter first, unlike long rule lists.</p>
 <p><strong>Customer Feedback</strong>: Critical exposures down 70% in one quarter; audit preparation down from 3 weeks to 4 days</p>
+<p><em>Sector: read from your inputs as cybersecurity. Business model: software subscription (read from your inputs; set Business model to change it).</em></p>
 <hr>
 <h5 class="hxr-h3">IMPACT Scorecard</h5>
 <h6 class="hxr-h4">Input completeness score: 77/100 (Grade: B)</h6>
@@ -357,27 +361,39 @@
 <p><strong>Action</strong>: Run Pinpoint Value to add this detail.</p>
 <p><strong>Possible input score change</strong>: +13 points to this area when you add the detail above (Example figure: replace with your own)</p>
 <hr>
+<h5 class="hxr-h3">Proof You Already Have</h5>
+<p>Customer feedback you supplied, as proof points (use each only if it is real and you can show it):</p>
+<ul>
+<li>Critical exposures down 70% in one quarter</li>
+<li>audit preparation down from 3 weeks to 4 days</li>
+</ul>
+<p>What a good proof point looks like in cybersecurity: Exposures found and closed during the proof of value, with the time it took to fix them.</p>
+<hr>
+<h5 class="hxr-h3">Your Current Positioning, Checked in Words</h5>
+<p>These checks read your words only. They are not part of the score above.</p>
+<div class="hx-table"><table><thead><tr><th>Word check on your current positioning</th><th>Result</th></tr></thead><tbody><tr><td>Names the buyer (shares a word with your target customer)</td><td>No</td></tr><tr><td>Names an alternative or says what it replaces</td><td>Yes</td></tr><tr><td>States a result (a number or a result word)</td><td>No</td></tr><tr><td>Uses generic words</td><td>No</td></tr></tbody></table></div>
+<hr>
 <h5 class="hxr-h3">Recommended Positioning</h5>
 <p>Based on your inputs, here's a generated positioning statement:</p>
 <blockquote><strong>For</strong> CISOs at mid-size fintech and SaaS companies running on two or more clouds</blockquote>
 <blockquote><strong>Who</strong> struggle with too many cloud alerts with no clear order to fix them</blockquote>
-<blockquote><strong>Cloudmoat</strong> <strong>is a</strong> solution</blockquote>
-<blockquote><strong>That</strong> [delivers the result you promise]</blockquote>
-<blockquote><strong>Unlike</strong> [the alternative your buyers use most, for example Competitor A]</blockquote>
+<blockquote><strong>Cloudmoat</strong> is: "Cloud security monitoring for companies on AWS, Azure and Google Cloud"</blockquote>
+<blockquote><strong>That</strong> delivers the result your customers describe: "Critical exposures down 70% in one quarter"</blockquote>
+<blockquote><strong>Unlike</strong> Competitor A or Competitor B or periodic manual audits</blockquote>
 <blockquote><strong>We</strong> offer exposure-based ranking of every misconfiguration, across AWS, Azure and Google Cloud</blockquote>
 <h6 class="hxr-h4">Tagline Options</h6>
 <ol>
-<li value="1">[Only if true and provable: "No more too many cloud alerts"]</li>
-<li value="2">"The exposure-based ranking solution"</li>
+<li value="1">[Only if true and provable: "Too many cloud alerts, solved."]</li>
+<li value="2">"Exposure-based ranking of"</li>
 <li value="3">"Built for CISOs"</li>
 </ol>
 <hr>
 <h5 class="hxr-h3">30-Day Action Plan</h5>
 <h6 class="hxr-h4">Week 1: Foundation</h6>
 <ul>
-<li>[ ] Complete champion identification exercise</li>
-<li>[ ] Document 5+ competitor weaknesses from customer research</li>
-<li>[ ] Define 3 quantified value proof points</li>
+<li>[ ] Confirm who champions and who signs: SOC or cloud security lead and CISO (this sector's usual committee)</li>
+<li>[ ] Document 5+ weaknesses of Competitor A and Competitor B and periodic manual audits from customer research</li>
+<li>[ ] Turn the proof you already have into 3 quantified proof points</li>
 </ul>
 <h6 class="hxr-h4">Week 2: Positioning</h6>
 <ul>
@@ -387,23 +403,21 @@
 </ul>
 <h6 class="hxr-h4">Week 3: Execution</h6>
 <ul>
-<li>[ ] Update website hero section</li>
-<li>[ ] Create sales deck with new positioning</li>
-<li>[ ] Update LinkedIn profile/company page</li>
+<li>[ ] Update your hero section, sales deck and LinkedIn page</li>
+<li>[ ] Prepare answers to this sector's usual objections: "We already have a tool for this"; "We have too many alerts already"; "Integration with our SIEM and ticketing"; "We need proof before budget"</li>
+<li>[ ] Be ready to discuss what buyers weigh in a business like yours: term length, users or usage, and how the price grows</li>
 </ul>
 <h6 class="hxr-h4">Week 4: Validation</h6>
 <ul>
 <li>[ ] A/B test messaging in outreach</li>
-<li>[ ] Track conversion rate changes</li>
+<li>[ ] Track mean time to detect, mean time to respond, critical exposures open</li>
 <li>[ ] Gather qualitative feedback from prospects</li>
 </ul>
 <hr>
-<h5 class="hxr-h3">Expected Outcomes</h5>
-<p>With focused positioning work:</p>
-<p>Example figures: replace with your own.</p>
-<div class="hx-table"><table><thead><tr><th>Metric</th><th>Current (example)</th><th>Target</th><th>Improvement</th></tr></thead><tbody><tr><td>Website conversion</td><td>1-2%</td><td>3-5%</td><td>2-3x</td></tr><tr><td>Email reply rate</td><td>2-5%</td><td>8-15%</td><td>3x</td></tr><tr><td>Sales cycle</td><td>Average</td><td>-20%</td><td>Faster</td></tr><tr><td>Win rate</td><td>Average</td><td>+15%</td><td>Higher</td></tr></tbody></table></div>
-<p><strong>Investment</strong>: 20-30 hours of positioning work (Example figure: replace with your own)</p>
-<p><strong>Expected ROI</strong>: 2-3x improvement in GTM metrics (Example figure: replace with your own)</p>
+<h5 class="hxr-h3">Measures To Track</h5>
+<p>Fill the cells with your own numbers; this tool adds none.</p>
+<div class="hx-table"><table><thead><tr><th>Measure</th><th>Baseline (yours)</th><th>Target (yours)</th></tr></thead><tbody><tr><td>mean time to detect</td><td></td><td></td></tr><tr><td>mean time to respond</td><td></td><td></td></tr><tr><td>critical exposures open</td><td></td><td></td></tr><tr><td>alerts per analyst</td><td></td><td></td></tr></tbody></table></div>
+<p><strong>Investment</strong>: [the hours your team can give to positioning work]</p>
 <hr>
 <h5 class="hxr-h3">Tools to Use Next</h5>
 <p>Based on your scores, prioritize these tools:</p>

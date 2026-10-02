@@ -15,13 +15,13 @@
 
 ## Tools
 
-- [IMPACT Framework Guide](https://impact.gtmhelix.com/tools/impact-get-framework/) (`impact_get_framework`): Get complete IMPACT framework methodology with phase-by-phase guidance
-- [Identify Champions](https://impact.gtmhelix.com/tools/impact-identify-champions/) (`impact_identify_champions`): Generate champion hypotheses from your company and product context
-- [Map Alternatives](https://impact.gtmhelix.com/tools/impact-map-alternatives/) (`impact_map_alternatives`): Analyze competitive landscape and find positioning whitespace
-- [Pinpoint Value](https://impact.gtmhelix.com/tools/impact-pinpoint-value/) (`impact_pinpoint_value`): Generate value proposition with quantification and proof points
-- [Anchor Market](https://impact.gtmhelix.com/tools/impact-anchor-market/) (`impact_anchor_market`): Select a beachhead market: keyword-based segment scores and a TAM/SAM/SOM framework whose preset figures are labelled for you to replace
-- [Craft Message](https://impact.gtmhelix.com/tools/impact-craft-message/) (`impact_craft_message`): Build positioning statement and message hierarchy with variations
-- [Translate Execution](https://impact.gtmhelix.com/tools/impact-translate-execution/) (`impact_translate_execution`): Adapt positioning for specific channels and touchpoints
+- [IMPACT Framework Guide](https://impact.gtmhelix.com/tools/impact-get-framework/) (`impact_get_framework`): Get the IMPACT framework method phase by phase, optionally with your sector's buyer roles, measures and proof points
+- [Identify Champions](https://impact.gtmhelix.com/tools/impact-identify-champions/) (`impact_identify_champions`): Generate champion, economic buyer and technical influencer hypotheses from your product context, using the buying roles of your sector
+- [Map Alternatives](https://impact.gtmhelix.com/tools/impact-map-alternatives/) (`impact_map_alternatives`): Map your alternatives: one card per named competitor, plus the status-quo options you list, using the weaknesses and strengths you give, with the questions and objections of your sector
+- [Pinpoint Value](https://impact.gtmhelix.com/tools/impact-pinpoint-value/) (`impact_pinpoint_value`): Generate value proposition statements, a value matrix for your own figures and proof points that fit your business model
+- [Anchor Market](https://impact.gtmhelix.com/tools/impact-anchor-market/) (`impact_anchor_market`): Select a beachhead market: keyword-based segment scores (presets), and a TAM/SAM/SOM calculation that uses only the company counts, deal size and percentages you give
+- [Craft Message](https://impact.gtmhelix.com/tools/impact-craft-message/) (`impact_craft_message`): Build a positioning statement and message hierarchy from your own words, in whole sentences, with proof and objections that fit your sector and business model
+- [Translate Execution](https://impact.gtmhelix.com/tools/impact-translate-execution/) (`impact_translate_execution`): Adapt a positioning statement for the channels you choose (website, LinkedIn, cold email, sales deck, demo), with calls to action that fit your business model
 - [IMPACT Full Audit](https://impact.gtmhelix.com/tools/impact-full-audit/) (`impact_full_audit`): Positioning audit with an input completeness score and recommendations
 
 ## Questions and answers

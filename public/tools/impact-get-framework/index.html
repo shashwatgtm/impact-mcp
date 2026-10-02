@@ -173,7 +173,7 @@
    "about": {
     "@id": "https://impact.gtmhelix.com/#app"
    },
-   "dateModified": "2026-10-01",
+   "dateModified": "2026-10-02",
    "inLanguage": "en",
    "primaryImageOfPage": "https://impact.gtmhelix.com/og.png"
   },
@@ -211,7 +211,7 @@
    "@type": "WebApplication",
    "@id": "https://impact.gtmhelix.com/tools/impact-get-framework/#app",
    "name": "IMPACT Framework Guide (IMPACT)",
-   "description": "Get complete IMPACT framework methodology with phase-by-phase guidance",
+   "description": "Get the IMPACT framework method phase by phase, optionally with your sector's buyer roles, measures and proof points",
    "url": "https://impact.gtmhelix.com/tools/impact-get-framework/",
    "applicationCategory": "BusinessApplication",
    "browserRequirements": "Any modern browser; works without JavaScript",
@@ -273,15 +273,16 @@
     <div class="hero-grid"><div class="hx10-split-text">
       <p class="sub">Give it one IMPACT phase to focus on, or none for all six. Get the IMPACT positioning method phase by phase, with the working frameworks and templates for each.</p>
       <p class="hx10-actions hx11-tool-acts"><a class="hx-btn" href="?example=1#run">Try it with an example</a><a class="slink" href="#run">Use your own details</a></p>
-      <p class="hx-byline">Last updated <time datetime="2026-10-01">1 October 2026</time></p>
+      <p class="hx-byline">Last updated <time datetime="2026-10-02">2 October 2026</time></p>
     </div><figure class="hx8-vis hx10-split-vis "><svg viewBox="0 0 360 166" width="360" height="166" role="img" aria-labelledby="v1t v1d" class="hx8-svg"><title id="v1t">The IMPACT framework</title><desc id="v1d">The IMPACT framework: I Identify, M Map, P Pinpoint, A Anchor, C Craft, T Translate.</desc><text x="0" y="16" class="v-k" text-anchor="start">The IMPACT framework</text><rect x="2" y="30" width="56" height="56" class="v-ox v-pop d1"/><text x="30.0" y="68.0" class="v-letter" text-anchor="middle">I</text><text x="31.2" y="104.0" class="v-tm" text-anchor="middle">Identify</text><rect x="62" y="30" width="56" height="56" class="v-ox v-pop d2"/><text x="90.0" y="68.0" class="v-letter" text-anchor="middle">M</text><text x="90.0" y="120.0" class="v-tm" text-anchor="middle">Map</text><rect x="122" y="30" width="56" height="56" class="v-ox v-pop d3"/><text x="150.0" y="68.0" class="v-letter" text-anchor="middle">P</text><text x="150.0" y="104.0" class="v-tm" text-anchor="middle">Pinpoint</text><rect x="182" y="30" width="56" height="56" class="v-ox v-pop d4"/><text x="210.0" y="68.0" class="v-letter" text-anchor="middle">A</text><text x="210.0" y="120.0" class="v-tm" text-anchor="middle">Anchor</text><rect x="242" y="30" width="56" height="56" class="v-ox v-pop d5"/><text x="270.0" y="68.0" class="v-letter" text-anchor="middle">C</text><text x="270.0" y="104.0" class="v-tm" text-anchor="middle">Craft</text><rect x="302" y="30" width="56" height="56" class="v-ox v-pop d6"/><text x="330.0" y="68.0" class="v-letter" text-anchor="middle">T</text><text x="324.9" y="120.0" class="v-tm" text-anchor="middle">Translate</text></svg><figcaption>How the answer is laid out, using the sections the tool prints.</figcaption></figure></div>
   </div>
 </section>
 
 <div class="hx-body">
 <section class="hx-section hx-run-sec" id="run" aria-label="Run IMPACT Framework Guide">
-  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run IMPACT Framework Guide</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/impact_get_framework" data-tool="impact_get_framework" data-title="IMPACT Framework Guide"><p class="hx-help">Every field is optional. You can add: Focus phase.</p>
+  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run IMPACT Framework Guide</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/impact_get_framework" data-tool="impact_get_framework" data-title="IMPACT Framework Guide"><p class="hx-help">Every field is optional. You can add: Focus phase, Sector.</p>
 <div class="hx-field"><label for="f-focus_phase">Focus phase <span class="hx-opt">(optional)</span></label><select id="f-focus_phase" name="focus_phase" data-kind="string" aria-describedby="f-focus_phase-help"><option value="">Not specified</option><option value="identify">Identify</option><option value="map">Map</option><option value="pinpoint">Pinpoint</option><option value="anchor">Anchor</option><option value="craft">Craft</option><option value="translate">Translate</option><option value="all">All</option></select><p class="hx-help" id="f-focus_phase-help">Optional: specific phase to focus on (identify/map/pinpoint/anchor/craft/translate)</p></div>
+<div class="hx-field"><label for="f-sector">Sector <span class="hx-opt">(optional)</span></label><textarea id="f-sector" name="sector" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-sector-help"></textarea><p class="hx-help" id="f-sector-help">Optional: your sector in your own words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity). Adds how the six steps read in that sector</p></div>
     <div class="hx-hp" aria-hidden="true"><label for="hp-impact_get_framework">Leave this empty</label><input id="hp-impact_get_framework" name="leave_this_empty" type="text" tabindex="-1" autocomplete="off"></div>
     <div class="hx-actions">
       <button type="submit" class="hx-btn">Run IMPACT Framework Guide</button>
@@ -311,7 +312,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 2.2.18 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 2.2.19 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">IMPACT report</p>
@@ -340,7 +341,8 @@
 <li value="4">Who's actively researching solutions?</li>
 </ol>
 <p><strong>Champion Mapping Matrix:</strong></p>
-<div class="hx-table"><table><thead><tr><th>Role</th><th>Pain Level</th><th>Influence</th><th>Access to Power</th><th>Champion Score</th></tr></thead><tbody><tr><td>VP Sales</td><td>High</td><td>High</td><td>Direct</td><td>Strong Champion</td></tr><tr><td>Sales Ops</td><td>Very High</td><td>Medium</td><td>Indirect</td><td>Mobilizer</td></tr><tr><td>CFO</td><td>Medium</td><td>Very High</td><td>Decision Maker</td><td>Economic Buyer</td></tr></tbody></table></div>
+<p>Example pattern: replace each role with the one in your sector (add <code>sector</code> to see them).</p>
+<div class="hx-table"><table><thead><tr><th>Role</th><th>Pain Level</th><th>Influence</th><th>Access to Power</th><th>Champion Score</th></tr></thead><tbody><tr><td>[Role that owns the problem]</td><td>High</td><td>High</td><td>Direct</td><td>Strong Champion</td></tr><tr><td>[Role that runs the process day to day]</td><td>Very High</td><td>Medium</td><td>Indirect</td><td>Mobilizer</td></tr><tr><td>[Role that signs the budget]</td><td>Medium</td><td>Very High</td><td>Decision Maker</td><td>Economic Buyer</td></tr></tbody></table></div>
 <p><strong>Anti-Champion Warning Signs:</strong></p>
 <ul>
 <li>"Let me get back to you" (no ownership)</li>
@@ -389,10 +391,10 @@ COMPLEX ----------------+---------------- SIMPLE
 <p><strong>Purpose</strong>: Articulate your differentiated value with quantification</p>
 <h6 class="hxr-h4">Value Proposition Framework</h6>
 <p><strong>The Only Statement:</strong></p>
-<p>"We are the ONLY [category] that [unique capability] so that [target customer] can [key outcome]."</p>
+<p>"[Only if true and provable: We are the ONLY [category] that [unique capability] so that [target customer] can [key outcome].]"</p>
 <p><strong>Value Quantification Matrix:</strong></p>
-<p>Example figures: replace with your own.</p>
-<div class="hx-table"><table><thead><tr><th>Value Driver</th><th>Metric</th><th>Before</th><th>After</th><th>Improvement</th></tr></thead><tbody><tr><td>Time Savings</td><td>Hours/week</td><td>20</td><td>5</td><td>75% reduction</td></tr><tr><td>Error Rate</td><td>% mistakes</td><td>15%</td><td>2%</td><td>87% reduction</td></tr><tr><td>Revenue Impact</td><td>$/quarter</td><td>$0</td><td>$500K</td><td>New revenue</td></tr></tbody></table></div>
+<p>Fill the blank cells with your own figures; this tool adds none.</p>
+<div class="hx-table"><table><thead><tr><th>Value Driver</th><th>Metric</th><th>Before</th><th>After</th><th>Improvement</th></tr></thead><tbody><tr><td>[A measure of time]</td><td>[unit]</td><td>[before]</td><td>[after]</td><td>[change]</td></tr><tr><td>[A measure of quality]</td><td>[unit]</td><td>[before]</td><td>[after]</td><td>[change]</td></tr><tr><td>[A measure of money]</td><td>[unit]</td><td>[before]</td><td>[after]</td><td>[change]</td></tr></tbody></table></div>
 <h6 class="hxr-h4">Proof Point Categories</h6>
 <ol>
 <li value="1"><strong>Customer Results</strong>: Specific outcomes achieved</li>
@@ -432,7 +434,7 @@ SOM = Serviceable obtainable market (realistic capture)
     = SAM × Expected market share</code></pre>
 <h6 class="hxr-h4">Beachhead Market Selection Matrix</h6>
 <p>Example figures: replace with your own.</p>
-<div class="hx-table"><table><thead><tr><th>Segment</th><th>Pain (1-5)</th><th>Budget (1-5)</th><th>Access (1-5)</th><th>Reference (1-5)</th><th>Total</th></tr></thead><tbody><tr><td>Mid-market SaaS</td><td>5</td><td>4</td><td>5</td><td>5</td><td>19</td></tr><tr><td>Enterprise Finance</td><td>4</td><td>5</td><td>2</td><td>4</td><td>15</td></tr><tr><td>SMB Retail</td><td>3</td><td>2</td><td>4</td><td>2</td><td>11</td></tr></tbody></table></div>
+<div class="hx-table"><table><thead><tr><th>Segment</th><th>Pain (1-5)</th><th>Budget (1-5)</th><th>Access (1-5)</th><th>Reference (1-5)</th><th>Total</th></tr></thead><tbody><tr><td>Mid-size logistics providers</td><td>5</td><td>4</td><td>5</td><td>5</td><td>19</td></tr><tr><td>Enterprise banks</td><td>4</td><td>5</td><td>2</td><td>4</td><td>15</td></tr><tr><td>Small retail chains</td><td>3</td><td>2</td><td>4</td><td>2</td><td>11</td></tr></tbody></table></div>
 <p><strong>Select highest score as beachhead.</strong></p>
 <hr>
 <h5 class="hxr-h3">C: CRAFT CORE MESSAGE</h5>
@@ -448,17 +450,16 @@ SOM = Serviceable obtainable market (realistic capture)
 <h6 class="hxr-h4">Message Hierarchy</h6>
 <p><strong>Level 1: tagline (3 to 7 words)</strong></p>
 <p>The memorable hook that captures your essence.</p>
-<p>Example: "The AI that closes deals"</p>
+<p>Example: "Fix what is exposed first"</p>
 <p><strong>Level 2: value proposition (1 to 2 sentences)</strong></p>
 <p>The promise you make to customers.</p>
-<p>Example: "We help B2B sales teams close 40% more deals by automating discovery and follow-up." (Example figure: replace with your own)</p>
+<p>Example: "We help [target customer] [achieve the outcome] by [your capability]."</p>
 <p><strong>Level 3: supporting messages (3 pillars)</strong></p>
 <p>The proof points that support your promise.</p>
-<p>Example figures: replace with your own.</p>
 <ol>
-<li value="1">Speed: "10x faster prospecting"</li>
-<li value="2">Accuracy: "AI-qualified leads only"</li>
-<li value="3">Scale: "Handle 100x more conversations"</li>
+<li value="1">Your difference: "[what only you do]" (proof: [a result you can show])</li>
+<li value="2">Your outcome: "[the result the buyer gets]" (proof: [a customer figure, only if real])</li>
+<li value="3">Your fit: "[why it works in the buyer's sector]" (proof: [a reference or pilot result])</li>
 </ol>
 <h6 class="hxr-h4">Message Testing Framework</h6>
 <p><strong>Test each message variant for:</strong></p>
@@ -473,7 +474,7 @@ SOM = Serviceable obtainable market (realistic capture)
 <p><strong>Purpose</strong>: Adapt positioning for each channel and touchpoint</p>
 <h6 class="hxr-h4">Channel Adaptation Matrix</h6>
 <p>Example figures: replace with your own.</p>
-<div class="hx-table"><table><thead><tr><th>Channel</th><th>Format</th><th>Length</th><th>CTA Focus</th><th>Key Message</th></tr></thead><tbody><tr><td>LinkedIn</td><td>Text + Image</td><td>150 words</td><td>Engage</td><td>Problem awareness</td></tr><tr><td>Website Hero</td><td>Headline + Sub</td><td>15 words</td><td>Demo</td><td>Value prop</td></tr><tr><td>Cold Email</td><td>Subject + Body</td><td>75 words</td><td>Reply</td><td>Pain + curiosity</td></tr><tr><td>Sales Deck</td><td>Slides</td><td>10 slides</td><td>Meeting</td><td>Full story</td></tr><tr><td>Product Demo</td><td>Script</td><td>15 min</td><td>Trial</td><td>Capability proof</td></tr></tbody></table></div>
+<div class="hx-table"><table><thead><tr><th>Channel</th><th>Format</th><th>Length</th><th>CTA Focus</th><th>Key Message</th></tr></thead><tbody><tr><td>LinkedIn</td><td>Text + Image</td><td>150 words</td><td>Engage</td><td>Problem awareness</td></tr><tr><td>Website Hero</td><td>Headline + Sub</td><td>15 words</td><td>Next step</td><td>Value prop</td></tr><tr><td>Cold Email</td><td>Subject + Body</td><td>75 words</td><td>Reply</td><td>Pain + curiosity</td></tr><tr><td>Sales Deck</td><td>Slides</td><td>10 slides</td><td>Meeting</td><td>Full story</td></tr><tr><td>Demo or walkthrough</td><td>Script</td><td>15 min</td><td>Pilot or proposal</td><td>Capability proof</td></tr></tbody></table></div>
 <h6 class="hxr-h4">Execution Checklist</h6>
 <p><strong>Website:</strong></p>
 <ul>
@@ -503,6 +504,7 @@ SOM = Serviceable obtainable market (realistic capture)
 <li value="2">What content format they prefer</li>
 <li value="3">What stage of awareness they're in</li>
 </ol>
+<p>To see the framework in your sector's own terms, call this tool again with <code>sector</code> (logistics tech, fintech, vertical SaaS, AI native, ITeS, telecom, cybersecurity, software, SaaS).</p>
 <hr>
 <h5 class="hxr-h3">Getting Started</h5>
 <ol>

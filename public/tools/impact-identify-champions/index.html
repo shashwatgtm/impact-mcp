@@ -211,7 +211,7 @@
    "@type": "WebApplication",
    "@id": "https://impact.gtmhelix.com/tools/impact-identify-champions/#app",
    "name": "Identify Champions (IMPACT)",
-   "description": "Generate champion hypotheses from your company and product context",
+   "description": "Generate champion, economic buyer and technical influencer hypotheses from your product context, using the buying roles of your sector",
    "url": "https://impact.gtmhelix.com/tools/impact-identify-champions/",
    "applicationCategory": "BusinessApplication",
    "browserRequirements": "Any modern browser; works without JavaScript",
@@ -284,7 +284,7 @@
 <div class="hx-field"><label for="f-company_name">Company name <span class="hx-opt">(optional)</span></label><input id="f-company_name" name="company_name" type="text" maxlength="6000" data-kind="string" aria-describedby="f-company_name-help"><p class="hx-help" id="f-company_name-help">Your company name</p></div>
 <div class="hx-field"><label for="f-product_description">Product description <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-product_description" name="product_description" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-product_description-help"></textarea><p class="hx-help" id="f-product_description-help">What your product does (1-2 sentences)</p></div>
 <div class="hx-field"><label for="f-problem_solved">Problem solved <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-problem_solved" name="problem_solved" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-problem_solved-help"></textarea><p class="hx-help" id="f-problem_solved-help">The core problem you solve</p></div>
-<div class="hx-field"><label for="f-target_company_type">Target company type <span class="hx-opt">(optional)</span></label><input id="f-target_company_type" name="target_company_type" type="text" maxlength="6000" data-kind="string" aria-describedby="f-target_company_type-help"><p class="hx-help" id="f-target_company_type-help">Type of companies you target (e.g., &quot;Series B SaaS&quot;, &quot;Enterprise manufacturing&quot;)</p></div>
+<div class="hx-field"><label for="f-target_company_type">Target company type <span class="hx-opt">(optional)</span></label><textarea id="f-target_company_type" name="target_company_type" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-target_company_type-help"></textarea><p class="hx-help" id="f-target_company_type-help">Type of companies you target (e.g., &quot;mid-size fintech companies&quot;, &quot;enterprise manufacturers&quot;)</p></div>
 <div class="hx-field"><label for="f-price_point">Price point <span class="hx-opt">(optional)</span></label><textarea id="f-price_point" name="price_point" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-price_point-help"></textarea><p class="hx-help" id="f-price_point-help">Optional: ACV range (e.g., &quot;$50K-100K&quot;)</p></div>
     <div class="hx-hp" aria-hidden="true"><label for="hp-impact_identify_champions">Leave this empty</label><input id="hp-impact_identify_champions" name="leave_this_empty" type="text" tabindex="-1" autocomplete="off"></div>
     <div class="hx-actions">
@@ -315,7 +315,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 2.2.18 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 2.2.19 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">IMPACT report</p>
@@ -330,29 +330,30 @@
 <p><strong>Problem Solved</strong>: too many cloud alerts and slow audit preparation</p>
 <p><strong>Target Market</strong>: mid-size fintech and SaaS companies on two or more clouds</p>
 <p><strong>Price Point</strong>: $3,750 per month</p>
+<p><em>Sector: read from your inputs as cybersecurity.</em></p>
 <hr>
 <h5 class="hxr-h3">Champion Hypothesis</h5>
 <h6 class="hxr-h4">Primary Champion (Your Internal Advocate)</h6>
-<p><strong>Most Likely Role</strong>: CISO/VP Security</p>
+<p><strong>Most Likely Role</strong>: SOC or cloud security lead</p>
 <p><strong>Why This Role</strong>:</p>
 <ul>
-<li>Owns the problem: Compliance gaps, incident response, visibility gaps</li>
-<li>Personal motivation: Audit readiness, risk reduction metrics, board reporting</li>
+<li>Owns the problem: the problem you described, in your words: "too many cloud alerts and slow audit preparation"</li>
+<li>Personal motivation: a visible win on what this sector measures: mean time to detect, mean time to respond, critical exposures open, alerts per analyst</li>
 <li>Has organizational credibility to advocate for change</li>
 </ul>
 <p><strong>Champion Validation Questions</strong>:</p>
 <ol>
-<li value="1">"Who's currently responsible for solving too many cloud alerts and slow audit preparation?"</li>
+<li value="1">"Who is responsible for this problem today?" (your problem, in your words: "too many cloud alerts and slow audit preparation")</li>
 <li value="2">"Who brought this initiative to leadership's attention?"</li>
 <li value="3">"Who would be promoted/recognized if this problem was solved?"</li>
 <li value="4">"Who's actively researching solutions in this space?"</li>
 </ol>
 <h6 class="hxr-h4">Economic Buyer (Budget Authority)</h6>
-<p><strong>Most Likely Role</strong>: CIO or CFO</p>
+<p><strong>Most Likely Role</strong>: CISO</p>
 <p><strong>Why This Role</strong>:</p>
 <ul>
-<li>Primary concern: Risk exposure, compliance costs, incident costs</li>
-<li>Buying trigger: Audit findings, security incident, regulatory changes</li>
+<li>Primary concern: the same measures, and the cost of leaving the problem unsolved. How deals usually run here: CISO-led, with a proof of value on the buyer's own environment; budget often follows an audit finding or an incident.</li>
+<li>Buying trigger: an event that releases budget (a renewal, an audit, a season or a target): ask what the event is</li>
 </ul>
 <p><strong>Economic Buyer Discovery Questions</strong>:</p>
 <ol>
@@ -361,17 +362,37 @@
 <li value="3">"What's the cost of not solving this problem?"</li>
 </ol>
 <h6 class="hxr-h4">Technical Influencer (Implementation Voice)</h6>
-<p><strong>Most Likely Role</strong>: Security Engineer/Architect</p>
+<p><strong>Most Likely Role</strong>: Risk, compliance and audit; CIO or CTO</p>
 <p><strong>Why This Role</strong>:</p>
 <ul>
-<li>Evaluation criteria: Technical depth, coverage breadth, false positive rates</li>
-<li>Potential blocker: Alert fatigue concerns, tool sprawl</li>
+<li>Evaluation criteria: Risk, compliance and audit review the evidence it produces; CIO or CTO checks integration</li>
+<li>Potential blocker: the objections this sector often raises: "We already have a tool for this"; "We have too many alerts already"; "Integration with our SIEM and ticketing"; "We need proof before budget"</li>
 </ul>
 <p><strong>Technical Influencer Discovery Questions</strong>:</p>
 <ol>
 <li value="1">"What would a successful implementation look like?"</li>
 <li value="2">"What's failed before and why?"</li>
 <li value="3">"What systems does this need to integrate with?"</li>
+</ol>
+<h6 class="hxr-h4">Daily Users</h6>
+<p>Security engineers use it every day. Ask them what a good week looks like today; their answer is your first proof point.</p>
+<hr>
+<h5 class="hxr-h3">Using Your Price Point and Target Companies</h5>
+<ul>
+<li><strong>Price point</strong>: you gave "$3,750 per month". Ask the champion early whether that sits inside a budget they control or needs the economic buyer's sign-off; the answer tells you how many people you must reach.</li>
+<li><strong>Target companies</strong>: you target "mid-size fintech and SaaS companies on two or more clouds". Check how each role above is titled in those companies. In smaller ones one person often holds two of the roles; in larger ones procurement or finance usually joins the committee.</li>
+</ul>
+<h6 class="hxr-h4">Sector view: cybersecurity</h6>
+<ul>
+<li><strong>A proof point that lands:</strong> Exposures found and closed during the proof of value, with the time it took to fix them.</li>
+<li><strong>Discovery questions in this sector's language:</strong></li>
+</ul>
+<ol>
+<li value="1">Which assets, clouds or environments are in scope, and which are you least sure about?</li>
+<li value="2">How many alerts does the team handle in a week, and how are they ranked today?</li>
+<li value="3">What did the last audit or incident show?</li>
+<li value="4">Which tools must this work with (SIEM, ticketing, cloud accounts)?</li>
+<li value="5">How would you judge a proof of value a success?</li>
 </ol>
 <hr>
 <h5 class="hxr-h3">Anti-Champion Warning Signs</h5>
@@ -388,8 +409,8 @@
 </ul>
 <p><strong>Week 2</strong>: Multi-thread outreach</p>
 <ul>
-<li>Contact CISO/VP Security with problem-focused message</li>
-<li>Contact Security Engineer/Architect with solution-focused message</li>
+<li>Contact SOC or cloud security lead with a problem-focused message</li>
+<li>Contact the reviewers listed above with a solution-focused message</li>
 <li>See who engages first → likely champion</li>
 </ul>
 <p><strong>Week 3</strong>: Validate and align</p>
@@ -402,8 +423,8 @@
 <h5 class="hxr-h3">Champion Enablement Hypothesis</h5>
 <p>Once you identify your champion, they'll need:</p>
 <ol>
-<li value="1"><strong>Internal Business Case</strong>: ROI data to share with CIO or CFO</li>
-<li value="2"><strong>Technical Validation</strong>: Proof points for Security Engineer/Architect</li>
+<li value="1"><strong>Internal Business Case</strong>: ROI data to share with CISO</li>
+<li value="2"><strong>Technical Validation</strong>: Proof points for the reviewers above</li>
 <li value="3"><strong>Competitive Comparison</strong>: Why not alternatives (status quo, competitors)</li>
 <li value="4"><strong>Risk Mitigation</strong>: Implementation plan, support structure, success metrics</li>
 </ol>
