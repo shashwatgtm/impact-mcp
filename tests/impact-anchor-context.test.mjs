@@ -17,19 +17,19 @@ const rpc = async (method, params) => {
 };
 const call = async (args) => (await rpc("tools/call", { name: "impact_anchor_market", arguments: args })).content.map((c) => c.text).join("\n");
 const SENTENCE = "Your current customers and sales cycle are shown for context; they do not change the scores or the market sizes.";
-const BASE = { product_description: "Scheduling software for clinics", potential_segments: ["Mid-market SaaS (50-500 employees)", "Enterprise Finance", "Dental clinics"], average_deal_size: "$24,000" };
+const BASE = { product_description: "Cloud security monitoring for fintech teams", potential_segments: ["Mid-market SaaS (50-500 employees)", "Enterprise Finance", "Retail chains"], average_deal_size: "$24,000" };
 
 // Everything from the scoring matrix down, minus the two lines that print the inputs themselves.
 const scoring = (t) => t.slice(t.indexOf("## Segment Scoring Matrix")).split("\n").filter((l) => !/^- Sales cycle:/.test(l)).join("\n");
 
 test("C-IMP-03: the answer says once that current customers and sales cycle do not change the scores or sizes", async () => {
-  const out = await call({ ...BASE, current_customers: "Three clinic groups in Pune", sales_cycle: "2 months" });
+  const out = await call({ ...BASE, current_customers: "Three lenders in Pune", sales_cycle: "2 months" });
   assert.equal(out.split(SENTENCE).length - 1, 1);
 });
 
 test("C-IMP-03: changing current_customers and sales_cycle changes no score, ranking or market size", async () => {
-  const a = await call({ ...BASE, current_customers: "Three clinic groups in Pune", sales_cycle: "2 months" });
-  const b = await call({ ...BASE, current_customers: "Forty hospital networks across the US and UK", sales_cycle: "18 months" });
+  const a = await call({ ...BASE, current_customers: "Three lenders in Pune", sales_cycle: "2 months" });
+  const b = await call({ ...BASE, current_customers: "Forty bank networks across the US and UK", sales_cycle: "18 months" });
   const c = await call(BASE);
   assert.equal(scoring(a), scoring(b));
   assert.equal(scoring(a).replace(/ \(Example figure: replace with your own\)/g, ""), scoring(c).replace(/ \(Example figure: replace with your own\)/g, ""));

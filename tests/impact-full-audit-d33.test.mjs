@@ -28,17 +28,17 @@ const list = async () => {
 };
 
 const BASE = {
-  company_name: "ExampleCo",
-  product_description: "Scheduling software for clinics",
-  target_customer: "Clinic managers",
-  problem_solved: "Missed appointments",
+  company_name: "Cloudmoat",
+  product_description: "Cloud security monitoring for fintech teams",
+  target_customer: "Security managers",
+  problem_solved: "Too many cloud alerts",
 };
 const PADDED = {
   ...BASE,
-  target_customer: "Clinic managers at groups with 50 to 500 employees, very very great",
-  key_differentiation: "the only unique very very great scheduling approach",
+  target_customer: "Security managers at firms with 50 to 500 employees, very very great",
+  key_differentiation: "the only unique very very great monitoring approach",
   competitors: ["A", "B", "C"],
-  current_positioning: "The only very very great scheduling tool for clinic managers, unlike the rest",
+  current_positioning: "The only very very great monitoring tool for security managers, unlike the rest",
   customer_feedback: "Very very great, very very great, very very great, very very great product",
 };
 const MEASURES = "**What this score measures**: how complete and specific your inputs are, not whether your positioning is right. Longer inputs and certain words (such as only, unique, unlike, employees, revenue and Series) raise it.";

@@ -1,9 +1,9 @@
-# IMPACT MCP v2.2.18
+# IMPACT MCP v2.2.19
 **Hypothesis-Driven B2B Positioning Engine**: 8 tools implementing the IMPACT framework for strategic positioning and go-to-market messaging.
 
 ## Use it hosted (no install)
 
-Add `https://impact.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector. It needs no sign-in and always runs the newest version (2.2.18). The same tools run as a free web app with a form per tool at https://impact.gtmhelix.com/, and the setup steps are at https://impact.gtmhelix.com/connect/.
+Add `https://impact.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector. It needs no sign-in and always runs the newest version (2.2.19). The same tools run as a free web app with a form per tool at https://impact.gtmhelix.com/, and the setup steps are at https://impact.gtmhelix.com/connect/.
 
 The npm package below is an older version (2.0.0 on npm on 27 September 2026) until the next npm release. Use it only if you need a local stdio server.
 
@@ -53,17 +53,17 @@ Add to your `claude_desktop_config.json`:
 
 ## Tools and inputs
 
-Generated on 27 September 2026 from the server's own tool list and checked again on 30 September 2026 against `tools/list` of impact-mcp 2.2.18 (the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
+Generated on 2 October 2026 from the server's own tool list and checked against `tools/list` of impact-mcp 2.2.19 (the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
 
 | # | Tool | Title | What it does |
 |---|---|---|---|
-| 1 | `impact_get_framework` | IMPACT Framework Guide | Get complete IMPACT framework methodology with phase-by-phase guidance |
-| 2 | `impact_identify_champions` | Identify Champions | Generate champion hypotheses from your company and product context |
-| 3 | `impact_map_alternatives` | Map Alternatives | Analyze competitive landscape and find positioning whitespace |
-| 4 | `impact_pinpoint_value` | Pinpoint Value | Generate value proposition with quantification and proof points |
-| 5 | `impact_anchor_market` | Anchor Market | Select a beachhead market: keyword-based segment scores and a TAM/SAM/SOM framework whose preset figures are labelled for you to replace |
-| 6 | `impact_craft_message` | Craft Message | Build positioning statement and message hierarchy with variations |
-| 7 | `impact_translate_execution` | Translate Execution | Adapt positioning for specific channels and touchpoints |
+| 1 | `impact_get_framework` | IMPACT Framework Guide | Get the IMPACT framework method phase by phase, optionally with your sector's buyer roles, measures and proof points |
+| 2 | `impact_identify_champions` | Identify Champions | Generate champion, economic buyer and technical influencer hypotheses from your product context, using the buying roles of your sector |
+| 3 | `impact_map_alternatives` | Map Alternatives | Map your alternatives: one card per named competitor, plus the status-quo options you list, using the weaknesses and strengths you give, with the questions and objections of your sector |
+| 4 | `impact_pinpoint_value` | Pinpoint Value | Generate value proposition statements, a value matrix for your own figures and proof points that fit your business model |
+| 5 | `impact_anchor_market` | Anchor Market | Select a beachhead market: keyword-based segment scores (presets), and a TAM/SAM/SOM calculation that uses only the company counts, deal size and percentages you give |
+| 6 | `impact_craft_message` | Craft Message | Build a positioning statement and message hierarchy from your own words, in whole sentences, with proof and objections that fit your sector and business model |
+| 7 | `impact_translate_execution` | Translate Execution | Adapt a positioning statement for the channels you choose (website, LinkedIn, cold email, sales deck, demo), with calls to action that fit your business model |
 | 8 | `impact_full_audit` | IMPACT Full Audit | Positioning audit with an input completeness score and recommendations |
 
 ### Inputs of each tool
@@ -73,6 +73,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | Input | Required | Type | Description |
 |---|---|---|---|
 | `focus_phase` | No | one of: `identify`, `map`, `pinpoint`, `anchor`, `craft`, `translate`, `all` | Optional: specific phase to focus on (identify/map/pinpoint/anchor/craft/translate) |
+| `sector` | No | string | Optional: your sector in your own words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity). Adds how the six steps read in that sector |
 
 #### 2. Identify Champions (`impact_identify_champions`)
 
@@ -81,7 +82,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | `product_description` | Yes | string | What your product does (1-2 sentences) |
 | `problem_solved` | Yes | string | The core problem you solve |
 | `company_name` | No | string | Your company name |
-| `target_company_type` | No | string | Type of companies you target (e.g., "Series B SaaS", "Enterprise manufacturing") |
+| `target_company_type` | No | string | Type of companies you target (e.g., "mid-size fintech companies", "enterprise manufacturers") |
 | `price_point` | No | string | Optional: ACV range (e.g., "$50K-100K") |
 
 #### 3. Map Alternatives (`impact_map_alternatives`)
@@ -89,31 +90,35 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | Input | Required | Type | Description |
 |---|---|---|---|
 | `your_product` | Yes | string | What your product does |
-| `category` | Yes | string | Your product category (e.g., "Sales engagement", "Data platform") |
-| `competitors` | No | array of string | List of competitor names |
-| `competitor_weaknesses` | No | string | Optional: Known competitor weaknesses or customer complaints |
-| `your_strengths` | No | string | Optional: What you do better than competitors |
+| `category` | Yes | string | Your product category (e.g., "cloud security monitoring", "last-mile delivery software") |
+| `competitors` | No | array of string | List of competitor names, and the status-quo options your buyers use (for example "spreadsheets"). A description in brackets after a name is kept |
+| `competitor_weaknesses` | No | string | Optional: Known competitor weaknesses or customer complaints, one per line or separated by semicolons. A weakness that names a competitor is shown on its card |
+| `your_strengths` | No | string | Optional: What you do better than competitors, one per line or separated by semicolons |
 
 #### 4. Pinpoint Value (`impact_pinpoint_value`)
 
 | Input | Required | Type | Description |
 |---|---|---|---|
-| `target_customer` | Yes | string | Who you serve (e.g., "B2B sales teams") |
+| `target_customer` | Yes | string | Who you serve (e.g., "cloud security leads at mid-size fintech companies") |
 | `key_outcome` | Yes | string | The main result customers achieve |
 | `unique_capability` | Yes | string | What you do that others cannot/don't |
 | `product_name` | No | string | Your product/company name |
 | `category` | No | string | Product category |
-| `customer_metrics` | No | string | Optional: Any customer results data (e.g., "40% faster, 3x pipeline") |
+| `customer_metrics` | No | string | Optional: Any customer results data (e.g., "critical exposures down 70% in one quarter; audit preparation from 3 weeks to 4 days") |
+| `business_model` | No | one of: `saas`, `services`, `connectivity`, `transactions`, `marketplace`, `hardware_software`, `investment` | Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose proof types; read from your inputs when not given |
 
 #### 5. Anchor Market (`impact_anchor_market`)
 
 | Input | Required | Type | Description |
 |---|---|---|---|
 | `product_description` | Yes | string | What your product does |
-| `potential_segments` | No | array of string | List of potential market segments (e.g., ["Mid-market SaaS", "Enterprise Finance", "SMB Retail"]) |
+| `potential_segments` | No | array of string | List of potential market segments (e.g., ["Mid-market fintech", "Enterprise banks", "Small retail chains"]) |
 | `current_customers` | No | string | Optional: Description of your current/best customers. Shown in the output; not used in the scoring |
 | `average_deal_size` | No | string | Optional: Your ACV as one amount (e.g., "$50,000", "$50K" or "$1.5M"); a range is refused |
 | `sales_cycle` | No | string | Optional: Typical sales cycle length. Shown in the output; not used in the scoring |
+| `company_counts` | No | string | Optional: how many companies you could sell to in each segment, one per line or separated by semicolons (for example "Mid-market fintech: 3,200; Enterprise banks: 600"). A single number is read as the count for the recommended segment. Needed for market sizing |
+| `percent_matching_icp` | No | number | Optional: the percent of those companies that match your ideal customer profile (for example 25). Needed for SAM |
+| `year_one_share_percent` | No | number | Optional: the share of the matching companies you expect to win in year one, in percent (for example 1). Needed for SOM |
 
 #### 6. Craft Message (`impact_craft_message`)
 
@@ -123,9 +128,10 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | `key_benefit` | Yes | string | Primary benefit/reason to buy |
 | `differentiation` | Yes | string | Your unique differentiation |
 | `product_name` | No | string | Your product name |
-| `customer_need` | No | string | The need they have, written as an action (for example "lose revenue to missed appointments") |
-| `product_category` | No | string | Your product category, written as a noun phrase (for example "analytics platform") |
+| `customer_need` | No | string | The need they have, written as an action (for example "lose days chasing low-risk cloud alerts") |
+| `product_category` | No | string | Your product category, written as a noun phrase (for example "cloud security monitoring platform") |
 | `competitor` | No | string | Primary alternative/competitor |
+| `business_model` | No | one of: `saas`, `services`, `connectivity`, `transactions`, `marketplace`, `hardware_software`, `investment` | Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose the cost and proof lines; read from your inputs when not given |
 
 #### 7. Translate Execution (`impact_translate_execution`)
 
@@ -133,9 +139,10 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 |---|---|---|---|
 | `positioning_statement` | Yes | string | Your core positioning statement |
 | `target_customer` | Yes | string | Target customer profile |
-| `key_benefit` | Yes | string | Primary benefit, written as an action (for example "cut no-shows") |
-| `channels` | No | array of string | Accepted but not used yet: the output always covers website, LinkedIn, email, sales deck and demo |
+| `key_benefit` | Yes | string | Primary benefit, written as an action (for example "fix critical exposures first") |
+| `channels` | No | array of string | Optional: which channels to cover, from website, linkedin, cold_email, sales_deck and product_demo. Others are listed as not covered; with none, all five are covered |
 | `product_name` | No | string | Your product name |
+| `business_model` | No | one of: `saas`, `services`, `connectivity`, `transactions`, `marketplace`, `hardware_software`, `investment` | Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose calls to action and commercial terms; read from your inputs when not given |
 
 #### 8. IMPACT Full Audit (`impact_full_audit`)
 
@@ -149,6 +156,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | `competitors` | No | array of string | Main competitors |
 | `current_positioning` | No | string | Optional: Your current positioning statement or tagline |
 | `customer_feedback` | No | string | Optional: What customers say about you |
+| `business_model` | No | one of: `saas`, `services`, `connectivity`, `transactions`, `marketplace`, `hardware_software`, `investment` | Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the score |
 
 ## Who Is This For?
 

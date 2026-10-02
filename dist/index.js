@@ -2,10 +2,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SERVER_VERSION = exports.SERVER_NAME = void 0;
+exports.splitItems = splitItems;
+exports.kindOf = kindOf;
+exports.inf = inf;
+exports.needClause = needClause;
+exports.diffSentence = diffSentence;
+exports.shortText = shortText;
+exports.catNoun = catNoun;
+exports.committeeParts = committeeParts;
+exports.parseCounts = parseCounts;
 exports.createServer = createServer;
 const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
+const verticals_ts_1 = require("./verticals.js");
 // =============================================================================
 // IMPACT MCP v2.0.0 - Hypothesis-Driven B2B Positioning Engine
 // =============================================================================
@@ -19,7 +29,7 @@ const EXAMPLE = '(Example figure: replace with your own)';
 const EXAMPLES = 'Example figures: replace with your own.';
 const SUGGESTED = 'Suggested timings, lengths and counts: adjust them to your own.';
 // Text only (run 9): common words that may open an input phrase. Mid-sentence, only these are lowered
-// ("Fewer no-shows" becomes "fewer no-shows"). Any other capitalised word is kept as typed, because it may be a
+// ("Fewer late deliveries" becomes "fewer late deliveries"). Any other capitalised word is kept as typed, because it may be a
 // name or an acronym ("Salesforce data you can trust", "Microsoft Teams approvals", "AI deal scoring", "CRM hygiene").
 const COMMON_WORDS = new Set(('a an the this that these those our your their my its his her we you they it me us them all any each every ' +
     'both either neither no not none some many much more most less least fewer few several other another such ' +
@@ -63,8 +73,8 @@ const COMMON_WORDS = new Set(('a an the this that these those our your their my 
     'cost costs price prices pricing budget budgets value roi time times hours days weeks months minutes setup ' +
     'set-up implementation integration integrations security compliance privacy risk risks errors error mistakes ' +
     'issues issue problems problem pain pains gaps gap delays delay bottlenecks friction complexity visibility ' +
-    'control access approvals approval handoffs handoff meetings meeting appointments appointment bookings ' +
-    'booking reminders reminder no-shows cancellations patients patient staff employees employee managers manager ' +
+    'control access approvals approval handoffs handoff meetings meeting bookings ' +
+    'booking reminders reminder cancellations staff employees employee managers manager ' +
     'leaders leader executives reps rep agents agent partners partner vendors vendor suppliers supplier companies ' +
     'company businesses business organisations organizations enterprises enterprise startups startup founders ' +
     'founder owners owner operations operators finance hr legal procurement engineering developers developer ' +
@@ -94,7 +104,7 @@ const COMMON_WORDS = new Set(('a an the this that these those our your their my 
     'predicts recover recovers resolve resolves respond responds reply replies follow follows hear hears worst ' +
     'lost won ').split(/\s+/).filter(Boolean));
 // A word counts as common when it is in the list, or ends in -ing or -ed ("Automated", "Missing"). A hyphenated
-// word counts by its first part ("Two-way", "No-shows").
+// word counts by its first part ("Two-way", "Fewer-errors").
 function isCommonWord(word) {
     const head = word.split('-')[0].replace(/[^A-Za-z']+$/, '');
     if (!/^[A-Z][a-z']*$/.test(head) || head === 'I' || /[A-Z]/.test(word.slice(1)))
@@ -106,9 +116,9 @@ function isCommonWord(word) {
 // common product and company names and the names found in the test inputs; other names are kept by the rules below.
 const KNOWN_NAMES = new Set(('Salesforce Microsoft Slack HubSpot LinkedIn Google Gmail Outlook Excel Zoom Zendesk Jira Notion Shopify Stripe ' +
     'Marketo Pardot Gong Intercom Freshworks Oracle SAP Workday ServiceNow Snowflake Tableau Asana Trello Dropbox ' +
-    'Apple Amazon AWS Azure Facebook Instagram WhatsApp YouTube Acme ExampleCo Sam ' +
+    'Apple Amazon AWS Azure Facebook Instagram WhatsApp YouTube Sam ' +
     // Run 11: the company and competitor names in the test inputs and the page examples.
-    'Clausewise Bengaluru Clari Northwind ClinicFlow Metricly').split(/\s+/).filter(Boolean));
+    'Bengaluru Clari Northwind Metricly').split(/\s+/).filter(Boolean));
 function bareWord(word) {
     return word.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '');
 }
@@ -118,7 +128,7 @@ function isKnownName(word) {
 }
 // Run 11: a known name typed in lower case gets its capitals back ("bengaluru teams" becomes "Bengaluru teams"). Names
 // that are also ordinary words (Slack, Zoom, Notion, Gong, Sam ...) are kept when typed with a capital, never raised.
-const PLAIN_WORDS = new Set('slack zoom notion excel oracle stripe apple amazon gong sam outlook workday snowflake asana tableau intercom acme sap azure'.split(' '));
+const PLAIN_WORDS = new Set('slack zoom notion excel oracle stripe apple amazon gong sam outlook workday snowflake asana tableau intercom sap azure'.split(' '));
 const NAME_BY_LOWER = new Map([...KNOWN_NAMES].filter(n => !PLAIN_WORDS.has(n.toLowerCase())).map(n => [n.toLowerCase(), n]));
 function fixNames(phrase) {
     return phrase.replace(/[A-Za-z]+/g, w => (w === w.toLowerCase() && NAME_BY_LOWER.get(w)) || w);
@@ -135,10 +145,10 @@ function lowerJobTitle(phrase) {
 }
 // Run 10: the first word of an input phrase keeps its capital only when it is a known name, has an inner capital or is
 // all capitals (HubSpot, AI, CRM), holds a digit (B2B, Q4), or starts a name of two words: the next word is capitalised
-// too (New York, Clinic Group A, Competitor A) and is not a known name on its own ("Native Salesforce" is not a name).
+// too (New York, Branch Group A, Competitor A) and is not a known name on its own ("Native Salesforce" is not a name).
 // Run 11: a one-letter word keeps its capital (I, X), and a common first word never makes the next word a name ("For
-// Clausewise contract review" becomes "for Clausewise contract review"), unless the next word is a one-letter label after
-// a noun (Competitor A) or the phrase opens with three capitalised words (Example Clinic Group).
+// Cloudmoat exposure ranking" becomes "for Cloudmoat exposure ranking"), unless the next word is a one-letter label after
+// a noun (Competitor A) or the phrase opens with three capitalised words (Example Logistics Co).
 function keepsFirstCapital(word, next, third = '') {
     const w = bareWord(word);
     if (!/^[A-Z]/.test(w) || (w.length === 1 && !(w === 'A' && next)) || isKnownName(w))
@@ -188,8 +198,8 @@ function lowerCommonWords(phrase) {
         return lower ? w.replace(/[A-Z]/, c => c.toLowerCase()) : w;
     }).join('');
 }
-// Text only (run 8, run 9): an input phrase placed mid-sentence starts in lower case ("That Fewer no-shows" becomes
-// "That delivers fewer no-shows") only when its first word is a common word; names and acronyms keep their capitals.
+// Text only (run 8, run 9): an input phrase placed mid-sentence starts in lower case ("That Fewer late deliveries" becomes
+// "That delivers fewer late deliveries") only when its first word is a common word; names and acronyms keep their capitals.
 function mid(phrase) {
     return lowerFirstIfCommon(phrase);
 }
@@ -293,6 +303,331 @@ function firstWords(phrase, n) {
     return w.join(' ').replace(/[,;:]$/, '');
 }
 // =============================================================================
+// Run 19 (owner decision D80): shared helpers for the 8 problems of the real-world test.
+// =============================================================================
+// Sector knowledge sits in ONE data file, src/verticals.ts (rule B82: no statistic, market size, benchmark or named-company fact).
+// A list typed by the user: one item per line or per semicolon. Commas stay inside an item, so a phrase such as
+// "Routes re-planned in under a minute, not overnight" is never cut into a fragment. A plain comma list of short items is split.
+function splitItems(s) {
+    if (typeof s !== 'string')
+        return [];
+    const parts = s.split(/\n|;/).map((x) => x.trim().replace(/^[-*•]\s*/, '')).filter(Boolean);
+    if (parts.length === 1 && /,/.test(parts[0])) {
+        const c = parts[0].split(/,(?!\d{3}(?!\d))/).map((x) => x.trim()).filter(Boolean);
+        if (c.length > 1 && c.every((x) => x.split(/\s+/).length <= 6) && !c.some((x) => /^(not|but|and|or|so|which|that)\b/i.test(x)))
+            return c;
+    }
+    return parts;
+}
+// Text typed by the user, quoted when it is placed inside one of the tool's own sentences, so a clause never breaks the grammar.
+function q(s) {
+    return `"${s.trim().replace(/^"|"$/g, '').replace(/[.!]+$/, '')}"`;
+}
+const clean = (s) => s.trim().replace(/[.!]+$/, '');
+// The sector and the business model read from the inputs, with one line saying how they were read.
+function readContext(explicitModel, ...texts) {
+    const v = (0, verticals_ts_1.detectVertical)(...texts);
+    const m = (0, verticals_ts_1.detectModel)(explicitModel, ...texts);
+    const sector = v ? `read from your inputs as ${v.name}` : 'not clear from your inputs (name the industry in plain words for sector notes)';
+    const model = m.model
+        ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from business_model' : m.how === 'sector' ? 'the usual model in this sector, assumed; set business_model to change it' : 'read from your inputs; set business_model to change it'})`
+        : 'not clear from your inputs; set business_model (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
+    return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };
+}
+const sectorLine = (v) => v
+    ? `*Sector: read from your inputs as ${v.name}.*`
+    : '*Sector: not clear from your inputs, so no sector notes are added. Name the industry in plain words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity).*';
+const SECTOR_NAMES = verticals_ts_1.VERTICALS.map((v) => v.name).join(', ');
+// A sector typed on its own ("fintech", "IT services"): one word is enough here, unlike detectVertical, which reads whole texts.
+const SECTOR_WORDS = [
+    ['vertical-saas', /vertical[- ]saas|field sales|fmcg|consumer goods|retail execution/i],
+    ['logistics-tech', /logistics|supply chain|last[- ]mile|3pl|freight|fleet/i],
+    ['fintech', /fintech|financ|spend|payments?|banking|lending/i],
+    ['ai-native', /\bai\b|ai[- ]native|llm|generative/i],
+    ['ites', /\bites\b|it services|it-enabled|managed services?|outsourc|bpo/i],
+    ['telecom', /telecom|telco|connectivity|sd-wan|isp\b/i],
+    ['cybersecurity', /cyber|security|infosec|ciso/i],
+    ['software', /software|developer|dev ?tools|\bapi\b/i],
+    ['saas', /saas|subscription/i],
+];
+function findSector(text) {
+    const t = text.trim();
+    if (!t)
+        return null;
+    for (const [id, re] of SECTOR_WORDS)
+        if (re.test(t))
+            return verticals_ts_1.VERTICALS.find((v) => v.id === id) || null;
+    return (0, verticals_ts_1.detectVertical)(t);
+}
+const list = (items, prefix = '- ') => items.map((x) => `${prefix}${x}`).join('\n');
+const numbered = (items) => items.map((x, i) => `${i + 1}. ${x}`).join('\n');
+function sectorBlock(v, parts, heading = 'Sector view') {
+    if (!v)
+        return '';
+    const out = [`### ${heading}: ${v.name}`];
+    if (parts.includes('committee'))
+        out.push(`- **Who usually buys:** ${v.committee}`);
+    if (parts.includes('motion'))
+        out.push(`- **How deals usually run:** ${v.salesMotion}`);
+    if (parts.includes('metrics'))
+        out.push(`- **What this sector measures:** ${v.metrics.join(', ')}.`);
+    if (parts.includes('objections'))
+        out.push(`- **Objections this sector often raises:** ${v.objections.map((o) => `"${o.objection}"`).join('; ')}.`);
+    if (parts.includes('proof'))
+        out.push(`- **A proof point that lands:** ${v.proofShape}`);
+    if (parts.includes('discovery'))
+        out.push(`- **Discovery questions in this sector's language:**\n${numbered(v.discovery).split('\n').map((l) => `  ${l}`).join('\n')}`);
+    return out.join('\n');
+}
+const BASE_VERBS = new Set(('cut reduce lift grow increase close resolve fix catch find get save speed shorten avoid prevent stop eliminate boost improve win keep retain ' +
+    'scale automate simplify move ship hire deliver protect secure detect respond recover understand see know reconcile prioritise prioritize clean ' +
+    'cleanse connect manage turn double halve raise expand launch generate capture convert qualify trim slash lose waste chase drown struggle spend ' +
+    'miss wait juggle rely make build create start finish complete approve onboard train sell buy renew upsell reach serve handle assign allocate ' +
+    'predict notify escalate comply meet hit beat exceed settle provision deploy migrate integrate import enrich personalise personalize engage ' +
+    'activate adopt compare choose select decide show prove lend underwrite insure invest rebalance hedge learn tell ask spot flag rank tighten ' +
+    'streamline unify replace remove stay pass clear pay collect bring give let put take use ensure enable help bill refund reclaim recoup ' +
+    'surface highlight verify validate monitor track stay hold open bridge replace align shrink slim speed-up').split(/\s+/).filter(Boolean));
+// verbs that can also stand at the start of a noun phrase ("route planning time", "audit preparation") are left out of BASE_VERBS;
+// these bases are safe to read in the third person ("plans every route" is a verb only after re-)
+const RE_BASES = new Set('plan route assign allocate book open start balance calculate train check rank score test order schedule price'.split(' '));
+const THIRD_BASES = new Set(('match rank find catch detect resolve prioritise prioritize reconcile automate clean cleanse connect monitor track turn give show let help keep save ' +
+    'cut reduce lift close fix flag map send pull push build learn adapt handle cover protect secure stop block run capture suggest generate surface ' +
+    'validate approve notify escalate predict scale ship deliver simplify unify remove replace enrich integrate migrate provision onboard serve assign ' +
+    'allocate create make take bring drive raise grow boost improve eliminate avoid prevent recover respond understand know see read write learn ' +
+    'compare choose select decide prove verify lend underwrite insure invest rebalance hedge spot tighten streamline pay collect hold open bridge align shrink').split(/\s+/).filter(Boolean));
+const NOUNISH = new Set(('fewer more less faster slower lower higher better shorter longer bigger smaller no zero one single a an the our your their every each all any some same ' +
+    'real-time realtime live instant automatic automated manual reliable predictable consistent clear accurate full complete end-to-end unified continuous daily ' +
+    'weekly monthly cheaper simpler easier safer smarter early late quick rapid critical steady lasting measurable repeatable visible transparent too many much ' +
+    'slow long high low poor rising growing failed missed fragmented uneven inconsistent unclear hidden thin weak limited rigid heavy costly expensive falling ' +
+    'lost wasted duplicate siloed scattered outdated legacy unreliable unpredictable delayed incomplete inaccurate stale noisy overloaded overdue repeated ' +
+    'constant endless frequent sudden unplanned top key main core better best new old own').split(/\s+/).filter(Boolean));
+function thirdBase(w) {
+    if (!/s$/.test(w) || w.length < 3)
+        return null;
+    const cands = [w.replace(/ies$/, 'y'), w.replace(/(ch|sh|ss|x|z|o)es$/, '$1'), w.replace(/s$/, ''), w.replace(/es$/, '')];
+    for (const c of cands)
+        if (c !== w && THIRD_BASES.has(c))
+            return c;
+    return null;
+}
+function kindOf(phrase) {
+    const w0 = (phrase.trim().split(/\s+/)[0] || '').toLowerCase().replace(/[^a-z0-9$%'-]+$/g, '');
+    if (!w0)
+        return 'other';
+    const rest = w0.startsWith('re-') ? w0.slice(3) : null;
+    if (BASE_VERBS.has(w0) || (rest !== null && RE_BASES.has(rest)))
+        return 'base';
+    if (thirdBase(w0) || (rest !== null && thirdBase(rest)) || (rest !== null && /s$/.test(rest) && RE_BASES.has(rest.slice(0, -1))))
+        return 'third';
+    if (NOUNISH.has(w0) || /^[\d$]/.test(w0))
+        return 'noun';
+    return 'other';
+}
+function lowerFirst(t) {
+    const w = t.split(/\s+/)[0] || '';
+    return /^[A-Z][a-z'-]+$/.test(w) && !isKnownName(w) ? t.charAt(0).toLowerCase() + t.slice(1) : t;
+}
+// "so you can ..." / "helps them ..." / "trying to ...": the benefit as an infinitive phrase.
+function inf(benefit) {
+    const t = clean(benefit);
+    const k = kindOf(t);
+    if (k === 'base')
+        return lowerFirst(t);
+    if (k === 'noun')
+        return `get ${lowerFirst(t)}`;
+    return `reach this result (${t})`;
+}
+// The need or problem as what a buyer does or faces: "lose days chasing alerts" stays; "failed deliveries" becomes "struggle with ...".
+function needClause(need) {
+    const t = clean(need);
+    const k = kindOf(t);
+    if (k === 'base')
+        return lowerFirst(t);
+    if (k === 'noun')
+        return `struggle with ${lowerFirst(t)}`;
+    return `face this problem (${t})`;
+}
+// A sentence with the product as its subject and the typed capability or difference as its predicate.
+function diffSentence(product, diff) {
+    const t = clean(diff);
+    const k = kindOf(t);
+    if (k === 'base')
+        return `${product} can ${lowerFirst(t)}`;
+    if (k === 'third')
+        return `${product} ${lowerFirst(t)}`;
+    return `${product} offers ${lowerFirst(t)}`;
+}
+function toBaseVerb(third) {
+    const [first, ...rest] = third.trim().split(/\s+/);
+    let pre = '';
+    let w = first.toLowerCase();
+    if (w.startsWith('re-')) {
+        pre = 're-';
+        w = w.slice(3);
+    }
+    const b = thirdBase(w) ?? (pre && /s$/.test(w) && RE_BASES.has(w.slice(0, -1)) ? w.slice(0, -1) : null);
+    return b ? [pre + b, ...rest].join(' ') : third;
+}
+// "We ..." line of a positioning statement.
+function weClause(diff) {
+    const t = clean(diff);
+    const k = kindOf(t);
+    if (k === 'base')
+        return lowerFirst(t);
+    if (k === 'third')
+        return toBaseVerb(lowerFirst(t));
+    return `offer ${lowerFirst(t)}`;
+}
+// The words of a phrase up to a clause boundary, when the phrase is longer than max words; null when no short form is possible.
+function shortClause(phrase, max) {
+    const t = clean(phrase);
+    if (t.split(/\s+/).length <= max)
+        return t;
+    // the first clause boundary that leaves 3 to max words before it
+    const re = /,|;|\s+(?:by|in|within|from|while|so that|each|every|across|when|after|before|until|because|with|without|at|for|per)\s/gi;
+    let m;
+    while ((m = re.exec(t))) {
+        const left = t.slice(0, m.index).trim();
+        const n = left.split(/\s+/).length;
+        if (n >= 3 && n <= max)
+            return left;
+        if (n > max)
+            break;
+    }
+    return null;
+}
+// Backlog B15-L1 (a very long input pasted whole into sentences): where an input repeats inside the tool's own sentences it is
+// shortened at a word boundary after 200 characters; the full text is printed once, in the inputs list.
+const LONG_AT = 200;
+function shortText(t, n = LONG_AT) {
+    const x = t.trim().replace(/\s+/g, ' ');
+    if (x.length <= n)
+        return x;
+    const cut = x.slice(0, n);
+    const sp = cut.lastIndexOf(' ');
+    return `${(sp > n / 2 ? cut.slice(0, sp) : cut).replace(/[\s,;:.]+$/, '')}...`;
+}
+const longNote = (...texts) => (texts.some((t) => (t || '').trim().length > LONG_AT) ? '\n*Long inputs are shortened where they repeat in the sentences below; the full text is in the inputs above.*' : '');
+const capFirst = (t) => (/^[a-z]+[A-Z]/.test(t.split(/\s+/)[0] || '') ? t : t.charAt(0).toUpperCase() + t.slice(1));
+// A hero line of 5 to 8 words. An action stands alone with the audience after it; a noun phrase takes "for <audience>".
+function heroLine(benefit, audience) {
+    const short = shortClause(benefit, 8);
+    if (!short)
+        return `Shorten this to 5 to 8 words: ${q(benefit)}`;
+    return kindOf(short) === 'base' ? `${capFirst(short)}. Built for ${audience}.` : `${capFirst(short)} for ${audience}.`;
+}
+// A tagline of 3 to 7 words, or an instruction when the phrase cannot be cut at a clause boundary.
+function taglineOf(benefit) {
+    const short = shortClause(benefit, 7);
+    return short ? `"${capFirst(short)}"` : `shorten this to 3 to 7 words: ${q(benefit)}`;
+}
+// A category typed in the plural or as a mass noun ("connectivity and digital services") reads as "a provider of ...".
+function catNoun(category) {
+    const t = category.trim();
+    return /s$/i.test(t) && !/(ss|us|is)$/i.test(t) ? `provider of ${t}` : t;
+}
+// The name of a competitor or alternative without its description in brackets: "Competitor A (a global suite)" gives "Competitor A".
+function nameOf(c) {
+    return c.replace(/\s*\(.*$/, '').trim() || c.trim();
+}
+const STATUS_QUO = /spreadsheet|manual|in-house|in house|status quo|do nothing|internal|home-?grown|excel|e-?mail|whatsapp|phone|hiring|\bdiy\b|existing (?:tool|process|team)|periodic|current (?:provider|process|team)|incumbent/i;
+function committeeParts(v) {
+    const strip = (s) => s.replace(/^(the|a|an)\s+/i, '').trim();
+    let signer = '';
+    let champion = '';
+    let users = null;
+    const reviewers = [];
+    for (const c of v.committee.replace(/\.\s*$/, '').split(/;\s*/)) {
+        let m;
+        if ((m = c.match(/^(.*?)\s+signs?$/i)))
+            signer = strip(m[1]);
+        else if ((m = c.match(/^(.*?)\s+champions?$/i)))
+            champion = strip(m[1]);
+        else if ((m = c.match(/^(.*?)\s+(checks?|reviews?|evaluates?|compares?|joins?|holds?|handles?|runs?)\b\s*(.*)$/i)))
+            reviewers.push({ role: strip(m[1]), does: m[2].toLowerCase(), what: m[3].trim() });
+        else if ((m = c.match(/^(.*?)\s+(?:use|uses|adopt|adopts)\b/i)))
+            users = strip(m[1]);
+    }
+    let inferred = false;
+    if (!champion) {
+        const ev = reviewers.find((r) => /evaluat/.test(r.does));
+        champion = ev ? ev.role : signer;
+        inferred = true;
+    }
+    return { signer, champion, championInferred: inferred, users, reviewers };
+}
+const MODEL_NOTES = {
+    saas: { cta: ['Get a demo', 'Start a trial (only if you offer one)'], commercial: 'term length, users or usage, and how the price grows', cost: 'lower total cost of ownership',
+        proofTiers: ['Analyst coverage, review sites such as G2, Capterra or TrustRadius, awards, and certifications such as SOC 2 or ISO 27001 if you hold them', 'Benchmarks against alternatives, integrations, live demos', 'Logo wall, case studies, reviews, user community'],
+        assets: 'hero section, sales deck and LinkedIn page' },
+    services: { cta: ['Request a scoping call', 'Get a proposal'], commercial: 'scope, price model (per FTE, per ticket or fixed), SLA, service credits and exit terms', cost: 'lower total cost of the outcome',
+        proofTiers: ['Certifications and audits you actually hold, industry-body mentions, and client references who agree to take a call', 'SLA and service reports, the transition you delivered and the dates you met, and a named governance model', 'Client logos with consent, case studies, clients who have stayed for years'],
+        assets: 'proposal template with a transition plan, a governance one-pager and reference calls' },
+    connectivity: { cta: ['Request a site survey', 'Get a quote for your sites'], commercial: 'price per site or link, contract term, SLA, service credits and migration waves', cost: 'lower total cost per site',
+        proofTiers: ['Licences and certifications you hold, and independent uptime or repair-time records where they exist', 'Site survey results and pilot-site measurements against the incumbent for the same sites', 'Reference site visits, case studies with consent'],
+        assets: 'rate-card comparison, site-survey checklist and a migration wave plan' },
+    transactions: { cta: ['Talk to sales', 'Set up a test integration'], commercial: 'price per transaction, volume commitments and settlement terms', cost: 'a lower cost per transaction',
+        proofTiers: ['Licences, audits and certifications you hold', 'Success rate, settlement and reconciliation results for a similar client', 'Client references with consent'],
+        assets: 'integration guide, a test-environment walkthrough and a pricing one-pager' },
+    marketplace: { cta: ['See how it works for buyers and sellers', 'Talk to us'], commercial: 'take rate, volume and how both sides are onboarded', cost: null,
+        proofTiers: ['Certifications, audits and policies you hold', 'Proof of activity on both sides of the marketplace, from your own records', 'Buyer and seller references with consent'],
+        assets: 'two landing pages (one per side) and a seller onboarding guide' },
+    hardware_software: { cta: ['Book a pilot site', 'Request a quote'], commercial: 'device price, software term, installation and support', cost: 'lower total cost of ownership',
+        proofTiers: ['Product certifications and test reports you hold', 'Pilot-site results and device reliability records', 'A reference site visit and case studies with consent'],
+        assets: 'pilot proposal, installation checklist and a reference-site visit plan' },
+    investment: { cta: ['Request a meeting', 'Ask for the strategy documents'], commercial: 'mandate size, fees, reporting and risk limits', cost: null,
+        proofTiers: ['Regulatory registrations and audits you hold, and independent verification of how you report', 'The documented investment process, the risk limits and how the portfolio is reported; performance figures only with the disclosures your compliance team requires', 'Social proof: client references with consent'],
+        assets: 'strategy document, a reporting sample and a due-diligence pack' },
+    unknown: { cta: ['Get a demo or talk to us', 'See a case study'], commercial: 'term, scope and price', cost: null,
+        proofTiers: ['Certifications, awards or analyst mentions you actually hold', 'Results against the alternatives, integrations and live proof', 'Case studies and references with consent'],
+        assets: 'hero section, sales deck and case study' },
+};
+// The first step a buyer in a sector is asked to take (from the sector's usual sales motion).
+const SECTOR_CTA = {
+    'logistics-tech': 'Book a pilot at one hub', fintech: 'Book a pilot on one entity or department', 'vertical-saas': 'Book a pilot in one region',
+    'ai-native': 'Run a proof of concept on your own data', ites: 'Request a scoping call', telecom: 'Request a site survey', cybersecurity: 'Start a time-boxed proof of value',
+};
+function callsToAction(v, model) {
+    const n = MODEL_NOTES[model || 'unknown'];
+    const first = model === 'saas' || model === null ? (v && SECTOR_CTA[v.id]) || n.cta[0] : n.cta[0];
+    return [...new Set([first, ...n.cta])];
+}
+// ---- Money and counts for the market anchor (problem 5: the user's own figures only) ---------------------------------------------
+function trimDecimals(x) {
+    const s = (Math.round(x * 100) / 100).toString();
+    return /\./.test(s) ? s : `${s}.0`;
+}
+function usd(v) {
+    if (v >= 1e9)
+        return `$${trimDecimals(v / 1e9)}B`;
+    if (v >= 1e6)
+        return `$${trimDecimals(v / 1e6)}M`;
+    if (v >= 1e5)
+        return `$${(v / 1e6).toFixed(2)}M`;
+    return `$${Math.round(v).toLocaleString('en-US')}`;
+}
+const usdFull = (v) => `$${Math.round(v).toLocaleString('en-US')}`;
+// "Mid-size manufacturers: 3,200; IT services firms: 1,800" gives one count per named segment; a bare number has no name.
+function parseCounts(s) {
+    if (typeof s !== 'string')
+        return [];
+    const out = [];
+    for (const raw of s.split(/\n|;/).map((x) => x.trim()).filter(Boolean)) {
+        const m = raw.match(/^(?:(.*?)\s*[:=]\s*)?(?:about |around |roughly |~)?(\d[\d,]*(?:\.\d+)?)\s*([km])?\b/i);
+        if (!m)
+            continue;
+        const n = parseFloat(m[2].replace(/,/g, '')) * (m[3] ? (m[3].toLowerCase() === 'k' ? 1e3 : 1e6) : 1);
+        if (Number.isFinite(n) && n > 0)
+            out.push({ name: (m[1] || '').trim(), count: Math.round(n) });
+    }
+    return out;
+}
+const sameName = (a, b) => {
+    const x = a.toLowerCase().replace(/\s+/g, ' ').trim();
+    const y = b.toLowerCase().replace(/\s+/g, ' ').trim();
+    return !!x && !!y && (x === y || (x.length >= 4 && y.includes(x)) || (y.length >= 4 && x.includes(y)));
+};
+// =============================================================================
 // TOOL DEFINITIONS
 // =============================================================================
 const tools = {
@@ -300,7 +635,7 @@ const tools = {
     // Tool 1: Get Framework Overview
     // ---------------------------------------------------------------------------
     impact_get_framework: {
-        description: 'Get complete IMPACT framework methodology with phase-by-phase guidance',
+        description: 'Get the IMPACT framework method phase by phase, optionally with your sector\'s buyer roles, measures and proof points',
         inputSchema: {
             type: 'object',
             properties: {
@@ -308,11 +643,47 @@ const tools = {
                     type: 'string',
                     description: 'Optional: specific phase to focus on (identify/map/pinpoint/anchor/craft/translate)',
                     enum: ['identify', 'map', 'pinpoint', 'anchor', 'craft', 'translate', 'all']
+                },
+                sector: {
+                    type: 'string',
+                    description: 'Optional: your sector in your own words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity). Adds how the six steps read in that sector'
                 }
             }
         },
         execute: (args) => {
             const phase = args.focus_phase || 'all';
+            const sectorText = (args.sector || '').trim();
+            const v = sectorText ? findSector(sectorText) : null;
+            let sectorPart = '';
+            if (sectorText && !v) {
+                sectorPart = `\n---\n\n## Your sector\n\nYou gave the sector ${q(sectorText)}, which this tool did not recognise. It knows these: ${SECTOR_NAMES}. Call it again with one of those names to add how the six steps read in your sector.\n`;
+            }
+            else if (v) {
+                const c = committeeParts(v);
+                sectorPart = `
+---
+
+## Your sector: ${v.name}
+
+How the six steps read in this sector. These are patterns, with no figures, from the tool's sector data file.
+
+**I: Identify.** ${v.committee} The usual signer is ${c.signer}; the likeliest champion is ${c.champion}.
+
+**M: Map.** Objections buyers in this sector raise show which alternatives they weigh: ${v.objections.map((o) => `"${o.objection}"`).join('; ')}.
+
+**P: Pinpoint.** What the sector measures: ${v.metrics.join(', ')}. A proof point that lands: ${v.proofShape}
+
+**A: Anchor.** How deals usually run: ${v.salesMotion}
+
+**C: Craft.** Words this sector's buyers use: ${v.vocabulary.join(', ')}.
+
+**T: Translate.** Discovery questions in the sector's language:
+${numbered(v.discovery)}
+`;
+            }
+            else {
+                sectorPart = `\nTo see the framework in your sector's own terms, call this tool again with \`sector\` (${SECTOR_NAMES}).\n`;
+            }
             const phases = {
                 identify: `
 ## I: IDENTIFY CHAMPIONS
@@ -334,11 +705,12 @@ const tools = {
 4. Who's actively researching solutions?
 
 **Champion Mapping Matrix:**
+Example pattern: replace each role with the one in your sector (add \`sector\` to see them).
 | Role | Pain Level | Influence | Access to Power | Champion Score |
 |------|-----------|-----------|-----------------|----------------|
-| VP Sales | High | High | Direct | Strong Champion |
-| Sales Ops | Very High | Medium | Indirect | Mobilizer |
-| CFO | Medium | Very High | Decision Maker | Economic Buyer |
+| [Role that owns the problem] | High | High | Direct | Strong Champion |
+| [Role that runs the process day to day] | Very High | Medium | Indirect | Mobilizer |
+| [Role that signs the budget] | Medium | Very High | Decision Maker | Economic Buyer |
 
 **Anti-Champion Warning Signs:**
 - "Let me get back to you" (no ownership)
@@ -394,15 +766,15 @@ COMPLEX ----------------+---------------- SIMPLE
 ### Value Proposition Framework
 
 **The Only Statement:**
-"We are the ONLY [category] that [unique capability] so that [target customer] can [key outcome]."
+"[Only if true and provable: We are the ONLY [category] that [unique capability] so that [target customer] can [key outcome].]"
 
 **Value Quantification Matrix:**
-${EXAMPLES}
+Fill the blank cells with your own figures; this tool adds none.
 | Value Driver | Metric | Before | After | Improvement |
 |--------------|--------|--------|-------|-------------|
-| Time Savings | Hours/week | 20 | 5 | 75% reduction |
-| Error Rate | % mistakes | 15% | 2% | 87% reduction |
-| Revenue Impact | $/quarter | $0 | $500K | New revenue |
+| [A measure of time] | [unit] | [before] | [after] | [change] |
+| [A measure of quality] | [unit] | [before] | [after] | [change] |
+| [A measure of money] | [unit] | [before] | [after] | [change] |
 
 ### Proof Point Categories
 
@@ -451,9 +823,9 @@ SOM = Serviceable obtainable market (realistic capture)
 ${EXAMPLES}
 | Segment | Pain (1-5) | Budget (1-5) | Access (1-5) | Reference (1-5) | Total |
 |---------|------------|--------------|--------------|-----------------|-------|
-| Mid-market SaaS | 5 | 4 | 5 | 5 | 19 |
-| Enterprise Finance | 4 | 5 | 2 | 4 | 15 |
-| SMB Retail | 3 | 2 | 4 | 2 | 11 |
+| Mid-size logistics providers | 5 | 4 | 5 | 5 | 19 |
+| Enterprise banks | 4 | 5 | 2 | 4 | 15 |
+| Small retail chains | 3 | 2 | 4 | 2 | 11 |
 
 **Select highest score as beachhead.**
 `,
@@ -476,18 +848,17 @@ ${EXAMPLES}
 
 **Level 1: tagline (3 to 7 words)**
 The memorable hook that captures your essence.
-Example: "The AI that closes deals"
+Example: "Fix what is exposed first"
 
 **Level 2: value proposition (1 to 2 sentences)**
 The promise you make to customers.
-Example: "We help B2B sales teams close 40% more deals by automating discovery and follow-up." ${EXAMPLE}
+Example: "We help [target customer] [achieve the outcome] by [your capability]."
 
 **Level 3: supporting messages (3 pillars)**
 The proof points that support your promise.
-${EXAMPLES}
-1. Speed: "10x faster prospecting"
-2. Accuracy: "AI-qualified leads only"
-3. Scale: "Handle 100x more conversations"
+1. Your difference: "[what only you do]" (proof: [a result you can show])
+2. Your outcome: "[the result the buyer gets]" (proof: [a customer figure, only if real])
+3. Your fit: "[why it works in the buyer's sector]" (proof: [a reference or pilot result])
 
 ### Message Testing Framework
 
@@ -508,10 +879,10 @@ ${EXAMPLES}
 | Channel | Format | Length | CTA Focus | Key Message |
 |---------|--------|--------|-----------|-------------|
 | LinkedIn | Text + Image | 150 words | Engage | Problem awareness |
-| Website Hero | Headline + Sub | 15 words | Demo | Value prop |
+| Website Hero | Headline + Sub | 15 words | Next step | Value prop |
 | Cold Email | Subject + Body | 75 words | Reply | Pain + curiosity |
 | Sales Deck | Slides | 10 slides | Meeting | Full story |
-| Product Demo | Script | 15 min | Trial | Capability proof |
+| Demo or walkthrough | Script | 15 min | Pilot or proposal | Capability proof |
 
 ### Execution Checklist
 
@@ -548,7 +919,7 @@ The IMPACT framework is a systematic approach to B2B positioning that generates 
 **IMPACT = Identify · Map · Pinpoint · Anchor · Craft · Translate**
 
 ${Object.values(phases).join('\n---\n')}
-
+${sectorPart}
 ---
 
 ## Getting Started
@@ -568,16 +939,16 @@ ${SUGGESTED}
             const single = phases[phase];
             // The craft phase suggests text lengths, so it ends with the suggestions footer.
             if (single && phase === 'craft') {
-                return `${single}\n${SUGGESTED}\n`;
+                return `${single}${sectorPart}\n${SUGGESTED}\n`;
             }
-            return single || 'Phase not found. Use: identify, map, pinpoint, anchor, craft, translate, or all';
+            return single ? `${single}${sectorPart}` : 'Phase not found. Use: identify, map, pinpoint, anchor, craft, translate, or all';
         }
     },
     // ---------------------------------------------------------------------------
     // Tool 2: Identify Champions
     // ---------------------------------------------------------------------------
     impact_identify_champions: {
-        description: 'Generate champion hypotheses from your company and product context',
+        description: 'Generate champion, economic buyer and technical influencer hypotheses from your product context, using the buying roles of your sector',
         inputSchema: {
             type: 'object',
             properties: {
@@ -595,7 +966,7 @@ ${SUGGESTED}
                 },
                 target_company_type: {
                     type: 'string',
-                    description: 'Type of companies you target (e.g., "Series B SaaS", "Enterprise manufacturing")'
+                    description: 'Type of companies you target (e.g., "mid-size fintech companies", "enterprise manufacturers")'
                 },
                 price_point: {
                     type: 'string',
@@ -605,139 +976,86 @@ ${SUGGESTED}
             required: ['product_description', 'problem_solved']
         },
         execute: (args) => {
-            const company = args.company_name || 'not supplied';
-            const targetType = args.target_company_type || 'B2B companies (assumed, not supplied)';
-            const pricePoint = args.price_point || 'mid-market (assumed, not supplied)';
-            // Analyze problem to generate champion hypotheses
-            const problemLower = args.problem_solved.toLowerCase();
-            const productLower = args.product_description.toLowerCase();
-            // Champion detection logic
+            const company = (args.company_name || '').trim();
+            const targetType = (args.target_company_type || '').trim();
+            const pricePoint = (args.price_point || '').trim();
+            const problem = args.problem_solved;
+            const pq = q(shortText(problem));
+            // The sector is read from what the product does and the problem; the target companies are added only when those name none.
+            const v = (0, verticals_ts_1.detectVertical)(args.product_description, problem) || (0, verticals_ts_1.detectVertical)(args.product_description, problem, targetType, company);
+            const problemLower = problem.toLowerCase();
             let primaryChampion = { role: '', pain: '', motivation: '' };
             let economicBuyer = { role: '', concern: '', trigger: '' };
             let technicalInfluencer = { role: '', criteria: '', blocker: '' };
-            // Sales-related problems
-            if (problemLower.includes('sales') || problemLower.includes('revenue') || problemLower.includes('pipeline') || problemLower.includes('quota')) {
+            let usersLine = '';
+            let inferredNote = '';
+            if (v) {
+                const c = committeeParts(v);
                 primaryChampion = {
-                    role: 'VP/Director of Sales',
-                    pain: 'Missing quota, low win rates, pipeline visibility',
-                    motivation: 'Compensation tied to team performance, promotion depends on hitting numbers'
+                    role: c.champion,
+                    pain: `the problem you described, in your words: ${pq}`,
+                    motivation: `a visible win on what this sector measures: ${v.metrics.slice(0, 4).join(', ')}`
                 };
                 economicBuyer = {
-                    role: 'CRO or CEO',
-                    concern: 'Revenue growth, sales efficiency, CAC:LTV ratio',
-                    trigger: 'Board pressure on growth metrics, missed quarterly targets'
+                    role: c.signer,
+                    concern: `the same measures, and the cost of leaving the problem unsolved. How deals usually run here: ${v.salesMotion}`,
+                    trigger: 'an event that releases budget (a renewal, an audit, a season or a target): ask what the event is'
                 };
                 technicalInfluencer = {
-                    role: 'Sales Operations Manager',
-                    criteria: 'CRM integration, data accuracy, adoption ease',
-                    blocker: 'Implementation complexity, rep pushback concerns'
+                    role: c.reviewers.length ? c.reviewers.map((r) => capFirst(r.role)).join('; ') : 'the people who check fit and security',
+                    criteria: c.reviewers.length ? c.reviewers.map((r) => `${capFirst(r.role)} ${r.does} ${r.what}`.trim()).join('; ') : 'technical fit and effort to implement',
+                    blocker: 'the objections this sector often raises: ' + v.objections.map((o) => `"${o.objection}"`).join('; ')
                 };
+                usersLine = c.users ? `\n### Daily Users\n${capFirst(c.users)} use it every day. Ask them what a good week looks like today; their answer is your first proof point.\n` : '';
+                inferredNote = c.championInferred ? ' (this sector\'s usual committee names no separate champion, so the person who evaluates it is the likeliest)' : '';
             }
-            // Marketing-related problems
+            else if (problemLower.includes('sales') || problemLower.includes('revenue') || problemLower.includes('pipeline') || problemLower.includes('quota')) {
+                primaryChampion = { role: 'VP/Director of Sales', pain: 'Missing quota, low win rates, pipeline visibility', motivation: 'Compensation tied to team performance, promotion depends on hitting numbers' };
+                economicBuyer = { role: 'CRO or CEO', concern: 'Revenue growth, sales efficiency, CAC:LTV ratio', trigger: 'Board pressure on growth metrics, missed quarterly targets' };
+                technicalInfluencer = { role: 'Sales Operations Manager', criteria: 'CRM integration, data accuracy, adoption ease', blocker: 'Implementation complexity, rep pushback concerns' };
+            }
             else if (problemLower.includes('marketing') || problemLower.includes('leads') || problemLower.includes('demand') || problemLower.includes('brand')) {
-                primaryChampion = {
-                    role: 'VP/Director of Marketing',
-                    pain: 'Lead quality issues, attribution gaps, campaign ROI',
-                    motivation: 'Pipeline contribution targets, marketing-sourced revenue goals'
-                };
-                economicBuyer = {
-                    role: 'CMO or CEO',
-                    concern: 'Marketing efficiency, brand perception, market share',
-                    trigger: 'Budget scrutiny, competitive pressure, growth targets'
-                };
-                technicalInfluencer = {
-                    role: 'Marketing Operations Manager',
-                    criteria: 'Tech stack integration, data flow, automation capabilities',
-                    blocker: 'Existing tool overlap, migration complexity'
-                };
+                primaryChampion = { role: 'VP/Director of Marketing', pain: 'Lead quality issues, attribution gaps, campaign ROI', motivation: 'Pipeline contribution targets, marketing-sourced revenue goals' };
+                economicBuyer = { role: 'CMO or CEO', concern: 'Marketing efficiency, brand perception, market share', trigger: 'Budget scrutiny, competitive pressure, growth targets' };
+                technicalInfluencer = { role: 'Marketing Operations Manager', criteria: 'Tech stack integration, data flow, automation capabilities', blocker: 'Existing tool overlap, migration complexity' };
             }
-            // Operations/efficiency problems
             else if (problemLower.includes('operations') || problemLower.includes('efficiency') || problemLower.includes('process') || problemLower.includes('manual')) {
-                primaryChampion = {
-                    role: 'VP/Director of Operations',
-                    pain: 'Manual processes, team bandwidth, scaling challenges',
-                    motivation: 'Efficiency metrics, headcount optimization, process improvement KPIs'
-                };
-                economicBuyer = {
-                    role: 'COO or CFO',
-                    concern: 'Operating costs, scalability, resource utilization',
-                    trigger: 'Growth without proportional headcount increase'
-                };
-                technicalInfluencer = {
-                    role: 'Operations/Systems Manager',
-                    criteria: 'Workflow automation, system reliability, learning curve',
-                    blocker: 'Change management concerns, training requirements'
-                };
+                primaryChampion = { role: 'VP/Director of Operations', pain: 'Manual processes, team bandwidth, scaling challenges', motivation: 'Efficiency metrics, headcount optimization, process improvement KPIs' };
+                economicBuyer = { role: 'COO or CFO', concern: 'Operating costs, scalability, resource utilization', trigger: 'Growth without proportional headcount increase' };
+                technicalInfluencer = { role: 'Operations/Systems Manager', criteria: 'Workflow automation, system reliability, learning curve', blocker: 'Change management concerns, training requirements' };
             }
-            // Engineering/technical problems
             else if (problemLower.includes('engineering') || problemLower.includes('development') || problemLower.includes('technical') || problemLower.includes('code')) {
-                primaryChampion = {
-                    role: 'VP/Director of Engineering',
-                    pain: 'Velocity issues, technical debt, developer productivity',
-                    motivation: 'Shipping targets, team satisfaction, innovation capacity'
-                };
-                economicBuyer = {
-                    role: 'CTO or CEO',
-                    concern: 'Engineering investment ROI, competitive velocity, talent retention',
-                    trigger: 'Missed launches, developer turnover, competitor outpacing'
-                };
-                technicalInfluencer = {
-                    role: 'Engineering Manager/Tech Lead',
-                    criteria: 'Technical fit, learning curve, community support',
-                    blocker: 'Not-invented-here syndrome, integration concerns'
-                };
+                primaryChampion = { role: 'VP/Director of Engineering', pain: 'Velocity issues, technical debt, developer productivity', motivation: 'Shipping targets, team satisfaction, innovation capacity' };
+                economicBuyer = { role: 'CTO or CEO', concern: 'Engineering investment ROI, competitive velocity, talent retention', trigger: 'Missed launches, developer turnover, competitor outpacing' };
+                technicalInfluencer = { role: 'Engineering Manager/Tech Lead', criteria: 'Technical fit, learning curve, community support', blocker: 'Not-invented-here syndrome, integration concerns' };
             }
-            // Security/compliance problems
             else if (problemLower.includes('security') || problemLower.includes('compliance') || problemLower.includes('risk') || problemLower.includes('audit')) {
-                primaryChampion = {
-                    role: 'CISO/VP Security',
-                    pain: 'Compliance gaps, incident response, visibility gaps',
-                    motivation: 'Audit readiness, risk reduction metrics, board reporting'
-                };
-                economicBuyer = {
-                    role: 'CIO or CFO',
-                    concern: 'Risk exposure, compliance costs, incident costs',
-                    trigger: 'Audit findings, security incident, regulatory changes'
-                };
-                technicalInfluencer = {
-                    role: 'Security Engineer/Architect',
-                    criteria: 'Technical depth, coverage breadth, false positive rates',
-                    blocker: 'Alert fatigue concerns, tool sprawl'
-                };
+                primaryChampion = { role: 'CISO/VP Security', pain: 'Compliance gaps, incident response, visibility gaps', motivation: 'Audit readiness, risk reduction metrics, board reporting' };
+                economicBuyer = { role: 'CIO or CFO', concern: 'Risk exposure, compliance costs, incident costs', trigger: 'Audit findings, security incident, regulatory changes' };
+                technicalInfluencer = { role: 'Security Engineer/Architect', criteria: 'Technical depth, coverage breadth, false positive rates', blocker: 'Alert fatigue concerns, tool sprawl' };
             }
-            // Default/generic
             else {
-                primaryChampion = {
-                    role: `Department head who owns ${mid(args.problem_solved)}`,
-                    pain: mid(args.problem_solved),
-                    motivation: 'KPIs directly tied to problem resolution'
-                };
-                economicBuyer = {
-                    role: 'C-level executive sponsoring the initiative',
-                    concern: 'Business impact, ROI, strategic alignment',
-                    trigger: 'Board pressure, competitive threats, growth requirements'
-                };
-                technicalInfluencer = {
-                    role: 'Senior IC or Manager who implements',
-                    criteria: 'Technical fit, implementation effort, ongoing maintenance',
-                    blocker: 'Change resistance, competing priorities'
-                };
+                primaryChampion = { role: 'the department head who owns this problem', pain: `the problem you described, in your words: ${pq}`, motivation: 'KPIs directly tied to problem resolution' };
+                economicBuyer = { role: 'the executive sponsoring the initiative', concern: 'Business impact, ROI, strategic alignment', trigger: 'Board pressure, competitive threats, growth requirements' };
+                technicalInfluencer = { role: 'the senior specialist or manager who implements', criteria: 'Technical fit, implementation effort, ongoing maintenance', blocker: 'Change resistance, competing priorities' };
             }
             return `# Champion Identification Analysis
 
 ## Company Context
-**Company**: ${company}
+**Company**: ${company || 'not supplied'}
 **Product**: ${args.product_description}
-**Problem Solved**: ${args.problem_solved}
-**Target Market**: ${targetType}
-**Price Point**: ${pricePoint}
+**Problem Solved**: ${problem}
+**Target Market**: ${targetType || 'not supplied'}
+**Price Point**: ${pricePoint || 'not supplied'}
+
+${sectorLine(v)}${longNote(args.product_description, problem, args.target_company_type)}${v ? '' : '\nThe roles below are generic, because no sector was clear. They are a starting point: name your industry and run the tool again for roles that exist in it.'}
 
 ---
 
 ## Champion Hypothesis
 
 ### Primary Champion (Your Internal Advocate)
-**Most Likely Role**: ${primaryChampion.role}
+**Most Likely Role**: ${primaryChampion.role}${inferredNote}
 
 **Why This Role**:
 - Owns the problem: ${primaryChampion.pain}
@@ -745,7 +1063,7 @@ ${SUGGESTED}
 - Has organizational credibility to advocate for change
 
 **Champion Validation Questions**:
-1. "Who's currently responsible for solving ${mid(args.problem_solved)}?"
+1. "Who is responsible for this problem today?" (your problem, in your words: ${pq})
 2. "Who brought this initiative to leadership's attention?"
 3. "Who would be promoted/recognized if this problem was solved?"
 4. "Who's actively researching solutions in this space?"
@@ -773,7 +1091,14 @@ ${SUGGESTED}
 1. "What would a successful implementation look like?"
 2. "What's failed before and why?"
 3. "What systems does this need to integrate with?"
+${usersLine}
+---
 
+## Using Your Price Point and Target Companies
+
+- **Price point**: ${pricePoint ? `you gave ${q(pricePoint)}. Ask the champion early whether that sits inside a budget they control or needs the economic buyer's sign-off; the answer tells you how many people you must reach.` : 'not supplied, so no view on who can approve the spend. Add price_point (for example "$50K-100K") and the tool will say what to ask about the budget.'}
+- **Target companies**: ${targetType ? `you target ${q(targetType)}. Check how each role above is titled in those companies. In smaller ones one person often holds two of the roles; in larger ones procurement or finance usually joins the committee.` : 'not supplied, so the roles are not tuned to a company size. Add target_company_type to get a note on how the roles are titled.'}
+${v ? `\n${sectorBlock(v, ['discovery', 'proof'], 'Sector view')}\n` : ''}
 ---
 
 ## Anti-Champion Warning Signs
@@ -799,8 +1124,8 @@ If you're starting without an identified champion:
 - Find mutual connections for warm introductions
 
 **Week 2**: Multi-thread outreach
-- Contact ${primaryChampion.role} with problem-focused message
-- Contact ${technicalInfluencer.role} with solution-focused message
+- Contact ${primaryChampion.role} with a problem-focused message
+- Contact ${v ? 'the reviewers listed above' : technicalInfluencer.role} with a solution-focused message
 - See who engages first → likely champion
 
 **Week 3**: Validate and align
@@ -815,7 +1140,7 @@ If you're starting without an identified champion:
 Once you identify your champion, they'll need:
 
 1. **Internal Business Case**: ROI data to share with ${economicBuyer.role}
-2. **Technical Validation**: Proof points for ${technicalInfluencer.role}
+2. **Technical Validation**: Proof points for ${v ? 'the reviewers above' : technicalInfluencer.role}
 3. **Competitive Comparison**: Why not alternatives (status quo, competitors)
 4. **Risk Mitigation**: Implementation plan, support structure, success metrics
 
@@ -829,7 +1154,7 @@ ${SUGGESTED}
     // Tool 3: Map Alternatives
     // ---------------------------------------------------------------------------
     impact_map_alternatives: {
-        description: 'Analyze competitive landscape and find positioning whitespace',
+        description: 'Map your alternatives: one card per named competitor, plus the status-quo options you list, using the weaknesses and strengths you give, with the questions and objections of your sector',
         inputSchema: {
             type: 'object',
             properties: {
@@ -839,120 +1164,98 @@ ${SUGGESTED}
                 },
                 category: {
                     type: 'string',
-                    description: 'Your product category (e.g., "Sales engagement", "Data platform")'
+                    description: 'Your product category (e.g., "cloud security monitoring", "last-mile delivery software")'
                 },
                 competitors: {
                     type: 'array',
                     items: { type: 'string' },
-                    description: 'List of competitor names'
+                    description: 'List of competitor names, and the status-quo options your buyers use (for example "spreadsheets"). A description in brackets after a name is kept'
                 },
                 competitor_weaknesses: {
                     type: 'string',
-                    description: 'Optional: Known competitor weaknesses or customer complaints'
+                    description: 'Optional: Known competitor weaknesses or customer complaints, one per line or separated by semicolons. A weakness that names a competitor is shown on its card'
                 },
                 your_strengths: {
                     type: 'string',
-                    description: 'Optional: What you do better than competitors'
+                    description: 'Optional: What you do better than competitors, one per line or separated by semicolons'
                 }
             },
             required: ['your_product', 'category']
         },
         execute: (args) => {
-            // Run 15 R15-32: an empty list is treated like no list, and the placeholder names say they are examples
-            const competitorsGiven = !!(args.competitors && args.competitors.length);
-            const competitors = competitorsGiven ? args.competitors : ['Competitor A', 'Competitor B', 'Status Quo'];
-            const weaknesses = args.competitor_weaknesses || '';
-            const strengths = args.your_strengths || '';
-            // Text only (run 12): a map cell is padded to the box width; a name is printed only when one was given (or is the example list).
+            // An empty list is treated like no list, and the placeholder names say they are examples
+            const competitorsGiven = !!(args.competitors && args.competitors.filter((c) => c && c.trim()).length);
+            const named = competitorsGiven ? args.competitors.filter((c) => c && c.trim()).map((c) => c.trim()) : ['Competitor A', 'Competitor B', 'Status Quo'];
+            const weaknessItems = splitItems(args.competitor_weaknesses);
+            const strengthItems = splitItems(args.your_strengths);
+            const strengthShort = strengthItems.map((x) => shortText(x));
+            const v = (0, verticals_ts_1.detectVertical)(args.your_product, args.category);
+            const vendors = named.filter((c) => !STATUS_QUO.test(nameOf(c)) && nameOf(c).toLowerCase() !== 'status quo' && nameOf(c).toLowerCase() !== 'do nothing');
+            const statusQuo = named.filter((c) => !vendors.includes(c));
+            // A weakness is shown on the card of the competitor it names. One that names nobody goes on the only vendor's card when
+            // there is exactly one, and otherwise under "not tied to a competitor".
+            const matched = new Map();
+            const used = new Set();
+            for (const c of named) {
+                const key = nameOf(c).toLowerCase();
+                const hits = key.length >= 3 ? weaknessItems.filter((w) => w.toLowerCase().includes(key)) : [];
+                if (hits.length) {
+                    matched.set(c, hits);
+                    hits.forEach((h) => used.add(h));
+                }
+            }
+            let untied = weaknessItems.filter((w) => !used.has(w));
+            if (vendors.length === 1 && untied.length) {
+                matched.set(vendors[0], [...(matched.get(vendors[0]) || []), ...untied]);
+                untied = [];
+            }
+            // Text only: a map cell is padded to the box width; a name is printed only when one was given (or is the example list).
             const mapCell = (name) => {
-                const t = name ? `[${name}]` : '';
+                const full = name ? nameOf(name) : '';
+                const short = full.length <= 15 ? full : full.split(/\s+/)[0].slice(0, 15);
+                const t = short ? `[${short}]` : '';
                 const left = Math.max(1, Math.floor((19 - t.length) / 2));
                 return (' '.repeat(left) + t).padEnd(19, ' ') + (t.length > 17 ? ' ' : '');
             };
-            // Generate competitive insights based on category
-            const categoryLower = args.category.toLowerCase();
-            let marketContext = {
-                typical_leaders: [],
-                common_complaints: [],
-                differentiation_axes: []
+            const descriptor = (c) => { const m = c.match(/\(([^)]*)\)/); return m ? m[1].trim() : ''; };
+            const card = (c, i) => {
+                const w = matched.get(c) || [];
+                const d = descriptor(c);
+                const q1 = v ? v.discovery[i % v.discovery.length] : 'What have you tried before to solve this, and what did not work?';
+                return `
+**${nameOf(c)}**${d ? ` (${d})` : ''}:
+- What you told us about them: ${d ? q(d) : 'only the name'}; nothing else was looked up
+- Weaknesses you reported (notes for you to test with buyers, not verified facts):${w.length ? '\n' + w.map((x) => `  - ${x}`).join('\n') : ' none supplied for this competitor'}
+- Where you can lead:${strengthShort.length ? '\n' + strengthShort.map((x) => `  - ${x}`).join('\n') : ' none supplied (add your_strengths)'}
+- A neutral question to ask a buyer about them: "${q1.replace(/\?$/, '')}?"`;
             };
-            if (categoryLower.includes('sales') || categoryLower.includes('crm') || categoryLower.includes('engagement')) {
-                marketContext = {
-                    typical_leaders: ['Salesforce', 'HubSpot', 'Outreach', 'Salesloft', 'Gong'],
-                    common_complaints: ['Too complex to customize', 'Poor data quality', 'Low rep adoption', 'Expensive seat-based pricing', 'Integration headaches'],
-                    differentiation_axes: ['Ease of use', 'AI capabilities', 'Pricing model', 'Integration depth', 'Vertical specialization']
-                };
-            }
-            else if (categoryLower.includes('marketing')) {
-                marketContext = {
-                    typical_leaders: ['Marketo', 'HubSpot', 'Pardot', 'ActiveCampaign', 'Klaviyo'],
-                    common_complaints: ['Difficult to use without developer', 'Attribution is inaccurate', 'Limited personalization', 'Template constraints', 'Deliverability issues'],
-                    differentiation_axes: ['Ease of use', 'Attribution accuracy', 'Personalization depth', 'Channel coverage', 'Analytics sophistication']
-                };
-            }
-            else if (categoryLower.includes('data') || categoryLower.includes('analytics') || /\bbi\b/.test(categoryLower)) {
-                marketContext = {
-                    typical_leaders: ['Snowflake', 'Databricks', 'Tableau', 'Looker', 'dbt'],
-                    common_complaints: ['Requires data team', 'Slow queries', 'Expensive at scale', 'Learning curve', 'Data freshness issues'],
-                    differentiation_axes: ['Self-service capability', 'Performance at scale', 'Pricing predictability', 'Learning curve', 'Real-time capabilities']
-                };
-            }
-            else if (categoryLower.includes('security') || categoryLower.includes('compliance')) {
-                marketContext = {
-                    typical_leaders: ['CrowdStrike', 'Palo Alto', 'Splunk', 'Okta', 'Snyk'],
-                    common_complaints: ['Alert fatigue', 'False positives', 'Complex deployment', 'Tool sprawl', 'Pricing complexity'],
-                    differentiation_axes: ['Alert quality', 'Deployment ease', 'Coverage breadth', 'Integration ecosystem', 'Pricing transparency']
-                };
-            }
-            else {
-                marketContext = {
-                    typical_leaders: ['Market leaders vary by specific category'],
-                    common_complaints: ['Complexity', 'Cost', 'Poor support', 'Limited customization', 'Difficult integration'],
-                    differentiation_axes: ['Ease of use', 'Price/value', 'Support quality', 'Flexibility', 'Integration depth']
-                };
-            }
-            // Parse any provided weaknesses/strengths into insights
-            let customInsights = '';
-            if (weaknesses) {
-                customInsights += `\n**Customer-Reported Competitor Issues**:\n${weaknesses.split(/\n|,(?!\d{3}(?!\d))/).map(w => `- ${w.trim()}`).join('\n')}\n`;
-            }
-            if (strengths) {
-                customInsights += `\n**Your Key Differentiators**:\n${strengths.split(/\n|,(?!\d{3}(?!\d))/).map(s => `- ${s.trim()}`).join('\n')}\n`;
-            }
+            const customInsights = `${untied.length ? `\n**Weaknesses you reported that name no competitor** (not tied to a card; test them with buyers):\n${list(untied)}\n` : ''}${strengthItems.length ? `\n**Your Key Differentiators**:\n${list(strengthItems)}\n` : ''}`;
             return `# Competitive Landscape Analysis
 
 ## Market Context
 **Your Product**: ${args.your_product}
 **Category**: ${args.category}
-**Analyzed Competitors**: ${competitors.join(', ')}${competitorsGiven ? '' : ' (examples: you supplied no competitors; replace them with your own)'}
+**Analyzed Competitors**: ${named.join(', ')}${competitorsGiven ? '' : ' (examples: you supplied no competitors; replace them with your own)'}
+${sectorLine(v)}${longNote(args.your_product, args.competitor_weaknesses, args.your_strengths)}
 
 ---
 
 ## Alternative Categories
 
 ### 1. Direct Competitors (Same Solution, Same Problem)
-${competitors.filter(c => c.toLowerCase() !== 'status quo' && c.toLowerCase() !== 'do nothing').map((c, i) => `
-**${c}**:
-- Positioning territory to check: ${marketContext.differentiation_axes[i % marketContext.differentiation_axes.length] || 'General market leader'} (a common axis in this category; nothing about ${c} was looked up)
-- Weakness to test with buyers: ${marketContext.common_complaints[i % marketContext.common_complaints.length]} (a common complaint in this category, not a known fact about ${c})
-- Best for: [who they serve best, from what buyers tell you]
-- Your opportunity: Differentiate on ${marketContext.differentiation_axes[(i + 1) % marketContext.differentiation_axes.length]}`).join('\n')}
+${vendors.length ? vendors.map((c, i) => card(c, i)).join('\n') : '\nNo named vendor competitor was supplied. Add the products your buyers compare you with to `competitors`.\n'}
 
 ### 2. Status Quo (Current Manual/DIY Approach)
-**What they may be doing instead** (common patterns to check with buyers):
-- Spreadsheets and manual processes
-- Existing tools cobbled together
-- Junior staff doing the work manually
-
+${statusQuo.length ? `**What your buyers use today** (in your words):\n${statusQuo.map((c) => { const w = matched.get(c) || []; return `- ${c}${w.length ? `\n  - Weaknesses you reported (a note for you to test with buyers): ${w.join('; ')}` : ''}`; }).join('\n')}\n` : '**What they may be doing instead** (common patterns to check with buyers):\n- Spreadsheets and manual processes\n- Existing tools cobbled together\n- Junior staff doing the work manually\n'}
 **Why status quo persists**:
 - "Good enough" for current scale
 - Change requires effort/budget
 - No forcing function yet
-
+${v ? `- In this sector, buyers often say: ${v.objections.slice(0, 2).map((o) => `"${o.objection}"`).join(' and ')}\n` : ''}
 **Breaking status quo**:
-- Quantify cost of manual approach
-- Show what competitors are doing
-- Create urgency with market trends
+- Quantify cost of the current approach in the buyer's own figures
+- Show what the alternatives cannot do
+- Create urgency with a dated event (a renewal, an audit, a season, a target)
 
 ### 3. Do Nothing (Accept the Problem)
 **Why they might do nothing**:
@@ -968,15 +1271,11 @@ ${competitors.filter(c => c.toLowerCase() !== 'status quo' && c.toLowerCase() !=
 ---
 
 ## Competitive Whitespace Analysis
-
-### Common Market Complaints (Opportunity Areas)
-${marketContext.common_complaints.map((c, i) => `${i + 1}. **${c}** → Your opportunity to excel here`).join('\n')}
 ${customInsights}
-
 ### Differentiation Axes
-| Axis | Market Standard | Your Potential Position |
-|------|-----------------|------------------------|
-${marketContext.differentiation_axes.map((axis) => `| ${axis} | [How the market does it today] | [Lead, match or skip] |`).join('\n')}
+${strengthItems.length || v ? `| Axis | How alternatives handle it today (ask buyers) | Your potential position |
+|------|----------------------------------------------|------------------------|
+${strengthShort.map((s) => `| ${s} (your strength) | ask buyers | Lead, match or skip |`).join('\n')}${strengthItems.length && v ? '\n' : ''}${v ? v.metrics.slice(0, 4).map((m) => `| ${m} (what this sector measures) | ask buyers | Lead, match or skip |`).join('\n') : ''}` : 'No strengths were supplied and no sector was clear, so there are no axes to show. Add `your_strengths` (one per line) or name your industry in `your_product`.'}
 
 ---
 
@@ -987,11 +1286,11 @@ ${marketContext.differentiation_axes.map((axis) => `| ${axis} | [How the market 
                         │
     ┌───────────────────┼───────────────────┐
     │                   │                   │
-    │${mapCell(competitors[0])}│${mapCell('YOUR WHITESPACE')}│
+    │${mapCell(named[0])}│${mapCell('YOUR WHITESPACE')}│
     │                   │                   │
 COMPLEX ────────────────┼──────────────────── SIMPLE
     │                   │                   │
-    │${mapCell(competitors[1])}│${mapCell(competitors[2])}│
+    │${mapCell(named[1])}│${mapCell(named[2])}│
     │                   │                   │
     └───────────────────┼───────────────────┘
                         │
@@ -1009,24 +1308,33 @@ COMPLEX ────────────────┼───────
 ---
 
 ## Competitive Battle Strategy
-
-### Against ${competitors[0] || 'Market Leader'}
-**Their strength (an assumption to check with buyers)**: Established brand, large customer base
-**Weakness to test with buyers**: ${marketContext.common_complaints[0]} (a common complaint in this category, not a known fact about ${competitors[0] || 'them'})
-**Your attack angle**: ${strengths ? `"Unlike ${competitors[0] || '[them]'}, we offer ${mid(strengths)}"` : '"Unlike [them], we [your differentiation]"'}
-**Landmine question**: "How has [competitor weakness] impacted your results?"
-
+${vendors.map((c, i) => {
+                const n = nameOf(c);
+                const w = matched.get(c) || [];
+                return `
+### Against ${n}
+**Their likely strength (an assumption to check with buyers)**: what made buyers shortlist ${n} in the first place
+**Weakness to test with buyers**: ${w.length ? w.map((x) => shortText(x)).join('; ') + ' (your note, not a verified fact)' : 'none supplied for this competitor'}
+**Your attack angle**: ${strengthShort.length ? `lead with one of your own strengths: ${strengthShort.map((s) => q(s)).join(', ')}` : 'add your_strengths to get an angle'}
+**Landmine question**: ask the buyer to describe the last time the points above came up with ${n}, and what it cost them${v ? ` (in this sector: ${q(v.discovery[(i + 2) % v.discovery.length])})` : ''}`;
+            }).join('\n')}
+${statusQuo.map((c) => `
+### Against ${nameOf(c)}
+**Their strength**: No change required, no new budget needed
+**Their weakness**: ${(matched.get(c) || []).length ? `${(matched.get(c) || []).map((x) => shortText(x)).join('; ')} (your note, not a verified fact)` : 'it does not scale, and it costs time that is rarely counted'}
+**Your attack angle**: "What is the cost of continuing this way for another year?"
+**Landmine question**: "How many hours a week does your team spend on this today, and who does it?"`).join('\n') || `
 ### Against Status Quo
 **Their strength**: No change required, no budget needed
-**Their weakness**: Doesn't scale, manual errors, opportunity cost
-**Your attack angle**: "What's the cost of continuing this way for another year?"
-**Landmine question**: "How many hours per week does your team spend on this manually?"
+**Their weakness**: Does not scale, manual errors, opportunity cost
+**Your attack angle**: "What is the cost of continuing this way for another year?"
+**Landmine question**: "How many hours per week does your team spend on this manually?"`}
 
 ### Against Do Nothing
 **Their strength**: Zero effort, zero risk
 **Their weakness**: Competitive disadvantage, compounding problem
 **Your attack angle**: [Only if true and provable: "Your competitors are already solving this"]
-**Landmine question**: "What happens to your metrics if this problem grows 2x next year?" ${EXAMPLE}
+**Landmine question**: "What happens to your results if this problem grows next year?"
 
 ---
 
@@ -1034,12 +1342,14 @@ COMPLEX ────────────────┼───────
 
 Ask prospects these questions to understand their competitive context:
 
-1. "What have you tried before to solve this?"
-2. "What other solutions are you evaluating?"
-3. "What would make you choose [competitor] over us?"
-4. "What didn't work about your previous approach?"
-5. "What's missing from solutions you've seen?"
-
+${numbered([
+                '"What have you tried before to solve this?"',
+                '"What other solutions are you evaluating?"',
+                ...(vendors.length ? vendors.slice(0, 2).map((c) => `"What would make you choose ${nameOf(c)} over us?"`) : ['"What would make you choose a competitor over us?"']),
+                '"What didn\'t work about your previous approach?"',
+                '"What\'s missing from solutions you\'ve seen?"',
+            ])}
+${v ? `\n${sectorBlock(v, ['committee', 'objections', 'discovery'], 'Sector view')}\n` : ''}
 **Next Step**: Use \`impact_pinpoint_value\` to articulate your unique differentiation
 `;
         }
@@ -1048,7 +1358,7 @@ Ask prospects these questions to understand their competitive context:
     // Tool 4: Pinpoint Unique Value
     // ---------------------------------------------------------------------------
     impact_pinpoint_value: {
-        description: 'Generate value proposition with quantification and proof points',
+        description: 'Generate value proposition statements, a value matrix for your own figures and proof points that fit your business model',
         inputSchema: {
             type: 'object',
             properties: {
@@ -1062,7 +1372,7 @@ Ask prospects these questions to understand their competitive context:
                 },
                 target_customer: {
                     type: 'string',
-                    description: 'Who you serve (e.g., "B2B sales teams")'
+                    description: 'Who you serve (e.g., "cloud security leads at mid-size fintech companies")'
                 },
                 key_outcome: {
                     type: 'string',
@@ -1074,109 +1384,69 @@ Ask prospects these questions to understand their competitive context:
                 },
                 customer_metrics: {
                     type: 'string',
-                    description: 'Optional: Any customer results data (e.g., "40% faster, 3x pipeline")'
+                    description: 'Optional: Any customer results data (e.g., "critical exposures down 70% in one quarter; audit preparation from 3 weeks to 4 days")'
+                },
+                business_model: {
+                    type: 'string',
+                    enum: verticals_ts_1.BUSINESS_MODELS,
+                    description: 'Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose proof types; read from your inputs when not given'
                 }
             },
             required: ['target_customer', 'key_outcome', 'unique_capability']
         },
         execute: (args) => {
-            const product = args.product_name || '[Your product]';
-            const category = args.category || 'solution';
-            const metrics = args.customer_metrics || '';
-            // Parse any provided metrics
-            let quantifiedResults = {
-                primary: '40%',
-                secondary: '3x',
-                time: '2 weeks'
-            };
-            if (metrics) {
-                const percentMatch = metrics.match(/(\d+)%/);
-                const multiplierMatch = metrics.match(/(\d+)x/);
-                const timeMatch = metrics.match(/(\d+)\s*(days?|weeks?|months?)/i);
-                if (percentMatch)
-                    quantifiedResults.primary = percentMatch[1] + '%';
-                if (multiplierMatch)
-                    quantifiedResults.secondary = multiplierMatch[1] + 'x';
-                if (timeMatch)
-                    quantifiedResults.time = timeMatch[0];
-            }
-            // Labels only: a figure found in customer_metrics is the user's own; the preset ones are examples.
-            const userPercent = /(\d+)%/.test(metrics);
-            const userMultiplier = /(\d+)x/.test(metrics);
-            const userTime = /(\d+)\s*(days?|weeks?|months?)/i.test(metrics);
-            // Text only (run 12): the user's own words for a percent result ("40% faster"), for the website hero line.
-            const userPercentWords = (metrics.split(/[,;]/).find(p => /\d+%/.test(p)) || '').trim().replace(/[.!]+$/, '');
-            const metricsText = metrics.trim().replace(/[.!]+$/, '');
-            // Generate outcome-based value metrics
-            const outcomeLower = args.key_outcome.toLowerCase();
-            let valueMetrics = {
-                time_savings: '10 hours/week',
-                error_reduction: '80%',
-                revenue_impact: '$500K/year',
-                efficiency_gain: '3x'
-            };
-            if (outcomeLower.includes('revenue') || outcomeLower.includes('sales') || outcomeLower.includes('pipeline')) {
-                valueMetrics = {
-                    time_savings: '15 hours/week per rep',
-                    error_reduction: '60% fewer missed follow-ups',
-                    revenue_impact: '40% increase in pipeline',
-                    efficiency_gain: '2x sales productivity'
-                };
-            }
-            else if (outcomeLower.includes('cost') || outcomeLower.includes('saving') || outcomeLower.includes('efficiency')) {
-                valueMetrics = {
-                    time_savings: '20 hours/week',
-                    error_reduction: '90% process automation',
-                    revenue_impact: '$200K annual savings',
-                    efficiency_gain: '5x throughput'
-                };
-            }
-            else if (outcomeLower.includes('risk') || outcomeLower.includes('compliance') || outcomeLower.includes('security')) {
-                valueMetrics = {
-                    time_savings: '30 hours/month audit prep',
-                    error_reduction: '95% coverage improvement',
-                    revenue_impact: 'Avoid $1M+ breach costs',
-                    efficiency_gain: '10x faster incident response'
-                };
-            }
-            // R13-20f: with customer_metrics given, the Revenue Impact row is the user's own reported metrics, not a preset.
-            if (metrics) {
-                valueMetrics.revenue_impact = metricsText;
-            }
+            const P = (args.product_name || '').trim() || 'your product';
+            const categoryTyped = (args.category || '').trim() || 'solution';
+            const category = catNoun(categoryTyped);
+            const metrics = (args.customer_metrics || '').trim();
+            const metricItems = splitItems(metrics).map((m) => shortText(m));
+            const ctx = readContext(args.business_model, args.product_name, args.category, args.target_customer, args.key_outcome, args.unique_capability);
+            const v = ctx.v;
+            const notes = MODEL_NOTES[ctx.model || 'unknown'];
+            const signer = v ? committeeParts(v).signer : 'the budget owner';
+            const aud = mid(shortText(args.target_customer));
+            const sa = shortAudience(shortText(args.target_customer));
+            const outcome = shortText(args.key_outcome);
+            const capab = shortText(args.unique_capability);
+            const onlyWith = (d) => { const k = kindOf(d); const t = lowerFirst(clean(d)); return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
+            const matrixRows = [
+                ...metricItems.map((m) => `| ${m} | | | Supplied by you |`),
+                ...(v ? v.metrics.slice(0, 5).map((m) => `| ${m} | | | Fill from the customer's own data |`) : ['| A measure of time | | | |', '| A measure of quality | | | |', '| A measure of money | | | |']),
+            ];
             return `# Value Proposition Analysis
 
 ## Positioning Inputs
 **Product**: ${args.product_name || 'not supplied'}
-**Category**: ${category}
+**Category**: ${args.category || 'not supplied (the lines below say "solution")'}
 **Target Customer**: ${args.target_customer}
 **Key Outcome**: ${args.key_outcome}
 **Unique Capability**: ${args.unique_capability}
-${metrics ? `**Reported Metrics**: ${metrics}` : ''}
+${metrics ? `**Reported Metrics**: ${metrics} (supplied by you: use only what is real and you can show)` : '**Reported Metrics**: not supplied, so no result is quoted below; add customer_metrics to fill the matrix and the proof lines'}
+${ctx.line}${longNote(args.target_customer, args.key_outcome, args.unique_capability, args.customer_metrics)}
 
 ---
 
 ## The Only Statement
 
+The "only" claim stays inside brackets until it is true and you can prove it.
+
 ### Version 1 (Category-focused)
-> [Only if true and provable: **${product}** is the **only ${mid(category)}** with **${mid(args.unique_capability)}**, giving **${mid(args.target_customer)}** **${mid(args.key_outcome)}**.]
+> [Only if true and provable: **${P}** is the only ${mid(category)} ${onlyWith(capab)}. It gives ${aud} this result: ${q(outcome)}.]
 
 ### Version 2 (Outcome-focused)
-> We help **${mid(args.target_customer)}** achieve **${mid(args.key_outcome)}** through **${mid(args.unique_capability)}**. [Only if true and provable: something no other ${mid(category)} can deliver.]
+> We help **${aud}** ${inf(outcome)}. ${capFirst(diffSentence(P, capab))}. [Only if true and provable: no other ${mid(category)} can say the same.]
 
 ### Version 3 (Problem-focused)
-> [Only if true and provable: Unlike traditional ${mid(/s$/i.test(category.trim()) ? category.trim() : `${category}s`)},] **${product}** offers **${mid(args.unique_capability)}**, which means **${mid(args.target_customer)}** finally get **${mid(args.key_outcome)}**.
+> [Only if true and provable: Unlike traditional ${mid(/s$/i.test(categoryTyped) ? categoryTyped : `${categoryTyped}s`)},] ${capFirst(diffSentence(P, capab))}, so ${aud} can ${inf(outcome)}.
 
 ---
 
 ## Value Quantification Matrix
 
-${EXAMPLES}${metrics ? ' The Revenue Impact figure is your input.' : ''}
-| Value Driver | Metric | Typical Before | With ${product} | Improvement |
-|--------------|--------|----------------|-----------------|-------------|
-| **Time Savings** | Hours saved | Manual effort | Automated | ${valueMetrics.time_savings} |
-| **Error Reduction** | Accuracy | Error-prone | Reliable | ${valueMetrics.error_reduction} |
-| **Revenue Impact** | Business outcome | Baseline | Optimized | ${valueMetrics.revenue_impact} |
-| **Efficiency** | Productivity | 1x | Accelerated | ${valueMetrics.efficiency_gain} |
+This tool adds no figure of its own. The rows are the measures ${v ? `buyers in ${v.name} already watch` : 'to fill'}; the cells are for your numbers${metricItems.length ? ', and the results you supplied are listed first' : ''}.
+| What to measure | Before (their number) | With ${P} (their number) | Source |
+|-----------------|-----------------------|--------------------------|--------|
+${matrixRows.join('\n')}
 
 ---
 
@@ -1185,36 +1455,22 @@ ${EXAMPLES}${metrics ? ' The Revenue Impact figure is your input.' : ''}
 ### Tier 1: Customer Results (Strongest)
 Use these patterns to document customer success:
 
-> **"[Customer Name] achieved [specific metric] within [timeframe]"**
-
-Example templates:
-- "[Customer] improved [outcome] by ${quantifiedResults.primary} in [time frame]"${userPercent ? '' : ` ${EXAMPLE}`}
-- "[Customer] saved ${valueMetrics.time_savings} previously spent on [manual task]" ${EXAMPLE}
-- "[Customer] saw ${quantifiedResults.secondary} improvement in [metric]"${userMultiplier ? '' : ` ${EXAMPLE}`}
-
+> **"[Customer name] improved [the measure] from [before] to [after] within [time frame]"**
+${metricItems.length ? `\n**Results you supplied** (use one only if it is real and you can show it):\n${list(metricItems)}\n` : ''}
 **Proof Collection Questions** (ask your existing customers):
-1. "What metric improved most after implementing us?"
-2. "How much time does your team save weekly?"
+1. "What measure improved most after implementing us?"
+2. "How much time does your team save, and on what?"
 3. "What would you have to spend to achieve this otherwise?"
-4. "What was the ROI payback period?"
-
+4. "What was the payback period?"
+${v ? `\n**What a good proof point looks like in ${v.name}:** ${v.proofShape}\n` : ''}
 ### Tier 2: Third-Party Validation
-- **Analyst Recognition**: industry analyst reports, G2 rankings
-- **Awards**: Industry awards, innovation recognition
-- **Certifications**: SOC 2, ISO 27001, industry-specific
-- **Media Coverage**: Press mentions, thought leadership
+- ${notes.proofTiers[0]}
 
-### Tier 3: Technical Proof
-- **Benchmarks**: Performance metrics vs. alternatives
-- **Integrations**: Ecosystem partner certifications
-- **Case Studies**: Detailed implementation stories
-- **Demos**: Live proof of capability
+### Tier 3: Technical or Operational Proof
+- ${notes.proofTiers[1]}
 
 ### Tier 4: Social Proof
-- **Logo Wall**: Recognizable customer brands
-- **Reviews**: G2, Capterra, TrustRadius ratings
-- **Testimonials**: Customer quotes and videos
-- **Community**: User group size, engagement
+- ${notes.proofTiers[2]}
 
 ---
 
@@ -1222,28 +1478,28 @@ Example templates:
 
 ### For Different Audiences
 
-**For Champions (${args.target_customer})**:
-> "Finally, ${mid(args.key_outcome)} without [current pain point]. ${metrics ? `Our customers report: ${metricsText}."` : `[Only if true and provable: our customers see ${valueMetrics.revenue_impact}.]" ${EXAMPLE}`}
+**For Champions (${shortText(args.target_customer)})**:
+> "${capFirst(P)} helps you ${inf(outcome)}, without [the current pain point]. ${metricItems.length ? `A result to cite (yours, only if real): ${metricItems[0]}.` : '[Only if true and provable: a result a customer saw.]'}"
 
-**For Economic Buyers (CFO/CEO)**:
-> "${metrics ? `Our customers report ${metricsText}, with payback in [your payback period].` : `Drive ${valueMetrics.revenue_impact} with payback in [your payback period].`} [Only if true and provable: lower TCO than alternatives.]"${metrics ? '' : ` ${EXAMPLE}`}
+**For Economic Buyers (${signer})**:
+> "${capFirst(P)} helps ${aud} ${inf(outcome)}. ${metricItems.length ? `A result to cite (yours, only if real): ${metricItems[0]}. ` : ''}Payback: [your payback period, if you can show it].${notes.cost ? ` [Only if true and provable: ${notes.cost} than the alternatives.]` : ''}"
 
 **For Technical Evaluators**:
-> "${cap(args.unique_capability)}, delivered through [technical approach]. [Only if true and provable: integrates with your existing stack in days, not months.]"
+> "${capFirst(diffSentence(P, capab))}, delivered through [technical approach]. [Only if true and provable: how it works with the systems the buyer already runs.]"
 
 ### For Different Channels
 
 **Website Hero** (15 words max):
-> "${cap(firstWords(args.key_outcome, 3))} for ${mid(args.target_customer)}. ${userPercent ? `${cap(userPercentWords)}.` : `${quantifiedResults.primary} improvement in [key metric].`}"${userPercent ? '' : ` ${EXAMPLE}`}
+> "${heroLine(outcome, sa)}"
 
 **LinkedIn Post** (Hook):
-> "${cap(args.target_customer)}: does [the problem you solve] sound familiar? We built something different: ${mid(args.unique_capability)}."
+> "${capFirst(sa)}: does [the problem you solve] sound familiar? ${capFirst(diffSentence(P, capab))}."
 
 **Cold Email** (Value prop):
-> "We help companies like yours get ${mid(args.key_outcome)}. ${metrics ? `Recent customer results: ${metricsText}."` : `[Only if true and provable: a recent customer achieved ${valueMetrics.revenue_impact}.]" ${EXAMPLE}`}
+> "We help companies like yours ${inf(outcome)}. ${metricItems.length ? `A recent result (yours, only if real): ${metricItems[0]}.` : '[Only if true and provable: a recent customer result.]'}"
 
 **Sales Deck** (Slide title):
-> [Only if true and provable: "The only ${mid(category)} with ${mid(args.unique_capability)}"]
+> [Only if true and provable: "The only ${mid(category)} ${onlyWith(capab)}"]
 
 ---
 
@@ -1252,10 +1508,10 @@ Example templates:
 Before finalizing, validate with prospects:
 
 1. **Clarity**: "After hearing this, what do you think we do?"
-2. **Relevance**: "How important is [key outcome] to you right now?"
+2. **Relevance**: "How important is this result to you right now?"
 3. **Differentiation**: "Have you heard anything like this from other vendors?"
 4. **Believability**: "What would you need to see to believe this?"
-
+${v ? `\n${sectorBlock(v, ['committee', 'objections'], 'Sector view')}\n` : ''}
 **Next Step**: Use \`impact_anchor_market\` to select your beachhead market segment
 
 ${SUGGESTED}
@@ -1266,7 +1522,7 @@ ${SUGGESTED}
     // Tool 5: Anchor in Right Market
     // ---------------------------------------------------------------------------
     impact_anchor_market: {
-        description: 'Select a beachhead market: keyword-based segment scores and a TAM/SAM/SOM framework whose preset figures are labelled for you to replace',
+        description: 'Select a beachhead market: keyword-based segment scores (presets), and a TAM/SAM/SOM calculation that uses only the company counts, deal size and percentages you give',
         inputSchema: {
             type: 'object',
             properties: {
@@ -1277,7 +1533,7 @@ ${SUGGESTED}
                 potential_segments: {
                     type: 'array',
                     items: { type: 'string' },
-                    description: 'List of potential market segments (e.g., ["Mid-market SaaS", "Enterprise Finance", "SMB Retail"])'
+                    description: 'List of potential market segments (e.g., ["Mid-market fintech", "Enterprise banks", "Small retail chains"])'
                 },
                 current_customers: {
                     type: 'string',
@@ -1290,20 +1546,49 @@ ${SUGGESTED}
                 sales_cycle: {
                     type: 'string',
                     description: 'Optional: Typical sales cycle length. Shown in the output; not used in the scoring'
+                },
+                company_counts: {
+                    type: 'string',
+                    description: 'Optional: how many companies you could sell to in each segment, one per line or separated by semicolons (for example "Mid-market fintech: 3,200; Enterprise banks: 600"). A single number is read as the count for the recommended segment. Needed for market sizing'
+                },
+                percent_matching_icp: {
+                    type: 'number',
+                    exclusiveMinimum: 0,
+                    maximum: 100,
+                    description: 'Optional: the percent of those companies that match your ideal customer profile (for example 25). Needed for SAM'
+                },
+                year_one_share_percent: {
+                    type: 'number',
+                    exclusiveMinimum: 0,
+                    maximum: 100,
+                    description: 'Optional: the share of the matching companies you expect to win in year one, in percent (for example 1). Needed for SOM'
                 }
             },
             required: ['product_description']
         },
         execute: (args) => {
-            // Run 15 R15-32: an empty list is treated like no list (it was a tool error)
-            const segGiven = !!(args.potential_segments && args.potential_segments.length);
-            const segments = segGiven ? args.potential_segments : ['Mid-market SaaS (50-500 employees)', 'Enterprise Tech (500+ employees)', 'SMB (10-50 employees)'];
-            const acv = args.average_deal_size || '$30,000';
-            const cycle = args.sales_cycle || '3-6 months';
-            // Parse ACV for calculations
-            const acvNumber = readAmount(acv) || 30000;
-            // Generate segment scores (these would be based on analysis in real implementation)
-            const segmentScores = segments.map((segment, index) => {
+            // An empty list is treated like no list. A segment listed twice is scored once (backlog B15-L2).
+            const segGiven = !!(args.potential_segments && args.potential_segments.filter((s) => s && s.trim()).length);
+            const rawSegments = segGiven ? args.potential_segments.filter((s) => s && s.trim()) : ['Mid-market SaaS (50-500 employees)', 'Enterprise Tech (500+ employees)', 'SMB (10-50 employees)'];
+            const seen = new Set();
+            const segments = [];
+            const dropped = [];
+            for (const s of rawSegments) {
+                const k = s.trim().toLowerCase().replace(/\s+/g, ' ');
+                if (seen.has(k))
+                    dropped.push(s.trim());
+                else {
+                    seen.add(k);
+                    segments.push(s);
+                }
+            }
+            const acvGiven = (args.average_deal_size || '').trim();
+            const cycleGiven = (args.sales_cycle || '').trim();
+            const acvNumber = acvGiven ? readAmount(acvGiven) : null;
+            const ctx = readContext(undefined, args.product_description, ...segments);
+            const v = ctx.v;
+            // Segment scores: keyword presets, unchanged (a segment with none of the keywords gets the middle score).
+            const segmentScores = segments.map((segment) => {
                 const segmentLower = segment.toLowerCase();
                 let scores = {
                     pain: 3,
@@ -1327,7 +1612,7 @@ ${SUGGESTED}
                 else if (segmentLower.includes('finance') || segmentLower.includes('fintech')) {
                     scores = { pain: 4, budget: 5, access: 3, reference: 4, competition: 2 };
                 }
-                // Text only (run 12): whether a keyword set the scores (a segment with none gets the middle score on every criterion).
+                // Whether a keyword set the scores (a segment with none gets the middle score on every criterion).
                 const keyword = /enterprise|mid-market|mid market|smb|small|saas|tech|finance|fintech/.test(segmentLower);
                 return {
                     name: segment,
@@ -1336,38 +1621,56 @@ ${SUGGESTED}
                     total: scores.pain + scores.budget + scores.access + scores.reference + scores.competition
                 };
             });
-            // Sort by total score
+            // Sort by total score (stable: the first-listed segment stays first on a tie)
             segmentScores.sort((a, b) => b.total - a.total);
             const beachhead = segmentScores[0];
-            // Calculate TAM/SAM/SOM for beachhead
-            const tamMultiplier = beachhead.name.toLowerCase().includes('enterprise') ? 50000 :
-                beachhead.name.toLowerCase().includes('mid') ? 100000 : 500000;
-            const tam = tamMultiplier * acvNumber;
-            const sam = tam * 0.3; // 30% serviceable
-            const som = sam * 0.05; // 5% obtainable year 1
-            // Labels only: values the user did not supply are preset examples.
-            const acvEx = args.average_deal_size ? '' : ` ${EXAMPLE}`;
-            const cycleEx = args.sales_cycle ? '' : ` ${EXAMPLE}`;
+            // Market sizing uses only the user's own figures (problem 5 and 6 of the real-world test).
+            const counts = parseCounts(args.company_counts);
+            const countText = (args.company_counts || '').trim();
+            const unreadable = countText ? countText.split(/\n|;/).map((x) => x.trim()).filter((x) => x && !/\d/.test(x)) : [];
+            const countFor = (name) => {
+                const named = counts.find((c) => c.name && sameName(c.name, name));
+                if (named)
+                    return named.count;
+                const bare = counts.find((c) => !c.name);
+                return bare && name === beachhead.name ? bare.count : null;
+            };
+            const beachCount = countFor(beachhead.name);
+            const pct = typeof args.percent_matching_icp === 'number' ? args.percent_matching_icp : null;
+            const share = typeof args.year_one_share_percent === 'number' ? args.year_one_share_percent : null;
+            const tam = beachCount !== null && acvNumber ? beachCount * acvNumber : null;
+            const sam = tam !== null && pct !== null ? tam * pct / 100 : null;
+            const som = sam !== null && share !== null ? sam * share / 100 : null;
+            const customers = beachCount !== null && pct !== null && share !== null ? Math.round(beachCount * (pct / 100) * (share / 100) * 1e6) / 1e6 : null;
+            const customersText = (n) => Number.isInteger(n) ? `${n.toLocaleString('en-US')} customers` : n < 1 ? 'less than 1 customer' : `about ${n >= 10 ? Math.round(n).toLocaleString('en-US') : (Math.round(n * 10) / 10)} customers`;
+            const needs = [];
+            if (beachCount === null)
+                needs.push(counts.length ? `company_counts for ${beachhead.name} (you gave counts, but none for this segment: add "${beachhead.name}: <number>")` : `company_counts (for example "${beachhead.name}: 3,200")`);
+            if (!acvNumber)
+                needs.push('average_deal_size (for example "$50,000")');
+            if (pct === null)
+                needs.push('percent_matching_icp (for example 25)');
+            if (share === null)
+                needs.push('year_one_share_percent (for example 1)');
+            // Labels only: a segment the user did not supply is an example.
             const segEx = segGiven ? '' : ` ${EXAMPLE}`;
-            const sizeIsUsers = segGiven && beachhead.name.includes('(') && !!beachhead.name.match(/\(([^)]+)\)/)?.[1];
-            // Text only (run 12): a tie at the top is said plainly; the first-listed segment stays first (stable sort), no score changes.
-            const tied = segmentScores.filter(s => s.total === beachhead.total);
+            // A tie at the top is said plainly; the first-listed segment stays first (stable sort), no score changes.
+            const tied = segmentScores.filter((s) => s.total === beachhead.total);
             const tieLine = tied.length > 1
                 ? `\nTie: ${tied.length === 2 ? 'both segments have' : 'the top segments have'} the same total score${beachhead.keyword ? '' : ' (the preset middle score)'}. ${beachhead.name} is listed first: choose using your own data.\n`
                 : '';
-            // One label line under a heading, instead of a label inside the heading.
             const segLine = segGiven ? '' : '\nExample segment: replace with your own.\n';
-            // Millions with a thousands separator; billions when that loses no digit of the millions figure.
-            const money = (v) => v >= 1e9 && Math.round(v / 1e5) % 1000 === 0
-                ? `$${(v / 1e9).toFixed(1)}B`
-                : `$${(v / 1e6).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
+            const acvShown = acvGiven ? `${acvGiven}${/\bACV\b/i.test(acvGiven) ? '' : ' ACV'}` : 'your price';
+            const c = v ? committeeParts(v) : null;
             return `# Beachhead Market Selection
 
 ## Market Context
 **Product**: ${args.product_description}
-**Average Deal Size**: ${acv}${acvEx}
-**Sales Cycle**: ${cycle}${cycleEx}
+**Average Deal Size**: ${acvGiven || 'not supplied (market sizing needs it: add average_deal_size, for example "$50,000")'}
+**Sales Cycle**: ${cycleGiven || 'not supplied'}
 ${args.current_customers ? `**Current Customers**: ${args.current_customers}` : ''}
+${dropped.length ? `**Segments listed twice**: ${dropped.map((d) => `"${d}"`).join(', ')} was listed more than once and is scored once (duplicate dropped).` : ''}
+${ctx.line}
 
 ---
 
@@ -1397,76 +1700,59 @@ ${segLine}${tieLine}
 ${EXAMPLES}
 **${tied.length > 1 ? 'Joint Highest Score' : 'Highest Score'} (${beachhead.total}/25)** based on:
 ${beachhead.pain >= 4 ? `- **High Pain Intensity** (${beachhead.pain}/5): Urgent problem that demands solution` : `- Note: Pain Level (${beachhead.pain}/5): May need more urgency creation`}
-${beachhead.budget >= 4 ? `- **Strong Budget** (${beachhead.budget}/5): Can afford ${acv}${/\bACV\b/i.test(acv) ? '' : ' ACV'}` : `- Note: Budget (${beachhead.budget}/5): May need pricing flexibility`}
+${beachhead.budget >= 4 ? `- **Strong Budget** (${beachhead.budget}/5): Can afford ${acvShown}` : `- Note: Budget (${beachhead.budget}/5): May need pricing flexibility`}
 ${beachhead.access >= 4 ? `- **Easy Access** (${beachhead.access}/5): Can reach through existing channels` : `- Note: Accessibility (${beachhead.access}/5): May need channel development`}
 ${beachhead.reference >= 4 ? `- **High Reference Value** (${beachhead.reference}/5): Great logos for expansion` : `- Note: Reference Value (${beachhead.reference}/5): May need additional segments for logos`}
 ${beachhead.competition >= 4 ? `- **Low Competition** (${beachhead.competition}/5): White space opportunity` : `- Note: Competition (${beachhead.competition}/5): Need clear differentiation`}
 
+${v ? `${sectorBlock(v, ['committee', 'metrics', 'proof', 'motion'], 'What to check in each segment (sector view)')}\n\nBefore you commit to a segment, check that the roles above exist in its companies, that they can reach your price, and that the sector's usual objections do not block the first sale.${ctx.model ? ` In a business like yours, buyers also weigh: ${MODEL_NOTES[ctx.model].commercial}.` : ''}\n` : ''}
 ---
 
-## Market Sizing (Bottom-Up Calculation)
+## Market Sizing (your figures only)
 
-### TAM/SAM/SOM for ${beachhead.name}
+This tool adds no company count, ICP share, market share or deal size of its own. TAM, SAM and SOM are calculated only from the figures you supply: company_counts, average_deal_size, percent_matching_icp and year_one_share_percent.
 ${segLine}
-The company count, ICP share and market share below are presets for this type of segment, not research on your market, so every total computed from them is an example.
-
-**Total Addressable Market (TAM)**
-${EXAMPLES}
+| Figure | Value | Source |
+|--------|-------|--------|
+| Companies in ${beachhead.name} | ${beachCount !== null ? beachCount.toLocaleString('en-US') : 'not supplied'} | ${beachCount !== null ? 'your company_counts' : 'add company_counts'} |
+| Average deal size | ${acvGiven || 'not supplied'} | ${acvGiven ? 'your average_deal_size' : 'add average_deal_size'} |
+| % that match your ICP | ${pct !== null ? `${pct}%` : 'not supplied'} | ${pct !== null ? 'your percent_matching_icp' : 'add percent_matching_icp'} |
+| Year 1 share | ${share !== null ? `${share}%` : 'not supplied'} | ${share !== null ? 'your year_one_share_percent' : 'add year_one_share_percent'} |
+${unreadable.length ? `\nNot read as a count (no number in it): ${unreadable.map((u) => `"${u}"`).join('; ')}.\n` : ''}
 \`\`\`
 TAM = Total potential customers × ACV
-TAM = ~${(tamMultiplier).toLocaleString('en-US')} companies × ${acv}
-TAM = ${money(tam)}
-\`\`\`
+${tam !== null ? `TAM = ${beachCount.toLocaleString('en-US')} companies × ${acvGiven}\nTAM = ${usdFull(tam)} (${usd(tam)})` : `TAM: cannot be calculated yet`}
 
-**Serviceable Addressable Market (SAM)**
-${EXAMPLES}
-\`\`\`
 SAM = TAM × % that match your ICP
-SAM = ${money(tam)} × 30% (have the problem + right profile)
-SAM = ${money(sam)}
-\`\`\`
+${sam !== null ? `SAM = ${usd(tam)} × ${pct}%\nSAM = ${usdFull(sam)} (${usd(sam)})` : `SAM: cannot be calculated yet`}
 
-**Serviceable Obtainable Market (SOM)**
-${EXAMPLES}
+SOM = SAM × expected market share (Year 1)
+${som !== null ? `SOM = ${usd(sam)} × ${share}%\nSOM = ${usdFull(som)} (${usd(som)})` : `SOM: cannot be calculated yet`}
 \`\`\`
-SOM = SAM × Expected market share (Year 1)
-SOM = ${money(sam)} × 5%
-SOM = $${(som / 1000000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}M
-\`\`\`
-
-### Market Sizing Assumptions
-${EXAMPLES}${args.average_deal_size ? ' The average deal size is your input.' : ''}
-| Assumption | Value | How to check it |
-|------------|-------|-----------------|
-| Total companies in segment | ~${tamMultiplier.toLocaleString('en-US')} | Industry databases, LinkedIn |
-| % with problem | 30% | Customer research |
-| Year 1 market share | 5% | Your sales capacity and win rate |
-| Average deal size | ${acv} | Current pipeline data |
-
-**Validation Required**: These are hypothesis numbers. Validate with:
-1. Industry analyst reports
+${needs.length ? `\n**To finish the sizing, add:** ${needs.join('; ')}.\n` : ''}${counts.length > 1 && acvNumber ? `\n### TAM by segment (your counts × your deal size)\n| Segment | Companies | TAM |\n|---------|-----------|-----|\n${segmentScores.map((s) => { const n = countFor(s.name); return n === null ? null : `| ${s.name} | ${n.toLocaleString('en-US')} | ${usd(n * acvNumber)} |`; }).filter(Boolean).join('\n')}\n` : ''}
+**Validation Required**: Check your counts with:
+1. Industry databases or analyst reports you trust
 2. LinkedIn Sales Navigator company counts
-3. Customer interviews on market size perception
+3. Customer interviews on how the segment sees the problem
 
 ---
 
 ## Beachhead Expansion Path
 
 ### Year 1: Dominate ${beachhead.name}
-${segLine}${EXAMPLES}
-- Focus: 100% of GTM on this segment
-- Goal: ${Math.round(som / acvNumber).toLocaleString('en-US')} customers
-- Revenue: $${(som / 1000000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}M ARR
+${segLine}- Focus: your whole GTM effort on this segment
+- Goal: ${customers !== null ? customersText(customers) + ' (your counts and percentages)' : '[your customer target: it comes from the sizing above once you give the figures it needs]'}
+- Revenue: ${som !== null ? `${usd(som)} (SOM, from your figures)` : '[your revenue target]'}
 
 ### Year 2: Adjacent Expansion
-- Add: ${segmentScores[1]?.name || 'Next highest-scoring segment'}${segmentScores[1] ? segEx : ''}
+- Add: ${segmentScores[1]?.name || 'the next highest-scoring segment'}${segmentScores[1] ? segEx : ''}
 - Leverage: References from beachhead customers
-- Goal: 2x customer base ${EXAMPLE}
+- Goal: [your target for year 2]
 
 ### Year 3: Market Leadership
 - Expand: Full SAM coverage
 - Position: Category leader in ${beachhead.name}${segEx}
-- Goal: 10% market share ${EXAMPLE}
+- Goal: [your share target]
 
 ---
 
@@ -1476,15 +1762,12 @@ Based on beachhead selection, your ICP likely includes:
 
 **Company Characteristics**:
 - Industry: ${beachhead.name.split('(')[0].trim()}
-- Size: ${beachhead.name.includes('(') ? beachhead.name.match(/\(([^)]+)\)/)?.[1] || '50-500 employees' : '50-500 employees'}${sizeIsUsers ? '' : ` ${EXAMPLE}`}
-- Tech stack: [fill in from your best customers, for example modern and willing to adopt new tools]
-- Growth stage: ${beachhead.keyword ? '[fill in, for example Series B+ or established]' : '[fill in]'}
-
-**Buying Characteristics**:
-- Budget: can pay ${acv} or more${acvEx}
-- Decision maker: [fill in, for example ${beachhead.budget >= 4 ? 'VP/C-level accessible' : 'Manager-level start'}]
-- Sales cycle: ${cycle}${cycleEx}
-- Buying trigger: [fill in from your best customers, for example growth pressure or a competitive threat]
+- Size: ${beachhead.name.includes('(') ? beachhead.name.match(/\(([^)]+)\)/)?.[1] || '[fill in from your best customers]' : '[fill in from your best customers]'}${!segGiven ? ` ${EXAMPLE}` : ''}
+- Systems it must work with: [fill in from your best customers]
+${c ? `\n**Buying Characteristics**:\n- Decision maker: ${c.signer} signs; ${c.champion} is the likeliest champion (this sector's usual committee)` : '\n**Buying Characteristics**:\n- Decision maker: [fill in, for example VP/C-level accessible]'}
+- Budget: ${acvGiven ? `can pay ${acvGiven} or more` : '[fill in once you know your price]'}
+- Sales cycle: ${cycleGiven || 'not supplied'}
+- Buying trigger: [fill in from your best customers, for example an audit finding, a season or a competitive threat]
 
 **Next Step**: Use \`impact_craft_message\` to build positioning for this beachhead
 `;
@@ -1494,7 +1777,7 @@ Based on beachhead selection, your ICP likely includes:
     // Tool 6: Craft Core Message
     // ---------------------------------------------------------------------------
     impact_craft_message: {
-        description: 'Build positioning statement and message hierarchy with variations',
+        description: 'Build a positioning statement and message hierarchy from your own words, in whole sentences, with proof and objections that fit your sector and business model',
         inputSchema: {
             type: 'object',
             properties: {
@@ -1508,11 +1791,11 @@ Based on beachhead selection, your ICP likely includes:
                 },
                 customer_need: {
                     type: 'string',
-                    description: 'The need they have, written as an action (for example "lose revenue to missed appointments")'
+                    description: 'The need they have, written as an action (for example "lose days chasing low-risk cloud alerts")'
                 },
                 product_category: {
                     type: 'string',
-                    description: 'Your product category, written as a noun phrase (for example "analytics platform")'
+                    description: 'Your product category, written as a noun phrase (for example "cloud security monitoring platform")'
                 },
                 key_benefit: {
                     type: 'string',
@@ -1525,27 +1808,48 @@ Based on beachhead selection, your ICP likely includes:
                 differentiation: {
                     type: 'string',
                     description: 'Your unique differentiation'
+                },
+                business_model: {
+                    type: 'string',
+                    enum: verticals_ts_1.BUSINESS_MODELS,
+                    description: 'Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose the cost and proof lines; read from your inputs when not given'
                 }
             },
             required: ['target_customer', 'key_benefit', 'differentiation']
         },
         execute: (args) => {
-            const product = args.product_name || '[Your Product]';
-            const category = args.product_category || 'solution';
-            const competitor = args.competitor || 'traditional alternatives';
-            const need = args.customer_need ? mid(args.customer_need) : '[their need]';
-            const benefit = mid(args.key_benefit);
-            const diff = mid(args.differentiation);
+            const P = (args.product_name || '').trim() || 'your product';
+            const category = catNoun((args.product_category || '').trim() || 'solution');
+            const hasComp = !!(args.competitor && args.competitor.trim());
+            const alt = hasComp ? shortText(args.competitor) : 'the alternatives your buyers use today';
+            const altShort = hasComp ? nameOf(alt) : alt;
+            const need = shortText(args.customer_need || '');
+            const benefit = shortText(args.key_benefit);
+            const diff = shortText(args.differentiation);
+            const aud = mid(shortText(args.target_customer));
+            const ctx = readContext(args.business_model, args.product_name, args.target_customer, args.product_category, args.differentiation, args.key_benefit, args.customer_need);
+            const v = ctx.v;
+            const notes = MODEL_NOTES[ctx.model || 'unknown'];
+            const thatLine = (() => { const k = kindOf(benefit); return k === 'base' ? `helps them ${lowerFirst(clean(benefit))}` : k === 'noun' ? `delivers ${lowerFirst(clean(benefit))}` : `delivers this result (${clean(benefit)})`; })();
+            const needIf = need ? needClause(need) : '';
+            const onlyWith = (d) => { const k = kindOf(d); const t = lowerFirst(clean(d)); return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
+            const diffShort = shortClause(diff, 5);
+            const differentiatorTagline = diffShort ? `[Only if true and provable: "The only ${mid(category)} ${onlyWith(diffShort)}"]` : `[Only if true and provable: shorten this to about 5 words, then use it after "The only ${mid(category)}": ${q(diff)}]`;
+            const pillars = v
+                ? [`| **Your difference** | ${q(diff)} | ${v.proofShape} |`, `| **Your outcome** | ${q(benefit)} | Measure it with: ${v.metrics.slice(0, 3).join(', ')} |`, `| **The usual objection** | "${v.objections[0].objection}": ${v.objections[0].response} | A reference or pilot result that answers it |`]
+                : [`| **Your difference** | ${q(diff)} | [a result you can show] |`, `| **Your outcome** | ${q(benefit)} | [a customer figure, only if real] |`, '| **Why it is safe to buy** | [the risk the buyer worries about, and how you remove it] | [a reference or pilot result] |'];
+            const sectorObjections = v ? v.objections.map((o) => `| "${o.objection}" | ${o.response} |`).join('\n') : '';
             return `# Positioning & Messaging Framework
 
 ## Positioning Inputs
 - **Product**: ${args.product_name || 'not supplied'}
 - **Target Customer**: ${args.target_customer}
-- **Need/Opportunity**: ${need}
-- **Category**: ${category}
+- **Need/Opportunity**: ${args.customer_need || 'not supplied (the statement shows a gap for it)'}
+- **Category**: ${args.product_category || 'not supplied (the lines below say "solution")'}
 - **Key Benefit**: ${args.key_benefit}
-- **Primary Alternative**: ${competitor}
+- **Primary Alternative**: ${hasComp ? args.competitor : 'not supplied (the lines below say "the alternatives your buyers use today")'}
 - **Differentiation**: ${args.differentiation}
+${ctx.line}${longNote(args.target_customer, args.customer_need, args.key_benefit, args.competitor, args.differentiation)}
 
 ---
 
@@ -1553,18 +1857,18 @@ Based on beachhead selection, your ICP likely includes:
 
 ### Complete Positioning Statement
 
-> **For** ${mid(args.target_customer)}
-> **Who** ${need}
-> **${product}** **is ${aOrAn(category)}** ${mid(category)}
-> **That** delivers ${benefit}
-> **Unlike** ${competitor}
-> **We** offer ${diff}
+> **For** ${aud}
+> **Who** ${need ? needIf : '[the need they have: add customer_need]'}
+> **${P}** **is ${aOrAn(category)}** ${mid(category)}
+> **That** ${thatLine}
+> **Unlike** ${alt}
+> **We** ${weClause(diff)}
 
 ### One-Paragraph Version
-> ${product} is the ${mid(category)} for ${mid(args.target_customer)} who ${need}. Unlike ${competitor}, we offer ${diff}, which means you get ${benefit}.
+> ${capFirst(P)} is ${category.startsWith('provider of') ? 'a' : 'the'} ${mid(category)} for ${aud}${need ? ` who ${needIf}` : ''}. Unlike ${alt}, ${diffSentence(P, diff)}. For ${aud} that means they can ${inf(benefit)}.
 
 ### One-Sentence Version
-> ${product} gives ${mid(args.target_customer)} ${benefit} through ${diff}.
+> ${capFirst(P)} helps ${aud} ${inf(benefit)}.
 
 ---
 
@@ -1575,30 +1879,29 @@ Choose the style that fits your brand:
 
 | Style | Tagline | Best For |
 |-------|---------|----------|
-| **Outcome** | "${cap(firstWords(args.key_benefit, 4))}" | Clarity |
-| **Differentiator** | [Only if true and provable: "The only ${mid(category)} with ${firstWords(diff, 3)}"] | Uniqueness |
-| **Audience** | "Built for ${shortAudience(args.target_customer)}" | Targeting |
-| **Provocative** | "Stop ${args.key_benefit.includes('increase') ? 'losing' : 'wasting'}. Start winning." | Attention |
-
+| **Outcome** | ${taglineOf(benefit)} | Clarity |
+| **Differentiator** | ${differentiatorTagline} | Uniqueness |
+| **Audience** | "Built for ${shortAudience(shortText(args.target_customer))}" | Targeting |
+${need && shortClause(need, 9) ? `| **Problem** | "Do you ${needClause(shortClause(need, 9))}?" | Attention |\n` : ''}
 ### Level 2: Value Proposition (1-2 sentences)
 **Option A: problem to solution**
-> "If you ${need}, ${product} offers ${diff}, so you finally get ${benefit}."
+> "${need ? `If you ${needIf}, ${diffSentence(P, diff)}` : capFirst(diffSentence(P, diff))}, so you can ${inf(benefit)}."
 
 **Option B: outcome first**
-> "Get ${benefit} [Only if true and provable: without the complexity of ${competitor}]. ${product} offers ${diff}."
+> "${P}: ${capFirst(clean(benefit))}${hasComp ? ` [Only if true and provable: without the complexity of ${altShort}]` : ''}. ${capFirst(diffSentence(P, diff))}."
 
 **Option C: unique mechanism**
-> "[Only if true and provable: The only ${mid(category)} with ${diff}.] That's how ${mid(args.target_customer)} get ${benefit}."
+> "[Only if true and provable: The only ${mid(category)} ${onlyWith(diff)}.] That is how ${aud} can ${inf(benefit)}."
 
 ### Level 3: Supporting Pillars (3 proof points)
 
-Example pillars: replace with your own.
+Pillars built from your own words and this sector's proof (replace the bracketed parts with your own):
 
-| Pillar | Message | Proof Point |
-|--------|---------|-------------|
-| **Speed** | "Achieve results in days, not months" | Implementation time, time-to-value |
-| **Simplicity** | "No complexity, no consultants" | Ease of use, self-service |
-| **Scale** | "Grows with you from startup to enterprise" | Customer range, flexibility |
+| Pillar | Message (your words) | Proof Point |
+|--------|----------------------|-------------|
+${pillars.join('\n')}
+
+What buyers in a business like yours also weigh: ${notes.commercial}.
 
 ---
 
@@ -1607,27 +1910,27 @@ Example pillars: replace with your own.
 ### A/B Testing Options
 
 **Variation A: lead with pain**
-> "Tired of ${competitor.trim().replace(/^traditional /, '')}? ${product} offers ${diff}."
+> "${need ? `Do you ${needIf}? ${capFirst(diffSentence(P, diff))}` : capFirst(diffSentence(P, diff))}."
 
 **Variation B: lead with outcome**
-> "${cap(args.key_benefit)}. That's what ${mid(args.target_customer)} get with ${product}."
+> "${P}: ${capFirst(clean(benefit))}. Built for ${aud}."
 
 **Variation C: lead with differentiation**
-> "Unlike ${competitor}, ${product} offers ${diff}. Finally, ${benefit}."
+> "${hasComp ? `Unlike ${alt}, ${diffSentence(P, diff)}.` : `${capFirst(diffSentence(P, diff))}. [Only if true and provable: unlike the alternatives your buyers use today.]`}"
 
 **Variation D: lead with social proof**
-> "Join 100+ ${pluralAudience(args.target_customer)} who get ${benefit} with ${product}." ${EXAMPLE}
+> "[Only if true and provable: Join [number] ${pluralAudience(shortText(args.target_customer))} who ${inf(benefit)} with ${P}.]"
 
 ### Audience-Specific Messaging
 
-**For Champions (${args.target_customer})**:
-> "We built ${product} because [Only if true and provable: ${competitor} fell short for teams like yours]. Now you can get ${benefit}."
+**For Champions (${shortText(args.target_customer)})**:
+> "We built ${P} because [Only if true and provable: ${altShort} fell short for teams like yours]. Now you can ${inf(benefit)}."
 
-**For Economic Buyers (Executives)**:
-> "Drive [the ${args.key_benefit.includes('revenue') || args.key_benefit.includes('growth') ? 'growth' : 'ROI'} you can prove, with a real customer figure] with ${product}. [Only if true and provable: lower TCO than ${competitor}]"
+**For Economic Buyers (${v ? committeeParts(v).signer : 'Executives'})**:
+> "${capFirst(P)} helps ${aud} ${inf(benefit)}. [Only if true and provable: the ${v ? v.metrics[0] : 'result'} a customer saw, and the time it took.]${notes.cost ? ` [Only if true and provable: ${notes.cost} than ${altShort}.]` : ''}"
 
 **For Technical Evaluators**:
-> "${product} offers ${diff}, in ${aOrAn(category)} ${mid(category)} designed for ${mid(args.target_customer)}."
+> "${capFirst(diffSentence(P, diff))}. ${capFirst(P)} is ${aOrAn(category)} ${mid(category)} designed for ${aud}."
 
 ---
 
@@ -1655,11 +1958,10 @@ Before finalizing, test each message for:
 
 | Objection | Response Message |
 |-----------|------------------|
-| "We use ${competitor}" | "[Only if true and provable: many of our customers switched from ${competitor} and found that ${diff} delivered ${benefit}.]" |
-| "Too expensive" | "Consider the cost of doing nothing about it. [Only if true and provable: the payback time your customers have seen, in months.]" |
-| "We're not ready" | "[Only if true and provable: that's exactly when our best customers started.] [Only if true: ${product} is designed for ${mid(args.target_customer)} at your stage.]" |
-| "Need to think about it" | "Absolutely. While you're evaluating, [Only if true and provable: here's a case study of how a similar company achieved ${benefit}.]" |
-
+${hasComp ? `| "We use ${altShort}" | "[Only if true and provable: customers switched from ${altShort}; what they report: ${q(diff)}]" |\n` : ''}| "Too expensive" | "Consider the cost of doing nothing about it. [Only if true and provable: the result your customers have seen, and how long it took.]" |
+| "We're not ready" | "[Only if true and provable: that's exactly when our best customers started.]" |
+| "Need to think about it" | "Absolutely. While you're evaluating, [Only if true and provable: here's a case study of how a similar company got a result like this.]" |
+${sectorObjections ? sectorObjections + '\n' : ''}
 **Next Step**: Use \`impact_translate_execution\` to adapt these messages for each channel
 
 ${SUGGESTED}
@@ -1670,7 +1972,7 @@ ${SUGGESTED}
     // Tool 7: Translate to Execution
     // ---------------------------------------------------------------------------
     impact_translate_execution: {
-        description: 'Adapt positioning for specific channels and touchpoints',
+        description: 'Adapt a positioning statement for the channels you choose (website, LinkedIn, cold email, sales deck, demo), with calls to action that fit your business model',
         inputSchema: {
             type: 'object',
             properties: {
@@ -1684,44 +1986,79 @@ ${SUGGESTED}
                 },
                 key_benefit: {
                     type: 'string',
-                    description: 'Primary benefit, written as an action (for example "cut no-shows")'
+                    description: 'Primary benefit, written as an action (for example "fix critical exposures first")'
                 },
                 channels: {
                     type: 'array',
                     items: { type: 'string' },
-                    description: 'Accepted but not used yet: the output always covers website, LinkedIn, email, sales deck and demo'
+                    description: 'Optional: which channels to cover, from website, linkedin, cold_email, sales_deck and product_demo. Others are listed as not covered; with none, all five are covered'
                 },
                 product_name: {
                     type: 'string',
                     description: 'Your product name'
+                },
+                business_model: {
+                    type: 'string',
+                    enum: verticals_ts_1.BUSINESS_MODELS,
+                    description: 'Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose calls to action and commercial terms; read from your inputs when not given'
                 }
             },
             required: ['positioning_statement', 'target_customer', 'key_benefit']
         },
         execute: (args) => {
-            const product = args.product_name || '[Your product]';
-            const channels = args.channels || ['website', 'linkedin', 'cold_email', 'sales_deck', 'product_demo'];
-            return `# Channel Execution Playbook
-
-## Positioning Foundation
-**Statement**: ${args.positioning_statement}
-**Target**: ${args.target_customer}
-**Key Benefit**: ${args.key_benefit}
-
----
-
-## Website Execution
+            const P = (args.product_name || '').trim() || 'your product';
+            const benefit = shortText(args.key_benefit);
+            const statement = args.positioning_statement;
+            const aud = mid(shortText(args.target_customer));
+            const sa = shortAudience(shortText(args.target_customer));
+            const ctx = readContext(args.business_model, args.product_name, args.target_customer, args.key_benefit, statement);
+            const v = ctx.v;
+            const notes = MODEL_NOTES[ctx.model || 'unknown'];
+            const ctas = callsToAction(v, ctx.model);
+            const committee = v ? committeeParts(v) : null;
+            // Channels (problem 3): the input selects the sections. Unknown names are listed as not covered.
+            const CHANNEL_WORDS = [
+                ['website', /^(website|web|webpage|homepage|site|landing_?page)$/],
+                ['linkedin', /^(linkedin|social)$/],
+                ['cold_email', /^(email|cold_?email|outbound_?email|outreach|email_?sequence)$/],
+                ['sales_deck', /^(sales_?deck|deck|slides|presentation|pitch_?deck)$/],
+                ['product_demo', /^(demo|product_?demo|walkthrough|pilot_?review)$/],
+            ];
+            const asked = (args.channels || []).map((c) => String(c).trim()).filter(Boolean);
+            const chosen = new Set();
+            const notCovered = [];
+            for (const c of asked) {
+                const key = c.toLowerCase().replace(/[\s-]+/g, '_');
+                const hit = CHANNEL_WORDS.find(([, re]) => re.test(key));
+                if (hit)
+                    chosen.add(hit[0]);
+                else
+                    notCovered.push(c);
+            }
+            const noneRecognised = asked.length > 0 && chosen.size === 0;
+            if (asked.length === 0 || noneRecognised)
+                CHANNEL_WORDS.forEach(([k]) => chosen.add(k));
+            const channelNote = asked.length === 0 ? '' : noneRecognised
+                ? `\n**Channels**: none of the channels you listed (${asked.join(', ')}) is one this tool covers, so all five are shown. It covers website, LinkedIn, cold email, sales deck and demo.`
+                : `\n**Channels requested**: ${asked.join(', ')}.${notCovered.length ? ` Channels not covered by this tool: ${notCovered.join(', ')} (it covers website, LinkedIn, cold email, sales deck and demo).` : ''}`;
+            // The "Unlike ..." and "offers ..." parts of the statement, used on the key slide and in the demo.
+            const unlike = shortText((statement.match(/\bunlike\s+([^,.;]+(?:\([^)]*\))?)/i) || [])[1]?.trim() || '');
+            const offers = shortText((statement.match(/\boffers?\s+([^.]+?)\.?\s*$/i) || [])[1]?.trim() || '');
+            const unlikeName = unlike ? nameOf(unlike) : '';
+            const sections = [];
+            if (chosen.has('website'))
+                sections.push(`## Website Execution
 
 ### Homepage Hero
 **Headline (5-8 words)**:
-> "${cap(firstWords(args.key_benefit, 5))} for ${shortAudience(args.target_customer)}"
+> "${heroLine(benefit, sa)}"
 
 **Subheadline (15-20 words)**:
-> "${product} helps ${mid(args.target_customer)} ${lowerCommonWords(args.key_benefit)}. [Add one line of proof you can back up]"
+> "${capFirst(P)} helps ${aud} ${inf(benefit)}. [Add one line of proof you can back up]"
 
 **CTA Options** (examples: keep only the ones you offer):
-- Primary: "Start Free Trial" / "Get a Demo"
-- Secondary: "See How It Works" / "View Case Studies"
+- Primary: "${ctas[0]}"
+- Secondary: "${ctas[1] || 'See How It Works'}" / "View Case Studies"
 
 ### Above the Fold Checklist
 - [ ] Clear value proposition in headline
@@ -1729,30 +2066,29 @@ ${SUGGESTED}
 - [ ] Key benefit stated
 - [ ] Social proof (logos, stats)
 - [ ] Clear CTA button
-- [ ] Demo/product visual
-
----
-
-## LinkedIn Execution
+- [ ] Demo or product visual
+`);
+            if (chosen.has('linkedin'))
+                sections.push(`## LinkedIn Execution
 
 ### Profile/Company Page Tagline
-> "Helping ${mid(args.target_customer)} ${mid(args.key_benefit)}"
+> "Helping ${aud} ${inf(benefit)}"
 
 ### Post Templates
 
 **Thought Leadership Post**:
 \`\`\`
-Most ${mid(args.target_customer)} think [common belief].
+Most ${aud} think [common belief].
 
-[Only if true and provable: but here's what we've learned from 100+ customers:] ${EXAMPLE}
+[Only if true and provable: here's what we've learned from [number] customers:]
 
-[Counterintuitive insight on your key benefit: ${mid(args.key_benefit)}]
+[Counterintuitive insight about this benefit: ${q(benefit)}]
 
 [Only if your data shows it:]
 → Companies doing X see [positive outcome]
 → Companies doing Y see [negative outcome]
 
-The difference? [Your differentiation]
+The difference? [what sets you apart, from your statement]
 
 What's your experience?
 \`\`\`
@@ -1768,7 +2104,7 @@ Here's what changed:
 Before: [metric before]
 After: [metric after]
 
-The key? [Your differentiation]
+The key? [what sets you apart, from your statement]
 
 Full case study in comments
 \`\`\`
@@ -1777,7 +2113,7 @@ Full case study in comments
 \`\`\`
 Stop if this sounds familiar:
 
-You're a [target customer title] trying to ${lowerCommonWords(args.key_benefit)}.
+You're a [target customer title] trying to ${inf(benefit)}.
 
 But you're stuck with:
 - [Pain point 1]
@@ -1790,10 +2126,9 @@ But you're stuck with:
 
 DM me "GUIDE" for [the guide or resource you actually offer].
 \`\`\`
-
----
-
-## Cold Email Execution
+`);
+            if (chosen.has('cold_email'))
+                sections.push(`## Cold Email Execution
 
 ### Email 1: problem-focused
 **Subject**: [Pain point] at [Company]?
@@ -1803,11 +2138,11 @@ Hi [First name],
 
 [Trigger/reason for outreach, personalized]
 
-I'm reaching out because [the specific pain you have seen ${mid(args.target_customer)} face].
+I'm reaching out because [the specific pain you have seen ${aud} face].
 
-We help companies like [similar company] ${lowerCommonWords(args.key_benefit)}.
+We help companies like [similar company] ${inf(benefit)}.
 
-Would it make sense to show you how in 15 minutes? ${EXAMPLE}
+Would it make sense to show you how in [the time you will ask for]?
 
 [Signature]
 \`\`\`
@@ -1820,7 +2155,7 @@ Hi [First name],
 
 Quick follow-up with a relevant data point:
 
-[Similar Company] was facing [problem]. After implementing ${product}:
+[Similar Company] was facing [problem]. After implementing ${P}:
 - [Metric 1 improvement]
 - [Metric 2 improvement]
 
@@ -1837,7 +2172,7 @@ Worth a conversation?
 \`\`\`
 Hi [First name],
 
-I've reached out a few times about helping [Company] ${lowerCommonWords(args.key_benefit)}.
+I've reached out a few times about helping [Company] ${inf(benefit)}.
 
 If the timing isn't right, no worries at all.
 
@@ -1846,44 +2181,42 @@ But if [specific trigger/pain] becomes a priority, here's a resource that might 
 Best,
 [Signature]
 \`\`\`
-
----
-
-## Sales Deck Execution
+`);
+            if (chosen.has('sales_deck'))
+                sections.push(`## Sales Deck Execution
 
 ### Slide Structure (10 slides)
 
 | Slide | Title | Content |
 |-------|-------|---------|
-| 1 | Title | ${product}: ${args.key_benefit} |
-| 2 | The Problem | Why ${mid(args.target_customer)} struggle today |
+| 1 | Title | ${P}: ${benefit} |
+| 2 | The Problem | Why ${aud} struggle today |
 | 3 | Cost of Inaction | What happens if this doesn't get solved |
-| 4 | The Solution | Introducing ${product} |
+| 4 | The Solution | Introducing ${P} |
 | 5 | How It Works | 3-step process / key features |
 | 6 | Differentiation | Why we're different (your positioning) |
 | 7 | Results | Customer outcomes and metrics |
 | 8 | Case Study | Specific customer story |
-| 9 | Pricing/Packages | Investment and what's included |
-| 10 | Next Steps | Clear call-to-action |
+| 9 | Commercials | ${capFirst(notes.commercial)} |
+| 10 | Next Steps | ${ctas[0]} |
 
 ### Key Slide: Differentiation
 \`\`\`
-Unlike [Competitor Category]...
+Unlike ${unlike || 'the alternative your buyers use today'}...
 
-They do: [Competitor approach]
-We do: [Your approach]
+They do: [how ${unlikeName || 'that alternative'} handles it today, from what buyers tell you]
+We do: ${offers ? offers : 'what your positioning statement says you offer'}
 
-Result: [Quantified outcome]
+Result: [a quantified outcome you can show]
 \`\`\`
+`);
+            if (chosen.has('product_demo'))
+                sections.push(`## Product Demo Execution
 
----
-
-## Product Demo Execution
-
-### Demo Script Structure (15 minutes, Example figure: replace with your own)
+### ${ctx.model === 'saas' || ctx.model === null ? 'Demo' : 'Walkthrough'} Script Structure (15 minutes, Example figure: replace with your own)
 
 **0-2 min: Context Setting** ${EXAMPLE}
-> "Based on our conversation, you mentioned [their specific pain]. Let me show you exactly how ${product} helps ${mid(args.target_customer)} ${lowerCommonWords(args.key_benefit)}."
+> "Based on our conversation, you mentioned [their specific pain]. Let me show you exactly how ${P} helps ${aud} ${inf(benefit)}."${v ? `\nA question to open with, in this sector's language: ${q(v.discovery[0])}` : ''}
 
 **2-8 min: Core Value Demonstration** ${EXAMPLE}
 Show 2-3 features that directly address their stated needs:
@@ -1892,40 +2225,51 @@ Show 2-3 features that directly address their stated needs:
 3. Feature C → Outcome C
 
 **8-12 min: Differentiation Proof** ${EXAMPLE}
-> "You might be wondering how this compares to [competitor]. Watch this..."
+> "You might be wondering how this compares to ${unlikeName || '[the alternative they use today]'}. Watch this..."
 [Show specific capability they can't match]
 
 **12-15 min: Close & Next Steps** ${EXAMPLE}
 > "So you've seen how [recap 3 key outcomes]. What questions do you have?"
 > "What would success look like for you in the first 90 days?"
 
-### Demo Best Practices
+### ${ctx.model === 'saas' || ctx.model === null ? 'Demo' : 'Walkthrough'} Best Practices
 - [ ] Customize to their specific use case
 - [ ] Use their industry/terminology
 - [ ] Show outcomes, not features
 - [ ] Leave time for questions
 - [ ] Have clear next step
+`);
+            // One list: the order is the table (backlog B15-L5f), and it follows how buyers in this sector usually buy.
+            const selfServe = ctx.model === 'saas' && !(v && ['cybersecurity', 'fintech', 'logistics-tech', 'vertical-saas', 'ai-native'].includes(v.id));
+            const order = (selfServe
+                ? [['website', 'Website + SEO', 'foundation: buyers research you here before they reply'], ['linkedin', 'LinkedIn Organic', 'awareness among your target roles'], ['cold_email', 'Cold Email', 'pipeline from named accounts'], ['sales_deck', 'Sales Deck', 'conversion once there is a conversation'], ['product_demo', 'Demo', 'proof of capability']]
+                : [['cold_email', 'Cold Email', `direct outreach to the roles that buy${committee ? `: ${committee.signer}; ${committee.champion}` : ''}`], ['linkedin', 'LinkedIn Organic', 'awareness among those same roles'], ['sales_deck', 'Sales Deck', 'the story you tell once there is a meeting'], ['website', 'Website', 'credibility: proof, references and the facts buyers check'], ['product_demo', ctx.model === 'saas' || ctx.model === null ? 'Demo' : 'Walkthrough or pilot review', 'proof of capability']]).filter(([k]) => chosen.has(k));
+            return `# Channel Execution Playbook
+
+## Positioning Foundation
+**Statement**: ${statement}
+**Target**: ${args.target_customer}
+**Key Benefit**: ${args.key_benefit}
+**Product**: ${args.product_name || 'not supplied'}${channelNote}
+${ctx.line}${longNote(statement, args.target_customer, args.key_benefit)}
 
 ---
 
-## Channel Priority Matrix
+${sections.join('\n---\n\n')}
+---
+${v ? `
+## Sector Language
 
-Example priorities: replace with your own.
+Use the words buyers in ${v.name} use, and keep claims to what you can show. Words this sector's buyers use: ${v.vocabulary.join(', ')}. What the sector measures: ${v.metrics.join(', ')}. A proof point that lands: ${v.proofShape}
 
-| Channel | ICP Match | Effort | Expected CAC | Priority |
-|---------|-----------|--------|--------------|----------|
-| LinkedIn Organic | High | Medium | Low | Five stars |
-| Cold Email | High | Low | Medium | Four stars |
-| Website SEO | Medium | High | Low | Four stars |
-| Paid LinkedIn | High | Medium | High | Three stars |
-| Events | High | High | High | Three stars |
-| Content Marketing | Medium | High | Low | Four stars |
+---
+` : ''}
+## Channel Priority
+
+Example priorities: replace with your own.${v ? ` The order follows how deals usually run in ${v.name}: ${v.salesMotion}` : ''}
 
 **Recommended Priority Order**:
-1. Website + SEO (foundation)
-2. LinkedIn Organic (awareness)
-3. Cold Email (pipeline)
-4. Sales Deck (conversion)
+${numbered(order.map(([, name, why]) => `${name} (${why})`))}
 
 **Next Step**: Use \`impact_full_audit\` for a complete positioning assessment
 
@@ -1973,18 +2317,27 @@ ${SUGGESTED}
                 customer_feedback: {
                     type: 'string',
                     description: 'Optional: What customers say about you'
+                },
+                business_model: {
+                    type: 'string',
+                    enum: verticals_ts_1.BUSINESS_MODELS,
+                    description: 'Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the score'
                 }
             },
             required: ['product_description', 'target_customer', 'problem_solved']
         },
         execute: (args) => {
-            const company = args.company_name || '[Your company]';
+            const company = (args.company_name || '').trim() || 'your product';
             const competitors = args.competitors || ['Status quo', 'DIY solutions'];
             const differentiation = args.key_differentiation || 'unique approach';
-            // Text only (run 12): the words shown for the differentiation and the main alternative; a default is never quoted as the user's words.
-            const diffShown = args.key_differentiation ? mid(args.key_differentiation) : '[your differentiation]';
-            const alternativeShown = args.competitors && args.competitors.length ? `[the alternative your buyers use most, for example ${args.competitors[0]}]` : '[the alternative your buyers use most]';
-            // Calculate scores based on input completeness and clarity
+            const givenCompetitors = (args.competitors || []).filter((c) => c && c.trim());
+            const alternativeShown = givenCompetitors.length ? givenCompetitors.slice(0, 3).join(' or ') : '[the alternative your buyers use most]';
+            const feedbackItems = splitItems(args.customer_feedback);
+            const ctx = readContext(args.business_model, args.company_name, args.product_description, args.target_customer, args.problem_solved, args.key_differentiation, args.current_positioning, args.customer_feedback);
+            const v = ctx.v;
+            const notes = MODEL_NOTES[ctx.model || 'unknown'];
+            const committee = v ? committeeParts(v) : null;
+            // Calculate scores based on input completeness and clarity (unchanged: owner decision D72 pauses the grade)
             const scores = {
                 identify: 0,
                 map: 0,
@@ -2081,6 +2434,28 @@ ${SUGGESTED}
                 identify: 'impact_identify_champions', map: 'impact_map_alternatives', pinpoint: 'impact_pinpoint_value',
                 anchor: 'impact_anchor_market', craft: 'impact_craft_message', translate: 'impact_translate_execution'
             };
+            // ---- Words only (not part of the score): the generated positioning, tagline options, proof and word checks ----
+            const problemShort = shortClause(shortText(args.problem_solved), 6);
+            const diffShort = args.key_differentiation ? shortClause(args.key_differentiation, 5) : null;
+            const taglines = [];
+            if (problemShort && kindOf(problemShort) !== 'base' && !/^(a|an|the)\s/i.test(problemShort))
+                taglines.push(`[Only if true and provable: "${capFirst(problemShort)}, solved."]`);
+            if (diffShort && !['base', 'third'].includes(kindOf(diffShort)))
+                taglines.push(`"${capFirst(diffShort)}"`);
+            taglines.push(`"Built for ${shortAudience(shortText(args.target_customer))}"`);
+            const stop = new Set('the and for with who that this our your their its are was were been from they them you can will not but all any'.split(' '));
+            const wordsOf = (s) => (s.toLowerCase().match(/[a-z][a-z-]{2,}/g) || []).filter((w) => !stop.has(w));
+            const cur = (args.current_positioning || '').trim();
+            const targetWords = wordsOf(args.target_customer);
+            const curWords = wordsOf(cur);
+            const yn = (b) => (b ? 'Yes' : 'No');
+            const genericHits = [...new Set((cur.match(/\b(smarter way|smarter|leading|best-in-class|world-class|cutting-edge|next-generation|innovative|seamless|powerful|robust|all-in-one|revolutionary|solution|platform)\b/gi) || []).map((w) => w.toLowerCase()))];
+            const checks = cur ? `| Word check on your current positioning | Result |
+|---|---|
+| Names the buyer (shares a word with your target customer) | ${yn(targetWords.some((w) => curWords.includes(w)))} |
+| Names an alternative or says what it replaces | ${yn(/\b(unlike|instead of|rather than|than|versus|vs\.?|replaces?|replacing)\b/i.test(cur) || givenCompetitors.some((c) => cur.toLowerCase().includes(nameOf(c).toLowerCase())))} |
+| States a result (a number or a result word) | ${yn(/\d/.test(cur) || /\b(cut|cuts|reduce|reduces|grow|grows|save|saves|faster|fewer|more|less|lower|higher|increase|improve|improves|win|wins|fix|fixes)\b/i.test(cur))} |
+| Uses generic words | ${genericHits.length ? `Yes: ${genericHits.join(', ')}` : 'No'} |` : 'No current positioning was supplied, so there is nothing to check in words. Add current_positioning.';
             return `# IMPACT Positioning Audit
 
 ## Company Overview
@@ -2088,8 +2463,11 @@ ${SUGGESTED}
 **Product**: ${args.product_description}
 **Target**: ${args.target_customer}
 **Problem**: ${args.problem_solved}
+**Differentiation**: ${args.key_differentiation || 'not supplied'}
+**Competitors**: ${givenCompetitors.length ? givenCompetitors.join('; ') : 'not supplied (the score uses the default alternatives: status quo and DIY solutions)'}
 ${args.current_positioning ? `**Current Positioning**: ${args.current_positioning}` : ''}
 ${args.customer_feedback ? `**Customer Feedback**: ${args.customer_feedback}` : ''}
+${ctx.line}${longNote(args.product_description, args.target_customer, args.problem_solved, args.key_differentiation, args.current_positioning, args.customer_feedback)}
 
 ---
 
@@ -2116,9 +2494,9 @@ ${strongest.map(([phase, score]) => score < 50 ? `
 Rated Thin: it is listed here only because the other areas scored lower.
 ` : `
 ### ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
-${phase === 'identify' ? `Your target customer ("${args.target_customer}") is long and specific enough for a high score in this area.` : ''}
+${phase === 'identify' ? `Your target customer ("${shortText(args.target_customer)}") is long and specific enough for a high score in this area.` : ''}
 ${phase === 'map' ? `You named ${competitors.length} competitor${competitors.length === 1 ? '' : 's'}; this area counts how many you name, not who they are.` : ''}
-${phase === 'pinpoint' ? (args.key_differentiation ? `Your differentiation ("${args.key_differentiation}") is long enough for a high score in this area${score >= 85 ? ' and uses the word "only" or "unique"' : ''}.` : 'No differentiation supplied yet.') : ''}
+${phase === 'pinpoint' ? (args.key_differentiation ? `Your differentiation ("${shortText(args.key_differentiation)}") is long enough for a high score in this area${score >= 85 ? ' and uses the word "only" or "unique"' : ''}.` : 'No differentiation supplied yet.') : ''}
 ${phase === 'anchor' ? (score >= 80 ? `Your target customer mentions employees, revenue or a funding series.` : `Your target customer is several words long.`) : ''}
 ${phase === 'craft' ? (score >= 85 ? `Your current positioning is long and uses the word "unlike" or "only".` : score >= 70 ? `Your current positioning is long.` : `You supplied a current positioning statement.`) : ''}
 ${phase === 'translate' ? `You supplied customer feedback; this area scores its length, not what it says.` : ''}
@@ -2144,30 +2522,42 @@ ${score >= 70 ? 'This input is already detailed: sharpen it next.' : `**Input**:
 
 ---
 
+## Proof You Already Have
+
+${feedbackItems.length ? `Customer feedback you supplied, as proof points (use each only if it is real and you can show it):\n${list(feedbackItems)}\n${v ? `\nWhat a good proof point looks like in ${v.name}: ${v.proofShape}\n` : ''}` : 'No customer feedback was supplied, so there is no proof to list. Add customer_feedback (what customers say, or results they report).'}
+
+---
+
+## Your Current Positioning, Checked in Words
+
+These checks read your words only. They are not part of the score above.
+
+${checks}
+
+---
+
 ## Recommended Positioning
 
 Based on your inputs, here's a generated positioning statement:
 
-> **For** ${mid(args.target_customer)}
-> **Who** struggle with ${lowerCommonWords(args.problem_solved)}
-> **${company}** **is a** solution
-> **That** ${args.product_description.toLowerCase().includes('helps') ? args.product_description.split('helps')[1]?.trim() || '[delivers the result you promise]' : '[delivers the result you promise]'}
+> **For** ${mid(shortText(args.target_customer))}
+> **Who** ${needClause(shortText(args.problem_solved))}
+> **${company}** is: ${q(shortText(args.product_description))}
+> **That** ${feedbackItems.length ? `delivers the result your customers describe: ${q(shortText(feedbackItems[0]))}` : '[the result you deliver: write it with impact_pinpoint_value]'}
 > **Unlike** ${alternativeShown}
-> **We** offer ${diffShown}
+> **We** ${args.key_differentiation ? weClause(args.key_differentiation) : '[what sets you apart: add key_differentiation]'}
 
 ### Tagline Options
-1. [Only if true and provable: "No more ${lowerCommonWords(args.problem_solved.split(' ').slice(0, 4).join(' '))}"]
-2. "The ${firstWords(diffShown, 3)} solution"
-3. "Built for ${shortAudience(args.target_customer)}"
+${numbered(taglines)}
 
 ---
 
 ## 30-Day Action Plan
 
 ### Week 1: Foundation
-- [ ] Complete champion identification exercise
-- [ ] Document 5+ competitor weaknesses from customer research
-- [ ] Define 3 quantified value proof points
+- [ ] Confirm who champions and who signs: ${committee ? `${committee.champion} and ${committee.signer} (this sector's usual committee)` : 'the champion and the economic buyer'}
+- [ ] Document 5+ weaknesses of ${givenCompetitors.length ? givenCompetitors.map((c) => nameOf(c)).join(' and ') : 'your alternatives'} from customer research
+- [ ] Turn the proof you already have into 3 quantified proof points
 
 ### Week 2: Positioning
 - [ ] Finalize positioning statement (3 variations)
@@ -2175,31 +2565,24 @@ Based on your inputs, here's a generated positioning statement:
 - [ ] Refine based on feedback
 
 ### Week 3: Execution
-- [ ] Update website hero section
-- [ ] Create sales deck with new positioning
-- [ ] Update LinkedIn profile/company page
-
+- [ ] Update your ${notes.assets}
+${v ? `- [ ] Prepare answers to this sector's usual objections: ${v.objections.map((o) => `"${o.objection}"`).join('; ')}\n` : ''}- [ ] Be ready to discuss what buyers weigh in a business like yours: ${notes.commercial}\n
 ### Week 4: Validation
 - [ ] A/B test messaging in outreach
-- [ ] Track conversion rate changes
+- [ ] Track ${v ? v.metrics.slice(0, 3).join(', ') : 'the measures your buyers already use'}
 - [ ] Gather qualitative feedback from prospects
 
 ---
 
-## Expected Outcomes
+## Measures To Track
 
-With focused positioning work:
+Fill the cells with your own numbers; this tool adds none.
 
-${EXAMPLES}
-| Metric | Current (example) | Target | Improvement |
-|--------|---------------------|--------|-------------|
-| Website conversion | 1-2% | 3-5% | 2-3x |
-| Email reply rate | 2-5% | 8-15% | 3x |
-| Sales cycle | Average | -20% | Faster |
-| Win rate | Average | +15% | Higher |
+| Measure | Baseline (yours) | Target (yours) |
+|---------|------------------|----------------|
+${(v ? v.metrics.slice(0, 4) : ['A measure of reach', 'A measure of conversion', 'A measure of cycle time']).map((m) => `| ${m} | | |`).join('\n')}
 
-**Investment**: 20-30 hours of positioning work ${EXAMPLE}
-**Expected ROI**: 2-3x improvement in GTM metrics ${EXAMPLE}
+**Investment**: [the hours your team can give to positioning work]
 
 ---
 
@@ -2227,7 +2610,7 @@ ${SUGGESTED}
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'impact-mcp';
-exports.SERVER_VERSION = '2.2.18';
+exports.SERVER_VERSION = '2.2.19';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "impact_get_framework": "IMPACT Framework Guide",
