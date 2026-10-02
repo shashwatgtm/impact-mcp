@@ -1937,7 +1937,7 @@ ${SUGGESTED}
     // Tool 8: Full Positioning Audit
     // ---------------------------------------------------------------------------
     impact_full_audit: {
-        description: 'Positioning audit with an input completeness score and recommendations',
+        description: 'Positioning audit with an input completeness checklist and recommendations',
         inputSchema: {
             type: 'object',
             properties: {
@@ -1984,7 +1984,8 @@ ${SUGGESTED}
             // Text only (run 12): the words shown for the differentiation and the main alternative; a default is never quoted as the user's words.
             const diffShown = args.key_differentiation ? mid(args.key_differentiation) : '[your differentiation]';
             const alternativeShown = args.competitors && args.competitors.length ? `[the alternative your buyers use most, for example ${args.competitors[0]}]` : '[the alternative your buyers use most]';
-            // Calculate scores based on input completeness and clarity
+            // The scorecard is an input-completeness checklist, not a quality grade. Completeness is
+            // intentionally based on whether the relevant input was supplied, never on length or keywords.
             const scores = {
                 identify: 0,
                 map: 0,
@@ -1993,85 +1994,12 @@ ${SUGGESTED}
                 craft: 0,
                 translate: 0
             };
-            // Scoring logic based on provided inputs
-            // Identify Champions (based on target customer clarity)
-            if (args.target_customer.length > 20 && args.target_customer.includes(' ')) {
-                scores.identify = args.target_customer.length > 50 ? 85 : 70;
-            }
-            else {
-                scores.identify = 45;
-            }
-            // Map Alternatives (based on competitors)
-            if (competitors.length > 2) {
-                scores.map = 80;
-            }
-            else if (competitors.length > 0 && competitors[0] !== 'Status quo') {
-                scores.map = 65;
-            }
-            else {
-                scores.map = 40;
-            }
-            // Pinpoint Value (based on differentiation)
-            if (differentiation.length > 30) {
-                scores.pinpoint = differentiation.includes('only') || differentiation.includes('unique') ? 85 : 70;
-            }
-            else {
-                scores.pinpoint = 50;
-            }
-            // Anchor Market (based on target specificity)
-            if (args.target_customer.includes('employees') || args.target_customer.includes('revenue') || args.target_customer.includes('Series')) {
-                scores.anchor = 80;
-            }
-            else if (args.target_customer.split(' ').length > 3) {
-                scores.anchor = 65;
-            }
-            else {
-                scores.anchor = 45;
-            }
-            // Craft Message (based on current positioning)
-            if (args.current_positioning && args.current_positioning.length > 50) {
-                scores.craft = args.current_positioning.includes('unlike') || args.current_positioning.includes('only') ? 85 : 70;
-            }
-            else if (args.current_positioning) {
-                scores.craft = 55;
-            }
-            else {
-                scores.craft = 30;
-            }
-            // Translate Execution (based on customer feedback indicating market presence)
-            if (args.customer_feedback && args.customer_feedback.length > 50) {
-                scores.translate = 75;
-            }
-            else if (args.customer_feedback) {
-                scores.translate = 55;
-            }
-            else {
-                scores.translate = 35;
-            }
-            const overallScore = Math.round((scores.identify + scores.map + scores.pinpoint + scores.anchor + scores.craft + scores.translate) / 6);
-            // Determine grade
-            let grade = 'F';
-            let gradeDescription = '';
-            if (overallScore >= 85) {
-                grade = 'A';
-                gradeDescription = 'Very complete: every area has detailed input';
-            }
-            else if (overallScore >= 75) {
-                grade = 'B';
-                gradeDescription = 'Mostly complete: a few inputs could be more specific';
-            }
-            else if (overallScore >= 65) {
-                grade = 'C';
-                gradeDescription = 'Partly complete: several inputs are short or missing';
-            }
-            else if (overallScore >= 50) {
-                grade = 'D';
-                gradeDescription = 'Thin: many inputs are short or missing';
-            }
-            else {
-                grade = 'F';
-                gradeDescription = 'Very thin: most inputs are short or missing';
-            }
+            scores.identify = args.target_customer.trim() ? 100 : 0;
+            scores.map = args.competitors && args.competitors.length ? 100 : 0;
+            scores.pinpoint = args.key_differentiation?.trim() ? 100 : 0;
+            scores.anchor = args.target_customer.trim() ? 100 : 0;
+            scores.craft = args.current_positioning?.trim() ? 100 : 0;
+            scores.translate = args.customer_feedback?.trim() ? 100 : 0;
             // Find weakest areas
             const sortedScores = Object.entries(scores).sort((a, b) => a[1] - b[1]);
             const weakest = sortedScores.slice(0, 2);
@@ -2095,9 +2023,9 @@ ${args.customer_feedback ? `**Customer Feedback**: ${args.customer_feedback}` : 
 
 ## IMPACT Scorecard
 
-### Input completeness score: ${overallScore}/100 (Grade: ${grade})
-**Inputs**: ${gradeDescription}
-**What this score measures**: how complete and specific your inputs are, not whether your positioning is right. Longer inputs and certain words (such as only, unique, unlike, employees, revenue and Series) raise it.
+### Input completeness checklist
+**Inputs**: each phase is marked complete only when its relevant input is supplied. This is not a quality score or positioning grade.
+**What this checklist measures**: whether relevant inputs are present. It does not judge evidence quality, positioning strength, or commercial validity.
 
 | Phase | Score | Input detail | Priority |
 |-------|-------|--------|----------|
@@ -2116,12 +2044,12 @@ ${strongest.map(([phase, score]) => score < 50 ? `
 Rated Thin: it is listed here only because the other areas scored lower.
 ` : `
 ### ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
-${phase === 'identify' ? `Your target customer ("${args.target_customer}") is long and specific enough for a high score in this area.` : ''}
-${phase === 'map' ? `You named ${competitors.length} competitor${competitors.length === 1 ? '' : 's'}; this area counts how many you name, not who they are.` : ''}
-${phase === 'pinpoint' ? (args.key_differentiation ? `Your differentiation ("${args.key_differentiation}") is long enough for a high score in this area${score >= 85 ? ' and uses the word "only" or "unique"' : ''}.` : 'No differentiation supplied yet.') : ''}
-${phase === 'anchor' ? (score >= 80 ? `Your target customer mentions employees, revenue or a funding series.` : `Your target customer is several words long.`) : ''}
-${phase === 'craft' ? (score >= 85 ? `Your current positioning is long and uses the word "unlike" or "only".` : score >= 70 ? `Your current positioning is long.` : `You supplied a current positioning statement.`) : ''}
-${phase === 'translate' ? `You supplied customer feedback; this area scores its length, not what it says.` : ''}
+${phase === 'identify' ? `Your target customer input is present.` : ''}
+${phase === 'map' ? `You supplied ${competitors.length} alternative${competitors.length === 1 ? '' : 's'}; this checklist records presence, not quality.` : ''}
+${phase === 'pinpoint' ? (args.key_differentiation ? `Your differentiation input is present.` : 'No differentiation supplied yet.') : ''}
+${phase === 'anchor' ? `Your target customer input is present; market evidence still needs validation.` : ''}
+${phase === 'craft' ? (args.current_positioning ? `Your current positioning input is present.` : 'No current positioning supplied yet.') : ''}
+${phase === 'translate' ? `Your customer feedback input is present; evidence quality still needs validation.` : ''}
 `.replace(/\n{2,}/g, '\n')).join('')}
 
 ---
@@ -2139,7 +2067,7 @@ ${score >= 70 ? 'This input is already detailed: sharpen it next.' : `**Input**:
 
 **Action**: Run \`impact_${phase === 'identify' ? 'identify_champions' : phase === 'map' ? 'map_alternatives' : phase === 'pinpoint' ? 'pinpoint_value' : phase === 'anchor' ? 'anchor_market' : phase === 'craft' ? 'craft_message' : 'translate_execution'}\` to add this detail.
 
-**Possible input score change**: +${20 - Math.floor(score / 10)} points to this area when you add the detail above ${EXAMPLE}
+**Checklist change**: this area becomes complete when the relevant input is supplied; completeness does not establish evidence quality ${EXAMPLE}
 `).join('')}
 
 ---
