@@ -1691,7 +1691,7 @@ ${v ? `\n${sectorBlock(v, lz.fn ? ['committee', 'objections'] : ['vocabulary', '
       customer_metrics?: string;
       business_model?: string;
     }) => {
-      const P = (args.product_name || '').trim() || 'your product';
+      const P = runningName((args.product_name || '').trim()) || 'your product';
       const categoryTyped = (args.category || '').trim() || 'solution';
       // In a sentence the category is its leading noun phrase ("predictive cybersecurity: attack path intelligence ..." reads "predictive cybersecurity"); the full text stays in the inputs.
       const category = catNoun(noNotes(categoryTyped).split(/\s*[:;]\s*/)[0] || categoryTyped);
@@ -2218,7 +2218,7 @@ ${c ? `\n**Buying Characteristics**:\n- Decision maker: ${c.signer} signs; ${c.c
       differentiation: string;
       business_model?: string;
     }) => {
-      const P = (args.product_name || '').trim() || 'your product';
+      const P = runningName((args.product_name || '').trim()) || 'your product';
       const category = catNoun((args.product_category || '').trim() || 'solution');
       const hasComp = !!(args.competitor && args.competitor.trim());
       const alt = hasComp ? shortText(args.competitor as string, FRAME_AT) : 'the alternatives your buyers use today';
@@ -2426,7 +2426,7 @@ ${SUGGESTED}
       product_name?: string;
       business_model?: string;
     }) => {
-      const P = (args.product_name || '').trim() || 'your product';
+      const P = runningName((args.product_name || '').trim()) || 'your product';
       const benefit = shortText(args.key_benefit, FRAME_AT);
       const statement = args.positioning_statement;
       const audFull = noNotes(args.target_customer);
@@ -3147,6 +3147,20 @@ function checkRequiredInputs(name: string, args: Record<string, unknown> | undef
     return `Invalid input for ${name}: ${problems.join("; ")}.`;
   }
   return null;
+}
+
+/** Run 21c round 3: a product typed as a long description is named in running sentences by its noun phrase ("Freight visibility platform"); a clear name is used as typed. The Product line keeps the full text. */
+function runningName(text: string): string {
+  const t = text.replace(/\s+/g, ' ').trim();
+  if (!t || (t.split(' ').length <= 6 && t.length <= 60)) return t;
+  const head = t.split(/[:;]|,\s/)[0].trim();
+  const words = head.split(' ');
+  if (words.length <= 6 && head.length <= 60) return head;
+  const j = words.findIndex((w, i) => i >= 2 && /^(?:that|which|who|where|for|with|by|from|to|connects?|helps?|lets?|gives?|makes?|builds?|runs?|designs?|turns?|unifies?|joins?|uses?)$/i.test(w));
+  if (j >= 2 && j <= 4) return words.slice(0, j).join(' ');
+  const lead = words.slice(0, 4);
+  while (lead.length > 2 && /^(?:that|which|who|where|for|with|to|by|on|in|of|and|or|from|the|a|an)$/i.test(lead[lead.length - 1])) lead.pop();
+  return lead.join(' ');
 }
 
 export function createServer(): Server {
