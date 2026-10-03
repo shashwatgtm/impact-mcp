@@ -41,3 +41,10 @@ test("a bracket note and a longer noun phrase: the short name is the noun phrase
   const out = await call("impact_translate_execution", { product_name: "AI led sales and distribution (route to market) software for consumer brands: sales force automation, a distributor system and van sales", positioning_statement: "AI led sales and distribution software for consumer brands that need one view of every outlet", target_audience: "consumer brands", channels: "website, email" });
   assert.doesNotMatch(out, /Why AI led sales and not/);
 });
+
+// Run 21c round 6 (test first, found by judges in rounds 4 and 6): a clause about another business's audience ("logistics providers are served by a separate business, LSP44") became the audience ("Built for business, LSP44").
+test("a clause about another business's audience is not the audience", async () => {
+  const out = await call("impact_craft_message", { product_name: "Lanehop", target_customer: "shippers (enterprise brands that move freight); logistics providers are served by a separate business, Carrierly; 1,000+ enterprise brands use Lanehop (page claim)", customer_need: "late deliveries and manual planning", product_category: "route planning software", key_benefit: "fewer late deliveries", differentiation: "one connected network of carriers" });
+  assert.doesNotMatch(out, /for business, Carrierly|Built for business/);
+  assert.match(out, /shippers/);
+});

@@ -257,6 +257,8 @@ function leadAudience(words: string[]): string[] | null {
 }
 // Run 20 round 1: a bracketed note inside an audience ("(the about page calls ...)", "(page claim)") is a source note, not part of the audience.
 export function noNotes(t: string): string {
+  // run 21c round 6: a clause about another business's audience is not the audience
+  t = t.replace(/\s*;\s*[^;]*\bserved by (?:a |another |an )?(?:separate|different|sister) (?:business|company|team|brand|product)[^;]*/gi, '');
   return t.replace(/\s*[;:]\s*(?:more than|over|about)?\s*[\d,]+\+?\s.*$/i, '').replace(/,\s+in particular\b.*$/i, '').replace(/,?\s+(?:with )?the (?:about )?(?:page|site|website)\b[^;]*$/i, '').replace(/\s*\([^)]*\)/g, '').replace(/\s*;\s*/g, ', ').replace(/\s{2,}/g, ' ').replace(/[,;:\s]+$/, '').trim() || t.trim();
 }
 function shortAudience(phrase: string): string {
