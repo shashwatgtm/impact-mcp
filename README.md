@@ -64,7 +64,7 @@ Generated on 2 October 2026 from the server's own tool list and checked against 
 | 5 | `impact_anchor_market` | Anchor Market | Select a beachhead market: keyword-based segment scores (presets), and a TAM/SAM/SOM calculation that uses only the company counts, deal size and percentages you give |
 | 6 | `impact_craft_message` | Craft Message | Build a positioning statement and message hierarchy from your own words, in whole sentences, with proof and objections that fit your sector and business model |
 | 7 | `impact_translate_execution` | Translate Execution | Adapt a positioning statement for the channels you choose (website, LinkedIn, cold email, sales deck, demo), with calls to action that fit your business model |
-| 8 | `impact_full_audit` | IMPACT Full Audit | Positioning audit with an input completeness score and recommendations |
+| 8 | `impact_full_audit` | IMPACT Full Audit | Positioning audit with an input completeness checklist and recommendations |
 
 ### Inputs of each tool
 
@@ -156,7 +156,7 @@ Generated on 2 October 2026 from the server's own tool list and checked against 
 | `competitors` | No | array of string | Main competitors |
 | `current_positioning` | No | string | Optional: Your current positioning statement or tagline |
 | `customer_feedback` | No | string | Optional: What customers say about you |
-| `business_model` | No | one of: `saas`, `services`, `connectivity`, `transactions`, `marketplace`, `hardware_software`, `investment` | Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the score |
+| `business_model` | No | one of: `saas`, `services`, `connectivity`, `transactions`, `marketplace`, `hardware_software`, `investment` | Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the checklist |
 
 ## Who Is This For?
 

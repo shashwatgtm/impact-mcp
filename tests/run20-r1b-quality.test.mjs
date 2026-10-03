@@ -129,13 +129,14 @@ test("translate_execution: telecom and IT services get no free trial, and every 
     assert.match(t, /What sets it apart|one contract for all branch links|a staged transition plan/);
   }
 });
-test("full_audit: the draft statement has no 'is a solution', no doubled words, at least two tagline options, and the score is unchanged", async () => {
+test("full_audit: the draft statement has no 'is a solution', no doubled words, at least two tagline options, and a presence checklist", async () => {
   const inputs = { company_name: "Lanehop", product_description: "Lanehop last-mile delivery routing and dispatch software for third-party logistics companies", target_customer: "heads of last-mile operations at third-party logistics companies with their own fleets", problem_solved: "failed first-attempt deliveries and a rising cost per delivery", key_differentiation: "re-plans every route in under a minute when an order or a road changes, with live driver updates", competitors: ["Competitor A (a global route-planning suite)", "spreadsheets and in-house dispatch"], current_positioning: "last-mile routing software that dispatchers trust", customer_feedback: "18% lower cost per delivery at Example Logistics Co (hypothetical)" };
   const t = await call("impact_full_audit", inputs);
   assert.doesNotMatch(t, /is a solution|\bThe the\b|\bis: "/i);
   const taglines = t.split("### Tagline Options")[1].split("---")[0].split("\n").filter((l) => /^\d+\. /.test(l));
   assert.ok(taglines.length >= 2, taglines.join(" | "));
-  assert.match(t, /Input completeness score: \d+\/100/);
+  assert.match(t, /Input completeness checklist/);
+  assert.doesNotMatch(t, /Grade:|Input completeness score|\/100/);
   assert.equal(brackets(t.replace(/- \[ \][^\n]*/g, "")).length, 0, brackets(t.replace(/- \[ \][^\n]*/g, "")).join(" | "));
 });
 

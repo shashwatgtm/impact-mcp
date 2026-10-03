@@ -114,9 +114,9 @@ test("A17-O29: no tool answer carries an invented tagline, and every quoted tagl
   }
 });
 
-// ---- A17-O31: the Full Audit scores input completeness only --------------------------------------------------------------------
+// ---- A17-O31: the Full Audit reports input presence only -----------------------------------------------------------------------
 
-test("A17-O31: the framework guide and translate_execution describe the Full Audit as an input completeness score", async () => {
+test("A17-O31: the framework guide and translate_execution describe the Full Audit as an input completeness checklist", async () => {
   const fw = await call("impact_get_framework", {});
   const tr = await call("impact_translate_execution", { positioning_statement: "For heads of ops, Lanehop re-plans every route.", target_customer: TARGET, key_benefit: "cut cost per delivery by 18%" });
   for (const [n, out] of [["framework", fw], ["translate", tr]]) {
