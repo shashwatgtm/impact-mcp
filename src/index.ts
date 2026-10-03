@@ -417,6 +417,7 @@ function sectorBlock(v: Vertical | null, parts: Part[], heading = 'Sector view')
 // noun:   starts with a quantity, comparative or adjective ("Fewer critical exposures"); other: anything else, which is quoted.
 export type Kind = 'base' | 'third' | 'noun' | 'other';
 const BASE_VERBS = new Set((
+  'combine merge join link blend orchestrate pair apply scan provide offer include watch ' +
   'cut reduce lift grow increase close resolve fix catch find get save speed shorten avoid prevent stop eliminate boost improve win keep retain ' +
   'scale automate simplify move ship hire deliver protect secure detect respond recover understand see know reconcile prioritise prioritize clean ' +
   'cleanse connect manage turn double halve raise expand launch generate capture convert qualify trim slash lose waste chase drown struggle spend ' +
@@ -430,6 +431,7 @@ const BASE_VERBS = new Set((
 // these bases are safe to read in the third person ("plans every route" is a verb only after re-)
 const RE_BASES = new Set('plan route assign allocate book open start balance calculate train check rank score test order schedule price'.split(' '));
 const THIRD_BASES = new Set((
+  'combine merge join link blend orchestrate pair apply scan provide offer include watch use support work check ' +
   'match rank find catch detect resolve prioritise prioritize reconcile automate clean cleanse connect monitor track turn give show let help keep save ' +
   'cut reduce lift close fix flag map send pull push build learn adapt handle cover protect secure stop block run capture suggest generate surface ' +
   'validate approve notify escalate predict scale ship deliver simplify unify remove replace enrich integrate migrate provision onboard serve assign ' +
@@ -660,8 +662,8 @@ export function strengthParts(items: string[]): string[] {
   for (const it of items) {
     const note = /\((?:page claims?|page claim)\)\s*$/i.test(it) ? ' (page claim)' : '';
     const body = it.replace(/\s*\((?:page claims?)\)\s*$/i, '');
-    const parts: string[] = []; let depth = 0; let cur = '';
-    for (const ch of body) { if (ch === '(') depth++; if (ch === ')') depth--; if (ch === ',' && depth === 0) { parts.push(cur); cur = ''; } else cur += ch; }
+    const parts: string[] = []; let depth = 0; let cur = ''; let idx = 0;
+    for (const ch of body) { if (ch === '(') depth++; if (ch === ')') depth--; if (ch === ',' && depth === 0 && !(/\d$/.test(cur) && /^\d{3}(?!\d)/.test(body.slice(idx + 1)))) { parts.push(cur); cur = ''; } else cur += ch; idx++; }
     parts.push(cur);
     const clean2 = parts.map((x) => x.trim().replace(/^and\s+/i, '')).filter((x) => x.split(/\s+/).length >= 2);
     if (clean2.length >= 2) out.push(...clean2.map((x) => x + note)); else out.push(it);
@@ -721,7 +723,13 @@ export function committeeParts(v: Vertical): Committee {
   for (const c of v.committee.replace(/\.\s*$/, '').split(/;\s*/)) {
     let m: RegExpMatchArray | null;
     if ((m = c.match(/^(.*?)\s+(?:signs?|decides?)$/i))) signer = strip(m[1]);
-    else if ((m = c.match(/^(.*?)\s+(?:champions?|sponsors?)\b.*$/i))) champion = strip(m[1]);
+    else if ((m = c.match(/^(.*?)\s+(?:champions?|sponsors?)\b.*$/i))) {
+      // "engineering leads evaluate the interfaces and champion": the role is the words before the first verb
+      let rm = m[1].match(/^(.*?)\s+(evaluates?|checks?|reviews?|compares?|joins?|holds?|handles?|runs?|owns?)\b\s*(.*)$/i);
+      if (rm && /\b(?:who|that|which)$/i.test(rm[1])) rm = null;   // "the lead who owns the affected area champions it" is one role
+      champion = strip(rm ? rm[1] : m[1]);
+      if (rm && /evaluat/i.test(rm[2])) reviewers.push({ role: champion, does: rm[2].toLowerCase(), what: rm[3].replace(/\s+and$/i, '').trim() });
+    }
     else if ((m = c.match(/^(.*?)\s+(checks?|reviews?|evaluates?|compares?|joins?|holds?|handles?|runs?)\b\s*(.*)$/i))) reviewers.push({ role: strip(m[1]), does: m[2].toLowerCase(), what: m[3].trim() });
     else if ((m = c.match(/^(.*?)\s+(?:use|uses|adopt|adopts)\b/i))) users = strip(m[1]);
   }
@@ -2126,13 +2134,13 @@ ${segLine}- Focus: your whole GTM effort on this segment
 - Revenue: ${som !== null ? `${usd(som)} (SOM, from your figures)` : 'not given: it comes from the same sizing'}
 
 ### Year 2: Adjacent Expansion
-- Add: ${segmentScores[1]?.name || 'the next highest-scoring segment'}${segmentScores[1] ? segEx : ''}
+- Add: ${allTied ? 'the segment you rank next after the first one is chosen and its results are in (the scores tie, so none is ahead)' : `${segmentScores[1]?.name || 'the next highest-scoring segment'}${segmentScores[1] ? segEx : ''}`}
 - Leverage: References from beachhead customers
 - Goal: set it after the first beachhead results are in
 
 ### Year 3: Market Leadership
 - Expand: Full SAM coverage
-- Position: Category leader in ${beachhead.name}${segEx}
+- Position: ${allTied ? 'set it once you have chosen a first segment and have its results' : `Category leader in ${beachhead.name}${segEx}`}
 
 ---
 
