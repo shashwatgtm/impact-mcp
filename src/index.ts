@@ -555,6 +555,13 @@ function usd(v: number): string {
   return `$${Math.round(v).toLocaleString('en-US')}`;
 }
 const usdFull = (v: number): string => `$${Math.round(v).toLocaleString('en-US')}`;
+// A percentage as printed: at most one decimal and no float noise (12.345678 gives "12.3", 0.1 + 0.2 gives "0.3"); a value above
+// 0 that would round to 0 reads "under 0.1". The sizing itself uses the exact figure the user gave.
+export function pctText(n: number): string {
+  const r = Math.round(n * 10) / 10;
+  if (n > 0 && r === 0) return 'under 0.1';
+  return Number.isInteger(r) ? String(r) : r.toFixed(1);
+}
 // "Mid-size manufacturers: 3,200; IT services firms: 1,800" gives one count per named segment; a bare number has no name.
 export function parseCounts(s: unknown): { name: string; count: number }[] {
   if (typeof s !== 'string') return [];
@@ -588,12 +595,12 @@ const tools = {
       properties: {
         focus_phase: {
           type: 'string',
-          description: 'Optional: specific phase to focus on (identify/map/pinpoint/anchor/craft/translate)',
+          description: 'Specific phase to focus on (identify/map/pinpoint/anchor/craft/translate)',
           enum: ['identify', 'map', 'pinpoint', 'anchor', 'craft', 'translate', 'all']
         },
         sector: {
           type: 'string',
-          description: 'Optional: your sector in your own words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity). Adds how the six steps read in that sector'
+          description: 'Your sector in your own words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity). Adds how the six steps read in that sector'
         }
       }
     },
@@ -794,7 +801,7 @@ ${EXAMPLES}
 
 **Level 1: tagline (3 to 7 words)**
 The memorable hook that captures your essence.
-Example: "Fix what is exposed first"
+Pattern: [Only if true and provable: "[the result your buyer gets, in 3 to 7 words]"]. Build it from your own outcome in your own words; this guide does not write the line for you.
 
 **Level 2: value proposition (1 to 2 sentences)**
 The promise you make to customers.
@@ -878,7 +885,7 @@ ${sectorPart}
 5. Call \`impact_craft_message\`: build messaging
 6. Finish with \`impact_translate_execution\`: channel adaptation
 
-Or run \`impact_full_audit\` for a complete scored assessment.
+Or run \`impact_full_audit\` for an input completeness score: it shows how complete and specific your inputs are, not whether your positioning is right, and adds a generated positioning draft and a 30-day plan.
 
 ${SUGGESTED}
 `;
@@ -919,7 +926,7 @@ ${SUGGESTED}
         },
         price_point: {
           type: 'string',
-          description: 'Optional: ACV range (e.g., "$50K-100K")'
+          description: 'What you charge, with the period, in your own words (for example "$50,000 a year" or "$3,750 per month")'
         }
       },
       required: ['product_description', 'problem_solved']
@@ -1048,7 +1055,7 @@ ${usersLine}
 
 ## Using Your Price Point and Target Companies
 
-- **Price point**: ${pricePoint ? `you gave ${q(pricePoint)}. Ask the champion early whether that sits inside a budget they control or needs the economic buyer's sign-off; the answer tells you how many people you must reach.` : 'not supplied, so no view on who can approve the spend. Add price_point (for example "$50K-100K") and the tool will say what to ask about the budget.'}
+- **Price point**: ${pricePoint ? `you gave ${q(pricePoint)}. Ask the champion early whether that sits inside a budget they control or needs the economic buyer's sign-off; the answer tells you how many people you must reach.` : 'not supplied, so no view on who can approve the spend. Add price_point (for example "$50,000 a year") and the tool will say what to ask about the budget.'}
 - **Target companies**: ${targetType ? `you target ${q(targetType)}. Check how each role above is titled in those companies. In smaller ones one person often holds two of the roles; in larger ones procurement or finance usually joins the committee.` : 'not supplied, so the roles are not tuned to a company size. Add target_company_type to get a note on how the roles are titled.'}
 ${v ? `\n${sectorBlock(v, ['discovery', 'proof'], 'Sector view')}\n` : ''}
 ---
@@ -1126,11 +1133,11 @@ ${SUGGESTED}
         },
         competitor_weaknesses: {
           type: 'string',
-          description: 'Optional: Known competitor weaknesses or customer complaints, one per line or separated by semicolons. A weakness that names a competitor is shown on its card'
+          description: 'Known competitor weaknesses or customer complaints, one per line or separated by semicolons. A weakness that names a competitor is shown on its card'
         },
         your_strengths: {
           type: 'string',
-          description: 'Optional: What you do better than competitors, one per line or separated by semicolons'
+          description: 'What you do better than competitors, one per line or separated by semicolons'
         }
       },
       required: ['your_product', 'category']
@@ -1342,12 +1349,12 @@ ${v ? `\n${sectorBlock(v, ['committee', 'objections', 'discovery'], 'Sector view
         },
         customer_metrics: {
           type: 'string',
-          description: 'Optional: Any customer results data (e.g., "critical exposures down 70% in one quarter; audit preparation from 3 weeks to 4 days")'
+          description: 'Any customer results data (e.g., "critical exposures down 70% in one quarter; audit preparation from 3 weeks to 4 days")'
         },
         business_model: {
           type: 'string',
           enum: BUSINESS_MODELS,
-          description: 'Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose proof types; read from your inputs when not given'
+          description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose proof types; read from your inputs when not given'
         }
       },
       required: ['target_customer', 'key_outcome', 'unique_capability']
@@ -1502,35 +1509,35 @@ ${SUGGESTED}
         potential_segments: {
           type: 'array',
           items: { type: 'string' },
-          description: 'List of potential market segments (e.g., ["Mid-market fintech", "Enterprise banks", "Small retail chains"])'
+          description: 'The market segments you are weighing (for example Mid-market fintech, Enterprise banks, Small retail chains)'
         },
         current_customers: {
           type: 'string',
-          description: 'Optional: Description of your current/best customers. Shown in the output; not used in the scoring'
+          description: 'Description of your current/best customers. Shown in the output; not used in the scoring'
         },
         average_deal_size: {
           type: 'string',
-          description: 'Optional: Your ACV as one amount (e.g., "$50,000", "$50K" or "$1.5M"); a range is refused'
+          description: 'Your annual contract value (ACV) as one amount (e.g., "$50,000", "$50K" or "$1.5M"); a range is refused'
         },
         sales_cycle: {
           type: 'string',
-          description: 'Optional: Typical sales cycle length. Shown in the output; not used in the scoring'
+          description: 'Typical sales cycle length. Shown in the output; not used in the scoring'
         },
         company_counts: {
           type: 'string',
-          description: 'Optional: how many companies you could sell to in each segment, one per line or separated by semicolons (for example "Mid-market fintech: 3,200; Enterprise banks: 600"). A single number is read as the count for the recommended segment. Needed for market sizing'
+          description: 'How many companies you could sell to in each segment, one per line or separated by semicolons (for example "Mid-market fintech: 3,200; Enterprise banks: 600"). A single number is read as the count for the recommended segment. Needed for market sizing'
         },
         percent_matching_icp: {
           type: 'number',
           exclusiveMinimum: 0,
           maximum: 100,
-          description: 'Optional: the percent of those companies that match your ideal customer profile (for example 25). Needed for SAM'
+          description: 'The percent of those companies that match your ideal customer profile (for example 25). Needed for SAM'
         },
         year_one_share_percent: {
           type: 'number',
           exclusiveMinimum: 0,
           maximum: 100,
-          description: 'Optional: the share of the matching companies you expect to win in year one, in percent (for example 1). Needed for SOM'
+          description: 'The share of the matching companies you expect to win in year one, in percent (for example 1). Needed for SOM'
         }
       },
       required: ['product_description']
@@ -1687,18 +1694,18 @@ ${segLine}
 |--------|-------|--------|
 | Companies in ${beachhead.name} | ${beachCount !== null ? beachCount.toLocaleString('en-US') : 'not supplied'} | ${beachCount !== null ? 'your company_counts' : 'add company_counts'} |
 | Average deal size | ${acvGiven || 'not supplied'} | ${acvGiven ? 'your average_deal_size' : 'add average_deal_size'} |
-| % that match your ICP | ${pct !== null ? `${pct}%` : 'not supplied'} | ${pct !== null ? 'your percent_matching_icp' : 'add percent_matching_icp'} |
-| Year 1 share | ${share !== null ? `${share}%` : 'not supplied'} | ${share !== null ? 'your year_one_share_percent' : 'add year_one_share_percent'} |
-${unreadable.length ? `\nNot read as a count (no number in it): ${unreadable.map((u) => `"${u}"`).join('; ')}.\n` : ''}
+| % that match your ICP | ${pct !== null ? `${pctText(pct)}%` : 'not supplied'} | ${pct !== null ? 'your percent_matching_icp' : 'add percent_matching_icp'} |
+| Year 1 share | ${share !== null ? `${pctText(share)}%` : 'not supplied'} | ${share !== null ? 'your year_one_share_percent' : 'add year_one_share_percent'} |
+${[pct, share].some((x) => x !== null && pctText(x) !== String(x)) ? '\n*Percentages are shown to one decimal; the sizing uses the exact figures you gave.*\n' : ''}${unreadable.length ? `\nNot read as a count (no number in it): ${unreadable.map((u) => `"${u}"`).join('; ')}.\n` : ''}
 \`\`\`
 TAM = Total potential customers × ACV
 ${tam !== null ? `TAM = ${beachCount!.toLocaleString('en-US')} companies × ${acvGiven}\nTAM = ${usdFull(tam)} (${usd(tam)})` : `TAM: cannot be calculated yet`}
 
 SAM = TAM × % that match your ICP
-${sam !== null ? `SAM = ${usd(tam!)} × ${pct}%\nSAM = ${usdFull(sam)} (${usd(sam)})` : `SAM: cannot be calculated yet`}
+${sam !== null ? `SAM = ${usd(tam!)} × ${pctText(pct!)}%\nSAM = ${usdFull(sam)} (${usd(sam)})` : `SAM: cannot be calculated yet`}
 
 SOM = SAM × expected market share (Year 1)
-${som !== null ? `SOM = ${usd(sam!)} × ${share}%\nSOM = ${usdFull(som)} (${usd(som)})` : `SOM: cannot be calculated yet`}
+${som !== null ? `SOM = ${usd(sam!)} × ${pctText(share!)}%\nSOM = ${usdFull(som)} (${usd(som)})` : `SOM: cannot be calculated yet`}
 \`\`\`
 ${needs.length ? `\n**To finish the sizing, add:** ${needs.join('; ')}.\n` : ''}${counts.length > 1 && acvNumber ? `\n### TAM by segment (your counts × your deal size)\n| Segment | Companies | TAM |\n|---------|-----------|-----|\n${segmentScores.map((s) => { const n = countFor(s.name); return n === null ? null : `| ${s.name} | ${n.toLocaleString('en-US')} | ${usd(n * acvNumber)} |`; }).filter(Boolean).join('\n')}\n` : ''}
 **Validation Required**: Check your counts with:
@@ -1784,7 +1791,7 @@ ${c ? `\n**Buying Characteristics**:\n- Decision maker: ${c.signer} signs; ${c.c
         business_model: {
           type: 'string',
           enum: BUSINESS_MODELS,
-          description: 'Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose the cost and proof lines; read from your inputs when not given'
+          description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose the cost and proof lines; read from your inputs when not given'
         }
       },
       required: ['target_customer', 'key_benefit', 'differentiation']
@@ -1974,7 +1981,7 @@ ${SUGGESTED}
         channels: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Optional: which channels to cover, from website, linkedin, cold_email, sales_deck and product_demo. Others are listed as not covered; with none, all five are covered'
+          description: 'Which channels to cover, from website, linkedin, cold_email, sales_deck and product_demo. Others are listed as not covered; with none, all five are covered'
         },
         product_name: {
           type: 'string',
@@ -1983,7 +1990,7 @@ ${SUGGESTED}
         business_model: {
           type: 'string',
           enum: BUSINESS_MODELS,
-          description: 'Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose calls to action and commercial terms; read from your inputs when not given'
+          description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose calls to action and commercial terms; read from your inputs when not given'
         }
       },
       required: ['positioning_statement', 'target_customer', 'key_benefit']
@@ -2262,7 +2269,7 @@ Example priorities: replace with your own.${v ? ` The order follows how deals us
 **Recommended Priority Order**:
 ${numbered(order.map(([, name, why]) => `${name} (${why})`))}
 
-**Next Step**: Use \`impact_full_audit\` for a complete positioning assessment
+**Next Step**: Use \`impact_full_audit\` for an input completeness score (how complete and specific your inputs are, not whether your positioning is right), with a generated positioning draft and a 30-day plan
 
 ${SUGGESTED}
 `;
@@ -2304,16 +2311,16 @@ ${SUGGESTED}
         },
         current_positioning: {
           type: 'string',
-          description: 'Optional: Your current positioning statement or tagline'
+          description: 'Your current positioning statement or tagline'
         },
         customer_feedback: {
           type: 'string',
-          description: 'Optional: What customers say about you'
+          description: 'What customers say about you'
         },
         business_model: {
           type: 'string',
           enum: BUSINESS_MODELS,
-          description: 'Optional: how you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the score'
+          description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the score'
         }
       },
       required: ['product_description', 'target_customer', 'problem_solved']

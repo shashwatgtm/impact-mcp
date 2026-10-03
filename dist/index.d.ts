@@ -21,6 +21,7 @@ export interface Committee {
     }[];
 }
 export declare function committeeParts(v: Vertical): Committee;
+export declare function pctText(n: number): string;
 export declare function parseCounts(s: unknown): {
     name: string;
     count: number;
