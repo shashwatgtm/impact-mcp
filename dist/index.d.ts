@@ -11,6 +11,7 @@ export declare function diffSentence(product: string, diff: string): string;
 export declare function shortText(t: string, n?: number): string;
 export declare function shortList(t: string, n?: number): string;
 export declare function catNoun(category: string): string;
+export declare function strengthParts(items: string[]): string[];
 export declare function splitWeaknesses(s: unknown): string[];
 export declare function labelOf(c: string): string;
 export declare function leadPhrase(t: string): string;

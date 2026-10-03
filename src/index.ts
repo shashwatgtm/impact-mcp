@@ -554,7 +554,8 @@ export function shortText(t: string, n = LONG_AT): string {
     let m: RegExpExecArray | null;
     let last = -1;
     while ((m = re.exec(cut))) if (m.index >= n * 0.4) last = m[0] === ')' ? m.index + 1 : m.index;
-    if (last > 0) { at = last; break; }
+    // Run 20 round 3: the latest boundary of any kind wins, so "for humans and agents," is not cut back to "for humans".
+    if (last > at) at = last;
   }
   let head = at > 0 ? cut.slice(0, at) : cut.slice(0, Math.max(cut.lastIndexOf(' '), Math.floor(n / 2)));
   const open = (head.match(/\(/g) || []).length - (head.match(/\)/g) || []).length;
@@ -579,9 +580,14 @@ const capFirst = (t: string): string => (/^[a-z]+[A-Z]/.test(t.split(/\s+/)[0] |
 // A hero line of 5 to 8 words. An action stands alone with the audience after it; a noun phrase takes "for <audience>".
 function heroLine(benefit: string, audience: string, label = ''): string {
   const short = shortClause(benefit, 8);
-  // Run 20 round 1: when the outcome has no short clause, the hero is built from the product or category and the audience, not left as an instruction.
-  if (!short) return label ? `${capFirst(label)} for ${audience}.` : `Shorten this to 5 to 8 words: ${q(benefit)}`;
-  return kindOf(short) === 'base' ? `${capFirst(short)}. Built for ${audience}.` : `${capFirst(short)} for ${audience}.`;
+  if (!short) {
+    // Run 20 round 3: with no short clause the hero is the benefit's leading phrase and the audience, then the product label, never an instruction.
+    const lead = leadPhrase(benefit);
+    const n = lead.split(/\s+/).length;
+    if (n >= 3 && n <= 11) return `${capFirst(lead)}. Built for ${audience}.`;
+    return label ? `${capFirst(label)} for ${audience}.` : `Shorten this to 5 to 8 words: ${q(benefit)}`;
+  }
+  return kindOf(short) === 'base' || /\bfor\b/i.test(short) ? `${capFirst(short)}. Built for ${audience}.` : `${capFirst(short)} for ${audience}.`;
 }
 // A tagline of 3 to 7 words, or an instruction when the phrase cannot be cut at a clause boundary.
 function taglineOf(benefit: string): string {
@@ -599,16 +605,67 @@ export function catNoun(category: string): string {
 function nameOf(c: string): string {
   return c.replace(/\s*\(.*$/, '').trim() || c.trim();
 }
-const joinList = (xs: string[], word: 'and' | 'or'): string => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} ${word} ${xs[xs.length - 1]}`);
+// A claim of being first or only is never stated as fact: it is wrapped as "[Only if true and provable: ...]".
+const SUPERLATIVE = /\b(?:first and only|world's first|industry's first|the only|first[- ]ever|the first)\b/i;
+const gateClaim = (claimed: string, sentence: string): string => (SUPERLATIVE.test(claimed) && !/^\[Only if/.test(sentence) ? `[Only if true and provable: ${sentence}]` : sentence);
+const joinList = (xs0: string[], word: 'and' | 'or'): string => {
+  // a label that is part of another label ("billing systems" inside "legacy enterprise billing systems") or a repeat is dropped
+  const xs = xs0.filter((x, i) => !xs0.some((y, j) => j !== i && y.length >= x.length && y.toLowerCase().includes(x.toLowerCase()) && (y.length > x.length || j < i)));
+  const sep = xs.some((x) => /,| and /i.test(x)) ? '; ' : ', ';
+  return xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(sep)}${sep === '; ' ? '; ' : ' '}${word} ${xs[xs.length - 1]}`.replace(/, (and|or) /, ' $1 ');
+};
 // A text that holds a finite verb in its first words is a clause, not a noun phrase.
 const hasFiniteVerb = (t: string): boolean => /\b(?:is|are|was|were|has|have|had|does|do|did|can|cannot|will|would|combine|combines|run|runs|manage|manages|rely|relies|juggle|suffer|spend|spends|hand|hands|fail|fails|break|breaks|fall|falls|lose|loses|need|needs|make|makes)\b/i.test(t.split(/\s+/).slice(0, 9).join(' '));
+// A measure and the words of a result that answer it, by meaning ("uptime per site" and "99.5% uptime", "approval cycle time" and "3 to 5 days").
+const MEASURE_CONCEPTS: [RegExp, RegExp][] = [
+  [/uptime|availability|outage|incident/i, /uptime|availability|outage|incident/i],
+  [/cycle|days|time to|lead time|turnaround|handling time|approval|speed|latency|repair|resolve|planning time|build time/i, /\b\d+(?:\.\d+)?\s*(?:to\s*\d+\s*)?(?:days?|hours?|minutes?|weeks?|months?)\b/i],
+  [/cycle|time to|lead time|turnaround|approval|speed|planning time|build time|sites live/i, /faster|half the time|\d+x\b|quicker|in hours|cycle/i],
+  [/cost|saving|spend|expense|price|per ticket|per fte|payback/i, /cost|saving|\$\s?\d|expense|spend|reduction in|reduced/i],
+  [/error|accuracy|defect|breach|finding|audit|quality|compliance|violation|policy|fraud|risk/i, /error|accuracy|defect|compliance|violation|policy|audit|mistake|exposure|fraud/i],
+  [/adoption|coverage|calls|productive|usage|utili[sz]ation|active/i, /adoption|coverage|productive|usage|digiti[sz]ed|utili[sz]ation|users/i],
+  [/automation|throughput|release|velocity|frequency|volume/i, /automat|faster|\d+x\b|throughput|release|volume/i],
+  [/sales|revenue|market share|growth|retention|churn|renewal|expansion/i, /sales|revenue|market share|top line|\bgrow|retention|churn|renewal/i],
+];
+// The usual status quo of a buyer, by what the seller sells (never spreadsheets and junior staff for an investment manager or a developer platform).
+function statusQuoDefaults(v: Vertical | null, model: BusinessModel | null): string[] {
+  if (v && /investment management/.test(v.name)) return ['Staying with the incumbent manager, or the managers an investment consultant already recommends', 'Running the strategy with an in-house quant team', 'Passive index exposure'];
+  const by: Partial<Record<VerticalId, string[]>> = {
+    'logistics-tech': ['Manual dispatch and route planning in spreadsheets', 'The transport system already in place, used as it is', 'Planning left to dispatchers and drivers'],
+    fintech: ['Spreadsheets and manual approvals', "The ERP's own expense or payment workflow", 'Cards and cash advances handled outside any system'],
+    'vertical-saas': ['Paper beat diaries and spreadsheets', "The distributor's own system, used as it is", 'Reps reporting by phone or a messaging app'],
+    'ai-native': ['The same work done by the team as today', "A model API wired in by the buyer's own engineers", 'A smaller point tool already in place'],
+    ites: ['Staying with the current provider and its contract', 'Doing the work in-house with the existing team', 'Splitting the work across several smaller providers'],
+    telecom: ['Staying with the current operator and its contract', 'Running the links in-house', 'Several providers for different sites'],
+    software: ['Disconnected tools already in place, used side by side', 'Scripts and documents kept by each team', 'An open-source tool the team maintains itself'],
+    cybersecurity: ['The current security tools plus manual review by analysts', 'A periodic scan or audit', 'Doing nothing until an incident or an audit finding'],
+  };
+  if (v && by[v.id]) return by[v.id]!;
+  return model === 'services' || model === 'connectivity' ? ['Staying with the current provider and its contract', 'Doing the work in-house with the existing team', 'Splitting the work across several smaller providers'] : ['Spreadsheets and manual processes', 'Existing tools cobbled together', "The team's own time"];
+}
+// Strengths typed as one comma list are shared out over the cards: top-level commas only, brackets kept whole.
+export function strengthParts(items: string[]): string[] {
+  const out: string[] = [];
+  for (const it of items) {
+    const note = /\((?:page claims?|page claim)\)\s*$/i.test(it) ? ' (page claim)' : '';
+    const body = it.replace(/\s*\((?:page claims?)\)\s*$/i, '');
+    const parts: string[] = []; let depth = 0; let cur = '';
+    for (const ch of body) { if (ch === '(') depth++; if (ch === ')') depth--; if (ch === ',' && depth === 0) { parts.push(cur); cur = ''; } else cur += ch; }
+    parts.push(cur);
+    const clean2 = parts.map((x) => x.trim().replace(/^and\s+/i, '')).filter((x) => x.split(/\s+/).length >= 2);
+    if (clean2.length >= 2) out.push(...clean2.map((x) => x + note)); else out.push(it);
+  }
+  return out;
+}
 // Weaknesses typed as one comma list ("detection delays from periodic scans, no threat validation, no financial impact quantification, and ...") are
 // cut into items when there are at least three and each has two words or more; otherwise they stay as typed.
 export function splitWeaknesses(s: unknown): string[] {
   const items = splitItems(s);
   if (items.length !== 1) return items;
   const chunks = items[0].split(/,\s*(?:and\s+)?/).map((c) => c.trim()).filter(Boolean);
-  return chunks.length >= 3 && chunks.every((c) => c.split(/\s+/).length >= 2) ? chunks : items;
+  // A sentence cut at its commas ("a congested highway prone to jams, slowdowns and disconnections, with sluggish apps ...") is one weakness, not three:
+  // items are split only when none starts with a joining word and each is a short phrase.
+  return chunks.length >= 3 && chunks.every((c) => c.split(/\s+/).length >= 2 && c.split(/\s+/).length <= 12 && !/^(?:with|which|that|where|because|so|while|but|or)\b/i.test(c)) && chunks.slice(1).filter((c) => /^(?:no|not|lack|low|poor|slow)\b/i.test(c)).length >= 1 ? chunks : items;
 }
 const STEM_STOP = new Set('the and for with that this from have has are was were not but its their they them than then into onto over such only more most very also each every any all some other another which what when where while about after before between through under without within among manual legacy tools tool systems system based multiple various existing same'.split(' '));
 function contentStems(t: string): Set<string> {
@@ -675,7 +732,9 @@ const FUNCTIONS: FunctionRoles[] = [
   { id: 'customer', re: /\b(support|customer success|customer experience|tickets?|churn|retention|renewals?|csat|nps)\b/gi, champion: 'Head of Customer Success or Support', buyer: 'Chief Customer Officer or COO', tech: 'support operations and the owner of the help-desk tools', measures: ['first response time', 'time to resolution', 'renewal rate', 'customer satisfaction'], blocker: 'agent workload during the change and tool overlap', questions: ['How long does a first response take today, and who feels it first?', 'Which tickets or renewals slip because of the tools in use?', 'Which number does support or success answer for each month?'], proof: 'First response time or renewal rate for one team before and after, from the help desk or CRM.', vocab: ['first response time', 'time to resolution', 'renewal', 'customer satisfaction', 'escalation'] },
   { id: 'engineering', re: /\b(engineer\w*|developers?|code|release\w*|deploy\w*|devops|software delivery|apis?|testing|pipelines?)\b/gi, champion: 'Engineering or Platform Lead', buyer: 'VP Engineering or CTO', tech: 'a staff engineer or architect, with security for code and data access', measures: ['release frequency', 'lead time for changes', 'escaped defects'], blocker: 'developer adoption and security review', questions: ['How often do you release today, and what slows the release down?', 'Where do defects escape, and who finds them?', 'Which tools would this replace or connect to?'], proof: 'Release frequency or escaped defects on one team before and after, from the pipeline data of that team.', vocab: ['release frequency', 'lead time for changes', 'escaped defects', 'CI pipeline', 'technical debt'] },
   { id: 'security', re: /\b(security|threats?|breach\w*|vulnerab\w*|attack\w*|ransomware|compliance|soc|siem)\b/gi, champion: 'Head of Security Operations or the SOC lead', buyer: 'CISO', tech: 'a security engineer or architect', measures: ['mean time to detect', 'mean time to respond', 'open critical exposures'], blocker: 'alert fatigue and tool overlap', questions: ['How many alerts reach an analyst each day, and how many are acted on?', 'How long does it take to find and respond to a real exposure today?', 'Which tools would this replace or feed?'], proof: 'Exposures found and closed during a proof of value, with the time it took to fix them.', vocab: ['alert fatigue', 'mean time to detect', 'exposure', 'proof of value', 'SOC'] },
-  { id: 'it', re: /\b(infrastructure|network\w*|cloud|it operations|legacy|data cent(?:er|re)s?|servers?|migrat\w*|modernis\w*|modernization|hybrid)\b/gi, champion: 'Head of IT Infrastructure or Cloud Operations', buyer: 'CIO', tech: 'the infrastructure or network manager, with security', measures: ['service availability', 'incident volume', 'time to provision'], blocker: 'migration risk and the current contract', questions: ['Which systems or sites are in scope, and which suffer the most incidents?', 'Who runs them today, and when does each contract end?', 'What does a migration or outage cost a day?'], proof: 'Availability or incident volume for the pilot scope before and after, measured over a full cycle.', vocab: ['uptime', 'incident', 'migration', 'service level', 'change window'] },
+  { id: 'api', re: /\b(apis?|governance|specs?|drift|discovery|catalog|contract testing|lifecycle|schema|collections)\b/gi, champion: 'Head of API Platform or the API program owner', buyer: 'VP Engineering or CTO', tech: 'enterprise architects and security', measures: ['APIs under governance', 'spec and implementation drift found', 'time to find an existing API', 'time to onboard an API consumer'], blocker: 'developer adoption and a security review of code and data access', questions: ['How do teams find an existing API today, and who owns the catalog?', 'How often do specs and implementations drift apart, and who notices?', 'Which API standards exist, and how is compliance checked?'], proof: 'APIs governed, or specs matched to implementations, for one team before and after.', vocab: ['API governance', 'spec drift', 'API catalog', 'design standards', 'contract testing'] },
+  { id: 'modernization', re: /\b(moderni[sz]\w*|legacy|cloud|migrat\w*|replatform\w*|refactor\w*|cloud native|data cent(?:er|re)s?)\b/gi, champion: 'Head of Application Modernization or Cloud Transformation', buyer: 'CIO', tech: 'enterprise architects and security', measures: ['applications moved per wave', 'cost of running the legacy estate', 'incidents during cutover', 'time to a working pilot'], blocker: 'migration risk and keeping the business running during the move', questions: ['Which applications and data centres are in scope, and which move first?', "What does running the legacy estate cost today, in the buyer's own figures?", 'Who signs off a cutover, and what is rolled back if it fails?'], proof: 'A pilot application migrated, with its cutover record and its running cost before and after.', vocab: ['cloud migration', 'legacy applications', 'cutover', 'landing zone', 'run cost', 'transition plan'] },
+  { id: 'it', re: /\b(infrastructure|network\w*|it operations|data cent(?:er|re)s?|servers?|hybrid)\b/gi, champion: 'Head of IT Infrastructure or Cloud Operations', buyer: 'CIO', tech: 'the infrastructure or network manager, with security', measures: ['service availability', 'incident volume', 'time to provision'], blocker: 'migration risk and the current contract', questions: ['Which systems or sites are in scope, and which suffer the most incidents?', 'Who runs them today, and when does each contract end?', 'What does a migration or outage cost a day?'], proof: 'Availability or incident volume for the pilot scope before and after, measured over a full cycle.', vocab: ['uptime', 'incident', 'migration', 'service level', 'change window'] },
   { id: 'operations', re: /\b(operations?|supply chain|logistics|warehouses?|delivery|fleet|process\w*|manual|workflows?|back office)\b/gi, champion: 'Head of Operations', buyer: 'COO', tech: 'the operations systems manager and IT', measures: ['cycle time', 'error rate', 'cost per transaction handled'], blocker: 'change management on the floor', questions: ['Which steps are done by hand today, and how long do they take?', 'Where do errors enter the process, and who finds them?', 'Which number does operations answer for each month?'], proof: 'Cycle time or error rate for one process before and after, over a full cycle of busy and quiet weeks.', vocab: ['cycle time', 'error rate', 'throughput', 'handover', 'service level'] },
   { id: 'people', re: /\b(hiring|recruit\w*|employees?|hr|payroll|attrition|talent|onboarding)\b/gi, champion: 'Head of HR or People Operations', buyer: 'CHRO', tech: 'the HR systems owner', measures: ['time to hire', 'attrition', 'payroll errors'], blocker: 'employee data privacy', questions: ['How long does a hire or a payroll run take today, and which step is slowest?', 'Where do errors or delays reach employees?', 'Which HR systems must this connect to?'], proof: 'Time to hire or payroll errors for one team before and after.', vocab: ['time to hire', 'attrition', 'payroll run', 'onboarding', 'HRIS'] },
   { id: 'risk', re: /\b(audit\w*|risk|regulat\w*|policy|policies|controls?)\b/gi, champion: 'Head of Risk and Compliance', buyer: 'CFO or Chief Risk Officer', tech: 'internal audit and IT', measures: ['audit findings', 'policy breaches', 'time to prepare an audit'], blocker: 'evidence the auditors will accept', questions: ['Which controls are tested by hand today, and how often?', 'How long does an audit take to prepare?', 'Which findings came back last time?'], proof: 'Audit findings or time to prepare an audit before and after, accepted by internal audit.', vocab: ['audit finding', 'control test', 'policy breach', 'evidence', 'risk register'] },
@@ -684,22 +743,29 @@ const FUNCTIONS: FunctionRoles[] = [
 // otherwise the sector's (AI native measures limited to those that fit any AI product).
 export interface Lens { fn: FunctionRoles | null; metrics: string[]; questions: string[]; proof: string; vocab: string[]; }
 function lensOf(v: Vertical | null, ...texts: (string | undefined)[]): Lens {
-  const fn = !v || v.id === 'saas' ? functionHits(2, ...texts) : null;
-  if (fn) return { fn, metrics: fn.measures, questions: fn.questions, proof: fn.proof, vocab: fn.vocab };
+  const fn = overlayFn(v, 2, ...texts);
+  if (fn) return { fn, metrics: fn.measures, questions: fn.questions, proof: fn.proof, vocab: v && v.id !== 'saas' ? [...fn.vocab, ...v.vocabulary] : fn.vocab };
   return { fn: null, metrics: v ? metricsOf(v) : [], questions: v ? v.discovery : [], proof: v ? v.proofShape : '', vocab: v ? v.vocabulary : [] };
 }
 const fnName = (f: FunctionRoles): string => f.id.replace('customer', 'customer success or support').replace(/^it$/, 'IT infrastructure');
 // The view of a team (finance, sales, ...) when the sector's committee is general: its measures, a proof that lands and its own questions.
 function teamBlock(f: FunctionRoles, v: Vertical | null = null): string {
-  return [`### Team view: ${fnName(f)}`, ...(v ? [`- **Words buyers in this team use:** ${f.vocab.join(', ')}.`] : []), `- **What this team measures:** ${f.measures.join(', ')}.`, `- **A proof point that lands:** ${f.proof}`,
+  return [`### Team view: ${fnName(f)}`, ...(v ? [`- **Words buyers in this team use:** ${(v.id === 'saas' ? f.vocab : [...f.vocab, ...v.vocabulary]).join(', ')}.`] : []), `- **What this team measures:** ${f.measures.join(', ')}.`, `- **A proof point that lands:** ${f.proof}`,
     `- **Discovery questions in this team's language:**\n${numbered(f.questions).split('\n').map((l) => `  ${l}`).join('\n')}`].join('\n');
 }
 // The function a text points to: the one with the most word hits; a tie goes to the earlier one in the table. null when no function word is found.
 export function functionOf(...texts: (string | undefined)[]): FunctionRoles | null { return functionHits(1, ...texts); }
-function functionHits(min: number, ...texts: (string | undefined)[]): FunctionRoles | null {
+function functionHits(min: number, ...texts: (string | undefined)[]): FunctionRoles | null { return functionHitsIn(null, min, ...texts); }
+// Which functions a sector may borrow: a general committee (SaaS, no sector) any; developer tools only the API owner; IT services only modernization.
+const OVERLAY: Partial<Record<VerticalId, string[]>> = { software: ['api'], ites: ['modernization'] };
+function overlayFn(v: Vertical | null, min: number, ...texts: (string | undefined)[]): FunctionRoles | null {
+  if (!v || v.id === 'saas') return functionHitsIn(null, min, ...texts);
+  return OVERLAY[v.id] ? functionHitsIn(OVERLAY[v.id]!, min, ...texts) : null;
+}
+function functionHitsIn(only: string[] | null, min: number, ...texts: (string | undefined)[]): FunctionRoles | null {
   const t = texts.filter(Boolean).join(' \n ');
   let best: FunctionRoles | null = null; let n = 0;
-  for (const f of FUNCTIONS) { const hits = (t.match(f.re) || []).length; if (hits > n) { best = f; n = hits; } }
+  for (const f of FUNCTIONS.filter((x) => !only || only.includes(x.id))) { const hits = (t.match(f.re) || []).length; if (hits > n) { best = f; n = hits; } }
   return n >= min ? best : null;
 }
 
@@ -1167,7 +1233,7 @@ ${SUGGESTED}
       const v = readContext(undefined, { core: [args.product_description], names: [company], context: [problem], buyer: [targetType] }).v;
       // A generic committee (SaaS, or no sector) takes its roles from the team the problem text names.
       const money = !!v && /investment management/.test(v.name); // a seller that manages money: the investment profile of the shared sector file
-      const fn = money ? null : !v || v.id === 'saas' ? functionHits(!v ? 1 : 2, problem, args.product_description) : v.id === 'ai-native' ? functionOf(problem) : null;
+      const fn = money ? null : !v ? functionHits(1, problem, args.product_description) : v.id === 'ai-native' ? functionOf(problem) : overlayFn(v, 2, problem);
       // An AI native product, or no sector, with a buyer industry named: the roles of that industry's teams.
       const ind = !fn && !money && (!v || v.id === 'ai-native') ? industryOf(targetType) : null;
 
@@ -1394,9 +1460,9 @@ ${SUGGESTED}
       for (const w of weaknessItems) {
         if (used.has(w)) continue;
         const ws = contentStems(w);
-        let best: string | null = null; let bestN = 0; let tie = false;
-        for (const c of named) { const n = [...contentStems(c)].filter((x) => ws.has(x)).length; if (n > bestN) { best = c; bestN = n; tie = false; } else if (n === bestN && n > 0) tie = true; }
-        if (tie) best = null; // one shared word counts only when exactly one alternative shares it
+        let best: string | null = null; let bestN = 1; let tie = false;
+        for (const c of named) { const n = [...contentStems(c)].filter((x) => ws.has(x)).length; if (n > bestN) { best = c; bestN = n; tie = false; } else if (n === bestN && n > 1) tie = true; }
+        if (tie) best = null;
         if (best) { matched.set(best, [...(matched.get(best) || []), w]); used.add(w); }
       }
       const untied = weaknessItems.filter((w) => !used.has(w));
@@ -1410,6 +1476,7 @@ ${SUGGESTED}
         const left = Math.max(1, Math.floor((19 - t.length) / 2));
         return (' '.repeat(left) + t).padEnd(19, ' ') + (t.length > 17 ? ' ' : '');
       };
+      const sParts = strengthParts(strengthItems);
       const descriptor = (c: string) => { const m = c.match(/\(([^)]*)\)/); return m ? m[1].trim() : ''; };
       const card = (c: string, i: number) => {
         const w = matched.get(c) || [];
@@ -1418,11 +1485,12 @@ ${SUGGESTED}
         return `
 **${nameOf(c)}**${d ? ` (${d})` : ''}:
 - What you told us about them: ${d ? q(d) : nameOf(c).split(/\s+/).length > 3 ? 'the description in the heading only (not a company name)' : 'only the name'}; nothing else was looked up
-- Weaknesses you reported (notes for you to test with buyers, not verified facts):${w.length ? '\n' + w.map((x) => `  - ${x}`).join('\n') : untied.length ? ' none of the weaknesses you gave names this one (see "Weaknesses you gave" below)' : ' none supplied'}
-- Where you can lead:${strengthShort.length ? ' your strengths are listed once under Your Key Differentiators below; start with the one this alternative handles worst, which buyers will tell you' : ' none supplied (add your_strengths)'}
+- Weaknesses you reported (notes for you to test with buyers, not verified facts):${w.length ? '\n' + w.map((x) => `  - ${x}`).join('\n') : untied.length ? ' none of the weaknesses you gave names this one (see "Weaknesses you gave" above)' : ' none supplied'}
+- Where you can lead:${sParts.length ? ` start with ${q(shortText(sParts[i % sParts.length], 110))} (your words), and ask the buyer how ${labelOf(c)} does on it; your other differentiators are listed once below` : ' none supplied (add your_strengths)'}
 - A neutral question to ask a buyer about them: "${q1.replace(/\?$/, '')}?"`;
       };
-      const customInsights = `${untied.length ? `\n**Weaknesses you gave** (not tied to one alternative; test each with buyers, they are your notes and not verified facts):\n${list(untied)}\n` : ''}${strengthItems.length ? `\n**Your Key Differentiators**:\n${list(strengthItems)}\n` : ''}`;
+      const weakBlock = untied.length ? `\n**Weaknesses you gave** (about the alternatives as a group, not tied to one card; test each with buyers, they are your notes and not verified facts):\n${list(untied)}\n` : '';
+      const customInsights = `${strengthItems.length ? `\n**Your Key Differentiators**:\n${list(strengthItems)}\n` : ''}`;
 
       return `# Competitive Landscape Analysis
 
@@ -1437,10 +1505,10 @@ ${sectorLine(v)}${longNote(args.your_product, args.competitor_weaknesses, args.y
 ## Alternative Categories
 
 ### 1. ${vendors.length && !vendors.some((c) => /^[A-Z0-9]/.test(nameOf(c)) && nameOf(c).split(/\s+/).length <= 4) ? 'Alternatives You Described (no company names were given)' : 'Direct Competitors (Same Solution, Same Problem)'}
-${vendors.length && !vendors.some((c) => /^[A-Z0-9]/.test(nameOf(c)) && nameOf(c).split(/\s+/).length <= 4) ? '\nThese are alternatives described in words, not named vendors. Add the names of the products your buyers compare you with to `competitors` for cards that carry real names.\n' : ''}${vendors.length ? vendors.map((c, i) => card(c, i)).join('\n') : '\nNo named vendor competitor was supplied. Add the products your buyers compare you with to `competitors`.\n'}
+${vendors.length && !vendors.some((c) => /^[A-Z0-9]/.test(nameOf(c)) && nameOf(c).split(/\s+/).length <= 4) ? '\nThese are alternatives described in words, not named vendors. Add the names of the products your buyers compare you with to `competitors` for cards that carry real names.\n' : ''}${weakBlock}${vendors.length ? vendors.map((c, i) => card(c, i)).join('\n') : '\nNo named vendor competitor was supplied. Add the products your buyers compare you with to `competitors`.\n'}
 
 ### 2. Status Quo (Current Manual/DIY Approach)
-${statusQuo.length ? `**What your buyers use today** (in your words):\n${statusQuo.map((c) => { const w = matched.get(c) || []; return `- ${c}${w.length ? `\n  - Weaknesses you reported (a note for you to test with buyers): ${w.join('; ')}` : ''}`; }).join('\n')}\n` : `**What they may be doing instead** (common patterns to check with buyers):\n${rc.model === 'services' || rc.model === 'connectivity' ? '- Staying with the current provider and its contract\n- Doing the work in-house with the existing team\n- Splitting the work across several smaller providers\n' : '- Spreadsheets and manual processes\n- Existing tools cobbled together\n- Junior staff doing the work manually\n'}`}
+${statusQuo.length ? `**What your buyers use today** (in your words):\n${statusQuo.map((c) => { const w = matched.get(c) || []; return `- ${c}${w.length ? `\n  - Weaknesses you reported (a note for you to test with buyers): ${w.join('; ')}` : ''}`; }).join('\n')}\n` : `**What they may be doing instead** (common patterns for this kind of seller; check them with buyers):\n${statusQuoDefaults(v, rc.model).map((x) => `- ${x}`).join('\n')}\n`}
 **Why status quo persists**:
 - "Good enough" for current scale
 - Change requires effort/budget
@@ -1539,7 +1607,7 @@ Ask prospects these questions to understand their competitive context:
 ${numbered([
   '"What have you tried before to solve this?"',
   '"What other solutions are you evaluating?"',
-  ...(vendors.length ? vendors.slice(0, 2).map((c) => `"What would make you choose ${nameOf(c)} over us?"`) : ['"What would make you choose a competitor over us?"']),
+  ...(vendors.length ? vendors.slice(0, 2).map((c) => (nameLike(c) ? `"What would make you choose ${nameOf(c)} over us?"` : `"What keeps you with ${labelOf(c)} today, and what would make you change?"`)) : ['"What would make you choose a competitor over us?"']),
   '"What didn\'t work about your previous approach?"',
   '"What\'s missing from solutions you\'ve seen?"',
 ])}
@@ -1622,7 +1690,8 @@ ${v ? `\n${sectorBlock(v, lz.fn ? ['committee', 'objections'] : ['vocabulary', '
       const saysFor = (m: string): string => {
         const ms = contentStems(m);
         const need = Math.min(2, ms.size);
-        const hits = evidence.filter((e) => [...contentStems(e)].filter((x) => ms.has(x)).length >= need && need > 0);
+        const byWords = (e: string) => need > 0 && [...contentStems(e)].filter((x) => ms.has(x)).length >= need;
+        const hits = evidence.filter((e) => byWords(e) || MEASURE_CONCEPTS.some(([mr, er]) => mr.test(m) && er.test(e)));
         return hits.length ? hits.slice(0, 2).map((h) => clean(h)).join('; ') : 'nothing in your inputs yet';
       };
       const matrixRows = [
@@ -1888,6 +1957,27 @@ ${SUGGESTED}
       const acvShown = acvGiven ? `${acvGiven}${/\bACV\b/i.test(acvGiven) ? '' : ' ACV'}` : 'your price';
       const c = v ? committeeParts(v) : null;
 
+      // Run 20 round 3: a short section built from the user's own inputs comes before the keyword scores (the scores themselves are unchanged, D80).
+      const ccText = (args.current_customers || '').trim();
+      const ccStems = contentStems(ccText);
+      const overlap = (seg: string): string[] => [...contentStems(seg.replace(/\([^)]*\)/g, ''))].filter((x) => ccStems.has(x));
+      const matchedSegs = segmentScores.map((x) => ({ x, hit: overlap(x.name) })).filter((m) => m.hit.length).sort((a, b) => b.hit.length - a.hit.length);
+      const secondView = ccText
+        ? matchedSegs.length
+          ? `**Second view (from your current customers; it is separate from the keyword scores below and does not change them).** These segments share words with the customers you described, strongest first: ${matchedSegs.map((m) => `${m.x.name} (shares "${m.hit.join('", "')}")`).join('; ')}. The segment where your customers already are is the strongest candidate for a first beachhead.`
+          : `**Second view.** None of the segment names shares a word with the customers you described (${q(shortText(ccText, 120))}). Say which segment each of your customers belongs to, and the segment with the most customers is your strongest candidate.`
+        : 'Add current_customers (who your best customers are today, in the segments you listed) to get a second view that ranks the segments by where your customers already are. Until then the scores below are only a keyword match.';
+      const howToDecide = `## How to decide, from your own inputs
+
+What you gave: deal size ${acvGiven || 'not given'}, sales cycle ${cycleGiven || 'not given'}, current customers ${ccText ? 'given' : 'not given'}. The keyword scores below do not use any of these, so use them first:
+
+- ${secondView}
+- **Deal size and cycle.** ${acvGiven || cycleGiven ? `A deal of ${acvGiven || 'your size'}${cycleGiven ? ` with a cycle of ${cycleGiven}` : ''} needs, in each segment, a buyer who can approve that amount and a team that can run a process of that length. Check that for each segment before you rank it.` : 'Add average_deal_size and sales_cycle: each segment must have a buyer who can approve that amount and run a process of that length.'}
+- **Strongest pain.** Ask three buyers in each segment which problem they raise first; the segment where it is raised unprompted comes first.
+
+---
+
+`;
       return `# Beachhead Market Selection
 
 ## Market Context
@@ -1900,7 +1990,7 @@ ${ctx.line}
 
 ---
 
-## Segment Scoring Matrix
+${howToDecide}## Segment Scoring Matrix
 
 ### Scoring Criteria (1-5 scale)
 - **Pain Intensity**: How urgent is the problem?
@@ -2076,6 +2166,13 @@ ${c ? `\n**Buying Characteristics**:\n- Decision maker: ${c.signer} signs; ${c.c
       const notes = MODEL_NOTES[ctx.model || 'unknown'];
       const thatLine = ((): string => { const k = kindOf(benefit); return k === 'base' ? `helps them ${lowerFirst(clean(benefit))}` : k === 'noun' ? `delivers ${lowerFirst(clean(benefit))}` : `delivers this result (${clean(benefit)})`; })();
       const needIf = need ? needClause(need) : '';
+      // Repeated mentions of a long, clause-like benefit use its leading phrase; the full wording appears once, in the statement.
+      const benefitR = kindOf(benefit) === 'other' && benefit.length > 70 ? leadPhrase(benefit) : benefit;
+      const diffG = gateClaim(args.differentiation, diffSentence(P, diff));
+      const weG = gateClaim(args.differentiation, weClause(diff));
+      // What the inputs already give as proof: a count, a result with a figure, and a recognition.
+      const resultItems = splitItems(args.key_benefit).slice(1).filter((x) => /\d+\s?%|\d+x\b|\$\s?\d/.test(x)).map((x) => clean(shortText(x, 200)));
+      const recognition = ((args.differentiation + ' ; ' + args.key_benefit).match(/[^,;]*\b(?:gartner|forrester|idc|magic quadrant|g2 leader)\b[^;]*/i) || [''])[0].trim();
       // A count of customers in the inputs ("more than 1,000 teams use X", "used by 500,000 companies") is the social proof the user already gave.
       const countRe = /((?:more than|over|about|around|used by|trusted by)\s+)?(?<!Fortune\s)(?<![\d,.])[$]?\d[\d,.]*\+?\s*(?:[kmb]\b|million|billion)?\+?\s*(?:[\w-]+\s+){0,3}(?:teams|companies|customers|businesses|brands|enterprises|users|developers|clients|merchants)\b(?:\s+(?:use|trust|rely on|run on|choose|including)\s+[\w ,%'-]{1,60})?/i;
       const countClaim = ((`${args.target_customer} ; ${args.key_benefit} ; ${args.differentiation}`).replace(/\([^)]*\)/g, '').match(countRe) || [''])[0].trim().replace(/[,;\s]+$/, '');
@@ -2110,13 +2207,13 @@ ${ctx.line}${longNote(args.target_customer, args.customer_need, args.key_benefit
 > **${P}** **is ${aOrAn(category)}** ${mid(category)}
 > **That** ${thatLine}
 > **Unlike** ${alt}
-> **We** ${weClause(diff)}
+> **We** ${weG}
 
 ### One-Paragraph Version
-> ${capFirst(P)} is ${category.startsWith('provider of') ? 'a' : 'the'} ${mid(category)} for ${aud}${need ? ` who ${needIf}` : ''}. Unlike ${alt}, ${diffSentence(P, diff)}. For ${aud} that means they can ${inf(benefit)}.
+> ${capFirst(P)} is ${category.startsWith('provider of') ? 'a' : 'the'} ${mid(category)} for ${aud}${need ? ` who ${needIf}` : ''}. Unlike ${alt}, ${diffG}. For ${aud} that means they can ${inf(benefitR)}.
 
 ### One-Sentence Version
-> ${capFirst(P)} helps ${aud} ${inf(benefit)}.
+> ${capFirst(P)} helps ${aud} ${inf(benefitR)}.
 
 ---
 
@@ -2130,16 +2227,16 @@ Choose the style that fits your brand:
 | **Outcome** | ${taglineOf(benefit)} | Clarity |
 | **Differentiator** | ${differentiatorTagline} | Uniqueness |
 | **Audience** | "Built for ${shortAudience(shortText(noNotes(args.target_customer)))}" | Targeting |
-${need && shortClause(need, 9) ? `| **Problem** | "Do you ${needClause(shortClause(need, 9) as string)}?" | Attention |\n` : ''}
+${need && shortClause(need, 9) && !hasFiniteVerb(shortClause(need, 9) as string) ? `| **Problem** | "Do you ${needClause(shortClause(need, 9) as string)}?" | Attention |\n` : ''}
 ### Level 2: Value Proposition (1-2 sentences)
 **Option A: problem to solution**
-> "${need ? `If you ${needIf}, ${diffSentence(P, diff)}` : capFirst(diffSentence(P, diff))}, so you can ${inf(benefit)}."
+> "${need ? `If you ${needIf}, ${diffG}` : capFirst(diffG)}, so you can ${inf(benefitR)}."
 
 **Option B: outcome first**
-> "${P}: ${capFirst(clean(benefit))}${hasComp ? ` [Only if true and provable: without the complexity of ${altShort}]` : ''}. ${capFirst(diffSentence(P, diff))}."
+> "${P}: ${capFirst(clean(benefitR))}${hasComp ? ` [Only if true and provable: without the complexity of ${altShort}]` : ''}. ${capFirst(diffG)}."
 
 **Option C: unique mechanism**
-> "[Only if true and provable: The only ${mid(category)} ${onlyWith(diff)}.] That is how ${aud} can ${inf(benefit)}."
+> "[Only if true and provable: The only ${mid(category)} ${onlyWith(diff)}.] That is how ${aud} can ${inf(benefitR)}."
 
 ### Level 3: Supporting Pillars (3 proof points)
 
@@ -2158,27 +2255,27 @@ What buyers in a business like yours also weigh: ${notes.commercial}.${v ? `\n\n
 ### A/B Testing Options
 
 **Variation A: lead with pain**
-> "${need ? `Do you ${needIf}? ${capFirst(diffSentence(P, diff))}` : capFirst(diffSentence(P, diff))}."
+> "${need ? `Do you ${needIf}? ${capFirst(diffG)}` : capFirst(diffG)}."
 
 **Variation B: lead with outcome**
-> "${P}: ${capFirst(clean(benefit))}. Built for ${aud}."
+> "${P}: ${capFirst(clean(benefitR))}. Built for ${aud}."
 
 **Variation C: lead with differentiation**
-> "${hasComp ? `Unlike ${alt}, ${diffSentence(P, diff)}.` : `${capFirst(diffSentence(P, diff))}. [Only if true and provable: unlike the alternatives your buyers use today.]`}"
+> "${hasComp ? `Unlike ${alt}, ${diffG}.` : `${capFirst(diffG)}. [Only if true and provable: unlike the alternatives your buyers use today.]`}"
 
 **Variation D: lead with social proof**
-> ${countClaim ? `You gave a count in your inputs: ${q(countClaim)}. It is a company claim; use it only if it is true and you can cite it. Lead with it: "${capFirst(countClaim)}. ${capFirst(P)} helps ${aud} ${inf(benefit)}."` : `No customer count or named result was supplied, so there is no honest social-proof line to write yet. When you have a real count, write it as: "<your count> ${pluralAudience(args.target_customer)} already ${inf(benefit)} with ${P}".`}
+> ${(countClaim || resultItems.length || recognition) ? [countClaim ? `A count in your inputs: ${q(countClaim)}` : '', ...resultItems.slice(0, 2).map((x) => `A result in your inputs: ${q(x)}`), recognition ? `A recognition in your inputs: ${q(clean(recognition))}` : ''].filter(Boolean).join('.\n> ') + `.\n> These are claims from your own inputs; use each only if it is true and you can cite it. Lead with the strongest: "${countClaim ? `${capFirst(countClaim)}. ` : ''}${capFirst(P)} helps ${aud} ${inf(benefitR)}."` : `No customer count or named result was supplied, so there is no honest social-proof line to write yet. When you have a real count, write it as: "<your count> ${pluralAudience(args.target_customer)} already ${inf(benefitR)} with ${P}".`}
 
 ### Audience-Specific Messaging
 
 **For Champions (${aud})**:
-> "${capFirst(P)} gives you a way to ${inf(benefit)}${hasComp ? `, instead of living with ${altShort}` : ''}."
+> "${capFirst(P)} gives you a way to ${inf(benefitR)}${hasComp ? `, instead of living with ${altShort}` : ''}."
 
 **For Economic Buyers (${v ? (lz.fn ? lz.fn.buyer : committeeParts(v).signer) : 'Executives'})**:
-> "${capFirst(P)} helps ${aud} ${inf(benefit)}. ${v ? `Measure it in ${lz.metrics.slice(0, 2).join(' and ')}, the figures this sector already watches.` : 'Measure it in a figure your buyer already watches.'}${notes.cost ? ` [Only if true and provable: ${notes.cost} than ${altShort}.]` : ''}"
+> "${capFirst(P)} helps ${aud} ${inf(benefitR)}. ${v ? `Measure it in ${lz.metrics.slice(0, 2).join(' and ')}, the figures this sector already watches.` : 'Measure it in a figure your buyer already watches.'}${notes.cost ? ` [Only if true and provable: ${notes.cost} than ${altShort}.]` : ''}"
 
 **For Technical Evaluators**:
-> "${capFirst(diffSentence(P, diff))}. ${capFirst(P)} is ${aOrAn(category)} ${mid(category)} designed for ${aud}."
+> "${capFirst(diffG)}. ${capFirst(P)} is ${aOrAn(category)} ${mid(category)} designed for ${aud}."
 
 ---
 
@@ -2309,11 +2406,18 @@ ${SUGGESTED}
       const m0 = lz.metrics.length ? lz.metrics[0] : 'the main measure your buyer tracks';
       const m1 = lz.metrics.length ? lz.metrics[1] || lz.metrics[0] : 'a second measure your buyer tracks';
       const askLine = ctas[0].replace(/^./, (c) => c.toLowerCase());
-      const q0 = lz.questions.length ? lz.questions[0] : '';
-      const q1 = lz.questions.length ? lz.questions[1] || lz.questions[0] : '';
+      // An in-house alternative has no "current provider": questions about one are left out.
+      const inHouse = /in[- ]house|internal|\bDIY\b|ourselves/i.test(unlike);
+      const qs = lz.questions.filter((x) => !(inHouse && /provider|incumbent|vendor/i.test(x)));
+      // The hook follows the user's benefit: a benefit that is an action becomes the question "how long does it take you to ...".
+      const benefitQ = kindOf(benefit) === 'base' ? `How long does it take you today to ${lowerFirst(clean(benefit))}?` : '';
+      const q0 = benefitQ || (qs.length ? qs[0] : '');
+      const q1 = qs.length ? (benefitQ ? qs[0] : qs[1] || qs[0]) : '';
+      const benefitR = kindOf(benefit) === 'other' && benefit.length > 70 ? leadPhrase(benefit) : benefit;
+      const subjectLead = capFirst(shortClause(benefit, 6) || firstWords(clean(benefit), 5));
       const objection0 = v ? v.objections[0] : null;
       const demoWord = ctx.model === 'saas' || ctx.model === null ? 'demo' : 'walkthrough';
-      const offerLine = offers ? `${capFirst(P)} offers ${lowerFirst(clean(offers))}.` : `${capFirst(P)}: what sets it apart is in your positioning statement above.`;
+      const offerLine = offers ? gateClaim(offers, `${capFirst(P)} offers ${lowerFirst(clean(offers))}.`) : `${capFirst(P)}: what sets it apart is in your positioning statement above.`;
 
       if (chosen.has('website')) sections.push(`## Website Execution
 
@@ -2322,7 +2426,7 @@ ${SUGGESTED}
 > "${heroLine(benefit, sa, P)}"
 
 **Subheadline (15-20 words)**:
-> "${capFirst(P)} helps ${aud} ${inf(benefit)}."
+> "${capFirst(P)} helps ${aud} ${inf(benefitR)}."
 
 **Proof under the fold**: ${lz.proof ? `show ${lc1(lz.proof).replace(/\.$/, '')}. Use a real result of yours in that shape, or leave the slot empty.` : 'show one real customer result, with its source. Leave the slot empty if you have none.'}
 
@@ -2340,7 +2444,7 @@ ${SUGGESTED}
       if (chosen.has('linkedin')) sections.push(`## LinkedIn Execution
 
 ### Profile/Company Page Tagline
-> "Helping ${aud} ${inf(benefit)}"
+> "Helping ${aud} ${inf(benefitR)}"
 
 ### Post Drafts
 
@@ -2348,7 +2452,7 @@ ${SUGGESTED}
 \`\`\`
 ${q0 ? q0 : `Is this on your list this year: ${q(benefit)}?`}
 
-${capFirst(P)} helps ${aud} ${inf(benefit)}.
+${capFirst(P)} helps ${aud} ${inf(benefitR)}.
 ${offerLine}
 
 ${q1 ? `A question you can put to your buyers this week: ${q1}` : 'Ask your own team how they handle this today.'}
@@ -2356,7 +2460,7 @@ ${q1 ? `A question you can put to your buyers this week: ${q1}` : 'Ask your own 
 
 **Post 2: the claim and how you will prove it**
 \`\`\`
-${capFirst(P)} helps ${aud} ${inf(benefit)}.
+${capFirst(P)} helps ${aud} ${inf(benefitR)}.
 
 ${lz.proof ? `How we would show it: ${lz.proof}` : 'How we would show it: one customer, one measure, before and after.'}
 ${lz.metrics.length ? `The figures that matter here: ${lz.metrics.slice(0, 3).join(', ')}.` : ''}
@@ -2375,14 +2479,14 @@ Outline: the customer's situation, what they measured before, what changed, what
 Open each email with a trigger you can see for the buyer (a renewal, an audit, a season, a target); that is the one line only you can write.
 
 ### Email 1: problem-focused
-**Subject**: ${m0.replace(/^./, (c) => c.toUpperCase())} at [Company]?
+**Subject**: ${subjectLead}: a question for [Company]
 
 \`\`\`
 Hi [First name],
 
 ${q0 ? `A question I ask teams like yours: ${q0}` : `Teams like [Company] often weigh ${m0}.`}
 
-${capFirst(P)} helps ${aud} ${inf(benefit)}.
+${capFirst(P)} helps ${aud} ${inf(benefitR)}.
 
 If useful, the next step is simple: ${askLine}.
 
@@ -2410,7 +2514,7 @@ Worth a conversation?
 \`\`\`
 Hi [First name],
 
-I have reached out a few times about helping [Company] ${inf(benefit)}.
+I have reached out a few times about helping [Company] ${inf(benefitR)}.
 
 If the timing is not right, no worries at all. ${objection0 ? `If "${objection0.objection.replace(/[.?!]+$/, '')}" is the concern, I can answer it in one call.` : 'If switching is the concern, I can answer it in one call.'}
 
@@ -2451,7 +2555,7 @@ Result: the figure your buyer already tracks${v ? ` (${m0})` : ''}, from a real 
 ### ${demoWord === 'demo' ? 'Demo' : 'Walkthrough'} Script Structure (15 minutes, Example figure: replace with your own)
 
 **0-2 min: Context Setting** ${EXAMPLE}
-> "Based on our conversation, here is what I will show you: how ${P} helps ${aud} ${inf(benefit)}."${q0 ? `\nA question to open with, in this sector's language: ${q(q0)}` : ''}
+> "Based on our conversation, here is what I will show you: how ${P} helps ${aud} ${inf(benefitR)}."${q0 ? `\nA question to open with, in this sector's language: ${q(q0)}` : ''}
 
 **2-8 min: Core Value Demonstration** ${EXAMPLE}
 ${offers ? `Start with what you offer: ${offers}. ` : ''}Then show the two or three features that answer the buyer's stated needs, in the order of what this sector measures${lz.metrics.length ? `: ${lz.metrics.slice(0, 3).join(', ')}` : ''}.
@@ -2579,7 +2683,7 @@ ${SUGGESTED}
       const givenCompetitors = (args.competitors || []).filter((c) => c && c.trim());
       const allFeedback = splitItems(args.customer_feedback);
       // A company-wide claim ("$8B+ deployed", "more than 1,000 teams use X") or a recognition is not a result a customer describes.
-      const isCompanyClaim = (x: string): boolean => /^(?:more than|over|about|around)?\s*[$]?\d[\d,.]*\+?\s*(?:billion|million|bn|[bm])\b/i.test(x.trim()) || /\bdeployed\b|\bassets under management\b|\bAUM\b/i.test(x) || /^(?:more than|over|about|around)?\s*[$\d][\d,.]*\+?\s*(?:[kmb]\b|million|billion)?\+?\s*(?:\w+\s+){0,3}(?:teams|companies|businesses|customers|users|clients|developers|enterprises|brands|merchants)\b/i.test(x.trim()) || /^(?:named|featured|recognised|recognized|ranked|winner|a leader|leader in)\b|\b(?:award|excellence award|magic quadrant|frost radar|major contender|enterprise innovator)\b/i.test(x);
+      const isCompanyClaim = (x: string): boolean => /^(?:more than|over|about|around)?\s*[$]?\d[\d,.]*\+?\s*(?:billion|million|bn|[bm])\b/i.test(x.trim()) || /\bdeployed\b|\bassets under management\b|\bAUM\b/i.test(x) || /^(?:more than|over|about|around)?\s*[$\d][\d,.]*\+?\s*(?:[kmb]\b|million|billion)?\+?\s*(?:\w+\s+){0,3}(?:teams|companies|businesses|customers|users|clients|developers|enterprises|brands|merchants)\b/i.test(x.trim()) || /^(?:named|featured|recognised|recognized|ranked|winner|a leader|leader in)\b|\b(?:awards?|excellence award|magic quadrant|frost radar|major contender|enterprise innovator|gartner|forrester|idc|everest|hfs|g2|capterra|recogni[sz]ed|recognition|best [\w&' -]{3,40}(?:platform|solution|tool|software)|cio choice)\b/i.test(x);
       const companyClaims = allFeedback.filter(isCompanyClaim);
       const feedbackItems = allFeedback.filter((x) => !isCompanyClaim(x));
       const ctx = readContext(args.business_model, { core: [args.product_description], later: [args.key_differentiation, args.current_positioning], names: [args.company_name], context: [args.problem_solved, args.customer_feedback], buyer: [args.target_customer] });
@@ -2805,10 +2909,10 @@ Based on your inputs, here's a generated positioning statement:
 > **What ${company} is** ${q(clean(shortText(args.product_description, FRAME_AT)))}
 > **That** ${feedbackItems.length ? `delivers the result your customers describe: ${q(shortText(feedbackItems[0], 160))}` : 'delivers a result you still have to state: write it with impact_pinpoint_value'}
 > **Unlike** ${givenCompetitors.length ? joinList(givenCompetitors.slice(0, 3).map((c) => labelOf(c)), 'or') : 'the alternative your buyers use most (add competitors)'}
-> **We** ${args.key_differentiation ? weClause(shortText(args.key_differentiation, FRAME_AT)) : 'offer what sets you apart (add key_differentiation)'}
+> **We** ${args.key_differentiation ? gateClaim(args.key_differentiation, weClause(shortText(args.key_differentiation, FRAME_AT))) : 'offer what sets you apart (add key_differentiation)'}
 
 ### Tagline Options
-${numbered(taglines.filter((t) => { const w = t.replace(/^\[Only if true and provable: |\]$/g, '').replace(/^"|"$/g, '').split(/\s+/); return w.length <= 9 && !/^(?:combined|made|built|based|layered|powered)$/i.test(w[w.length - 1]); }))}
+${numbered(taglines.map((t) => (SUPERLATIVE.test(t) && !/Only if true/.test(t) ? `[Only if true and provable: ${t}]` : t)).filter((t) => { const w = t.replace(/^\[Only if true and provable: |\]$/g, '').replace(/^"|"$/g, '').split(/\s+/); return w.length <= 9 && !/^(?:combined|made|built|based|layered|powered)$/i.test(w[w.length - 1]); }))}
 
 ---
 

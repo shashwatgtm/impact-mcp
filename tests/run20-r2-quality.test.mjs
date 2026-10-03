@@ -77,7 +77,7 @@ test("craft: a customer count in the inputs is used in the social-proof line, an
 
 // (4) acronym casing
 test("translate: an acronym at the start of the proof line keeps its capitals (SLA, not sLA)", async () => {
-  const t = await call("impact_translate_execution", { positioning_statement: "For CIOs at Fortune 500 companies who need a cloud move, Northgate is the services partner that runs it. Unlike running cloud in house, it offers a staged transition plan.", target_customer: "CIOs at Fortune 500 companies", key_benefit: "modernize legacy applications with managed services", product_name: "Northgate", business_model: "services" });
+  const t = await call("impact_translate_execution", { positioning_statement: "For CIOs at Fortune 500 companies who need a service desk, Northgate is the services partner that runs it. Unlike running the desk in house, it offers a staged transition plan.", target_customer: "CIOs at Fortune 500 companies", key_benefit: "run the service desk with managed services", product_name: "Northgate", business_model: "services" });
   assert.doesNotMatch(t, /\bsLA\b|\bsla and cost/);
   assert.match(t, /SLA and cost outcomes/);
 });

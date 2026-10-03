@@ -81,7 +81,7 @@ test("map_alternatives: alternatives described in words are labelled as such, th
   assert.doesNotMatch(t, /Poor support|\[who they serve best|Best for/);
   for (const m of t.match(/\[[A-Za-z' ]{2,16}\]/g) || []) assert.ok(!/networ\]$/.test(m), m);
   assert.doesNotMatch(t, /Spreadsheets and manual processes/, "a connectivity business has no spreadsheet status quo");
-  assert.match(t, /Staying with the current provider/);
+  assert.match(t, /Staying with the current (?:provider|operator)/);
   assert.doesNotMatch(t, /ask buyers \| Lead, match or skip/);
 });
 
