@@ -712,6 +712,15 @@ const MEASURE_CONCEPTS = [
     [/automation|throughput|release|velocity|frequency|volume/i, /automat|faster|\d+x\b|throughput|release|volume/i],
     [/sales|revenue|market share|growth|retention|churn|renewal|expansion/i, /sales|revenue|market share|top line|\bgrow|retention|churn|renewal/i],
 ];
+// Run 21b: some lines below were written for ONE kind of company of a vertical (STOCK_KIND). They are used only when the sector read names that kind
+// (v.subtype); every other company of the vertical gets the neutral lines in STATUS_QUO_GENERIC and the model's own call to action.
+const STOCK_KIND = { 'logistics-tech': 'last-mile', fintech: 'spend-expense', 'vertical-saas': 'fmcg-retail-execution', telecom: 'operators-connectivity' };
+const STATUS_QUO_GENERIC = {
+    'logistics-tech': ['Shipments and orders followed by hand in spreadsheets and email', 'The transport or order system already in place, used as it is', 'Status chased by phone calls between teams'],
+    fintech: ['Spreadsheets and manual checks', "The ERP's or the bank's own tools, used as they are", 'Work split across several systems that do not talk to each other'],
+    'vertical-saas': ['Spreadsheets and paper records', 'A general business tool used as it is', 'Staff reporting by phone or a messaging app'],
+    telecom: ['Staying with the current provider and its contract', 'Running it in-house', 'Several providers for different needs'],
+};
 // The usual status quo of a buyer, by what the seller sells (never spreadsheets and junior staff for an investment manager or a developer platform).
 function statusQuoDefaults(v, model) {
     if (v && /investment management/.test(v.name))
@@ -727,7 +736,7 @@ function statusQuoDefaults(v, model) {
         cybersecurity: ['The current security tools plus manual review by analysts', 'A periodic scan or audit', 'Doing nothing until an incident or an audit finding'],
     };
     if (v && by[v.id])
-        return by[v.id];
+        return STOCK_KIND[v.id] && v.subtype !== STOCK_KIND[v.id] ? STATUS_QUO_GENERIC[v.id] : by[v.id];
     return model === 'services' || model === 'connectivity' ? ['Staying with the current provider and its contract', 'Doing the work in-house with the existing team', 'Splitting the work across several smaller providers'] : ['Spreadsheets and manual processes', 'Existing tools cobbled together', "The team's own time"];
 }
 // Strengths typed as one comma list are shared out over the cards: top-level commas only, brackets kept whole.
@@ -931,7 +940,8 @@ const SECTOR_CTA = {
 };
 function callsToAction(v, model) {
     const n = MODEL_NOTES[model || 'unknown'];
-    const first = model === 'saas' || model === null ? (v && SECTOR_CTA[v.id]) || n.cta[0] : n.cta[0];
+    const stock = v && STOCK_KIND[v.id] && v.subtype !== STOCK_KIND[v.id] ? undefined : v ? SECTOR_CTA[v.id] : undefined;
+    const first = model === 'saas' || model === null ? stock || n.cta[0] : n.cta[0];
     return [...new Set([first, ...n.cta])];
 }
 // ---- Money and counts for the market anchor (problem 5: the user's own figures only) ---------------------------------------------
