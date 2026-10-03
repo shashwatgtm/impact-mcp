@@ -162,3 +162,15 @@ test("sector: 'AI-native' in front of a security platform, or 'AI agents' in a t
   const ai = await call("impact_anchor_market", { product_description: "Forecastly AI forecasts and confidence scores for investment teams", potential_segments: ["Pension funds"] });
   assert.match(ai, /Sector: read from your inputs as AI native/);
 });
+
+test("sector words: every sector-aware tool lists the words buyers in the sector use (from the data file, no figures)", async () => {
+  const meshline = { product_description: "Meshline managed SD-WAN and MPLS links for enterprises with many branches", problem_solved: "branch outages and slow repairs" };
+  const outs = [
+    await call("impact_identify_champions", meshline),
+    await call("impact_map_alternatives", { your_product: meshline.product_description, category: "managed network services" }),
+    await call("impact_pinpoint_value", { product_name: "Meshline", category: "managed SD-WAN", target_customer: "CIOs at banks", key_outcome: "cut repair time", unique_capability: "fallback links on every branch" }),
+    await call("impact_craft_message", { product_name: "Meshline", product_category: "managed SD-WAN", target_customer: "CIOs at banks", key_benefit: "cut repair time", differentiation: "fallback links on every branch" }),
+    await call("impact_full_audit", { company_name: "Meshline", product_description: meshline.product_description, target_customer: "CIOs at banks", problem_solved: meshline.problem_solved }),
+  ];
+  for (const o of outs) { assert.match(o, /Words this sector's buyers use|in the words this sector's buyers use/); assert.match(o, /site survey|uptime|SD-WAN/); }
+});

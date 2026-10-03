@@ -376,10 +376,11 @@ const list = (items: string[], prefix = '- '): string => items.map((x) => `${pre
 const numbered = (items: string[]): string => items.map((x, i) => `${i + 1}. ${x}`).join('\n');
 
 // Sector view: the buying committee, what the sector measures, its usual objections, a proof that lands and discovery questions.
-type Part = 'committee' | 'metrics' | 'objections' | 'proof' | 'discovery' | 'motion';
+type Part = 'committee' | 'metrics' | 'objections' | 'proof' | 'discovery' | 'motion' | 'vocabulary';
 function sectorBlock(v: Vertical | null, parts: Part[], heading = 'Sector view'): string {
   if (!v) return '';
   const out = [`### ${heading}: ${v.name}`];
+  if (parts.includes('vocabulary')) out.push(`- **Words this sector's buyers use:** ${v.vocabulary.join(', ')}.`);
   if (parts.includes('committee')) out.push(`- **Who usually buys:** ${v.committee}`);
   if (parts.includes('motion')) out.push(`- **How deals usually run:** ${v.salesMotion}`);
   if (parts.includes('metrics')) out.push(`- **What this sector measures:** ${metricsOf(v).join(', ')}.`);
@@ -609,7 +610,7 @@ export function committeeParts(v: Vertical): Committee {
 interface FunctionRoles { id: string; re: RegExp; champion: string; buyer: string; tech: string; measures: string[]; blocker: string; }
 const FUNCTIONS: FunctionRoles[] = [
   { id: 'finance', re: /\b(financ\w*|billing|invoic\w*|reconcil\w*|revenue recognition|collections?|accounts? (?:payable|receivable)|month-end|ledger|treasury|expenses?|accounting|cash flow)\b/gi, champion: 'Finance Controller or Head of Billing Operations', buyer: 'CFO', tech: 'the finance systems owner (ERP and billing) and IT', measures: ['days to close the books', 'billing errors found after invoicing', 'manual reconciliation effort', 'audit findings'], blocker: 'a finance-systems change in the middle of a close, and the audit trail' },
-  { id: 'sales', re: /\b(sales|pipeline|quota|win rates?|reps?|leads?|deals?|prospects?|selling|outbound|forecast\w*)\b/gi, champion: 'Head of Sales Operations or Revenue Operations', buyer: 'Chief Revenue Officer', tech: 'the CRM administrator and sales operations', measures: ['pipeline coverage', 'win rate', 'sales cycle length', 'rep ramp time'], blocker: 'rep adoption and CRM data quality' },
+  { id: 'sales', re: /\b(sales|pipeline|quota|win rates?|reps?|leads?|deals?|prospects?|selling|outbound)\b/gi, champion: 'Head of Sales Operations or Revenue Operations', buyer: 'Chief Revenue Officer', tech: 'the CRM administrator and sales operations', measures: ['pipeline coverage', 'win rate', 'sales cycle length', 'rep ramp time'], blocker: 'rep adoption and CRM data quality' },
   { id: 'marketing', re: /\b(marketing|campaigns?|brand|demand gen\w*|attribution|content|seo|webinars?)\b/gi, champion: 'Head of Marketing or Demand Generation', buyer: 'CMO', tech: 'marketing operations', measures: ['marketing-sourced pipeline', 'cost per qualified lead', 'attribution coverage'], blocker: 'overlap with the marketing tools already in place' },
   { id: 'customer', re: /\b(support|customer success|customer experience|tickets?|churn|retention|renewals?|csat|nps)\b/gi, champion: 'Head of Customer Success or Support', buyer: 'Chief Customer Officer or COO', tech: 'support operations and the owner of the help-desk tools', measures: ['first response time', 'time to resolution', 'renewal rate', 'customer satisfaction'], blocker: 'agent workload during the change and tool overlap' },
   { id: 'engineering', re: /\b(engineer\w*|developers?|code|release\w*|deploy\w*|devops|software delivery|apis?|testing|pipelines?)\b/gi, champion: 'Engineering or Platform Lead', buyer: 'VP Engineering or CTO', tech: 'a staff engineer or architect, with security for code and data access', measures: ['release frequency', 'lead time for changes', 'escaped defects'], blocker: 'developer adoption and security review' },
@@ -1090,7 +1091,7 @@ ${SUGGESTED}
       // The sector is read from what the product does (core) first, then the deal text and the target companies.
       const v = readContext(undefined, { core: [args.product_description], names: [company], context: [problem], buyer: [targetType] }).v;
       // A generic committee (SaaS, or no sector) takes its roles from the team the problem text names.
-      const fn = !v || v.id === 'saas' ? functionOf(problem, args.product_description) : null;
+      const fn = !v || v.id === 'saas' ? functionOf(problem, args.product_description) : v.id === 'ai-native' ? functionOf(problem) : null;
       // An AI native product, or no sector, with a buyer industry named: the roles of that industry's teams.
       const ind = !fn && (!v || v.id === 'ai-native') ? industryOf(targetType) : null;
 
@@ -1200,7 +1201,7 @@ ${usersLine}
 
 - **Price point**: ${pricePoint ? `you gave ${q(pricePoint)}. Ask the champion early whether that sits inside a budget they control or needs the economic buyer's sign-off; the answer tells you how many people you must reach.` : 'not supplied, so no view on who can approve the spend. Add price_point (for example "$50,000 a year") and the tool will say what to ask about the budget.'}
 - **Target companies**: ${targetType ? `you target ${q(targetType)}. Check how each role above is titled in those companies. In smaller ones one person often holds two of the roles; in larger ones procurement or finance usually joins the committee.` : 'not supplied, so the roles are not tuned to a company size. Add target_company_type to get a note on how the roles are titled.'}
-${v ? `\n${sectorBlock(v, ['discovery', 'proof'], 'Sector view')}\n` : ''}
+${v ? `\n${sectorBlock(v, ['vocabulary', 'discovery', 'proof'], 'Sector view')}\n` : ''}
 ---
 
 ## Anti-Champion Warning Signs
@@ -1459,7 +1460,7 @@ ${numbered([
   '"What didn\'t work about your previous approach?"',
   '"What\'s missing from solutions you\'ve seen?"',
 ])}
-${v ? `\n${sectorBlock(v, ['committee', 'objections', 'discovery'], 'Sector view')}\n` : ''}
+${v ? `\n${sectorBlock(v, ['vocabulary', 'committee', 'objections', 'discovery'], 'Sector view')}\n` : ''}
 **Next Step**: Use \`impact_pinpoint_value\` to articulate your unique differentiation
 `;
     }
@@ -1635,7 +1636,7 @@ Before finalizing, validate with prospects:
 2. **Relevance**: "How important is this result to you right now?"
 3. **Differentiation**: "Have you heard anything like this from other vendors?"
 4. **Believability**: "What would you need to see to believe this?"
-${v ? `\n${sectorBlock(v, ['committee', 'objections'], 'Sector view')}\n` : ''}
+${v ? `\n${sectorBlock(v, ['vocabulary', 'committee', 'objections'], 'Sector view')}\n` : ''}
 **Next Step**: Use \`impact_anchor_market\` to select your beachhead market segment
 
 ${SUGGESTED}
@@ -1836,7 +1837,7 @@ ${EXAMPLES}
 ${beachhead.budget >= 4 ? `- Budget ${beachhead.budget}/5 is a preset for this keyword: check it against your own price${acvGiven ? ` (${acvShown})` : ''} before you rely on it.` : `- Budget ${beachhead.budget}/5 is a preset: ${acvGiven ? `check whether ${acvShown} fits this segment's budgets` : 'add average_deal_size to compare with your price'}.`}
 ${beachhead.access <= 2 ? `- Accessibility ${beachhead.access}/5 is low in the preset: plan how you will reach these buyers (a channel, a partner or a referral).` : ''}
 
-${v ? `${sectorBlock(v, ['committee', 'metrics', 'proof', 'motion'], 'What to check in each segment (sector view)')}\n\nBefore you commit to a segment, check that the roles above exist in its companies, that they can reach your price, and that the sector's usual objections do not block the first sale.${ctx.model ? ` In a business like yours, buyers also weigh: ${MODEL_NOTES[ctx.model].commercial}.` : ''}\n` : ''}
+${v ? `${sectorBlock(v, ['vocabulary', 'committee', 'metrics', 'proof', 'motion'], 'What to check in each segment (sector view)')}\n\nBefore you commit to a segment, check that the roles above exist in its companies, that they can reach your price, and that the sector's usual objections do not block the first sale.${ctx.model ? ` In a business like yours, buyers also weigh: ${MODEL_NOTES[ctx.model].commercial}.` : ''}\n` : ''}
 ---
 
 ## Market Sizing (your figures only)
@@ -2042,7 +2043,7 @@ Pillars built from your own words and this sector's proof shape (keep only a pro
 |--------|----------------------|-------------|
 ${pillars.join('\n')}
 
-What buyers in a business like yours also weigh: ${notes.commercial}.
+What buyers in a business like yours also weigh: ${notes.commercial}.${v ? `\n\nWords this sector's buyers use, to check your wording against: ${v.vocabulary.join(', ')}.` : ''}
 
 ---
 
@@ -2710,7 +2711,7 @@ ${numbered(taglines.filter((t) => { const w = t.replace(/^\[Only if true and pro
 - [ ] Refine based on feedback
 
 ### Week 3: Execution
-- [ ] Update your ${notes.assets}
+- [ ] Update your ${notes.assets}${v ? `, in the words this sector's buyers use (${v.vocabulary.slice(0, 6).join(', ')})` : ''}
 ${v ? `- [ ] Prepare answers to this sector's usual objections: ${v.objections.map((o) => `"${o.objection}"`).join('; ')}\n` : ''}- [ ] Be ready to discuss what buyers weigh in a business like yours: ${notes.commercial}\n
 ### Week 4: Validation
 - [ ] A/B test messaging in outreach
