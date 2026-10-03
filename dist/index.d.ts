@@ -33,6 +33,14 @@ interface FunctionRoles {
     blocker: string;
 }
 export declare function functionOf(...texts: (string | undefined)[]): FunctionRoles | null;
+interface IndustryRoles {
+    id: string;
+    re: RegExp;
+    champion: string;
+    buyer: string;
+    tech: string;
+}
+export declare function industryOf(...texts: (string | undefined)[]): IndustryRoles | null;
 export declare function pctText(n: number): string;
 export declare function parseCounts(s: unknown): {
     name: string;
