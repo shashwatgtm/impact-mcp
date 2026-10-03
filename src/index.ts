@@ -236,13 +236,13 @@ function leadAudience(words: string[]): string[] | null {
   let lead = words.slice(0, end).map((x, k) => (k === end - 1 ? x.replace(/[,;:(]+$/, '') : x));
   if (lead.length > 5) {
     const of = lead.findIndex((x, k) => k > 0 && /^of$/i.test(x));
-    lead = of > 0 ? lead.slice(0, of) : lead.slice(0, 0);
+    lead = of > 0 ? lead.slice(0, of) : lead.length <= 8 && end < words.length && /[,;:(]$/.test(words[end - 1] || '') ? lead : lead.slice(0, 0);
   }
-  return lead.length && lead.length <= 5 && !/\d/.test(lead.join(' ')) ? lead : null;
+  return lead.length && lead.length <= 8 && !/\d/.test(lead.join(' ')) ? lead : null;
 }
 // Run 20 round 1: a bracketed note inside an audience ("(the about page calls ...)", "(page claim)") is a source note, not part of the audience.
 export function noNotes(t: string): string {
-  return t.replace(/,\s+in particular\b.*$/i, '').replace(/,?\s+(?:with )?the (?:about )?(?:page|site|website)\b[^;]*$/i, '').replace(/\s*\([^)]*\)/g, '').replace(/\s*[;:]\s*(?:more than|over|about)?\s*[\d,]+\+?\s.*$/i, '').replace(/\s{2,}/g, ' ').trim() || t.trim();
+  return t.replace(/\s*[;:]\s*(?:more than|over|about)?\s*[\d,]+\+?\s.*$/i, '').replace(/,\s+in particular\b.*$/i, '').replace(/,?\s+(?:with )?the (?:about )?(?:page|site|website)\b[^;]*$/i, '').replace(/\s*\([^)]*\)/g, '').replace(/\s*;\s*/g, ', ').replace(/\s{2,}/g, ' ').replace(/[,;:\s]+$/, '').trim() || t.trim();
 }
 function shortAudience(phrase: string): string {
   const w = mid(noNotes(phrase)).split(/\s+/);
@@ -291,9 +291,11 @@ function firstWords(phrase: string, n: number): string {
 export function splitItems(s: unknown): string[] {
   if (typeof s !== 'string') return [];
   const parts = s.split(/\n|;/).map((x) => x.trim().replace(/^[-*•]\s*/, '')).filter(Boolean);
+  // Run 20 round 1: a comma list is cut into items only when it has at least three short items ("live re-routing, address cleaning, offline driver app");
+  // "AI, machine learning and mobility based automation" stays one phrase instead of fragments.
   if (parts.length === 1 && /,/.test(parts[0])) {
     const c = parts[0].split(/,(?!\d{3}(?!\d))/).map((x) => x.trim()).filter(Boolean);
-    if (c.length > 1 && c.every((x) => x.split(/\s+/).length <= 6) && !c.some((x) => /^(not|but|and|or|so|which|that)\b/i.test(x))) return c;
+    if (c.length >= 3 && c.every((x) => x.split(/\s+/).length <= 4) && !c.some((x) => /^(not|but|and|or|so|which|that)\b/i.test(x))) return c;
   }
   return parts;
 }
@@ -319,7 +321,15 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
   const descr = [...coreT, ...laterT];
   const full: ReaderInput = { seller: [...descr, ...(r.names || [])], context: r.context, role: r.role, buyer: r.buyer };
   const coreOnly = coreT.length ? explainSector({ seller: coreT }) : null;
-  const ex = coreOnly && coreOnly.vertical ? coreOnly : explainSector(full);
+  let ex = coreOnly && coreOnly.vertical ? coreOnly : explainSector(full);
+  // AI native is a way of building, not a trade ("AI-native CNAPP" is cybersecurity, "AI agents" in a testing platform is software): when the AI words are
+  // the only thing that named AI native, the text is read again without them, and a trade it names then wins.
+  if (ex.vertical && ex.vertical.id === 'ai-native') {
+    const noAi = (x: unknown) => (typeof x === 'string' ? x.replace(/\b(?:AI|A\.I\.)[- ](?:native|powered|led|driven|enabled|first|agents?|analyst|copilot|assistant|layered)\b|\bgenerative AI\b|\bGenAI\b|\bLLMs?\b|\b(?:agent )?copilots?\b|\bchatbots?\b|\bAI\b/gi, ' ') : x);
+    // Only the seller's own texts are read again, as free text (a trade word needs a second sector word beside it): the buyer's industry never decides here.
+    const again = explainSector({ context: [...descr, ...(r.names || [])].map(noAi) });
+    if (again.vertical && again.vertical.id !== 'ai-native') ex = again;
+  }
   const v = ex.vertical;
   // The model is read from what the product is (core) first; the capability and positioning text can mention "tools" or "cloud" in any business.
   const first = coreT.length ? detectModel(explicitModel, { seller: coreT }) : null;
@@ -422,6 +432,9 @@ export function kindOf(phrase: string): Kind {
   if (!w0) return 'other';
   const rest = w0.startsWith('re-') ? w0.slice(3) : null;
   if (BASE_VERBS.has(w0) || (rest !== null && RE_BASES.has(rest))) return 'base';
+  // Run 20 round 1: "plan routes faster, keep every delivery promise and close every invoice": a verb that can also be a noun (plan, route, book)
+  // is a verb when a later part of the list starts with an outcome verb.
+  if (RE_BASES.has(w0) && phrase.split(/,\s*|\s+and\s+/).slice(1).some((part) => BASE_VERBS.has((part.trim().split(/\s+/)[0] || '').toLowerCase()))) return 'base';
   if (thirdBase(w0) || (rest !== null && thirdBase(rest)) || (rest !== null && /s$/.test(rest) && RE_BASES.has(rest.slice(0, -1)))) return 'third';
   if (NOUNISH.has(w0) || /^[\d$]/.test(w0)) return 'noun';
   return 'other';
@@ -595,7 +608,7 @@ interface IndustryRoles { id: string; re: RegExp; champion: string; buyer: strin
 const INDUSTRIES: IndustryRoles[] = [
   { id: 'asset and wealth management', re: /\b(asset|wealth|fund|portfolio|invest\w*|pensions?|endowments?|allocators?|hedge)\b/i, champion: 'Head of Quantitative Research or a senior portfolio manager', buyer: 'Chief Investment Officer, with the investment committee', tech: 'Head of data and technology, with risk and compliance' },
   { id: 'insurance', re: /\binsur\w*/i, champion: 'Head of claims or underwriting operations', buyer: 'Chief Operating Officer', tech: 'Head of data and IT, with compliance' },
-  { id: 'banking and financial services', re: /\b(banks?|banking|lending|nbfcs?|financial services|bfsi|credit|fintech)\b/i, champion: 'Head of the business line that owns the work (operations, risk or customer service)', buyer: 'COO or CFO', tech: 'Head of data and technology, with information security and model risk' },
+  { id: 'banking and financial services', re: /\b(banks?|banking|lending|nbfcs?|financial services|bfsi|credit|fintech)\b/i, champion: 'Head of the team that owns the work (operations, risk or customer service)', buyer: 'COO or CFO', tech: 'Head of data and technology, with information security and model risk' },
   { id: 'manufacturing', re: /\b(manufactur\w*|factory|factories|plants?|industrial|automotive)\b/i, champion: 'Head of operations or of a plant', buyer: 'COO', tech: 'Head of IT, with the owner of the plant systems' },
   { id: 'retail and e-commerce', re: /\b(retail\w*|e-?commerce|consumer|fmcg|cpg|brands?)\b/i, champion: 'Head of customer experience or of operations', buyer: 'COO or Chief Commercial Officer', tech: 'Head of IT or digital' },
   { id: 'telecom and media', re: /\b(telecom\w*|telco|operators?|media|streaming|broadcast\w*)\b/i, champion: 'Head of customer operations or of network operations', buyer: 'COO or CTO', tech: 'Head of IT, with security' },
@@ -1127,7 +1140,7 @@ ${sectorLine(v)}${longNote(args.product_description, problem, args.target_compan
 - Has organizational credibility to advocate for change
 
 **Champion Validation Questions**:
-1. "Who is responsible for this problem today?"
+1. ${v && !fn && !ind ? `"Who is responsible for ${metricsOf(v)[0]} today, and who answers for it when it slips?"` : '"Who is responsible for this problem today?"'}
 2. "Who brought this initiative to leadership's attention?"
 3. "Who would be promoted/recognized if this problem was solved?"
 4. "Who's actively researching solutions in this space?"
@@ -1140,7 +1153,7 @@ ${sectorLine(v)}${longNote(args.product_description, problem, args.target_compan
 - Buying trigger: ${economicBuyer.trigger}
 
 **Economic Buyer Discovery Questions**:
-1. "What business metrics would this impact?"
+1. ${v && !fn && !ind ? `"Which of these would this move for you: ${metricsOf(v).slice(0, 3).join(', ')}?"` : fn ? `"Which of these would this move for you: ${fn.measures.slice(0, 3).join(', ')}?"` : '"What business metrics would this impact?"'}
 2. "How does this tie to company strategic priorities?"
 3. "What's the cost of not solving this problem?"
 
@@ -1279,12 +1292,12 @@ ${SUGGESTED}
         untied = [];
       }
       // Text only: a map cell is padded to the box width; a name is printed only when one was given (or is the example list).
-      const mapCell = (name?: string) => {
-        // Run 20 round 1: a long description is shown by its first two words (never one word cut out of the middle of a phrase).
-        const full = name ? labelOf(name) : '';
-        let short = full;
-        if (full.length > 15) { short = ''; for (const w of full.split(/\s+/)) { if ((short ? `${short} ${w}` : w).length > 15) break; short = short ? `${short} ${w}` : w; } short = short || full.slice(0, 15); }
-      const t = short ? `[${short}]` : '';
+      // Run 20 round 1: an alternative given as a description (not a name) is shown on the map as "Alt 1", "Alt 2", and listed under the map in full.
+      const nameLike = (c: string) => /^[A-Z0-9]/.test(nameOf(c)) && nameOf(c).split(/\s+/).length <= 4;
+      const mapLabels = named.slice(0, 3).map((c, i) => (nameLike(c) ? labelOf(c).slice(0, 15) : `Alt ${i + 1}`));
+      const mapLegend = named.slice(0, 3).map((c, i) => (nameLike(c) ? '' : `Alt ${i + 1} = ${labelOf(c)}`)).filter(Boolean);
+      const mapCell = (short?: string) => {
+        const t = short ? `[${short}]` : '';
         const left = Math.max(1, Math.floor((19 - t.length) / 2));
         return (' '.repeat(left) + t).padEnd(19, ' ') + (t.length > 17 ? ' ' : '');
       };
@@ -1358,18 +1371,18 @@ ${strengthShort.map((x) => `| ${x} | Your strength (your words) | Lead with it, 
                         │
     ┌───────────────────┼───────────────────┐
     │                   │                   │
-    │${mapCell(named[0])}│${mapCell('YOUR WHITESPACE')}│
+    │${mapCell(mapLabels[0])}│${mapCell('YOUR WHITESPACE')}│
     │                   │                   │
 COMPLEX ────────────────┼──────────────────── SIMPLE
     │                   │                   │
-    │${mapCell(named[1])}│${mapCell(named[2])}│
+    │${mapCell(mapLabels[1])}│${mapCell(mapLabels[2])}│
     │                   │                   │
     └───────────────────┼───────────────────┘
                         │
                       SMB
 \`\`\`
 
-(placement is a placeholder: move each name to where buyers put it)
+(placement is a placeholder: move each name to where buyers put it)${mapLegend.length ? `\n\n${mapLegend.join('; ')}` : ''}
 
 **Whitespace Identification Questions**:
 1. Which quadrant has the fewest strong competitors?
@@ -1539,7 +1552,7 @@ ${matrixRows.join('\n')}
 ### Tier 1: Customer Results (Strongest)
 Use these patterns to document customer success:
 
-> **"[Customer name] improved [the measure] from [before] to [after] within [time frame]"**
+> **"<A named customer> improved ${v ? metricsOf(v)[0] : '<the measure>'} from <before> to <after> over <time frame>"**  (the pattern: fill it only from a customer's own figures)
 ${metricItems.length ? `\n**Results you supplied** (use one only if it is real and you can show it):\n${list(metricItems)}\n` : ''}
 **Proof Collection Questions** (ask your existing customers):
 1. "What measure improved most after implementing us?"

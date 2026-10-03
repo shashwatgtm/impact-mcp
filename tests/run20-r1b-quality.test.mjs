@@ -152,3 +152,13 @@ test("get_framework: with a sector the channel table follows how that business s
   assert.match(idn, /Finance Controller/);
   assert.doesNotMatch(idn, /\[Role that/);
 });
+
+// ---- AI words do not make a security, testing or routing product an AI native product -------------------------------------------------------
+test("sector: 'AI-native' in front of a security platform, or 'AI agents' in a testing platform, does not change the sector; an AI forecasting product stays AI native", async () => {
+  const sec = await call("impact_pinpoint_value", { product_name: "Cloudmoat", category: "AI-native cloud workload protection platform (CNAPP)", target_customer: "security teams", key_outcome: "fix critical exposures first", unique_capability: "vulnerability and posture management with an AI analyst" });
+  assert.match(sec, /Sector: read from your inputs as cybersecurity/);
+  const qa = await call("impact_anchor_market", { product_description: "Testbench, cloud platform for testing websites and mobile apps on real browsers and real devices, with test automation, visual testing and AI agents", potential_segments: ["Enterprise engineering teams"] });
+  assert.match(qa, /Sector: read from your inputs as software/);
+  const ai = await call("impact_anchor_market", { product_description: "Forecastly AI forecasts and confidence scores for investment teams", potential_segments: ["Pension funds"] });
+  assert.match(ai, /Sector: read from your inputs as AI native/);
+});
