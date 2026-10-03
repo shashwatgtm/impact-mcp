@@ -54,8 +54,9 @@ test("shortening: a quoted problem ends at a clause, with its cut marked", async
 // ---- impact_identify_champions: roles from the team the problem names, not SaaS sales roles --------------------------------------------
 test("identify_champions: a billing problem that names Finance gets finance roles, with no quota, CRO or CAC", async () => {
   const t = await call("impact_identify_champions", { company_name: "Ledgerline", product_description: "Ledgerline is a billing and invoicing platform for subscription businesses", problem_solved: "Finance spends cycles reconciling invoices because most billing systems break when pricing changes deal by deal", target_company_type: "B2B SaaS companies", price_point: "$40,000 a year (hypothetical)" });
-  assert.match(t, /Finance Controller/);
-  assert.match(t, /Most Likely Role\*\*: (?:the )?CFO/);
+  assert.match(t, /billing and revenue operations/);
+  assert.match(t, /Revenue operations lead or the billing manager|Finance Controller/);
+  assert.match(t, /Most Likely Role\*\*: (?:the )?(?:CFO|Chief Financial Officer)/);
   assert.doesNotMatch(t, /quota|CRO|CAC:LTV|Sales Operations Manager|activation rate|logo churn/i);
 });
 test("identify_champions: an AI product for asset managers gets investment roles, and the problem is never pasted in as a role", async () => {

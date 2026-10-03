@@ -26,11 +26,6 @@ const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
 const echo_safe_ts_1 = require("./echo-safe.js");
 const verticals_ts_1 = require("./verticals.js");
-// Run 20 round 2: a seller can be the national operator itself, so the telecom price objection compares with the operator the buyer uses today.
-// (The shared data file is being fixed the same way; after it is synced this loop finds nothing to change.)
-for (const vt of verticals_ts_1.VERTICALS)
-    for (const o of vt.objections)
-        o.objection = o.objection.replace(/Price per site is higher than the national operator/i, 'Price per site compared with the incumbent operator the buyer uses today');
 // =============================================================================
 // IMPACT MCP v2.0.0 - Hypothesis-Driven B2B Positioning Engine
 // =============================================================================
@@ -377,11 +372,10 @@ function readContext(explicitModel, r) {
     const full = { seller: [...descr, ...(r.names || [])], context: r.context, role: r.role, buyer: r.buyer };
     const coreOnly = coreT.length ? (0, verticals_ts_1.explainSector)({ seller: coreT }) : null;
     let ex = coreOnly && coreOnly.vertical ? coreOnly : (0, verticals_ts_1.explainSector)(full);
-    // AI native is a way of building, not a trade ("AI-native CNAPP" is cybersecurity, "AI agents" in a testing platform is software): when the AI words are
-    // the only thing that named AI native, the text is read again without them, and a trade it names then wins.
-    if (ex.vertical && ex.vertical.id === 'ai-native') {
+    // The shared reader cuts a text at "for ..." (the buyer part), so "cloud platform for testing websites ... AI agents" can still read AI native from the label alone:
+    // the seller's own texts are read once more as free text without the AI words, and a trade they name then wins (the shared guard covers the other cases).
+    if (ex.vertical && ex.vertical.id === 'ai-native' && (0, verticals_ts_1.detectModel)(undefined, { seller: descr }).model !== 'investment') {
         const noAi = (x) => (typeof x === 'string' ? x.replace(/\b(?:AI|A\.I\.)[- ](?:native|powered|led|driven|enabled|first|agents?|analyst|copilot|assistant|layered)\b|\bgenerative AI\b|\bGenAI\b|\bLLMs?\b|\b(?:agent )?copilots?\b|\bchatbots?\b|\bAI\b/gi, ' ') : x);
-        // Only the seller's own texts are read again, as free text (a trade word needs a second sector word beside it): the buyer's industry never decides here.
         const again = (0, verticals_ts_1.explainSector)({ context: [...descr, ...(r.names || [])].map(noAi) });
         if (again.vertical && again.vertical.id !== 'ai-native')
             ex = again;
@@ -390,11 +384,7 @@ function readContext(explicitModel, r) {
     // The model is read from what the product is (core) first; the capability and positioning text can mention "tools" or "cloud" in any business.
     const first = coreT.length ? (0, verticals_ts_1.detectModel)(explicitModel, { seller: coreT }) : null;
     const read = first && (first.how === 'input' || first.how === 'read') ? first : (0, verticals_ts_1.detectModel)(explicitModel, { seller: descr });
-    let m = read.how === 'input' || read.how === 'read' ? read : v0 ? { model: verticals_ts_1.SECTOR_MODEL[v0.id], how: 'sector' } : read;
-    // A product that is sold as "business services", "managed services" and the like, with no software word, is a service even when the sector's usual model is a subscription.
-    const coreText = coreT.filter((x) => typeof x === 'string').join(' ');
-    if (m.how === 'sector' && v0 && ['ai-native', 'saas', 'software'].includes(v0.id) && /\b(?:business|managed|professional|customer|technology|it|engineering|consulting|outsourced)\s+services?\b/i.test(coreText) && !/\b(?:software|saas|platform|apps?|apis?|tools?|analytics|dashboards?)\b/i.test(coreText))
-        m = { model: 'services', how: 'read' };
+    const m = read.how === 'input' || read.how === 'read' ? read : v0 ? { model: verticals_ts_1.SECTOR_MODEL[v0.id], how: 'sector' } : read;
     // A seller that manages money gets the investment roles and measures, not the sector's own (shared sector file, profileFor).
     const v = (0, verticals_ts_1.profileFor)(v0, m.model, full);
     const from = ex.source === 'context' ? ' (from the deal text, because your own description names no sector)' : ex.source === 'role' ? ' (from the job titles, because your own description names no sector)' : ex.source === 'buyer' ? ' (from who you sell to, because your own description names no sector)' : '';
@@ -867,6 +857,8 @@ function functionHits(min, ...texts) { return functionHitsIn(null, min, ...texts
 // Which functions a sector may borrow: a general committee (SaaS, no sector) any; developer tools only the API owner; IT services only modernization.
 const OVERLAY = { software: ['api'], ites: ['modernization'] };
 function overlayFn(v, min, ...texts) {
+    if (v && v.id === 'saas' && /billing/i.test(v.name))
+        return null; // the shared billing profile already holds the finance roles, measures and questions
     if (!v || v.id === 'saas')
         return functionHitsIn(null, min, ...texts);
     return OVERLAY[v.id] ? functionHitsIn(OVERLAY[v.id], min, ...texts) : null;

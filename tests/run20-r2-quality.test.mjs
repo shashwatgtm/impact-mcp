@@ -116,10 +116,10 @@ test("SaaS billing for finance buyers: no activation-rate or time-to-value quest
 });
 
 // (8) the national operator objection
-test("telecom objection compares with the incumbent operator the buyer uses today", async () => {
+test("telecom objection is worded as what the buyer says (shared sector file)", async () => {
   const t = await call("impact_identify_champions", { company_name: "Meshline", product_description: "Meshline managed SD-WAN and MPLS links for enterprises with many branches", problem_solved: "branch outages and slow repairs" });
   assert.doesNotMatch(t, /higher than the national operator/);
-  assert.match(t, /incumbent operator the buyer uses today/);
+  assert.match(t, /Price per site compared with the operator we use today/);
 });
 
 // (9) company claims are not customer results

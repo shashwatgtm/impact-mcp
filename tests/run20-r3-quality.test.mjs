@@ -135,3 +135,22 @@ test("anchor: a billing platform sold to finance gets the finance view, not prod
   assert.doesNotMatch(t, /trials and self-serve where buyers expect them/);
   assert.match(t, /CFO/);
 });
+
+// Shared billing profile (Revenue run20 fa12ec8): a billing seller reads SaaS, billing and revenue operations in every tool, with finance roles and measures.
+test("billing seller: all tools read the billing profile (finance roles and measures, no product-led SaaS measures)", async () => {
+  const desc = "Billwise billing and invoicing platform for subscription businesses, with usage-based billing and revenue recognition";
+  const outs = [
+    await call("impact_identify_champions", { company_name: "Billwise", product_description: desc, problem_solved: "invoices break when pricing changes deal by deal" }),
+    await call("impact_map_alternatives", { your_product: desc, category: "billing and invoicing", competitors: ["a homegrown billing script"] }),
+    await call("impact_pinpoint_value", { product_name: "Billwise", category: "billing and invoicing platform", target_customer: "CFOs at subscription businesses", key_outcome: "launch pricing changes without engineering time", unique_capability: "usage-based billing and invoicing in one place" }),
+    await call("impact_anchor_market", { product_description: desc, potential_segments: ["B2B SaaS and software", "Gen AI"], average_deal_size: "$60,000" }),
+    await call("impact_craft_message", { product_name: "Billwise", target_customer: "CFOs at subscription businesses", key_benefit: "launch pricing changes without engineering time", differentiation: "usage-based billing and invoicing in one place", product_category: "billing platform" }),
+    await call("impact_translate_execution", { positioning_statement: "For CFOs at subscription businesses, Billwise is the billing platform that launches pricing changes without engineering time. Unlike a homegrown script, it offers usage-based billing.", target_customer: "CFOs at subscription businesses", key_benefit: "launch pricing changes without engineering time", product_name: "Billwise" }),
+    await call("impact_full_audit", { company_name: "Billwise", product_description: desc, target_customer: "CFOs at subscription businesses", problem_solved: "invoices break when pricing changes deal by deal" }),
+  ];
+  for (const o of outs) {
+    assert.match(o, /billing and revenue operations/);
+    assert.doesNotMatch(o, /activation rate|time to value|logo churn|trials and self-serve where buyers expect/i);
+    assert.match(o, /billing errors|invoice accuracy|Chief Financial Officer|CFO/);
+  }
+});
