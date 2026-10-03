@@ -37,7 +37,8 @@ test("audience: the role at the start of a long target customer, never its last 
 test("audience: short target customers are kept whole, as before", async () => {
   const r = await call("impact_craft_message", { ...MSG, target_customer: "fleet operations directors" });
   assert.match(r.text, /Built for fleet operations directors"/);
-  assert.match(r.text, /Join \[number\] fleet operations directors who get fewer late deliveries/);
+  // Run 20 round 1: the social-proof line no longer carries a bracket placeholder; the audience is still kept whole.
+  assert.match(r.text, /<your count> fleet operations directors already get fewer late deliveries with Lanehop/);
 });
 
 test("anchor market: an empty segment list is treated like no list, with the example label", async () => {

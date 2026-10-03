@@ -183,7 +183,9 @@ test("problem 8: identify_champions names the sector's own signer and champion f
     const v = VERTICALS.find((x) => x.id === s.id);
     const r = (await call("impact_identify_champions", BUILD.impact_identify_champions(s))).text;
     const signer = v.committee.split(";")[0].replace(/^(The|A|An) /i, "").replace(/ signs.*$/i, "");
-    assert.ok(r.includes(signer), `${s.id}: signer "${signer}" is in the answer`);
+    // Run 20 round 1: the general SaaS committee ("the budget owner of the function") gives way to the team the problem text names.
+    if (s.id === "saas") assert.ok(r.includes(signer) || /read from the team your problem text names/.test(r), `${s.id}: signer "${signer}" or a function-based role is in the answer`);
+    else assert.ok(r.includes(signer), `${s.id}: signer "${signer}" is in the answer`);
     assert.match(r, new RegExp(v.name.replace(/[-]/g, "[- ]"), "i"), `${s.id}: the answer says which sector it read`);
     assert.doesNotMatch(r, /Sales Operations Manager|VP\/Director of Sales/, `${s.id}: no sales-tech default roles`);
   }
