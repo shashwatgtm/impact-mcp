@@ -35,3 +35,14 @@ test("a committee sentence such as 'engineering leads evaluate the interfaces an
   assert.ok(line.length > 0, "no role line");
   assert.doesNotMatch(line, /evaluate|\band\s*$|\bthe interfaces/i, line);
 });
+
+test("a differentiation that is a phrase with no verb ('sovereign by design: built and run in one country') is not put after 'offers'", async () => {
+  const t = await call("impact_craft_message", { product_name: "Brightmind", target_customer: "enterprises and governments", customer_need: "data cannot leave the country", product_category: "language model platform", key_benefit: "run models on their own data", competitor: "foreign hosted models", differentiation: "sovereign by design: built, deployed and run entirely in one country, with engineers who work alongside your teams until you are live" });
+  assert.doesNotMatch(t, /Brightmind offers sovereign|\boffer sovereign/i);
+  assert.match(t, /sovereign by design/);
+});
+
+test("a DevSecOps platform whose text says 'lifecycle' and 'governance' is not given the API governance team's questions", async () => {
+  const t = await call("impact_map_alternatives", { your_product: "Buildway, a DevSecOps platform: planning, source code management, CI/CD and application security across the software lifecycle", category: "DevSecOps platform", competitors: ["collections of separate point tools for planning, source control and delivery"], competitor_weaknesses: "fragmented lifecycle tools leave review, security and release behind; weak governance across tools", your_strengths: "one data model, one security boundary and one control plane" });
+  assert.doesNotMatch(t, /specs and implementations drift apart|API catalog/i);
+});
