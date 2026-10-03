@@ -326,11 +326,16 @@ function q(s) {
     return `"${s.trim().replace(/^"|"$/g, '').replace(/[.!]+$/, '')}"`;
 }
 const clean = (s) => s.trim().replace(/[.!]+$/, '');
-// The sector and the business model read from the inputs, with one line saying how they were read.
-function readContext(explicitModel, ...texts) {
-    const v = (0, verticals_ts_1.detectVertical)(...texts);
-    const m = (0, verticals_ts_1.detectModel)(explicitModel, ...texts);
-    const sector = v ? `read from your inputs as ${v.name}` : 'not clear from your inputs (name the industry in plain words for sector notes)';
+function readContext(explicitModel, r) {
+    const descr = [...(r.core || []), ...(r.later || [])];
+    const full = { seller: [...descr, ...(r.names || [])], context: r.context, role: r.role, buyer: r.buyer };
+    const coreOnly = (r.core || []).length ? (0, verticals_ts_1.explainSector)({ seller: r.core }) : null;
+    const ex = coreOnly && coreOnly.vertical ? coreOnly : (0, verticals_ts_1.explainSector)(full);
+    const v = ex.vertical;
+    const read = (0, verticals_ts_1.detectModel)(explicitModel, { seller: descr });
+    const m = read.how === 'input' || read.how === 'read' ? read : v ? { model: verticals_ts_1.SECTOR_MODEL[v.id], how: 'sector' } : read;
+    const from = ex.source === 'context' ? ' (from the deal text, because your own description names no sector)' : ex.source === 'role' ? ' (from the job titles, because your own description names no sector)' : ex.source === 'buyer' ? ' (from who you sell to, because your own description names no sector)' : '';
+    const sector = v ? `read from your inputs as ${v.name}${from}` : 'not clear from your inputs (name the industry in plain words for sector notes)';
     const model = m.model
         ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from business_model' : m.how === 'sector' ? 'the usual model in this sector, assumed; set business_model to change it' : 'read from your inputs; set business_model to change it'})`
         : 'not clear from your inputs; set business_model (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
@@ -992,7 +997,7 @@ ${SUGGESTED}
             const problem = args.problem_solved;
             const pq = q(shortText(problem));
             // The sector is read from what the product does and the problem; the target companies are added only when those name none.
-            const v = (0, verticals_ts_1.detectVertical)(args.product_description, problem) || (0, verticals_ts_1.detectVertical)(args.product_description, problem, targetType, company);
+            const v = readContext(undefined, { core: [args.product_description], names: [company], context: [problem], buyer: [targetType] }).v;
             const problemLower = problem.toLowerCase();
             let primaryChampion = { role: '', pain: '', motivation: '' };
             let economicBuyer = { role: '', concern: '', trigger: '' };
@@ -1199,7 +1204,7 @@ ${SUGGESTED}
             const weaknessItems = splitItems(args.competitor_weaknesses);
             const strengthItems = splitItems(args.your_strengths);
             const strengthShort = strengthItems.map((x) => shortText(x));
-            const v = (0, verticals_ts_1.detectVertical)(args.your_product, args.category);
+            const v = readContext(undefined, { core: [args.category, args.your_product], later: [args.your_strengths], context: [args.competitor_weaknesses] }).v;
             const vendors = named.filter((c) => !STATUS_QUO.test(nameOf(c)) && nameOf(c).toLowerCase() !== 'status quo' && nameOf(c).toLowerCase() !== 'do nothing');
             const statusQuo = named.filter((c) => !vendors.includes(c));
             // A weakness is shown on the card of the competitor it names. One that names nobody goes on the only vendor's card when
@@ -1410,7 +1415,7 @@ ${v ? `\n${sectorBlock(v, ['committee', 'objections', 'discovery'], 'Sector view
             const category = catNoun(categoryTyped);
             const metrics = (args.customer_metrics || '').trim();
             const metricItems = splitItems(metrics).map((m) => shortText(m));
-            const ctx = readContext(args.business_model, args.product_name, args.category, args.target_customer, args.key_outcome, args.unique_capability);
+            const ctx = readContext(args.business_model, { core: [args.category], later: [args.unique_capability], names: [args.product_name], context: [args.key_outcome], buyer: [args.target_customer] });
             const v = ctx.v;
             const notes = MODEL_NOTES[ctx.model || 'unknown'];
             const signer = v ? committeeParts(v).signer : 'the budget owner';
@@ -1595,7 +1600,7 @@ ${SUGGESTED}
             const acvGiven = (args.average_deal_size || '').trim();
             const cycleGiven = (args.sales_cycle || '').trim();
             const acvNumber = acvGiven ? readAmount(acvGiven) : null;
-            const ctx = readContext(undefined, args.product_description, ...segments);
+            const ctx = readContext(undefined, { core: [args.product_description], buyer: [...segments, args.current_customers] });
             const v = ctx.v;
             // Segment scores: keyword presets, unchanged (a segment with none of the keywords gets the middle score).
             const segmentScores = segments.map((segment) => {
@@ -1837,7 +1842,7 @@ ${c ? `\n**Buying Characteristics**:\n- Decision maker: ${c.signer} signs; ${c.c
             const benefit = shortText(args.key_benefit);
             const diff = shortText(args.differentiation);
             const aud = mid(shortText(args.target_customer));
-            const ctx = readContext(args.business_model, args.product_name, args.target_customer, args.product_category, args.differentiation, args.key_benefit, args.customer_need);
+            const ctx = readContext(args.business_model, { core: [args.product_category], later: [args.differentiation], names: [args.product_name], context: [args.key_benefit, args.customer_need], buyer: [args.target_customer] });
             const v = ctx.v;
             const notes = MODEL_NOTES[ctx.model || 'unknown'];
             const thatLine = (() => { const k = kindOf(benefit); return k === 'base' ? `helps them ${lowerFirst(clean(benefit))}` : k === 'noun' ? `delivers ${lowerFirst(clean(benefit))}` : `delivers this result (${clean(benefit)})`; })();
@@ -2021,7 +2026,7 @@ ${SUGGESTED}
             const statement = args.positioning_statement;
             const aud = mid(shortText(args.target_customer));
             const sa = shortAudience(shortText(args.target_customer));
-            const ctx = readContext(args.business_model, args.product_name, args.target_customer, args.key_benefit, statement);
+            const ctx = readContext(args.business_model, { core: [(statement.match(/\b(?:is|are)\s+(?:an?|the)\s+(.{3,120}?)\s+(?:that|which|who)\b/i) || [])[1]], names: [args.product_name], context: [statement, args.key_benefit], buyer: [args.target_customer] });
             const v = ctx.v;
             const notes = MODEL_NOTES[ctx.model || 'unknown'];
             const ctas = callsToAction(v, ctx.model);
@@ -2343,7 +2348,7 @@ ${SUGGESTED}
             const givenCompetitors = (args.competitors || []).filter((c) => c && c.trim());
             const alternativeShown = givenCompetitors.length ? givenCompetitors.slice(0, 3).join(' or ') : '[the alternative your buyers use most]';
             const feedbackItems = splitItems(args.customer_feedback);
-            const ctx = readContext(args.business_model, args.company_name, args.product_description, args.target_customer, args.problem_solved, args.key_differentiation, args.current_positioning, args.customer_feedback);
+            const ctx = readContext(args.business_model, { core: [args.product_description], later: [args.key_differentiation, args.current_positioning], names: [args.company_name], context: [args.problem_solved, args.customer_feedback], buyer: [args.target_customer] });
             const v = ctx.v;
             const notes = MODEL_NOTES[ctx.model || 'unknown'];
             const committee = v ? committeeParts(v) : null;
