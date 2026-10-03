@@ -9,7 +9,9 @@ export declare function inf(benefit: string): string;
 export declare function needClause(need: string): string;
 export declare function diffSentence(product: string, diff: string): string;
 export declare function shortText(t: string, n?: number): string;
+export declare function shortList(t: string, n?: number): string;
 export declare function catNoun(category: string): string;
+export declare function splitWeaknesses(s: unknown): string[];
 export declare function labelOf(c: string): string;
 export declare function leadPhrase(t: string): string;
 export interface Committee {
@@ -32,6 +34,16 @@ interface FunctionRoles {
     tech: string;
     measures: string[];
     blocker: string;
+    questions: string[];
+    proof: string;
+    vocab: string[];
+}
+export interface Lens {
+    fn: FunctionRoles | null;
+    metrics: string[];
+    questions: string[];
+    proof: string;
+    vocab: string[];
 }
 export declare function functionOf(...texts: (string | undefined)[]): FunctionRoles | null;
 interface IndustryRoles {

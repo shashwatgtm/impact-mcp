@@ -7,7 +7,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { neutraliseDeep, neutraliseText } from './echo-safe.ts';
-import { detectVertical, detectModel, explainSector, SECTOR_MODEL, MODEL_NAME, BUSINESS_MODELS, VERTICALS, type Vertical, type VerticalId, type BusinessModel, type ReaderInput } from './verticals.ts';
+import { detectVertical, detectModel, explainSector, profileFor, SECTOR_MODEL, MODEL_NAME, BUSINESS_MODELS, VERTICALS, type Vertical, type VerticalId, type BusinessModel, type ReaderInput } from './verticals.ts';
 
 // Run 20 round 2: a seller can be the national operator itself, so the telecom price objection compares with the operator the buyer uses today.
 // (The shared data file is being fixed the same way; after it is synced this loop finds nothing to change.)
@@ -349,14 +349,16 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
     const again = explainSector({ context: [...descr, ...(r.names || [])].map(noAi) });
     if (again.vertical && again.vertical.id !== 'ai-native') ex = again;
   }
-  const v = ex.vertical;
+  const v0 = ex.vertical;
   // The model is read from what the product is (core) first; the capability and positioning text can mention "tools" or "cloud" in any business.
   const first = coreT.length ? detectModel(explicitModel, { seller: coreT }) : null;
   const read = first && (first.how === 'input' || first.how === 'read') ? first : detectModel(explicitModel, { seller: descr });
-  let m = read.how === 'input' || read.how === 'read' ? read : v ? { model: SECTOR_MODEL[v.id], how: 'sector' as const } : read;
+  let m = read.how === 'input' || read.how === 'read' ? read : v0 ? { model: SECTOR_MODEL[v0.id], how: 'sector' as const } : read;
   // A product that is sold as "business services", "managed services" and the like, with no software word, is a service even when the sector's usual model is a subscription.
   const coreText = coreT.filter((x): x is string => typeof x === 'string').join(' ');
-  if (m.how === 'sector' && v && ['ai-native', 'saas', 'software'].includes(v.id) && /\b(?:business|managed|professional|customer|technology|it|engineering|consulting|outsourced)\s+services?\b/i.test(coreText) && !/\b(?:software|saas|platform|apps?|apis?|tools?|analytics|dashboards?)\b/i.test(coreText)) m = { model: 'services' as BusinessModel, how: 'read' as const };
+  if (m.how === 'sector' && v0 && ['ai-native', 'saas', 'software'].includes(v0.id) && /\b(?:business|managed|professional|customer|technology|it|engineering|consulting|outsourced)\s+services?\b/i.test(coreText) && !/\b(?:software|saas|platform|apps?|apis?|tools?|analytics|dashboards?)\b/i.test(coreText)) m = { model: 'services' as BusinessModel, how: 'read' as const };
+  // A seller that manages money gets the investment roles and measures, not the sector's own (shared sector file, profileFor).
+  const v = profileFor(v0, m.model, full);
   const from = ex.source === 'context' ? ' (from the deal text, because your own description names no sector)' : ex.source === 'role' ? ' (from the job titles, because your own description names no sector)' : ex.source === 'buyer' ? ' (from who you sell to, because your own description names no sector)' : '';
   const sector = v ? `read from your inputs as ${v.name}${from}` : 'not clear from your inputs (name the industry in plain words for sector notes)';
   const model = m.model
@@ -367,7 +369,7 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
 // The measures of a sector. The AI native list in the data file is written for customer-service automation (resolution, handling time),
 // so for AI native only the measures that fit any AI product are shown (accuracy on the buyer's own data, and escalation to a person).
 function metricsOf(v: Vertical): string[] {
-  return v.id === 'ai-native' ? v.metrics.filter((m) => /accuracy|escalation/i.test(m)) : v.metrics;
+  return v.metrics;
 }
 const sectorLine = (v: Vertical | null): string => v
   ? `*Sector: read from your inputs as ${v.name}.*`
@@ -650,8 +652,8 @@ export function committeeParts(v: Vertical): Committee {
   const reviewers: { role: string; does: string; what: string }[] = [];
   for (const c of v.committee.replace(/\.\s*$/, '').split(/;\s*/)) {
     let m: RegExpMatchArray | null;
-    if ((m = c.match(/^(.*?)\s+signs?$/i))) signer = strip(m[1]);
-    else if ((m = c.match(/^(.*?)\s+champions?$/i))) champion = strip(m[1]);
+    if ((m = c.match(/^(.*?)\s+(?:signs?|decides?)$/i))) signer = strip(m[1]);
+    else if ((m = c.match(/^(.*?)\s+(?:champions?|sponsors?)\b.*$/i))) champion = strip(m[1]);
     else if ((m = c.match(/^(.*?)\s+(checks?|reviews?|evaluates?|compares?|joins?|holds?|handles?|runs?)\b\s*(.*)$/i))) reviewers.push({ role: strip(m[1]), does: m[2].toLowerCase(), what: m[3].trim() });
     else if ((m = c.match(/^(.*?)\s+(?:use|uses|adopt|adopts)\b/i))) users = strip(m[1]);
   }
@@ -1164,9 +1166,10 @@ ${SUGGESTED}
       // The sector is read from what the product does (core) first, then the deal text and the target companies.
       const v = readContext(undefined, { core: [args.product_description], names: [company], context: [problem], buyer: [targetType] }).v;
       // A generic committee (SaaS, or no sector) takes its roles from the team the problem text names.
-      const fn = !v || v.id === 'saas' ? functionOf(problem, args.product_description) : v.id === 'ai-native' ? functionOf(problem) : null;
+      const money = !!v && /investment management/.test(v.name); // a seller that manages money: the investment profile of the shared sector file
+      const fn = money ? null : !v || v.id === 'saas' ? functionHits(!v ? 1 : 2, problem, args.product_description) : v.id === 'ai-native' ? functionOf(problem) : null;
       // An AI native product, or no sector, with a buyer industry named: the roles of that industry's teams.
-      const ind = !fn && (!v || v.id === 'ai-native') ? industryOf(targetType) : null;
+      const ind = !fn && !money && (!v || v.id === 'ai-native') ? industryOf(targetType) : null;
 
       let primaryChampion = { role: '', pain: '', motivation: '' };
       let economicBuyer = { role: '', concern: '', trigger: '' };
@@ -1231,7 +1234,7 @@ ${sectorLine(v)}${longNote(args.product_description, problem, args.target_compan
 ## Champion Hypothesis
 
 ### Primary Champion (Your Internal Advocate)
-**Most Likely Role**: ${primaryChampion.role}${inferredNote}
+**Most Likely Role**: ${capFirst(primaryChampion.role)}${inferredNote}
 
 **Why This Role**:
 - Owns the problem: ${primaryChampion.pain}
@@ -1245,7 +1248,7 @@ ${sectorLine(v)}${longNote(args.product_description, problem, args.target_compan
 4. "Who's actively researching solutions in this space?"
 
 ### Economic Buyer (Budget Authority)
-**Most Likely Role**: ${economicBuyer.role}
+**Most Likely Role**: ${capFirst(economicBuyer.role)}
 
 **Why This Role**:
 - Primary concern: ${economicBuyer.concern}
@@ -1391,8 +1394,9 @@ ${SUGGESTED}
       for (const w of weaknessItems) {
         if (used.has(w)) continue;
         const ws = contentStems(w);
-        let best: string | null = null; let bestN = 1;
-        for (const c of named) { const n = [...contentStems(c)].filter((x) => ws.has(x)).length; if (n > bestN) { best = c; bestN = n; } }
+        let best: string | null = null; let bestN = 0; let tie = false;
+        for (const c of named) { const n = [...contentStems(c)].filter((x) => ws.has(x)).length; if (n > bestN) { best = c; bestN = n; tie = false; } else if (n === bestN && n > 0) tie = true; }
+        if (tie) best = null; // one shared word counts only when exactly one alternative shares it
         if (best) { matched.set(best, [...(matched.get(best) || []), w]); used.add(w); }
       }
       const untied = weaknessItems.filter((w) => !used.has(w));
@@ -2073,7 +2077,7 @@ ${c ? `\n**Buying Characteristics**:\n- Decision maker: ${c.signer} signs; ${c.c
       const thatLine = ((): string => { const k = kindOf(benefit); return k === 'base' ? `helps them ${lowerFirst(clean(benefit))}` : k === 'noun' ? `delivers ${lowerFirst(clean(benefit))}` : `delivers this result (${clean(benefit)})`; })();
       const needIf = need ? needClause(need) : '';
       // A count of customers in the inputs ("more than 1,000 teams use X", "used by 500,000 companies") is the social proof the user already gave.
-      const countRe = /((?:more than|over|about|around|used by|trusted by)\s+)?(?<!Fortune\s)[$]?\d[\d,.]*\+?\s*(?:[kmb]\b|million|billion)?\+?\s*(?:[\w-]+\s+){0,3}(?:teams|companies|customers|businesses|brands|enterprises|users|developers|clients|merchants)\b(?:\s+(?:use|trust|rely on|run on|choose|including)\s+[\w ,%'-]{1,60})?/i;
+      const countRe = /((?:more than|over|about|around|used by|trusted by)\s+)?(?<!Fortune\s)(?<![\d,.])[$]?\d[\d,.]*\+?\s*(?:[kmb]\b|million|billion)?\+?\s*(?:[\w-]+\s+){0,3}(?:teams|companies|customers|businesses|brands|enterprises|users|developers|clients|merchants)\b(?:\s+(?:use|trust|rely on|run on|choose|including)\s+[\w ,%'-]{1,60})?/i;
       const countClaim = ((`${args.target_customer} ; ${args.key_benefit} ; ${args.differentiation}`).replace(/\([^)]*\)/g, '').match(countRe) || [''])[0].trim().replace(/[,;\s]+$/, '');
       const onlyWith = (d: string) => { const k = kindOf(d); const t = lowerFirst(clean(d)); if (isNamedClause(clean(d))) return `where ${clean(d)}`; return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
       const diffShort = shortClause(diff, 5) || shortClause(diff, 8);
@@ -2575,7 +2579,7 @@ ${SUGGESTED}
       const givenCompetitors = (args.competitors || []).filter((c) => c && c.trim());
       const allFeedback = splitItems(args.customer_feedback);
       // A company-wide claim ("$8B+ deployed", "more than 1,000 teams use X") or a recognition is not a result a customer describes.
-      const isCompanyClaim = (x: string): boolean => /\bdeployed\b|\bassets under management\b|\bAUM\b/i.test(x) || /^(?:more than|over|about|around)?\s*[$\d][\d,.]*\+?\s*(?:[kmb]\b|million|billion)?\+?\s*(?:\w+\s+){0,3}(?:teams|companies|businesses|customers|users|clients|developers|enterprises|brands|merchants)\b/i.test(x.trim()) || /^(?:named|featured|recognised|recognized|ranked|winner|a leader|leader in)\b|\b(?:award|excellence award|magic quadrant|frost radar|major contender|enterprise innovator)\b/i.test(x);
+      const isCompanyClaim = (x: string): boolean => /^(?:more than|over|about|around)?\s*[$]?\d[\d,.]*\+?\s*(?:billion|million|bn|[bm])\b/i.test(x.trim()) || /\bdeployed\b|\bassets under management\b|\bAUM\b/i.test(x) || /^(?:more than|over|about|around)?\s*[$\d][\d,.]*\+?\s*(?:[kmb]\b|million|billion)?\+?\s*(?:\w+\s+){0,3}(?:teams|companies|businesses|customers|users|clients|developers|enterprises|brands|merchants)\b/i.test(x.trim()) || /^(?:named|featured|recognised|recognized|ranked|winner|a leader|leader in)\b|\b(?:award|excellence award|magic quadrant|frost radar|major contender|enterprise innovator)\b/i.test(x);
       const companyClaims = allFeedback.filter(isCompanyClaim);
       const feedbackItems = allFeedback.filter((x) => !isCompanyClaim(x));
       const ctx = readContext(args.business_model, { core: [args.product_description], later: [args.key_differentiation, args.current_positioning], names: [args.company_name], context: [args.problem_solved, args.customer_feedback], buyer: [args.target_customer] });

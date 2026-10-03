@@ -129,3 +129,22 @@ test("audit: a company-wide claim ($8B+ deployed, 1,000+ teams use) is shown as 
   assert.match(t, /Company claims/);
   assert.match(t, /not a customer result/);
 });
+
+// (T4) A seller that manages money (invented: Quantforge) gets investment roles and measures in every tool, never the support-automation text.
+test("investment seller: Quantforge gets investment roles and measures and no support-automation words in any tool", async () => {
+  const desc = "Quantforge, systematic investment strategies powered by adaptive AI: AI enhanced indexes and custom portfolios built with institutions";
+  const tc = "Asset allocators (pensions, insurers, endowments), investment banks, wealth managers, asset managers";
+  const outs = [
+    await call("impact_identify_champions", { company_name: "Quantforge", product_description: desc, problem_solved: "finding the best investment opportunities means analyzing datasets larger than most can handle", target_company_type: tc }),
+    await call("impact_map_alternatives", { your_product: desc, category: "systematic investment strategies", competitors: ["static factor models", "black box signals"] }),
+    await call("impact_pinpoint_value", { product_name: "Quantforge", category: "systematic investment strategies", target_customer: tc, key_outcome: "a more informed basis for investment decisions", unique_capability: "adaptive models that retrain when the error rate is high" }),
+    await call("impact_anchor_market", { product_description: desc, potential_segments: ["Pension funds", "Insurers"] }),
+    await call("impact_craft_message", { product_name: "Quantforge", target_customer: tc, key_benefit: "a more informed basis for investment decisions", differentiation: "adaptive models with explainability", product_category: "systematic investment strategies" }),
+    await call("impact_translate_execution", { positioning_statement: `For ${tc}, Quantforge is the systematic strategy provider that explains its signals.`, target_customer: tc, key_benefit: "a more informed basis for investment decisions", product_name: "Quantforge" }),
+    await call("impact_full_audit", { company_name: "Quantforge", product_description: desc, target_customer: tc, problem_solved: "analyzing datasets larger than most can handle" }),
+  ];
+  for (const o of outs) {
+    assert.doesNotMatch(o, /resolution rate|handling time|escalation rate|evaluation set|cost per resolved|help desk|support ticket/i);
+    assert.match(o, /investment management|Chief Investment Officer|Portfolio Manager|Investment Committee|investment consultant/i);
+  }
+});
