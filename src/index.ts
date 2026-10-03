@@ -612,7 +612,8 @@ const joinList = (xs0: string[], word: 'and' | 'or'): string => {
   // a label that is part of another label ("billing systems" inside "legacy enterprise billing systems") or a repeat is dropped
   const xs = xs0.filter((x, i) => !xs0.some((y, j) => j !== i && y.length >= x.length && y.toLowerCase().includes(x.toLowerCase()) && (y.length > x.length || j < i)));
   const sep = xs.some((x) => /,| and /i.test(x)) ? '; ' : ', ';
-  return xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(sep)}${sep === '; ' ? '; ' : ' '}${word} ${xs[xs.length - 1]}`.replace(/, (and|or) /, ' $1 ');
+  if (xs.length <= 2) return xs.join(` ${word} `);
+  return `${xs.slice(0, -1).join(sep)}${sep === '; ' ? '; ' : ' '}${word} ${xs[xs.length - 1]}`;
 };
 // A text that holds a finite verb in its first words is a clause, not a noun phrase.
 const hasFiniteVerb = (t: string): boolean => /\b(?:is|are|was|were|has|have|had|does|do|did|can|cannot|will|would|combine|combines|run|runs|manage|manages|rely|relies|juggle|suffer|spend|spends|hand|hands|fail|fails|break|breaks|fall|falls|lose|loses|need|needs|make|makes)\b/i.test(t.split(/\s+/).slice(0, 9).join(' '));
@@ -1486,7 +1487,7 @@ ${SUGGESTED}
 **${nameOf(c)}**${d ? ` (${d})` : ''}:
 - What you told us about them: ${d ? q(d) : nameOf(c).split(/\s+/).length > 3 ? 'the description in the heading only (not a company name)' : 'only the name'}; nothing else was looked up
 - Weaknesses you reported (notes for you to test with buyers, not verified facts):${w.length ? '\n' + w.map((x) => `  - ${x}`).join('\n') : untied.length ? ' none of the weaknesses you gave names this one (see "Weaknesses you gave" above)' : ' none supplied'}
-- Where you can lead:${sParts.length ? ` start with ${q(shortText(sParts[i % sParts.length], 110))} (your words), and ask the buyer how ${labelOf(c)} does on it; your other differentiators are listed once below` : ' none supplied (add your_strengths)'}
+- Where you can lead:${sParts.length ? ` start with ${q(shortText(sParts[i % sParts.length], 110))} (your words), and ask the buyer how that alternative does on it; your other differentiators are listed once below` : ' none supplied (add your_strengths)'}
 - A neutral question to ask a buyer about them: "${q1.replace(/\?$/, '')}?"`;
       };
       const weakBlock = untied.length ? `\n**Weaknesses you gave** (about the alternatives as a group, not tied to one card; test each with buyers, they are your notes and not verified facts):\n${list(untied)}\n` : '';
@@ -2410,7 +2411,9 @@ ${SUGGESTED}
       const inHouse = /in[- ]house|internal|\bDIY\b|ourselves/i.test(unlike);
       const qs = lz.questions.filter((x) => !(inHouse && /provider|incumbent|vendor/i.test(x)));
       // The hook follows the user's benefit: a benefit that is an action becomes the question "how long does it take you to ...".
-      const benefitQ = kindOf(benefit) === 'base' ? `How long does it take you today to ${lowerFirst(clean(benefit))}?` : '';
+      const lead0 = leadPhrase(benefit);
+      const benefitQ = kindOf(benefit) === 'base' ? `How long does it take you today to ${lowerFirst(clean(benefit))}?`
+        : lead0.split(/\s+/).length <= 10 && !/^[A-Za-z-]+(?:ing|ed)\b/i.test(lead0) ? `Do you have ${lowerFirst(lead0)} today?` : '';
       const q0 = benefitQ || (qs.length ? qs[0] : '');
       const q1 = qs.length ? (benefitQ ? qs[0] : qs[1] || qs[0]) : '';
       const benefitR = kindOf(benefit) === 'other' && benefit.length > 70 ? leadPhrase(benefit) : benefit;
