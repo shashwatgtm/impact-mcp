@@ -11,6 +11,7 @@ exports.diffSentence = diffSentence;
 exports.shortText = shortText;
 exports.catNoun = catNoun;
 exports.labelOf = labelOf;
+exports.leadPhrase = leadPhrase;
 exports.committeeParts = committeeParts;
 exports.functionOf = functionOf;
 exports.industryOf = industryOf;
@@ -500,8 +501,15 @@ function needClause(need) {
     return `face this problem (${t})`;
 }
 // A sentence with the product as its subject and the typed capability or difference as its predicate.
+// Run 20 round 1: a text that is already a sentence about a named feature ("Xpendite captures expense data ...") cannot follow "offers" or "offer".
+function isNamedClause(t) {
+    const w = t.trim().split(/\s+/);
+    return w.length >= 3 && /^[A-Z][A-Za-z0-9-]+$/.test(w[0]) && !isCommonWord(w[0]) && /^[a-z]{3,}s$/.test(w[1]) && !/(?:ss|us|is)$/.test(w[1]);
+}
 function diffSentence(product, diff) {
     const t = clean(diff);
+    if (isNamedClause(t))
+        return `${product}: ${t}`;
     const k = kindOf(t);
     if (k === 'base')
         return `${product} can ${lowerFirst(t)}`;
@@ -523,6 +531,8 @@ function toBaseVerb(third) {
 // "We ..." line of a positioning statement.
 function weClause(diff) {
     const t = clean(diff);
+    if (isNamedClause(t))
+        return `stand behind this: ${t}`;
     const k = kindOf(t);
     if (k === 'base')
         return lowerFirst(t);
@@ -541,6 +551,9 @@ function shortClause(phrase, max) {
     while ((m = re.exec(t))) {
         const left = t.slice(0, m.index).trim();
         const n = left.split(/\s+/).length;
+        // a comma inside a list ("define, design, develop, ...") is not a clause boundary: the item after it is one or two words
+        if (m[0] === ',' && (t.slice(m.index + 1).split(/,|;|\sand\s|\sor\s/)[0] || '').trim().split(/\s+/).length <= 2)
+            continue;
         if (n >= 3 && n <= max)
             return left;
         if (n > max)
@@ -563,7 +576,7 @@ function shortText(t, n = LONG_AT) {
     const cut = x.slice(0, n);
     // strong boundaries first (a semicolon, a colon, a closing bracket, "while", "which", "because"), then "and" or "with", then a comma
     let at = -1;
-    for (const re of [/[;:)]|\s(?:while|which|where|so that|because|including|such as)\s/g, /\s(?:and|but|with|plus)\s/g, /,/g]) {
+    for (const re of [/[;:)]|\s(?:while|which|where|so that|so|because|including|such as)\s/g, /\s(?:and|but|with|plus)\s/g, /,/g]) {
         let m;
         let last = -1;
         while ((m = re.exec(cut)))
@@ -615,6 +628,24 @@ function labelOf(c) {
     while (w.length > 2 && JOINING_WORD.test(w[w.length - 1]))
         w.pop();
     return w.join(' ');
+}
+// The leading noun phrase of a text: the words before the first "that", "which", "where", "with" or punctuation (at least 2 words), else its first 6 words.
+function leadPhrase(t) {
+    const x = clean(t);
+    const m = x.split(/\s(?:that|which|where|who|with|through|by|for)\s|[;:(]/)[0].trim();
+    // a list of short items ("travel, expense and payment management platform") is kept whole: the cut falls at the end of the list
+    const chunks = m.split(',').map((c) => c.trim());
+    let out = chunks[0];
+    for (let i = 1; i < chunks.length; i++) {
+        const first = chunks[i].split(/\sand\s/)[0].trim().split(/\s+/).length;
+        if (first > 2)
+            break;
+        out += `, ${chunks[i]}`;
+        if (/\sand\s/.test(chunks[i]))
+            break;
+    }
+    const n = out.split(/\s+/).length;
+    return n >= 2 && n <= 12 ? out : firstWords(x, 6);
 }
 const STATUS_QUO = /spreadsheet|manual|in-house|in house|status quo|do nothing|internal|home-?grown|excel|e-?mail|whatsapp|phone|hiring|\bdiy\b|existing (?:tool|process|team)|periodic|current (?:provider|process|team)|incumbent/i;
 function committeeParts(v) {
@@ -1541,12 +1572,13 @@ ${v ? `\n${sectorBlock(v, ['committee', 'objections', 'discovery'], 'Sector view
             const v = ctx.v;
             const notes = MODEL_NOTES[ctx.model || 'unknown'];
             const signer = v ? committeeParts(v).signer : 'the budget owner';
-            const aud = mid(shortText(noNotes(args.target_customer)));
+            const aud = mid(noNotes(args.target_customer).length <= 90 ? noNotes(args.target_customer) : shortAudience(args.target_customer));
             const sa = shortAudience(shortText(noNotes(args.target_customer)));
             const outcome = shortText(args.key_outcome, FRAME_AT);
             const capab = shortText(args.unique_capability, FRAME_AT);
             const catPlain = noNotes(categoryTyped).split(/\s*[:;]\s*/)[0] || categoryTyped;
-            const onlyWith = (d) => { const k = kindOf(d); const t = lowerFirst(clean(d)); return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
+            const onlyWith = (d) => { const k = kindOf(d); const t = lowerFirst(clean(d)); if (isNamedClause(clean(d)))
+                return `where ${clean(d)}`; return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
             const matrixRows = [
                 ...(v ? metricsOf(v).slice(0, 5).map((m) => `| ${m} | | | Fill from the customer's own data |`) : ['| A measure of time | | | |', '| A measure of quality | | | |', '| A measure of money | | | |']),
             ];
@@ -1974,9 +2006,10 @@ ${c ? `\n**Buying Characteristics**:\n- Decision maker: ${c.signer} signs; ${c.c
             const notes = MODEL_NOTES[ctx.model || 'unknown'];
             const thatLine = (() => { const k = kindOf(benefit); return k === 'base' ? `helps them ${lowerFirst(clean(benefit))}` : k === 'noun' ? `delivers ${lowerFirst(clean(benefit))}` : `delivers this result (${clean(benefit)})`; })();
             const needIf = need ? needClause(need) : '';
-            const onlyWith = (d) => { const k = kindOf(d); const t = lowerFirst(clean(d)); return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
+            const onlyWith = (d) => { const k = kindOf(d); const t = lowerFirst(clean(d)); if (isNamedClause(clean(d)))
+                return `where ${clean(d)}`; return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
             const diffShort = shortClause(diff, 5) || shortClause(diff, 8);
-            const differentiatorTagline = diffShort ? `[Only if true and provable: "The only ${mid(category)} ${onlyWith(diffShort)}"]` : `[Only if true and provable: "${capFirst(firstWords(diff, 6))}"]`;
+            const differentiatorTagline = diffShort ? `[Only if true and provable: "The only ${mid(category)} ${onlyWith(diffShort)}"]` : `[Only if true and provable: "${capFirst(leadPhrase(diff))}"]`;
             const pillars = v
                 ? [`| **Your difference** | ${q(diff)} | ${v.proofShape} |`, `| **Your outcome** | ${q(benefit)} | Measure it with: ${metricsOf(v).slice(0, 3).join(', ')} |`, `| **The usual objection** | "${v.objections[0].objection}": ${v.objections[0].response} | A reference or pilot result that answers it |`]
                 : [`| **Your difference** | ${q(diff)} | [a result you can show] |`, `| **Your outcome** | ${q(benefit)} | [a customer figure, only if real] |`, '| **Why it is safe to buy** | [the risk the buyer worries about, and how you remove it] | [a reference or pilot result] |'];
@@ -2151,8 +2184,9 @@ ${SUGGESTED}
             const P = (args.product_name || '').trim() || 'your product';
             const benefit = shortText(args.key_benefit, FRAME_AT);
             const statement = args.positioning_statement;
-            const aud = mid(shortText(noNotes(args.target_customer), 100));
-            const sa = shortAudience(shortText(noNotes(args.target_customer)));
+            const audFull = noNotes(args.target_customer);
+            const aud = mid(audFull.length <= 90 ? audFull : shortAudience(audFull));
+            const sa = shortAudience(shortText(audFull));
             const ctx = readContext(args.business_model, { core: [(statement.match(/\b(?:is|are)\s+(?:an?|the)\s+(.{3,120}?)\s+(?:that|which|who)\b/i) || [])[1]], names: [args.product_name], context: [statement, args.key_benefit], buyer: [args.target_customer] });
             const v = ctx.v;
             const notes = MODEL_NOTES[ctx.model || 'unknown'];
@@ -2185,7 +2219,7 @@ ${SUGGESTED}
                 : `\n**Channels requested**: ${asked.join(', ')}.${notCovered.length ? ` Channels not covered by this tool: ${notCovered.join(', ')} (it covers website, LinkedIn, cold email, sales deck and demo).` : ''}`;
             // The "Unlike ..." and "offers ..." parts of the statement, used on the key slide and in the demo.
             const unlike = shortText((statement.match(/\bunlike\s+([^,.;]+(?:\([^)]*\))?)/i) || statement.match(/\balternatives?(?: buyers)? (?:use|used|weigh) today:\s*([^.;]+)/i) || [])[1]?.trim() || '', FRAME_AT);
-            const offers = shortText((statement.match(/\boffers?\s+([^.]+?)\.?\s*$/i) || statement.match(/\bwhat sets it apart:\s*(.+?)\.?\s*$/i) || [])[1]?.trim() || '', FRAME_AT);
+            const offers = clean(shortText((statement.match(/\boffers?\s+([^.]+?)\.?\s*$/i) || statement.match(/\bwhat sets it apart:\s*(.+?)\.?\s*$/i) || [])[1]?.trim() || '', FRAME_AT));
             const unlikeName = unlike ? nameOf(unlike) : '';
             const sections = [];
             // Run 20 round 1: every section is a draft built from the inputs and the sector data file, with no bracket left where the sector or the
@@ -2568,7 +2602,7 @@ ${SUGGESTED}
                 taglines.push(`"${capFirst(posShort)}"`);
             // When no clause of 9 words or fewer exists, the first words of the differentiation and of the positioning (never ending on a joining word) are offered.
             for (const src of [args.key_differentiation, posLead]) {
-                const fw = src ? firstWords(clean(src), 6) : '';
+                const fw = src ? leadPhrase(src) : '';
                 if (fw && fw.split(/\s+/).length >= 3 && !taglines.some((t) => t.toLowerCase().includes(fw.toLowerCase())))
                     taglines.push(`"${capFirst(fw)}"`);
             }
@@ -2669,7 +2703,7 @@ ${checks}
 
 Based on your inputs, here's a generated positioning statement:
 
-> **For** ${mid(shortText(noNotes(args.target_customer), 100))}
+> **For** ${mid(noNotes(args.target_customer).length <= 90 ? noNotes(args.target_customer) : shortAudience(args.target_customer))}
 > **Who** ${needClause(shortText(args.problem_solved, FRAME_AT))}
 > **What ${company} is** ${q(clean(shortText(args.product_description, FRAME_AT)))}
 > **That** ${feedbackItems.length ? `delivers the result your customers describe: ${q(shortText(feedbackItems[0], 160))}` : 'delivers a result you still have to state: write it with impact_pinpoint_value'}
@@ -2677,7 +2711,7 @@ Based on your inputs, here's a generated positioning statement:
 > **We** ${args.key_differentiation ? weClause(shortText(args.key_differentiation, FRAME_AT)) : 'offer what sets you apart (add key_differentiation)'}
 
 ### Tagline Options
-${numbered(taglines)}
+${numbered(taglines.filter((t) => { const w = t.replace(/^\[Only if true and provable: |\]$/g, '').replace(/^"|"$/g, '').split(/\s+/); return w.length <= 9 && !/^(?:combined|made|built|based|layered|powered)$/i.test(w[w.length - 1]); }))}
 
 ---
 
