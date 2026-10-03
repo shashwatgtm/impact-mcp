@@ -892,6 +892,9 @@ const OVERLAY = { software: ['api'], ites: ['modernization'] };
 function overlayFn(v, min, ...texts) {
     if (v && v.id === 'saas' && /billing/i.test(v.name))
         return null; // the shared billing profile already holds the finance roles, measures and questions
+    // run 21c round 5: a seller read as customer service software keeps the customer team's roles (an "employee service" module must not hand the audit to HR)
+    if (v && v.id === 'saas' && v.subtype === 'customer-service')
+        return FUNCTIONS.find((x) => x.id === 'customer') ?? null;
     if (!v || v.id === 'saas')
         return functionHitsIn(null, min, ...texts);
     return OVERLAY[v.id] ? functionHitsIn(OVERLAY[v.id], min, ...texts) : null;

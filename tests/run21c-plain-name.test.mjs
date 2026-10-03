@@ -24,3 +24,14 @@ test("a clear name is used as typed", async () => {
   const out = await call("impact_pinpoint_value", { product_name: "Lanehop", ...base });
   assert.match(out, /\*\*Lanehop\*\* is the only/);
 });
+
+// Run 21c round 5 (test first, a judge's wrong sector finding): a customer service platform that also lists "employee service" and "workforce management" had its
+// audit committee and vocabulary taken from HR (CHRO, time to hire, payroll). A seller read as customer service software keeps the customer team's roles.
+test("impact_full_audit: a customer service platform with an employee service module is not given an HR committee", async () => {
+  const out = await call("impact_full_audit", {
+    company_name: "Plain Co", product_description: "Plain Co, a customer service platform with ticketing, messaging and live chat, a knowledge base, AI agents, employee service for staff requests, workforce management for employees and employee onboarding tools",
+    target_customer: "service teams and service leaders at businesses of all sizes", problem_solved: "customers and employees expect fast, accurate service across every channel",
+    key_differentiation: "one workspace for email, chat and phone with employee tools alongside", current_positioning: "a customer service platform with ticketing, messaging and employee service",
+  });
+  assert.doesNotMatch(out, /CHRO|time to hire|payroll run|HRIS/);
+});
