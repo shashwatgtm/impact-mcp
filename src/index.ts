@@ -363,6 +363,15 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
 function metricsOf(v: Vertical): string[] {
   return v.metrics;
 }
+// Run 21b: the measures of a sector, ordered by the user's own words. A measure that shares a word with the problem the user typed (or, less, with the
+// product description) comes first; the rest keep the sector's order, so nothing is dropped and nothing is added. No match: the sector's order stands.
+const MEASURE_STOP = new Set(['rate', 'time', 'share', 'effort', 'cost', 'number', 'count', 'average', 'total', 'per', 'and', 'the', 'for', 'with', 'from', 'that', 'this', 'your']);
+const measureStems = (t: string): Set<string> => new Set((t.toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => !MEASURE_STOP.has(w)).map((w) => w.replace(/s$/, '').slice(0, 4)));
+function rankMeasures(measures: string[], problem: string, product: string): string[] {
+  const p = measureStems(problem), d = measureStems(product);
+  const score = (m: string) => [...measureStems(m)].reduce((n, w) => n + (p.has(w) ? 2 : 0) + (d.has(w) ? 1 : 0), 0);
+  return measures.map((m, i) => ({ m, i, s: score(m) })).sort((a, b) => b.s - a.s || a.i - b.i).map((x) => x.m);
+}
 const sectorLine = (v: Vertical | null): string => v
   ? `*Sector: read from your inputs as ${v.name}.*`
   : '*Sector: not clear from your inputs, so no sector notes are added. Name the industry in plain words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity).*';
@@ -1231,6 +1240,8 @@ ${SUGGESTED}
       // An AI native product, or no sector, with a buyer industry named: the roles of that industry's teams.
       const ind = !fn && !money && (!v || v.id === 'ai-native') ? industryOf(targetType) : null;
 
+      // The sector's measures, led by the ones the user's own problem and product words point to.
+      const ranked = fn ? rankMeasures(fn.measures, problem, args.product_description) : v && !ind ? rankMeasures(metricsOf(v), problem, args.product_description) : [];
       let primaryChampion = { role: '', pain: '', motivation: '' };
       let economicBuyer = { role: '', concern: '', trigger: '' };
       let technicalInfluencer = { role: '', criteria: '', blocker: '' };
@@ -1240,8 +1251,8 @@ ${SUGGESTED}
       const triggerAsk = 'an event that releases budget (a renewal, an audit, a season or a target): ask what the event is';
 
       if (fn) {
-        primaryChampion = { role: fn.champion, pain: `the problem you described, in your words: ${pq}`, motivation: `a visible win on ${fn.measures.slice(0, 3).join(', ')}` };
-        economicBuyer = { role: fn.buyer, concern: `${fn.measures.slice(0, 2).join(' and ')}, and the cost of leaving the problem unsolved`, trigger: triggerAsk };
+        primaryChampion = { role: fn.champion, pain: `the problem you described, in your words: ${pq}`, motivation: `a visible win on ${ranked.slice(0, 3).join(', ')}` };
+        economicBuyer = { role: fn.buyer, concern: `${ranked.slice(0, 2).join(' and ')}, and the cost of leaving the problem unsolved`, trigger: triggerAsk };
         technicalInfluencer = { role: capFirst(fn.tech), criteria: `fit with the systems they run today and the effort to implement`, blocker: `${fn.blocker}` };
         inferredNote = ` (read from the team your problem text names: ${fn.id.replace('customer', 'customer success or support').replace('it', 'IT infrastructure')})`;
       } else if (ind) {
@@ -1257,7 +1268,7 @@ ${SUGGESTED}
         primaryChampion = {
           role: c.champion,
           pain: `the problem you described, in your words: ${pq}`,
-          motivation: `a visible win on what this sector measures: ${metricsOf(v).slice(0, 4).join(', ')}`
+          motivation: `a visible win on what this sector measures: ${ranked.slice(0, 4).join(', ')}`
         };
         economicBuyer = {
           role: c.signer,
@@ -1302,7 +1313,7 @@ ${sectorLine(v)}${longNote(args.product_description, problem, args.target_compan
 - Has organizational credibility to advocate for change
 
 **Champion Validation Questions**:
-1. ${v && !fn && !ind ? `"Who is responsible for ${metricsOf(v)[0]} today, and who answers for it when it slips?"` : '"Who is responsible for this problem today?"'}
+1. ${v && !fn && !ind ? `"Who is responsible for ${ranked[0]} today, and who answers for it when it slips?"` : '"Who is responsible for this problem today?"'}
 2. "Who brought this initiative to leadership's attention?"
 3. "Who would be promoted/recognized if this problem was solved?"
 4. "Who's actively researching solutions in this space?"
@@ -1315,7 +1326,7 @@ ${sectorLine(v)}${longNote(args.product_description, problem, args.target_compan
 - Buying trigger: ${economicBuyer.trigger}
 
 **Economic Buyer Discovery Questions**:
-1. ${v && !fn && !ind ? `"Which of these would this move for you: ${metricsOf(v).slice(0, 3).join(', ')}?"` : fn ? `"Which of these would this move for you: ${fn.measures.slice(0, 3).join(', ')}?"` : '"What business metrics would this impact?"'}
+1. ${v && !fn && !ind ? `"Which of these would this move for you: ${ranked.slice(0, 3).join(', ')}?"` : fn ? `"Which of these would this move for you: ${ranked.slice(0, 3).join(', ')}?"` : '"What business metrics would this impact?"'}
 2. "How does this tie to company strategic priorities?"
 3. "What's the cost of not solving this problem?"
 
