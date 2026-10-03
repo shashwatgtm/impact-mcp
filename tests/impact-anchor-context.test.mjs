@@ -36,8 +36,9 @@ test("C-IMP-03: changing current_customers and sales_cycle changes no score, ran
 });
 
 // Run 20 (ledger A17-O23): the leading "Optional: " is gone from every input hint (the form already says "(optional)"); the rest is unchanged.
-test("C-IMP-03: the two input descriptions say they are shown and not used in the scoring", async () => {
+test("C-IMP-03 (updated for D94): the input descriptions say what is used", async () => {
   const t = (await rpc("tools/list", {})).tools.find((x) => x.name === "impact_anchor_market");
-  assert.equal(t.inputSchema.properties.current_customers.description, "Description of your current/best customers. Shown in the output; not used in the scoring");
+  // Run 21c, D94: the customers hint now says when it ranks the segments (with customer_pain and average_deal_size); the sales cycle hint is unchanged.
+  assert.equal(t.inputSchema.properties.current_customers.description, "Description of your current/best customers. With customer_pain and average_deal_size it ranks the segments (the answer says which method it used); without them it is shown only and the keyword presets score the segments");
   assert.equal(t.inputSchema.properties.sales_cycle.description, "Typical sales cycle length. Shown in the output; not used in the scoring");
 });

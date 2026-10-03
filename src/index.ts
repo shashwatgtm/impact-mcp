@@ -7,7 +7,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { neutraliseDeep, neutraliseText } from './echo-safe.ts';
-import { detectVertical, detectModel, explainSector, profileFor, SECTOR_MODEL, MODEL_NAME, BUSINESS_MODELS, VERTICALS, type Vertical, type VerticalId, type BusinessModel, type ReaderInput } from './verticals.ts';
+import { detectVertical, detectModel, explainSector, profileFor, SUBTYPES, SECTOR_MODEL, MODEL_NAME, BUSINESS_MODELS, VERTICALS, type Vertical, type VerticalId, type BusinessModel, type ReaderInput } from './verticals.ts';
 
 // =============================================================================
 // IMPACT MCP v2.0.0 - Hypothesis-Driven B2B Positioning Engine
@@ -348,7 +348,7 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
   // The model is read from what the product is (core) first; the capability and positioning text can mention "tools" or "cloud" in any business.
   const first = coreT.length ? detectModel(explicitModel, { seller: coreT }) : null;
   const read = first && (first.how === 'input' || first.how === 'read') ? first : detectModel(explicitModel, { seller: descr });
-  const m = read.how === 'input' || read.how === 'read' ? read : v0 ? { model: SECTOR_MODEL[v0.id], how: 'sector' as const } : read;
+  const m = read.how === 'input' || read.how === 'read' ? read : v0 ? { model: (v0.subtype ? SUBTYPES.find((x) => x.id === v0.subtype)?.model : undefined) ?? SECTOR_MODEL[v0.id], how: 'sector' as const } : read;
   // A seller that manages money gets the investment roles and measures, not the sector's own (shared sector file, profileFor).
   const v = profileFor(v0, m.model, full);
   const from = ex.source === 'context' ? ' (from the deal text, because your own description names no sector)' : ex.source === 'role' ? ' (from the job titles, because your own description names no sector)' : ex.source === 'buyer' ? ' (from who you sell to, because your own description names no sector)' : '';
@@ -1826,7 +1826,7 @@ ${SUGGESTED}
   // Tool 5: Anchor in Right Market
   // ---------------------------------------------------------------------------
   impact_anchor_market: {
-    description: 'Select a beachhead market: keyword-based segment scores (presets), and a TAM/SAM/SOM calculation that uses only the company counts, deal size and percentages you give',
+    description: 'Select a beachhead market: segments ranked from your own customers, pain and deal size when you give all three (the answer says which method it used), otherwise keyword presets; and a TAM/SAM/SOM calculation that uses only the company counts, deal size and percentages you give',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1841,7 +1841,11 @@ ${SUGGESTED}
         },
         current_customers: {
           type: 'string',
-          description: 'Description of your current/best customers. Shown in the output; not used in the scoring'
+          description: 'Description of your current/best customers. With customer_pain and average_deal_size it ranks the segments (the answer says which method it used); without them it is shown only and the keyword presets score the segments'
+        },
+        customer_pain: {
+          type: 'string',
+          description: 'The problem your best customers describe, in their words. With current_customers and average_deal_size it ranks the segments from your own inputs; without them the keyword presets are used'
         },
         average_deal_size: {
           type: 'string',
@@ -1874,6 +1878,7 @@ ${SUGGESTED}
       product_description: string;
       potential_segments?: string[];
       current_customers?: string;
+      customer_pain?: string;
       average_deal_size?: string;
       sales_cycle?: string;
       company_counts?: string;
@@ -1896,8 +1901,32 @@ ${SUGGESTED}
       const ctx = readContext(undefined, { core: [args.product_description], buyer: segments });
       const v = ctx.v;
 
+      // Run 21c, owner decision D94: when the user gives all three of their own customers, the pain their customers describe and a deal size (and a list of segments),
+      // the segments are ranked from those; otherwise the keyword presets below are used exactly as before. The answer names the method.
+      const ccText0 = (args.current_customers || '').trim();
+      const painText = (args.customer_pain || '').trim();
+      const ownMethod = segGiven && !!ccText0 && !!painText && !!acvNumber;
+      const missingForOwn = [!segGiven ? 'potential_segments' : '', !ccText0 ? 'current_customers' : '', !painText ? 'customer_pain' : '', !acvNumber ? 'average_deal_size' : ''].filter(Boolean);
+      const stemsOf = (t: string) => contentStems(t);
+      const ccStems0 = stemsOf(ccText0), painStems = stemsOf(painText);
+      const shared = (seg: string, stems: Set<string>): string[] => [...stemsOf(seg.replace(/\([^)]*\)/g, ''))].filter((x) => stems.has(x));
+      const byShared = (n: number): number => (n <= 0 ? 1 : n === 1 ? 3 : n === 2 ? 4 : 5);
+      // Market value per segment from the user's own counts and deal size, for the budget criterion (needs counts for at least two segments).
+      const countsAll = parseCounts(args.company_counts);
+      const tamOf = (seg: string): number | null => { const n = countsAll.find((c) => c.name && sameName(c.name, seg)); return n && acvNumber ? n.count * acvNumber : null; };
+      const tamList = segments.map(tamOf).filter((x): x is number => x !== null);
+      const maxTam = tamList.length >= 2 ? Math.max(...tamList) : 0;
       // Segment scores: keyword presets, unchanged (a segment with none of the keywords gets the middle score).
       const segmentScores = segments.map((segment) => {
+        if (ownMethod) {
+          const rc = shared(segment, ccStems0), pn = shared(segment, painStems), tm = tamOf(segment);
+          const scoresOwn = {
+            pain: byShared(pn.length), budget: maxTam && tm !== null ? Math.max(1, Math.min(5, Math.round(1 + 4 * tm / maxTam))) : 3,
+            access: 3, reference: byShared(rc.length), competition: 3
+          };
+          return { name: segment, keyword: false, kw: '', ...scoresOwn, total: scoresOwn.pain + scoresOwn.budget + scoresOwn.access + scoresOwn.reference + scoresOwn.competition,
+            ownPain: pn, ownRef: rc, ownTam: tm };
+        }
         const segmentLower = segment.toLowerCase();
         let scores = {
           pain: 3,
@@ -1927,7 +1956,8 @@ ${SUGGESTED}
           keyword,
           kw: kwMatch ? kwMatch[0] : '',
           ...scores,
-          total: scores.pain + scores.budget + scores.access + scores.reference + scores.competition
+          total: scores.pain + scores.budget + scores.access + scores.reference + scores.competition,
+          ownPain: [] as string[], ownRef: [] as string[], ownTam: null as number | null
         };
       });
 
@@ -1966,7 +1996,7 @@ ${SUGGESTED}
       // Every segment has the same total: the scores choose nothing, and the answer says so instead of crowning the first-listed one.
       const allTied = tied.length === segmentScores.length && segmentScores.length > 1;
       const tieLine = tied.length > 1
-        ? `\nTie: ${tied.length === 2 ? 'both segments have' : `${tied.length} segments have`} the same total score (${beachhead.total}/25)${beachhead.keyword ? '' : ', the preset middle score, because no segment name contains a keyword'}. The scores cannot choose between them, and ${beachhead.name} is shown first only because you listed it first: choose using your own data.\n`
+        ? `\nTie: ${tied.length === 2 ? 'both segments have' : `${tied.length} segments have`} the same total score (${beachhead.total}/25)${ownMethod ? ', because no segment shares a word with your customers or your pain and no counts separate them' : beachhead.keyword ? '' : ', the preset middle score, because no segment name contains a keyword'}. The scores cannot choose between them, and ${beachhead.name} is shown first only because you listed it first: choose using your own data.\n`
         : '';
       const segLine = segGiven ? '' : '\nExample segment: replace with your own.\n';
       const acvShown = acvGiven ? `${acvGiven}${/\bACV\b/i.test(acvGiven) ? '' : ' ACV'}` : 'your price';
@@ -1982,7 +2012,7 @@ ${SUGGESTED}
           ? `**Second view (from your current customers; it is separate from the keyword scores below and does not change them).** These segments share words with the customers you described, strongest first: ${matchedSegs.map((m) => `${m.x.name} (shares "${m.hit.join('", "')}")`).join('; ')}. The segment where your customers already are is the strongest candidate for a first beachhead.`
           : `**Second view.** None of the segment names shares a word with the customers you described (${q(shortText(ccText, 120))}). Say which segment each of your customers belongs to, and the segment with the most customers is your strongest candidate.`
         : 'Add current_customers (who your best customers are today, in the segments you listed) to get a second view that ranks the segments by where your customers already are. Until then the scores below are only a keyword match.';
-      const howToDecide = `## How to decide, from your own inputs
+      const howToDecideKeyword = `## How to decide, from your own inputs
 
 What you gave: deal size ${acvGiven || 'not given'}, sales cycle ${cycleGiven || 'not given'}, current customers ${ccText ? 'given' : 'not given'}. The keyword scores below do not use any of these, so use them first:
 
@@ -1993,6 +2023,16 @@ What you gave: deal size ${acvGiven || 'not given'}, sales cycle ${cycleGiven ||
 ---
 
 `;
+      const howToDecide = ownMethod ? `## How the segments were ranked, from your own inputs
+
+What you gave: deal size ${acvGiven}, sales cycle ${cycleGiven || 'not given'}, current customers given, customer pain given. The scores below are built from your customers, your pain and your deal size (see "Method used" above), not from keywords in the segment names.
+
+- **Check it with buyers.** The ranking shows where the words of your own customers and your pain point; ask three buyers in the segment at the top which problem they raise first before you commit.
+- **Deal size and cycle.** A deal of ${acvGiven}${cycleGiven ? ` with a cycle of ${cycleGiven}` : ''} needs, in each segment, a buyer who can approve that amount and a team that can run a process of that length. Check that for each segment before you rank it.
+
+---
+
+` : howToDecideKeyword;
       return `# Beachhead Market Selection
 
 ## Market Context
@@ -2000,6 +2040,8 @@ What you gave: deal size ${acvGiven || 'not given'}, sales cycle ${cycleGiven ||
 **Average Deal Size**: ${acvGiven || 'not supplied (market sizing needs it: add average_deal_size, for example "$50,000")'}
 **Sales Cycle**: ${cycleGiven || 'not supplied'}
 ${args.current_customers ? `**Current Customers**: ${args.current_customers}` : ''}
+${painText ? `**Customer Pain**: ${painText}` : ''}
+**Method used: ${ownMethod ? 'ranked from your own customers, pain and deal size' : `keyword presets (not given: ${missingForOwn.join(', ')}; with potential_segments, current_customers, customer_pain and average_deal_size the segments are ranked from your own inputs instead)`}.**
 ${dropped.length ? `**Segments listed twice**: ${dropped.map((d) => `"${d}"`).join(', ')} was listed more than once and is scored once (duplicate dropped).` : ''}
 ${ctx.line}
 
@@ -2016,7 +2058,7 @@ ${howToDecide}## Segment Scoring Matrix
 
 ### Segment Scores
 
-These scores are presets, not research on your market: each segment is scored from keywords in its name (enterprise, mid-market, SMB, small, SaaS, tech, finance), and a segment with none of these keywords gets the middle score on every criterion.${segGiven ? '' : ' You supplied no segments, so the segments are examples too.'} Your current customers and sales cycle are shown for context; they do not change the scores or the market sizes.
+${ownMethod ? `These scores are built from your own inputs, not from keywords: Pain Intensity from the words each segment name shares with your customer_pain (none 1, one word 3, two 4, three or more 5), Reference Value from the words it shares with your current_customers (same scale), and Budget Availability from your company_counts times your deal size when you gave counts for at least two segments (the largest market value 5, the others in proportion), otherwise the middle score 3. Accessibility and Competition are the middle score 3 for every segment, because your inputs say nothing about them. Your sales cycle is shown for context; it does not change the scores or the market sizes.` : `These scores are presets, not research on your market: each segment is scored from keywords in its name (enterprise, mid-market, SMB, small, SaaS, tech, finance), and a segment with none of these keywords gets the middle score on every criterion.${segGiven ? '' : ' You supplied no segments, so the segments are examples too.'} Your current customers and sales cycle are shown for context; they do not change the scores or the market sizes.`}
 ${EXAMPLES}
 | Segment | Pain | Budget | Access | Reference | Competition | **TOTAL** |
 |---------|------|--------|--------|-----------|-------------|-----------|
@@ -2025,12 +2067,12 @@ ${segmentScores.map((s, i) => `| ${i === 0 && !allTied ? '**' + s.name + '** (be
 ---
 
 ## ${allTied ? `No segment is chosen by the scores: ${tied.length} segments tie` : `Recommended Beachhead: ${beachhead.name}`}
-${segLine}${tieLine}${tied.length === 1 && beachhead.keyword ? `\n*Read this as the highest keyword match only: ${beachhead.name} scores highest because its name contains the keyword "${beachhead.kw}", not because of anything known about your market. Score each segment yourself with your own data before you commit.*\n` : ''}
-**What decided each score:** ${segmentScores.map((x) => `${x.name}: ${x.keyword ? `the word "${x.kw}"` : 'no keyword, so the middle score'}`).join('; ')}.
+${segLine}${tieLine}${!ownMethod && tied.length === 1 && beachhead.keyword ? `\n*Read this as the highest keyword match only: ${beachhead.name} scores highest because its name contains the keyword "${beachhead.kw}", not because of anything known about your market. Score each segment yourself with your own data before you commit.*\n` : ''}
+**What decided each score:** ${segmentScores.map((x) => ownMethod ? `${x.name}: ${x.ownRef.length ? `shares "${x.ownRef.join('", "')}" with your customers` : 'shares no word with your customers'}; ${x.ownPain.length ? `shares "${x.ownPain.join('", "')}" with your pain` : 'shares no word with your pain'}; ${x.ownTam !== null && maxTam ? `market value ${usdFull(x.ownTam)} from your counts and deal size` : 'budget at the middle score (no counts for two segments)'}` : `${x.name}: ${x.keyword ? `the word "${x.kw}"` : 'no keyword, so the middle score'}`).join('; ')}.
 
-${tied.length > 1 || beachhead.keyword ? `### ${tied.length > 1 ? 'What would break the tie' : 'Before you trust this ranking'}
+${tied.length > 1 || (!ownMethod && beachhead.keyword) ? `### ${tied.length > 1 ? 'What would break the tie' : 'Before you trust this ranking'}
 
-The scores come from words in the segment names, so these inputs would give a real answer. Ask for them before you pick a beachhead:
+${ownMethod ? 'The ranking uses the words your segment names share with your customers and your pain, so name the segment in your own words where you can.' : 'The scores come from words in the segment names, so these inputs would give a real answer.'} Ask for them before you pick a beachhead:
 1. **Which segment already holds your own customers?** Put them in \`current_customers\` (today they are shown but do not change the scores). The segment where your customers already are is the strongest candidate for a first beachhead.
 2. **Where is the strongest pain?** In which segment do buyers raise this problem first, or lose most to it? Ask three buyers in each segment.
 3. **Which segment can pay ${acvGiven ? acvShown : 'your price'} and has a buyer you can reach?** The roles in the sector view below say who to look for.
@@ -2039,10 +2081,10 @@ The scores come from words in the segment names, so these inputs would give a re
 ` : ''}### How This Segment Scored
 
 ${EXAMPLES}
-**${tied.length > 1 ? 'Joint highest score' : 'Highest score'} (${beachhead.total}/25)**, from the presets:
+**${tied.length > 1 ? 'Joint highest score' : 'Highest score'} (${beachhead.total}/25)**, ${ownMethod ? 'from your own inputs' : 'from the presets'}:
 - Pain Intensity ${beachhead.pain}/5 | Budget ${beachhead.budget}/5 | Accessibility ${beachhead.access}/5 | Reference Value ${beachhead.reference}/5 | Competition (less contested is higher) ${beachhead.competition}/5
-${beachhead.budget >= 4 ? `- Budget ${beachhead.budget}/5 is a preset for this keyword: check it against your own price${acvGiven ? ` (${acvShown})` : ''} before you rely on it.` : `- Budget ${beachhead.budget}/5 is a preset: ${acvGiven ? `check whether ${acvShown} fits this segment's budgets` : 'add average_deal_size to compare with your price'}.`}
-${beachhead.access <= 2 ? `- Accessibility ${beachhead.access}/5 is low in the preset: plan how you will reach these buyers (a channel, a partner or a referral).` : ''}
+${ownMethod ? `- Budget ${beachhead.budget}/5 comes from ${beachhead.ownTam !== null && maxTam ? 'your company counts times your deal size' : 'the middle score (give company_counts for at least two segments to score it from your own figures)'}; Accessibility and Competition are the middle score 3 because your inputs say nothing about them.` : beachhead.budget >= 4 ? `- Budget ${beachhead.budget}/5 is a preset for this keyword: check it against your own price${acvGiven ? ` (${acvShown})` : ''} before you rely on it.` : `- Budget ${beachhead.budget}/5 is a preset: ${acvGiven ? `check whether ${acvShown} fits this segment's budgets` : 'add average_deal_size to compare with your price'}.`}
+${!ownMethod && beachhead.access <= 2 ? `- Accessibility ${beachhead.access}/5 is low in the preset: plan how you will reach these buyers (a channel, a partner or a referral).` : ''}
 
 ${v ? `${sectorBlock(v, ['vocabulary', 'committee', 'metrics', 'proof', 'motion'], 'What to check in each segment (sector view)')}\n\nBefore you commit to a segment, check that the roles above exist in its companies, that they can reach your price, and that the sector's usual objections do not block the first sale.${ctx.model ? ` In a business like yours, buyers also weigh: ${MODEL_NOTES[ctx.model].commercial}.` : ''}\n` : ''}
 ---

@@ -42,9 +42,10 @@ test("A17-O23: every hint starts with a capital letter or a digit", () => {
   for (const t of tools) for (const [k, p] of Object.entries(t.inputSchema.properties || {})) assert.match(p.description, /^[A-Z0-9]/, `${t.name}.${k}: ${p.description}`);
 });
 
-test("A17-O23: the two anchor hints keep their 'shown, not used in the scoring' words", () => {
+test("A17-O23: the sales cycle hint keeps its 'shown, not used in the scoring' words; the customers hint says (D94) when it ranks the segments", () => {
   const p = tool("impact_anchor_market").inputSchema.properties;
-  assert.match(p.current_customers.description, /Shown in the output; not used in the scoring/);
+  assert.match(p.current_customers.description, /customer_pain and average_deal_size it ranks the segments/);
+  assert.match(p.current_customers.description, /without them it is shown only/);
   assert.match(p.sales_cycle.description, /Shown in the output; not used in the scoring/);
 });
 
