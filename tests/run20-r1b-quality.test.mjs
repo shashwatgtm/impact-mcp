@@ -150,7 +150,7 @@ test("get_framework: with a sector the channel table follows how that business s
   const none = await call("impact_get_framework", { focus_phase: "all" });
   assert.doesNotMatch(none, /Trial|Start Free|VP Sales|Mid-size logistics|Enterprise banks|Small retail chains/);
   const idn = await call("impact_get_framework", { focus_phase: "identify", sector: "fintech" });
-  assert.match(idn, /Finance Controller/);
+  assert.match(idn, /product or operations lead/);   // run 21b: the neutral fintech entry; Finance Controller belongs to the spend and expense sub-type
   assert.doesNotMatch(idn, /\[Role that/);
 });
 

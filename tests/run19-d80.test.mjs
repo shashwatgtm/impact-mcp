@@ -79,7 +79,7 @@ const SC = [
     outcome: "catch breaking API changes before release", capability: "runs contract tests on every pull request", differentiation: "tests generated from the API specification",
     competitors: ["Competitor A (an open-source test framework)", "in-house scripts"], weak: "Competitor A needs maintenance by one engineer; in-house scripts break on every change", strengths: "tests from the spec; runs in the CI pipeline",
     metrics: "escaped defects down at Example Manufacturing Co", price: "$30,000 a year", customer: "Example Manufacturing Co", segments: ["Software product companies", "Platform teams"],
-    vocab: ["ci pipeline", "developer experience", "test coverage", "release frequency", "sdk", "technical debt", "open-source", "mean time to recovery", "escaped defects"] },
+    vocab: ["ci pipeline", "developer experience", "test coverage", "release frequency", "sdk", "technical debt", "open-source", "mean time to recovery", "escaped defects", "api governance", "spec drift", "contract testing", "test suite"] },
   { id: "cybersecurity", name: "Cloudmoat", saas: true, desc: "cloud security monitoring that ranks misconfigurations by real exposure", category: "cloud security monitoring",
     target: "CISOs at mid-size fintech and SaaS companies", problem: "too many cloud alerts with no clear order to fix them",
     outcome: "fix critical exposures first", capability: "ranks every misconfiguration by real exposure", differentiation: "exposure-based ranking across three clouds",
@@ -182,7 +182,10 @@ test("problem 8: identify_champions names the sector's own signer and champion f
   for (const s of SC) {
     const v = VERTICALS.find((x) => x.id === s.id);
     const r = (await call("impact_identify_champions", BUILD.impact_identify_champions(s))).text;
-    const signer = v.committee.split(";")[0].replace(/^(The|A|An) /i, "").replace(/ signs.*$/i, "");
+    // run 21b: the entry is neutral and the kind of company (sub-type) may supply the signer; any of them in the answer counts
+    const { SUBTYPES } = await import(new URL("../src/verticals.ts", import.meta.url));
+    const signers = [v.committee, ...SUBTYPES.filter((t) => t.vertical === v.id).map((t) => t.notes.committee)].map((c) => c.split(";")[0].replace(/^(The|A|An) /i, "").replace(/ signs.*$/i, ""));
+    const signer = signers.find((x) => r.includes(x)) || signers[0];
     // Run 20 round 1: the general SaaS committee ("the budget owner of the function") gives way to the team the problem text names.
     if (s.id === "saas" || s.id === "ai-native") assert.ok(r.includes(signer) || /read from the team your problem text names|roles for the buyers you named/.test(r), `${s.id}: signer "${signer}" or a function or industry based role is in the answer`);
     else assert.ok(r.includes(signer), `${s.id}: signer "${signer}" is in the answer`);
@@ -476,7 +479,7 @@ test("grammar engine: kindOf, inf and committeeParts", async () => {
     assert.ok(c.reviewers.length >= 1, `${v.id} reviewers`);
   }
   assert.equal(m.committeeParts(VERTICALS.find((v) => v.id === "logistics-tech")).signer, "COO or Head of Supply Chain");
-  assert.equal(m.committeeParts(VERTICALS.find((v) => v.id === "cybersecurity")).champion, "SOC or cloud security lead");
+  assert.equal(m.committeeParts(VERTICALS.find((v) => v.id === "cybersecurity")).champion, "security lead who owns the affected area");   // run 21b: the neutral entry; "SOC or cloud security lead" belongs to the cloud security sub-type
   assert.deepEqual(m.parseCounts("Mid-size manufacturers: 3,200; IT services firms: 1,800"), [{ name: "Mid-size manufacturers", count: 3200 }, { name: "IT services firms", count: 1800 }]);
   assert.deepEqual(m.parseCounts("3,200"), [{ name: "", count: 3200 }]);
 });
