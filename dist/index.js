@@ -16,6 +16,7 @@ exports.createServer = createServer;
 const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
+const echo_safe_ts_1 = require("./echo-safe.js");
 const verticals_ts_1 = require("./verticals.js");
 // =============================================================================
 // IMPACT MCP v2.0.0 - Hypothesis-Driven B2B Positioning Engine
@@ -2731,9 +2732,13 @@ function createServer() {
         tools: Object.entries(tools).map(([name, config]) => withMeta({ name, description: config.description, inputSchema: config.inputSchema })),
     }));
     server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
-        const problem = checkRequiredInputs(request.params.name, request.params.arguments);
+        // Run 20 echo safeguard (D086): the single dispatch point of the hosted function and of stdio. Every string in the arguments is
+        // made inert once, here, before it is checked or used: markup, links, hidden characters; an instruction-like text is quoted.
+        const safeName = (0, echo_safe_ts_1.neutraliseText)(String(request.params.name));
+        const safeArgs = (0, echo_safe_ts_1.neutraliseDeep)(request.params.arguments);
+        const problem = checkRequiredInputs(request.params.name, safeArgs);
         if (problem) {
-            return { content: [{ type: 'text', text: problem }], isError: true };
+            return { content: [{ type: 'text', text: (0, echo_safe_ts_1.neutraliseText)(problem) }], isError: true };
         }
         const toolName = request.params.name;
         const tool = tools[toolName];
@@ -2741,7 +2746,7 @@ function createServer() {
             return {
                 content: [{
                         type: 'text',
-                        text: `Unknown tool: ${toolName}. Available tools: ${Object.keys(tools).join(', ')}`
+                        text: `Unknown tool: ${safeName}. Available tools: ${Object.keys(tools).join(', ')}`
                     }],
                 isError: true
             };
@@ -2749,7 +2754,7 @@ function createServer() {
         try {
             // Text only (run 11, R11-06): a target customer that is a job title reads in lower case in running text
             // ("head of marketing"); names and acronyms in it keep their capitals. Any other target customer stays as typed.
-            const callArgs = { ...(request.params.arguments || {}) };
+            const callArgs = { ...(safeArgs || {}) };
             if (typeof callArgs.target_customer === 'string' && isJobTitle(callArgs.target_customer))
                 callArgs.target_customer = lowerJobTitle(callArgs.target_customer);
             const result = tool.execute(callArgs);

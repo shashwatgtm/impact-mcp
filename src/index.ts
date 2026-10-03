@@ -6,6 +6,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { neutraliseDeep, neutraliseText } from './echo-safe.ts';
 import { detectVertical, detectModel, MODEL_NAME, BUSINESS_MODELS, VERTICALS, type Vertical, type VerticalId, type BusinessModel } from './verticals.ts';
 
 // =============================================================================
@@ -2734,9 +2735,13 @@ export function createServer(): Server {
   }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const problem = checkRequiredInputs(request.params.name, request.params.arguments as Record<string, unknown> | undefined);
+    // Run 20 echo safeguard (D086): the single dispatch point of the hosted function and of stdio. Every string in the arguments is
+    // made inert once, here, before it is checked or used: markup, links, hidden characters; an instruction-like text is quoted.
+    const safeName = neutraliseText(String(request.params.name));
+    const safeArgs = neutraliseDeep(request.params.arguments) as Record<string, unknown> | undefined;
+    const problem = checkRequiredInputs(request.params.name, safeArgs);
     if (problem) {
-      return { content: [{ type: 'text', text: problem }], isError: true };
+      return { content: [{ type: 'text', text: neutraliseText(problem) }], isError: true };
     }
     const toolName = request.params.name as keyof typeof tools;
     const tool = tools[toolName];
@@ -2745,7 +2750,7 @@ export function createServer(): Server {
       return {
         content: [{
           type: 'text',
-          text: `Unknown tool: ${toolName}. Available tools: ${Object.keys(tools).join(', ')}`
+          text: `Unknown tool: ${safeName}. Available tools: ${Object.keys(tools).join(', ')}`
         }],
         isError: true
       };
@@ -2754,7 +2759,7 @@ export function createServer(): Server {
     try {
       // Text only (run 11, R11-06): a target customer that is a job title reads in lower case in running text
       // ("head of marketing"); names and acronyms in it keep their capitals. Any other target customer stays as typed.
-      const callArgs = { ...((request.params.arguments || {}) as Record<string, unknown>) };
+      const callArgs = { ...((safeArgs || {}) as Record<string, unknown>) };
       if (typeof callArgs.target_customer === 'string' && isJobTitle(callArgs.target_customer)) callArgs.target_customer = lowerJobTitle(callArgs.target_customer);
       const result = tool.execute(callArgs as any);
       return {
