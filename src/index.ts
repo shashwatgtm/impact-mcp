@@ -313,7 +313,8 @@ interface Read { core?: unknown[]; later?: unknown[]; names?: unknown[]; context
 function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; model: BusinessModel | null; line: string } {
   // A brand name is not a sector word ("Sonata Software" is not a software product): it is taken out of the other texts before they are read.
   const nameList = (r.names || []).filter((x): x is string => typeof x === 'string' && x.trim().length >= 3).map((x) => x.trim());
-  const strip = (x: unknown): unknown => (typeof x === 'string' ? nameList.reduce((t, nm) => t.split(new RegExp(nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')).join(' '), x) : x);
+  const brand = /\b[A-Z][\w-]*\s+(?:Software|Technologies|Systems|Solutions|Labs|Infotech)\b/g; // "Sonata Software" is a company name, not a product word
+  const strip = (x: unknown): unknown => (typeof x === 'string' ? nameList.reduce((t, nm) => t.split(new RegExp(nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')).join(' '), x).replace(brand, ' ') : x);
   const coreT = (r.core || []).map(strip), laterT = (r.later || []).map(strip);
   const descr = [...coreT, ...laterT];
   const full: ReaderInput = { seller: [...descr, ...(r.names || [])], context: r.context, role: r.role, buyer: r.buyer };
@@ -323,7 +324,10 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
   // The model is read from what the product is (core) first; the capability and positioning text can mention "tools" or "cloud" in any business.
   const first = coreT.length ? detectModel(explicitModel, { seller: coreT }) : null;
   const read = first && (first.how === 'input' || first.how === 'read') ? first : detectModel(explicitModel, { seller: descr });
-  const m = read.how === 'input' || read.how === 'read' ? read : v ? { model: SECTOR_MODEL[v.id], how: 'sector' as const } : read;
+  let m = read.how === 'input' || read.how === 'read' ? read : v ? { model: SECTOR_MODEL[v.id], how: 'sector' as const } : read;
+  // A product that is sold as "business services", "managed services" and the like, with no software word, is a service even when the sector's usual model is a subscription.
+  const coreText = coreT.filter((x): x is string => typeof x === 'string').join(' ');
+  if (m.how === 'sector' && v && ['ai-native', 'saas', 'software'].includes(v.id) && /\b(?:business|managed|professional|customer|technology|it|engineering|consulting|outsourced)\s+services?\b/i.test(coreText) && !/\b(?:software|saas|platform|apps?|apis?|tools?|analytics|dashboards?)\b/i.test(coreText)) m = { model: 'services' as BusinessModel, how: 'read' as const };
   const from = ex.source === 'context' ? ' (from the deal text, because your own description names no sector)' : ex.source === 'role' ? ' (from the job titles, because your own description names no sector)' : ex.source === 'buyer' ? ' (from who you sell to, because your own description names no sector)' : '';
   const sector = v ? `read from your inputs as ${v.name}${from}` : 'not clear from your inputs (name the industry in plain words for sector notes)';
   const model = m.model
@@ -535,8 +539,9 @@ function nameOf(c: string): string {
 }
 // A short label for an alternative typed as a long phrase: the words before the first comma, "which" or "that", at most 6 words.
 export function labelOf(c: string): string {
-  const w = nameOf(c).split(/,|\s(?:which|that|where)\s/)[0].trim().split(/\s+/);
-  return w.slice(0, 6).join(' ');
+  const w = nameOf(c).split(/,|\s(?:which|where)\s/)[0].trim().split(/\s+/).slice(0, 8);
+  while (w.length > 2 && JOINING_WORD.test(w[w.length - 1])) w.pop();
+  return w.join(' ');
 }
 const STATUS_QUO = /spreadsheet|manual|in-house|in house|status quo|do nothing|internal|home-?grown|excel|e-?mail|whatsapp|phone|hiring|\bdiy\b|existing (?:tool|process|team)|periodic|current (?:provider|process|team)|incumbent/i;
 
@@ -1068,7 +1073,7 @@ ${SUGGESTED}
         primaryChampion = { role: ind.champion, pain: `the problem you described, in your words: ${pq}`, motivation: `a visible win on the measure that team is judged on (ask which)${v ? ', proved on an evaluation set built from their own history' : ''}` };
         economicBuyer = { role: ind.buyer, concern: 'the cost of leaving the problem unsolved, and the risk and oversight the change brings', trigger: triggerAsk };
         technicalInfluencer = { role: capFirst(ind.tech), criteria: 'data privacy, model quality on their own data, and fit with the systems they run', blocker: v ? 'the objections this sector often raises: ' + v.objections.map((o) => `"${o.objection}"`).join('; ') : 'security review and competing priorities' };
-        inferredNote = ` (roles in ${ind.id}, your target companies)`;
+        inferredNote = ` (roles for the buyers you named: ${ind.id})`;
       } else if (v) {
         const c = committeeParts(v);
         const isTech = (r: { role: string }) => !/procure|vendor|financ|legal|audit|compliance|risk|\bhr\b|commercial/i.test(r.role);
@@ -1107,7 +1112,7 @@ ${SUGGESTED}
 **Target Market**: ${targetType || 'not supplied'}
 **Price Point**: ${pricePoint || 'not supplied'}
 
-${sectorLine(v)}${longNote(args.product_description, problem, args.target_company_type)}${ind ? `\n*The roles come from your target companies' industry (${ind.id}). If your buyers sit in another team, name it in problem_solved and run the tool again.*` : ''}${fn ? `\n*This sector's committee is general, so the roles come from the team your problem text names (${fn.id.replace('customer', 'customer success or support').replace('it', 'IT infrastructure')}). If the problem sits with another team, say so in problem_solved and run it again.*` : v ? '' : '\nThe roles below are generic, because no sector was clear and the problem text names no team. They are a starting point: name your industry or the team that feels the problem (for example finance, sales operations, security) and run the tool again for roles that exist there.'}
+${sectorLine(v)}${longNote(args.product_description, problem, args.target_company_type)}${ind ? `\n*The roles follow the buyers you named (${ind.id}). If your buyers sit in another team, name it in problem_solved and run the tool again.*` : ''}${fn ? `\n*This sector's committee is general, so the roles come from the team your problem text names (${fn.id.replace('customer', 'customer success or support').replace('it', 'IT infrastructure')}). If the problem sits with another team, say so in problem_solved and run it again.*` : v ? '' : '\nThe roles below are generic, because no sector was clear and the problem text names no team. They are a starting point: name your industry or the team that feels the problem (for example finance, sales operations, security) and run the tool again for roles that exist there.'}
 
 ---
 
@@ -1255,7 +1260,8 @@ ${SUGGESTED}
       const weaknessItems = splitItems(args.competitor_weaknesses);
       const strengthItems = splitItems(args.your_strengths);
       const strengthShort = strengthItems.map((x) => shortText(x));
-      const v = readContext(undefined, { core: [args.category, args.your_product], later: [args.your_strengths], context: [args.competitor_weaknesses] }).v;
+      const rc = readContext(undefined, { core: [args.category, args.your_product], later: [args.your_strengths], context: [args.competitor_weaknesses] });
+      const v = rc.v;
       const vendors = named.filter((c) => !STATUS_QUO.test(nameOf(c)) && nameOf(c).toLowerCase() !== 'status quo' && nameOf(c).toLowerCase() !== 'do nothing');
       const statusQuo = named.filter((c) => !vendors.includes(c));
       // A weakness is shown on the card of the competitor it names. One that names nobody goes on the only vendor's card when
@@ -1276,7 +1282,8 @@ ${SUGGESTED}
       const mapCell = (name?: string) => {
         // Run 20 round 1: a long description is shown by its first two words (never one word cut out of the middle of a phrase).
         const full = name ? labelOf(name) : '';
-        const short = full.length <= 15 ? full : full.split(/\s+/).slice(0, 2).join(' ').slice(0, 15).trim();
+        let short = full;
+        if (full.length > 15) { short = ''; for (const w of full.split(/\s+/)) { if ((short ? `${short} ${w}` : w).length > 15) break; short = short ? `${short} ${w}` : w; } short = short || full.slice(0, 15); }
       const t = short ? `[${short}]` : '';
         const left = Math.max(1, Math.floor((19 - t.length) / 2));
         return (' '.repeat(left) + t).padEnd(19, ' ') + (t.length > 17 ? ' ' : '');
@@ -1307,11 +1314,11 @@ ${sectorLine(v)}${longNote(args.your_product, args.competitor_weaknesses, args.y
 
 ## Alternative Categories
 
-### 1. Direct Competitors (Same Solution, Same Problem)
-${vendors.length ? vendors.map((c, i) => card(c, i)).join('\n') : '\nNo named vendor competitor was supplied. Add the products your buyers compare you with to `competitors`.\n'}
+### 1. ${vendors.length && !vendors.some((c) => /^[A-Z0-9]/.test(nameOf(c)) && nameOf(c).split(/\s+/).length <= 4) ? 'Alternatives You Described (no company names were given)' : 'Direct Competitors (Same Solution, Same Problem)'}
+${vendors.length && !vendors.some((c) => /^[A-Z0-9]/.test(nameOf(c)) && nameOf(c).split(/\s+/).length <= 4) ? '\nThese are alternatives described in words, not named vendors. Add the names of the products your buyers compare you with to `competitors` for cards that carry real names.\n' : ''}${vendors.length ? vendors.map((c, i) => card(c, i)).join('\n') : '\nNo named vendor competitor was supplied. Add the products your buyers compare you with to `competitors`.\n'}
 
 ### 2. Status Quo (Current Manual/DIY Approach)
-${statusQuo.length ? `**What your buyers use today** (in your words):\n${statusQuo.map((c) => { const w = matched.get(c) || []; return `- ${c}${w.length ? `\n  - Weaknesses you reported (a note for you to test with buyers): ${w.join('; ')}` : ''}`; }).join('\n')}\n` : '**What they may be doing instead** (common patterns to check with buyers):\n- Spreadsheets and manual processes\n- Existing tools cobbled together\n- Junior staff doing the work manually\n'}
+${statusQuo.length ? `**What your buyers use today** (in your words):\n${statusQuo.map((c) => { const w = matched.get(c) || []; return `- ${c}${w.length ? `\n  - Weaknesses you reported (a note for you to test with buyers): ${w.join('; ')}` : ''}`; }).join('\n')}\n` : `**What they may be doing instead** (common patterns to check with buyers):\n${rc.model === 'services' || rc.model === 'connectivity' ? '- Staying with the current provider and its contract\n- Doing the work in-house with the existing team\n- Splitting the work across several smaller providers\n' : '- Spreadsheets and manual processes\n- Existing tools cobbled together\n- Junior staff doing the work manually\n'}`}
 **Why status quo persists**:
 - "Good enough" for current scale
 - Change requires effort/budget
@@ -1471,7 +1478,8 @@ ${v ? `\n${sectorBlock(v, ['committee', 'objections', 'discovery'], 'Sector view
     }) => {
       const P = (args.product_name || '').trim() || 'your product';
       const categoryTyped = (args.category || '').trim() || 'solution';
-      const category = catNoun(categoryTyped);
+      // In a sentence the category is its leading noun phrase ("predictive cybersecurity: attack path intelligence ..." reads "predictive cybersecurity"); the full text stays in the inputs.
+      const category = catNoun(noNotes(categoryTyped).split(/\s*[:;]\s*/)[0] || categoryTyped);
       const metrics = (args.customer_metrics || '').trim();
       const metricItems = splitItems(metrics).map((m) => shortText(m));
       const ctx = readContext(args.business_model, { core: [args.category], later: [args.unique_capability], names: [args.product_name], context: [args.key_outcome], buyer: [args.target_customer] });
@@ -1482,7 +1490,7 @@ ${v ? `\n${sectorBlock(v, ['committee', 'objections', 'discovery'], 'Sector view
       const sa = shortAudience(shortText(noNotes(args.target_customer)));
       const outcome = shortText(args.key_outcome, FRAME_AT);
       const capab = shortText(args.unique_capability, FRAME_AT);
-      const catPlain = noNotes(categoryTyped).split(/\s*[:;]\s*/)[0];
+      const catPlain = noNotes(categoryTyped).split(/\s*[:;]\s*/)[0] || categoryTyped;
       const onlyWith = (d: string) => { const k = kindOf(d); const t = lowerFirst(clean(d)); return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
 
       const matrixRows = [
@@ -1738,6 +1746,8 @@ ${SUGGESTED}
       const segEx = segGiven ? '' : ` ${EXAMPLE}`;
       // A tie at the top is said plainly; the first-listed segment stays first (stable sort), no score changes.
       const tied = segmentScores.filter((s) => s.total === beachhead.total);
+      // Every segment has the same total: the scores choose nothing, and the answer says so instead of crowning the first-listed one.
+      const allTied = tied.length === segmentScores.length && segmentScores.length > 1;
       const tieLine = tied.length > 1
         ? `\nTie: ${tied.length === 2 ? 'both segments have' : `${tied.length} segments have`} the same total score (${beachhead.total}/25)${beachhead.keyword ? '' : ', the preset middle score, because no segment name contains a keyword'}. The scores cannot choose between them, and ${beachhead.name} is shown first only because you listed it first: choose using your own data.\n`
         : '';
@@ -1772,11 +1782,11 @@ These scores are presets, not research on your market: each segment is scored fr
 ${EXAMPLES}
 | Segment | Pain | Budget | Access | Reference | Competition | **TOTAL** |
 |---------|------|--------|--------|-----------|-------------|-----------|
-${segmentScores.map((s, i) => `| ${i === 0 ? '**' + s.name + '** (beachhead)' : s.name} | ${s.pain} | ${s.budget} | ${s.access} | ${s.reference} | ${s.competition} | **${s.total}** |`).join('\n')}
+${segmentScores.map((s, i) => `| ${i === 0 && !allTied ? '**' + s.name + '** (beachhead)' : s.name} | ${s.pain} | ${s.budget} | ${s.access} | ${s.reference} | ${s.competition} | **${s.total}** |`).join('\n')}
 
 ---
 
-## Recommended Beachhead: ${beachhead.name}
+## ${allTied ? `No segment is chosen by the scores: ${tied.length} segments tie` : `Recommended Beachhead: ${beachhead.name}`}
 ${segLine}${tieLine}${tied.length === 1 && beachhead.keyword ? `\n*Read this as the highest keyword match only: ${beachhead.name} scores highest because its name contains the keyword "${beachhead.kw}", not because of anything known about your market. Score each segment yourself with your own data before you commit.*\n` : ''}
 **What decided each score:** ${segmentScores.map((x) => `${x.name}: ${x.keyword ? `the word "${x.kw}"` : 'no keyword, so the middle score'}`).join('; ')}.
 
@@ -1822,7 +1832,7 @@ ${needs.length ? `\n**To finish the sizing, add:** ${needs.join('; ')}.\n` : ''}
 
 ## Beachhead Expansion Path
 
-### Year 1: Dominate ${beachhead.name}
+### Year 1: ${allTied ? `Start with the segment you choose (shown here: ${beachhead.name}, the first you listed)` : `Dominate ${beachhead.name}`}
 ${segLine}- Focus: your whole GTM effort on this segment
 - Goal: ${customers !== null ? customersText(customers) + ' (your counts and percentages)' : 'not given: the customer target comes from the sizing above once you give company_counts, percent_matching_icp and year_one_share_percent'}
 - Revenue: ${som !== null ? `${usd(som)} (SOM, from your figures)` : 'not given: it comes from the same sizing'}
@@ -1838,7 +1848,7 @@ ${segLine}- Focus: your whole GTM effort on this segment
 
 ---
 
-## ICP Hypothesis for ${beachhead.name}
+## ICP Hypothesis for ${beachhead.name}${allTied ? ' (the first segment you listed; the scores tie)' : ''}
 ${segLine}
 Based on beachhead selection, your ICP likely includes:
 
@@ -2531,6 +2541,11 @@ ${SUGGESTED}
       const posLead = (args.current_positioning || args.product_description || '').split(/[:;]|\s-\s/)[0].trim();
       const posShort = posLead && shortClause(posLead, 9);
       if (posShort && !taglines.some((t) => t.toLowerCase().includes(posShort.toLowerCase()))) taglines.push(`"${capFirst(posShort)}"`);
+      // When no clause of 9 words or fewer exists, the first words of the differentiation and of the positioning (never ending on a joining word) are offered.
+      for (const src of [args.key_differentiation, posLead]) {
+        const fw = src ? firstWords(clean(src), 6) : '';
+        if (fw && fw.split(/\s+/).length >= 3 && !taglines.some((t) => t.toLowerCase().includes(fw.toLowerCase()))) taglines.push(`"${capFirst(fw)}"`);
+      }
       const stop = new Set('the and for with who that this our your their its are was were been from they them you can will not but all any'.split(' '));
       const wordsOf = (s: string) => (s.toLowerCase().match(/[a-z][a-z-]{2,}/g) || []).filter((w) => !stop.has(w));
       const cur = (args.current_positioning || '').trim();
@@ -2633,7 +2648,7 @@ Based on your inputs, here's a generated positioning statement:
 
 > **For** ${mid(shortText(noNotes(args.target_customer), 100))}
 > **Who** ${needClause(shortText(args.problem_solved, FRAME_AT))}
-> **What ${company} is** ${q(shortText(args.product_description, FRAME_AT))}
+> **What ${company} is** ${q(clean(shortText(args.product_description, FRAME_AT)))}
 > **That** ${feedbackItems.length ? `delivers the result your customers describe: ${q(shortText(feedbackItems[0], 160))}` : 'delivers a result you still have to state: write it with impact_pinpoint_value'}
 > **Unlike** ${givenCompetitors.length ? givenCompetitors.slice(0, 3).map((c) => labelOf(c)).join(' or ') : 'the alternative your buyers use most (add competitors)'}
 > **We** ${args.key_differentiation ? weClause(shortText(args.key_differentiation, FRAME_AT)) : 'offer what sets you apart (add key_differentiation)'}
