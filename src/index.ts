@@ -3155,11 +3155,11 @@ function checkRequiredInputs(name: string, args: Record<string, unknown> | undef
 function runningName(text: string): string {
   const t = text.replace(/\s+/g, ' ').trim();
   if (!t || (t.split(' ').length <= 6 && t.length <= 60)) return t;
-  const head = t.split(/[:;]|,\s/)[0].trim();
+  const head = t.split(/[:;]|,\s/)[0].replace(/\s*\([^)]*\)/g, '').trim();   // a bracket note is not part of a short name
   const words = head.split(' ');
   if (words.length <= 6 && head.length <= 60) return head;
   const j = words.findIndex((w, i) => i >= 2 && /^(?:that|which|who|where|for|with|by|from|to|connects?|helps?|lets?|gives?|makes?|builds?|runs?|designs?|turns?|unifies?|joins?|uses?)$/i.test(w));
-  if (j >= 2 && j <= 4) return words.slice(0, j).join(' ');
+  if (j >= 2 && j <= 7) return words.slice(0, j).join(' ');
   const lead = words.slice(0, 4);
   while (lead.length > 2 && /^(?:that|which|who|where|for|with|to|by|on|in|of|and|or|from|the|a|an)$/i.test(lead[lead.length - 1])) lead.pop();
   return lead.join(' ');

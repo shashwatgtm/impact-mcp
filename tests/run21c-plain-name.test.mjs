@@ -35,3 +35,9 @@ test("impact_full_audit: a customer service platform with an employee service mo
   });
   assert.doesNotMatch(out, /CHRO|time to hire|payroll run|HRIS/);
 });
+
+// Run 21c round 5 (E11 name cut at a clause on the pool): "AI led sales and distribution (route to market) software for consumer brands" was cut to "AI led sales".
+test("a bracket note and a longer noun phrase: the short name is the noun phrase before the joining word", async () => {
+  const out = await call("impact_translate_execution", { product_name: "AI led sales and distribution (route to market) software for consumer brands: sales force automation, a distributor system and van sales", positioning_statement: "AI led sales and distribution software for consumer brands that need one view of every outlet", target_audience: "consumer brands", channels: "website, email" });
+  assert.doesNotMatch(out, /Why AI led sales and not/);
+});
