@@ -1198,7 +1198,7 @@ ${sectorPart}
 5. Call \`impact_craft_message\`: build messaging
 6. Finish with \`impact_translate_execution\`: channel adaptation
 
-Or run \`impact_full_audit\` for an input completeness score: it shows how complete and specific your inputs are, not whether your positioning is right, and adds a generated positioning draft and a 30-day plan.
+Or run \`impact_full_audit\` for an input completeness checklist: it shows whether relevant inputs are present, not whether your positioning is right, and adds a generated positioning draft and a 30-day plan.
 
 ${SUGGESTED}
 `;
@@ -2683,7 +2683,7 @@ Example priorities: replace with your own.${v ? ` The order follows how deals us
 **Recommended Priority Order**:
 ${numbered(order.map(([, name, why]) => `${name} (${why})`))}
 
-**Next Step**: Use \`impact_full_audit\` for an input completeness score (how complete and specific your inputs are, not whether your positioning is right), with a generated positioning draft and a 30-day plan
+**Next Step**: Use \`impact_full_audit\` for an input completeness checklist (whether relevant inputs are present, not whether your positioning is right), with a generated positioning draft and a 30-day plan
 
 ${SUGGESTED}
 `;
@@ -2694,7 +2694,7 @@ ${SUGGESTED}
   // Tool 8: Full Positioning Audit
   // ---------------------------------------------------------------------------
   impact_full_audit: {
-    description: 'Positioning audit with an input completeness score and recommendations',
+    description: 'Positioning audit with an input completeness checklist and recommendations',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2734,7 +2734,7 @@ ${SUGGESTED}
         business_model: {
           type: 'string',
           enum: BUSINESS_MODELS,
-          description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the score'
+          description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the checklist'
         }
       },
       required: ['product_description', 'target_customer', 'problem_solved']
@@ -2766,7 +2766,7 @@ ${SUGGESTED}
       const vocab = lz.vocab;
       const committee = lz.fn ? { signer: lz.fn.buyer, champion: lz.fn.champion, championInferred: false, users: null, reviewers: [] } as Committee : v ? committeeParts(v) : null;
 
-      // Calculate scores based on input completeness and clarity (unchanged: owner decision D72 pauses the grade)
+      // Presence-only completeness values. These deliberately do not reward length, keywords, persuasive prose, or filler.
       const scores = {
         identify: 0,
         map: 0,
@@ -2776,78 +2776,12 @@ ${SUGGESTED}
         translate: 0
       };
 
-      // Scoring logic based on provided inputs
-      // Identify Champions (based on target customer clarity)
-      if (args.target_customer.length > 20 && args.target_customer.includes(' ')) {
-        scores.identify = args.target_customer.length > 50 ? 85 : 70;
-      } else {
-        scores.identify = 45;
-      }
-
-      // Map Alternatives (based on competitors)
-      if (competitors.length > 2) {
-        scores.map = 80;
-      } else if (competitors.length > 0 && competitors[0] !== 'Status quo') {
-        scores.map = 65;
-      } else {
-        scores.map = 40;
-      }
-
-      // Pinpoint Value (based on differentiation)
-      if (differentiation.length > 30) {
-        scores.pinpoint = differentiation.includes('only') || differentiation.includes('unique') ? 85 : 70;
-      } else {
-        scores.pinpoint = 50;
-      }
-
-      // Anchor Market (based on target specificity)
-      if (args.target_customer.includes('employees') || args.target_customer.includes('revenue') || args.target_customer.includes('Series')) {
-        scores.anchor = 80;
-      } else if (args.target_customer.split(' ').length > 3) {
-        scores.anchor = 65;
-      } else {
-        scores.anchor = 45;
-      }
-
-      // Craft Message (based on current positioning)
-      if (args.current_positioning && args.current_positioning.length > 50) {
-        scores.craft = args.current_positioning.includes('unlike') || args.current_positioning.includes('only') ? 85 : 70;
-      } else if (args.current_positioning) {
-        scores.craft = 55;
-      } else {
-        scores.craft = 30;
-      }
-
-      // Translate Execution (based on customer feedback indicating market presence)
-      if (args.customer_feedback && args.customer_feedback.length > 50) {
-        scores.translate = 75;
-      } else if (args.customer_feedback) {
-        scores.translate = 55;
-      } else {
-        scores.translate = 35;
-      }
-
-      const overallScore = Math.round((scores.identify + scores.map + scores.pinpoint + scores.anchor + scores.craft + scores.translate) / 6);
-
-      // Determine grade
-      let grade = 'F';
-      let gradeDescription = '';
-      if (overallScore >= 85) {
-        grade = 'A';
-        gradeDescription = 'Very complete: every area has detailed input';
-      } else if (overallScore >= 75) {
-        grade = 'B';
-        gradeDescription = 'Mostly complete: a few inputs could be more specific';
-      } else if (overallScore >= 65) {
-        grade = 'C';
-        gradeDescription = 'Partly complete: several inputs are short or missing';
-      } else if (overallScore >= 50) {
-        grade = 'D';
-        gradeDescription = 'Thin: many inputs are short or missing';
-      } else {
-        grade = 'F';
-        gradeDescription = 'Very thin: most inputs are short or missing';
-      }
+      scores.identify = args.target_customer.trim() ? 100 : 0;
+      scores.map = givenCompetitors.length ? 100 : 0;
+      scores.pinpoint = args.key_differentiation?.trim() ? 100 : 0;
+      scores.anchor = args.target_customer.trim() ? 100 : 0;
+      scores.craft = args.current_positioning?.trim() ? 100 : 0;
+      scores.translate = args.customer_feedback?.trim() ? 100 : 0;
 
       // Find weakest areas
       const sortedScores = Object.entries(scores).sort((a, b) => a[1] - b[1]);
@@ -2859,7 +2793,7 @@ ${SUGGESTED}
         anchor: 'impact_anchor_market', craft: 'impact_craft_message', translate: 'impact_translate_execution'
       };
 
-      // ---- Words only (not part of the score): the generated positioning, tagline options, proof and word checks ----
+      // ---- Words only (not part of the checklist): the generated positioning, tagline options, proof and word checks ----
       const problemShort = shortClause(shortText(args.problem_solved), 6);
       const diffShort = args.key_differentiation ? shortClause(args.key_differentiation, 5) : null;
       const taglines: string[] = [];
@@ -2899,7 +2833,7 @@ ${SUGGESTED}
 **Target**: ${args.target_customer}
 **Problem**: ${args.problem_solved}
 **Differentiation**: ${args.key_differentiation || 'not supplied'}
-**Competitors**: ${givenCompetitors.length ? givenCompetitors.join('; ') : 'not supplied (the score uses the default alternatives: status quo and DIY solutions)'}
+**Competitors**: ${givenCompetitors.length ? givenCompetitors.join('; ') : 'not supplied (the positioning draft uses default alternatives: status quo and DIY solutions)'}
 ${args.current_positioning ? `**Current Positioning**: ${args.current_positioning}` : ''}
 ${args.customer_feedback ? `**Customer Feedback**: ${args.customer_feedback}` : ''}
 ${ctx.line}${longNote(args.product_description, args.target_customer, args.problem_solved, args.key_differentiation, args.current_positioning, args.customer_feedback)}
@@ -2908,53 +2842,53 @@ ${ctx.line}${longNote(args.product_description, args.target_customer, args.probl
 
 ## IMPACT Scorecard
 
-### Input completeness score: ${overallScore}/100 (Grade: ${grade})
-**Inputs**: ${gradeDescription}
-**What this score measures**: how complete and specific your inputs are, not whether your positioning is right. Longer inputs and certain words (such as only, unique, unlike, employees, revenue and Series) raise it.
+### Input completeness checklist
+**Inputs**: each phase is marked complete only when its relevant input is supplied. This is not a quality score or positioning grade.
+**What this checklist measures**: whether relevant inputs are present. It does not judge evidence quality, positioning strength, or commercial validity.
 
-| Phase | Score | Input detail | Priority |
-|-------|-------|--------|----------|
-| **I**: Identify Champions | ${scores.identify}/100 | ${scores.identify >= 70 ? 'Detailed' : scores.identify >= 50 ? 'Partial' : 'Thin'} | ${scores.identify < 60 ? 'High' : 'Low'} |
-| **M**: Map Alternatives | ${scores.map}/100 | ${scores.map >= 70 ? 'Detailed' : scores.map >= 50 ? 'Partial' : 'Thin'} | ${scores.map < 60 ? 'High' : 'Low'} |
-| **P**: Pinpoint Value | ${scores.pinpoint}/100 | ${scores.pinpoint >= 70 ? 'Detailed' : scores.pinpoint >= 50 ? 'Partial' : 'Thin'} | ${scores.pinpoint < 60 ? 'High' : 'Low'} |
-| **A**: Anchor Market | ${scores.anchor}/100 | ${scores.anchor >= 70 ? 'Detailed' : scores.anchor >= 50 ? 'Partial' : 'Thin'} | ${scores.anchor < 60 ? 'High' : 'Low'} |
-| **C**: Craft Message | ${scores.craft}/100 | ${scores.craft >= 70 ? 'Detailed' : scores.craft >= 50 ? 'Partial' : 'Thin'} | ${scores.craft < 60 ? 'High' : 'Low'} |
-| **T**: Translate Execution | ${scores.translate}/100 | ${scores.translate >= 70 ? 'Detailed' : scores.translate >= 50 ? 'Partial' : 'Thin'} | ${scores.translate < 60 ? 'High' : 'Low'} |
+| Phase | Relevant input | Presence | Next step |
+|-------|----------------|----------|-----------|
+| **I**: Identify Champions | Target customer | ${scores.identify ? 'Present' : 'Missing'} | ${scores.identify ? 'Validate buyer evidence' : 'Supply target_customer'} |
+| **M**: Map Alternatives | Competitors | ${scores.map ? 'Present' : 'Missing'} | ${scores.map ? 'Validate the alternatives' : 'Supply competitors'} |
+| **P**: Pinpoint Value | Differentiation | ${scores.pinpoint ? 'Present' : 'Missing'} | ${scores.pinpoint ? 'Validate the claimed value' : 'Supply key_differentiation'} |
+| **A**: Anchor Market | Target customer | ${scores.anchor ? 'Present' : 'Missing'} | ${scores.anchor ? 'Validate market evidence' : 'Supply target_customer'} |
+| **C**: Craft Message | Current positioning | ${scores.craft ? 'Present' : 'Missing'} | ${scores.craft ? 'Test the message' : 'Supply current_positioning'} |
+| **T**: Translate Execution | Customer feedback | ${scores.translate ? 'Present' : 'Missing'} | ${scores.translate ? 'Validate and activate the evidence' : 'Supply customer_feedback'} |
 
 ---
 
-## Most detailed inputs
+## Input presence notes
 ${strongest.map(([phase, score]) => score < 50 ? `
-### Least thin input: ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
-Rated Thin: it is listed here only because the other areas scored lower.
+### Missing input: ${phase.charAt(0).toUpperCase() + phase.slice(1)}
+This input is absent; no conclusion is drawn from that absence.
 ` : `
-### ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
-${phase === 'identify' ? `Your target customer ("${shortText(noNotes(args.target_customer))}") is long and specific enough for a high score in this area.` : ''}
-${phase === 'map' ? `You named ${competitors.length} competitor${competitors.length === 1 ? '' : 's'}; this area counts how many you name, not who they are.` : ''}
-${phase === 'pinpoint' ? (args.key_differentiation ? `Your differentiation ("${shortText(args.key_differentiation)}") is long enough for a high score in this area${score >= 85 ? ' and uses the word "only" or "unique"' : ''}.` : 'No differentiation supplied yet.') : ''}
-${phase === 'anchor' ? (score >= 80 ? `Your target customer mentions employees, revenue or a funding series.` : `Your target customer is several words long.`) : ''}
-${phase === 'craft' ? (score >= 85 ? `Your current positioning is long and uses the word "unlike" or "only".` : score >= 70 ? `Your current positioning is long.` : `You supplied a current positioning statement.`) : ''}
-${phase === 'translate' ? `You supplied customer feedback; this area scores its length, not what it says.` : ''}
+### Input supplied: ${phase.charAt(0).toUpperCase() + phase.slice(1)}
+${phase === 'identify' ? `Your target customer input is present.` : ''}
+${phase === 'map' ? `You supplied ${givenCompetitors.length} alternative${givenCompetitors.length === 1 ? '' : 's'}; this checklist records presence, not quality.` : ''}
+${phase === 'pinpoint' ? (args.key_differentiation ? `Your differentiation input is present.` : 'No differentiation supplied yet.') : ''}
+${phase === 'anchor' ? `Your target customer input is present; market evidence still needs validation.` : ''}
+${phase === 'craft' ? (args.current_positioning ? `Your current positioning input is present.` : 'No current positioning supplied yet.') : ''}
+${phase === 'translate' ? `Your customer feedback input is present; evidence quality still needs validation.` : ''}
 `.replace(/\n{2,}/g, '\n')).join('')}
 
 ---
 
 ## Areas to work on next
 ${weakest.map(([phase, score]) => `
-### ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
+### ${phase.charAt(0).toUpperCase() + phase.slice(1)}
 
-${score >= 70 ? 'This input is already detailed: sharpen it next.' : `**Input**: ${
-  phase === 'identify' ? 'Your target customer is short. Who exactly is your buyer?' :
-  phase === 'map' ? `This area counts the competitors you name, and you named ${givenCompetitors.length || 'none'}. Naming more of the alternatives customers consider raises it.` :
-  phase === 'pinpoint' ? `${args.key_differentiation ? 'Your differentiation is short.' : 'You supplied no differentiation.'} What specific outcomes do customers achieve?` :
-  phase === 'anchor' ? 'Your target customer does not mention employees, revenue or a funding series. What makes a company ideal for you?' :
-  phase === 'craft' ? `${args.current_positioning ? 'Your current positioning is short.' : 'You supplied no current positioning statement.'} How do you articulate your unique value?` :
-  `${args.customer_feedback ? 'Your customer feedback is short.' : 'You supplied no customer feedback.'} How does positioning show up in your channels?`
+${score >= 70 ? 'This input is present: validate its quality and evidence next.' : `**Input**: ${
+  phase === 'identify' ? 'No target customer was supplied. Who exactly is your buyer?' :
+  phase === 'map' ? 'No competitors were supplied. What alternatives do customers consider?' :
+  phase === 'pinpoint' ? 'No differentiation was supplied. What specific outcomes do customers achieve?' :
+  phase === 'anchor' ? 'No target customer was supplied. What makes a company ideal for you?' :
+  phase === 'craft' ? 'No current positioning statement was supplied. How do you articulate your value?' :
+  'No customer feedback was supplied. How does positioning show up in your channels?'
 }`}
 
 **Action**: Run \`impact_${phase === 'identify' ? 'identify_champions' : phase === 'map' ? 'map_alternatives' : phase === 'pinpoint' ? 'pinpoint_value' : phase === 'anchor' ? 'anchor_market' : phase === 'craft' ? 'craft_message' : 'translate_execution'}\` to add this detail.
 
-**Possible input score change**: +${20 - Math.floor(score / 10)} points to this area when you add the detail above ${EXAMPLE}
+**Checklist change**: this area becomes complete when the relevant input is supplied; completeness does not establish evidence quality.
 `).join('')}
 
 ---
@@ -2967,7 +2901,7 @@ ${companyClaims.length ? `Company claims you supplied (about the company as a wh
 
 ## Your Current Positioning, Checked in Words
 
-These checks read your words only. They are not part of the score above.
+These checks read your words only. They are not part of the checklist above.
 
 ${checks}
 
@@ -3025,10 +2959,10 @@ ${(lz.metrics.length ? lz.metrics.slice(0, 4) : ['A measure of reach', 'A measur
 
 ## Tools to Use Next
 
-Based on your scores, prioritize these tools:
+Based on missing checklist inputs, prioritize these tools:
 
-1. **\`${phaseTool[weakest[0][0]]}\`**: Address your lowest-scoring area first
-2. **\`${phaseTool[weakest[1][0]]}\`**: Then the second-lowest-scoring area
+1. **\`${phaseTool[weakest[0][0]]}\`**: Address the first missing input, or validate it when present
+2. **\`${phaseTool[weakest[1][0]]}\`**: Address the next missing input, or validate it when present
 ${[['impact_craft_message', 'Synthesize into final positioning'], ['impact_translate_execution', 'Activate across channels']]
   .filter(([t]) => t !== phaseTool[weakest[0][0]] && t !== phaseTool[weakest[1][0]])
   .map(([t, what], i) => `${i + 3}. **\`${t}\`**: ${what}`).join('\n')}

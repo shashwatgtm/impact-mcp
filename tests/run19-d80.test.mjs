@@ -364,31 +364,15 @@ test("problem 5: pinpoint_value prints no preset figure and labels the user's me
     assert.ok(r.includes(s.metrics.split(";")[0]));
   }
 });
-test("D72: full_audit keeps every score, weight, threshold and grade of the starting head", async () => {
-  // the old rules, re-implemented from src/index.ts at dc2a1620 lines 2040 to 2120
-  const old = (a) => {
-    const competitors = a.competitors || ["Status quo", "DIY solutions"];
-    const diff = a.key_differentiation || "unique approach";
-    const sc = {};
-    sc.identify = a.target_customer.length > 20 && a.target_customer.includes(" ") ? (a.target_customer.length > 50 ? 85 : 70) : 45;
-    sc.map = competitors.length > 2 ? 80 : competitors.length > 0 && competitors[0] !== "Status quo" ? 65 : 40;
-    sc.pinpoint = diff.length > 30 ? (diff.includes("only") || diff.includes("unique") ? 85 : 70) : 50;
-    sc.anchor = /employees|revenue|Series/.test(a.target_customer) ? 80 : a.target_customer.split(" ").length > 3 ? 65 : 45;
-    sc.craft = a.current_positioning && a.current_positioning.length > 50 ? (/unlike|only/.test(a.current_positioning) ? 85 : 70) : a.current_positioning ? 55 : 30;
-    sc.translate = a.customer_feedback && a.customer_feedback.length > 50 ? 75 : a.customer_feedback ? 55 : 35;
-    const overall = Math.round(Object.values(sc).reduce((x, y) => x + y, 0) / 6);
-    const grade = overall >= 85 ? "A" : overall >= 75 ? "B" : overall >= 65 ? "C" : overall >= 50 ? "D" : "F";
-    return { sc, overall, grade };
-  };
+test("D72 repair: full_audit exposes only presence and never a grade or numeric quality score", async () => {
   for (const s of SC) {
     const args = BUILD.impact_full_audit(s);
     for (const a of [args, { product_description: args.product_description, target_customer: args.target_customer, problem_solved: args.problem_solved }]) {
       const r = (await call("impact_full_audit", a)).text;
-      const o = old(a);
-      assert.match(r, new RegExp(`### Input completeness score: ${o.overall}/100 \\(Grade: ${o.grade}\\)`), s.id);
-      for (const [k, label] of [["identify", "I"], ["map", "M"], ["pinpoint", "P"], ["anchor", "A"], ["craft", "C"], ["translate", "T"]]) {
-        assert.match(r, new RegExp(`\\| \\*\\*${label}\\*\\*: [A-Za-z ]+ \\| ${o.sc[k]}/100 \\|`), `${s.id} ${k}`);
-      }
+      assert.match(r, /### Input completeness checklist/, s.id);
+      assert.doesNotMatch(r, /Grade:|Input completeness score|\/100/, s.id);
+      assert.equal((r.match(/^\| \*\*[IMPACT]\*\*:/gm) || []).length, 6, s.id);
+      assert.match(r, /\| Phase \| Relevant input \| Presence \| Next step \|/, s.id);
     }
   }
 });
@@ -402,7 +386,7 @@ test("problem 3 and 8: full_audit uses the customer feedback as proof, the named
   assert.match(r, /CISO/);
   assert.doesNotMatch(r, /1-2%|3-5%|8-15%|Investment\*\*: 20-30 hours|Expected ROI/);
   assert.doesNotMatch(r, /\[delivers the result you promise\]|No more [a-z ]+ and"/);
-  assert.match(r, /not part of the score/i);
+  assert.match(r, /not part of the checklist/i);
 });
 
 // ---- Channels (problem 3): the input is now used ------------------------------------------------------------------------------
