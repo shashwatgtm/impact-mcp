@@ -52,8 +52,7 @@ export function clip(text: string, n: number): string {
   // the structural boundaries first (a semicolon or colon, then a joining word); a comma is the last choice, because a comma inside a list leaves the list cut
   let at = -1;
   for (const re of [/[;:]\s/g, /\s(?:and|but|while|so|because|with|for|from|to|across|including)\s/g, /,\s/g]) {
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(head))) if (m.index >= n * 0.4) at = Math.max(at, m.index);
+    for (const m of head.matchAll(re)) if ((m.index ?? 0) >= n * 0.4) at = Math.max(at, m.index ?? 0);
     if (at > 0) break;
   }
   let cut = at > 0 ? head.slice(0, at) : head.slice(0, Math.max(head.lastIndexOf(' '), Math.floor(n / 2)));
@@ -199,4 +198,24 @@ export function splitStrengths(items: string[]): string[] {
     if (parts.length >= 2 && topLevel(body).length === parts.length) out.push(...parts.map((x) => x + note)); else out.push(it);
   }
   return out;
+}
+
+/** A short label for a long description: no joining word, preposition or half-open verb at its end ("previous freight forwarders working through" gives "previous freight forwarders"). */
+export function tidyLabel(label: string): string {
+  const w = label.trim().split(/\s+/);
+  while (w.length > 2 && (JOIN_END.test(w[w.length - 1]) || /^(?:through|using|via|working|relying|running|selling|built|based|only|also|still|not)$/i.test(w[w.length - 1]) || /ing$/i.test(w[w.length - 1]))) w.pop();
+  return w.join(' ').replace(/[,;:]+$/, '');
+}
+
+/** A running name for a product typed as a description: when the shared rule leaves one word of it ("cloud-native" from "a cloud-native, composable core banking platform ..."),
+ *  the noun phrase before the first clause word is used instead (at most 7 words). A name typed as a name is returned as it came. */
+export function plainName(text: string, candidate: string): string {
+  const t = text.replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+  if (!candidate || candidate.split(/\s+/).length >= 2 || t.split(/\s+/).length <= 3) return candidate;
+  const w = t.replace(/^(?:an?|the)\s+/i, '').split(/\s+/);
+  const stop = w.findIndex((x, i) => i >= 2 && /^(?:that|which|who|where|for|with|by|from|to|connects?|helps?|lets?|gives?|makes?|builds?|runs?|turns?|unifies?|uses?|delivered|provided|offered|powered|built|based)$/i.test(x.replace(/[,;:]+$/, '')));
+  const lead = (stop >= 2 ? w.slice(0, stop) : w.slice(0, 5)).slice(0, 7);
+  while (lead.length > 2 && JOIN_END.test(lead[lead.length - 1].replace(/[,;:]+$/, ''))) lead.pop();
+  const out = lead.join(' ').replace(/[,;:]+$/, '');
+  return out.split(/\s+/).length >= 2 ? out : candidate;
 }

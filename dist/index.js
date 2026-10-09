@@ -25,6 +25,7 @@ const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
 const echo_safe_ts_1 = require("./echo-safe.js");
+const rw_impact_ts_1 = require("./rw-impact.js");
 const verticals_ts_1 = require("./verticals.js");
 // =============================================================================
 // IMPACT MCP v2.0.0 - Hypothesis-Driven B2B Positioning Engine
@@ -1014,6 +1015,8 @@ const sameName = (a, b) => {
 // =============================================================================
 // TOOL DEFINITIONS
 // =============================================================================
+// Run 22: the helpers of this file that the rewrite helpers in rw-impact.ts need.
+const RW_KIT = { kindOf, lowerFirst, toBaseVerb };
 const tools = {
     // ---------------------------------------------------------------------------
     // Tool 1: Get Framework Overview
@@ -1570,19 +1573,20 @@ ${SUGGESTED}
             required: ['your_product', 'category']
         },
         execute: (args) => {
-            // An empty list is treated like no list, and the placeholder names say they are examples
+            // Run 22 rewrite: one part per alternative you named, each weakness set against the strength that answers it, the status quo of your own kind of business,
+            // and no competitor, strength or fact that you did not give. What is missing is named once, at the end.
             const competitorsGiven = !!(args.competitors && args.competitors.filter((c) => c && c.trim()).length);
-            const named = competitorsGiven ? args.competitors.filter((c) => c && c.trim()).map((c) => c.trim()) : ['Competitor A', 'Competitor B', 'Status Quo'];
+            const named = competitorsGiven ? args.competitors.filter((c) => c && c.trim()).map((c) => c.trim()) : [];
             const weaknessItems = splitWeaknesses(args.competitor_weaknesses);
             const strengthItems = splitItems(args.your_strengths);
-            const strengthShort = strengthItems.map((x) => shortText(x));
             const rc = readContext(undefined, { core: [args.category, args.your_product], later: [args.your_strengths], context: [args.competitor_weaknesses] });
             const v = rc.v;
             const lz = lensOf(v, args.your_product, args.category, args.competitor_weaknesses);
+            const nsw = (t) => (rc.model === 'saas' || rc.model === null ? t : (0, rw_impact_ts_1.noSeatWords)(t));
             const vendors = named.filter((c) => !STATUS_QUO.test(nameOf(c)) && nameOf(c).toLowerCase() !== 'status quo' && nameOf(c).toLowerCase() !== 'do nothing');
             const statusQuo = named.filter((c) => !vendors.includes(c));
-            // A weakness is shown on the card of the competitor it names. One that names nobody goes on the only vendor's card when
-            // there is exactly one, and otherwise under "not tied to a competitor".
+            // A weakness is shown on the card of the alternative it names. One that shares at least two content words with an alternative's description belongs there too;
+            // the rest are listed once under "Weaknesses you gave" and never hung on an alternative they do not describe.
             const matched = new Map();
             const used = new Set();
             for (const c of named) {
@@ -1593,8 +1597,14 @@ ${SUGGESTED}
                     hits.forEach((h) => used.add(h));
                 }
             }
-            // Run 20 round 2: a weakness that shares at least two content words with an alternative's description belongs on that card; the rest are listed
-            // once under "Weaknesses you gave" (they are never reported as not supplied, and never hung on an alternative they do not describe).
+            // A weakness about doing the work by hand fits the one status-quo option you listed, when you listed exactly one.
+            const sqOnly = named.filter((c) => STATUS_QUO.test(nameOf(c)) && nameOf(c).toLowerCase() !== 'do nothing');
+            if (sqOnly.length === 1)
+                for (const w of weaknessItems)
+                    if (!used.has(w) && /\b(?:by hand|spreadsheets?|in-house|paper|excel)\b/i.test(w)) {
+                        matched.set(sqOnly[0], [...(matched.get(sqOnly[0]) || []), w]);
+                        used.add(w);
+                    }
             for (const w of weaknessItems) {
                 if (used.has(w))
                     continue;
@@ -1620,151 +1630,117 @@ ${SUGGESTED}
                 }
             }
             const untied = weaknessItems.filter((w) => !used.has(w));
-            // Text only: a map cell is padded to the box width; a name is printed only when one was given (or is the example list).
-            // Run 20 round 1: an alternative given as a description (not a name) is shown on the map as "Alt 1", "Alt 2", and listed under the map in full.
             const nameLike = (c) => /^[A-Z0-9]/.test(nameOf(c)) && nameOf(c).split(/\s+/).length <= 4;
-            const mapLabels = named.slice(0, 3).map((c, i) => (nameLike(c) ? labelOf(c).slice(0, 15) : `Alt ${i + 1}`));
-            const mapLegend = named.slice(0, 3).map((c, i) => (nameLike(c) ? '' : `Alt ${i + 1} = ${clean(shortText(nameOf(c), 90))}`)).filter(Boolean);
-            const mapCell = (short) => {
-                const t = short ? `[${short}]` : '';
-                const left = Math.max(1, Math.floor((19 - t.length) / 2));
-                return (' '.repeat(left) + t).padEnd(19, ' ') + (t.length > 17 ? ' ' : '');
+            const describedOnly = vendors.length > 0 && !vendors.some(nameLike);
+            const sParts = (0, rw_impact_ts_1.splitStrengths)(strengthItems);
+            const descriptor = (c) => { if (!nameLike(c))
+                return ''; const m = c.match(/\(([^)]*)\)/); return m ? m[1].trim() : ''; };
+            const head = (c) => (nameLike(c) ? nameOf(c) : nameOf(c).split(/\s+/).length <= 9 && nameOf(c).length <= 70 ? nameOf(c) : (0, rw_impact_ts_1.tidyLabel)(labelOf(c)));
+            // The strength that answers a weakness: the one that shares the most content words with it (none when no word is shared).
+            const answerFor = (w) => {
+                const ws = contentStems(w);
+                let best = null;
+                let bestN = 0;
+                for (const s of sParts) {
+                    const n = [...contentStems(s)].filter((x) => ws.has(x)).length;
+                    if (n > bestN) {
+                        best = s;
+                        bestN = n;
+                    }
+                }
+                return best;
             };
-            const sParts = strengthParts(strengthItems);
-            const descriptor = (c) => { const m = c.match(/\(([^)]*)\)/); return m ? m[1].trim() : ''; };
-            const card = (c, i) => {
+            const lead = (c, i) => {
+                const w = matched.get(c) || [];
+                for (const x of w) {
+                    const a = answerFor(x);
+                    if (a)
+                        return `start with ${q((0, rw_impact_ts_1.clip)(a, 130))} (your words), which answers the weakness you reported (${q((0, rw_impact_ts_1.clip)(x, 90))}); ask the buyer how ${head(c)} does on it`;
+                }
+                return sParts.length ? `no weakness you gave ties a strength to ${head(c)}; the one to test against it first is ${q((0, rw_impact_ts_1.clip)(sParts[i % sParts.length], 130))} (your words): ask the buyer how ${head(c)} does on it` : 'none of your strengths was given, so no angle is drafted';
+            };
+            // One neutral question per card, never the same twice (the sector's own questions first, then three general ones; a card past the end has none).
+            const qPool = [...lz.questions, 'What would have to be true for you to change how you do this today?', 'Who else is involved when this decision comes up?', 'How do you measure this today, and who reviews the number?'];
+            let qUsed = 0;
+            const card = (c, i, kind) => {
                 const w = matched.get(c) || [];
                 const d = descriptor(c);
-                const q1 = lz.questions.length ? lz.questions[i % lz.questions.length] : 'What have you tried before to solve this, and what did not work?';
+                const who = kind === 'status'
+                    ? `a way your buyers cope today, in your words: ${q(nameLike(c) ? nameOf(c) : (0, rw_impact_ts_1.clip)(c, 240))}`
+                    : `${d ? q(d) : !nameLike(c) ? `the description ${q((0, rw_impact_ts_1.clip)(c, 240))}, which is not a company name` : 'only the name'}`;
+                const q1 = qPool[qUsed++];
                 return `
-**${nameOf(c)}**${d ? ` (${d})` : ''}:
-- What you told us about them: ${d ? q(d) : nameOf(c).split(/\s+/).length > 3 ? 'the description in the heading only (not a company name)' : 'only the name'}; nothing else was looked up
-- Weaknesses you reported (notes for you to test with buyers, not verified facts):${w.length ? '\n' + w.map((x) => `  - ${x}`).join('\n') : untied.length ? ' none of the weaknesses you gave names this one (see "Weaknesses you gave" above)' : ' none supplied'}
-- Where you can lead:${sParts.length ? ` start with ${q(shortText(sParts[i % sParts.length], 110))} (your words), and ask the buyer how that alternative does on it; your other differentiators are listed once below` : ' none supplied (add your_strengths)'}
-- A neutral question to ask a buyer about them: "${q1.replace(/\?$/, '')}?"`;
+### Against ${head(c)}
+**${nameLike(c) ? nameOf(c) : head(c)}**${d ? ` (${d})` : ''}
+- What you told us about them: ${who}
+${w.length ? `- Weaknesses you reported:\n${w.map((x) => `  - ${x}`).join('\n')}\n` : ''}- Where you can lead: ${lead(c, i)}
+${q1 ? `- A neutral question to ask a buyer about them: "${q1.replace(/\?$/, '')}?"` : ''}`;
             };
-            const weakBlock = untied.length ? `\n**Weaknesses you gave** (about the alternatives as a group, not tied to one card; test each with buyers, they are your notes and not verified facts):\n${list(untied)}\n` : '';
-            const customInsights = `${strengthItems.length ? `\n**Your Key Differentiators**:\n${list(strengthItems)}\n` : ''}`;
+            const weakBlock = untied.length ? `\n**Weaknesses you gave** (about the alternatives as a group, not tied to one of them; test each with buyers, they are your notes and not verified facts):\n${list(untied)}\n` : '';
+            const defaults = statusQuoDefaults(v, rc.model);
+            const prodName = (0, rw_impact_ts_1.plainName)(args.your_product, runningName(args.your_product.trim())) || 'Your product';
+            const answered = strengthItems.length ? sParts.filter((s) => weaknessItems.some((w) => answerFor(w) === s)) : [];
+            const inShort = `${prodName} is mapped against ${vendors.length ? `${vendors.length} ${describedOnly ? 'alternative' : 'competitor'}${vendors.length > 1 ? 's' : ''} you ${describedOnly ? 'described' : 'named'}` : 'no named competitor (you gave none)'}${statusQuo.length ? ` and ${statusQuo.length} way${statusQuo.length > 1 ? 's' : ''} your buyers cope without a vendor` : ''}. ${weaknessItems.length ? `You reported ${weaknessItems.length} weakness${weaknessItems.length > 1 ? 'es' : ''}: ${weaknessItems.length - untied.length} tied to a single alternative${untied.length ? ` and ${untied.length} about the group` : ''}.` : 'You reported no weaknesses, so each card says so and asks the buyer instead.'} ${strengthItems.length ? `${answered.length ? `${answered.length === 1 ? 'One' : answered.length} of your strengths answers a reported weakness directly; the others need proof that a buyer can check.` : 'None of your strengths answers a reported weakness directly by its words, so each needs proof a buyer can check.'}` : 'You gave no strengths, so no angle is drafted.'}${competitorsGiven ? '' : ' Because you gave no competitors, the answer below maps the usual alternatives for a seller like you and names no rival.'}`;
+            const missing = [];
+            if (!competitorsGiven)
+                missing.push({ give: 'competitors (the rivals and the status-quo options your buyers use)', changes: 'the whole answer, which would get one part per alternative' });
+            if (!weaknessItems.length)
+                missing.push({ give: 'competitor_weaknesses (what buyers complain about)', changes: 'each part, which now has no weakness to test' });
+            if (!strengthItems.length)
+                missing.push({ give: 'your_strengths', changes: 'the "Where you can lead" lines, which now draft no angle' });
+            const sharpen = (0, rw_impact_ts_1.sharpenLine)(missing);
+            const dq = [
+                '"What have you tried before to solve this?"',
+                '"What other solutions are you evaluating?"',
+                ...(vendors.length ? vendors.slice(0, 2).map((c) => (nameLike(c) ? `"What would make you choose ${nameOf(c)} over us?"` : `"What keeps you with ${labelOf(c)} today, and what would make you change?"`)) : ['"What would make you choose a competitor over us?"']),
+                '"What didn\'t work about your previous approach?"',
+                '"What\'s missing from solutions you\'ve seen?"',
+            ];
+            const pairLines = strengthItems.length ? sParts.map((s) => {
+                const w = weaknessItems.find((x) => answerFor(x) === s);
+                return `- ${s}: ${w ? `answers the weakness you reported, ${q((0, rw_impact_ts_1.clip)(w, 110))}` : 'no weakness you gave is answered by these words directly, so back it with proof a buyer can check'}`;
+            }) : [];
+            const sectorPart = v ? `\n${nsw(sectorBlock(v, lz.fn ? ['committee', 'objections'] : ['vocabulary', 'committee', 'objections', 'discovery'], 'Sector view'))}${lz.fn ? `\n${teamBlock(lz.fn, v)}` : ''}\n` : '';
             return `# Competitive Landscape Analysis
+
+## In short
+
+${inShort}
 
 ## Market Context
 **Your Product**: ${args.your_product}
 **Category**: ${args.category}
-**Analyzed Competitors**: ${named.join(', ')}${competitorsGiven ? '' : ' (examples: you supplied no competitors; replace them with your own)'}
-${sectorLine(v)}${longNote(args.your_product, args.competitor_weaknesses, args.your_strengths)}
+**Analyzed Competitors**: ${competitorsGiven ? named.join(', ') : 'none given'}
+${rc.line}
 
 ---
 
-## Alternative Categories
+## ${describedOnly ? 'Alternatives You Described (no company names were given)' : 'Direct Competitors (Same Solution, Same Problem)'}
 
-### 1. ${vendors.length && !vendors.some((c) => /^[A-Z0-9]/.test(nameOf(c)) && nameOf(c).split(/\s+/).length <= 4) ? 'Alternatives You Described (no company names were given)' : 'Direct Competitors (Same Solution, Same Problem)'}
-${vendors.length && !vendors.some((c) => /^[A-Z0-9]/.test(nameOf(c)) && nameOf(c).split(/\s+/).length <= 4) ? '\nThese are alternatives described in words, not named vendors. Add the names of the products your buyers compare you with to `competitors` for cards that carry real names.\n' : ''}${weakBlock}${vendors.length ? vendors.map((c, i) => card(c, i)).join('\n') : '\nNo named vendor competitor was supplied. Add the products your buyers compare you with to `competitors`.\n'}
-
-### 2. Status Quo (Current Manual/DIY Approach)
-${statusQuo.length ? `**What your buyers use today** (in your words):\n${statusQuo.map((c) => { const w = matched.get(c) || []; return `- ${c}${w.length ? `\n  - Weaknesses you reported (a note for you to test with buyers): ${w.join('; ')}` : ''}`; }).join('\n')}\n` : `**What they may be doing instead** (common patterns for this kind of seller; check them with buyers):\n${statusQuoDefaults(v, rc.model).map((x) => `- ${x}`).join('\n')}\n`}
-**Why status quo persists**:
-- "Good enough" for current scale
-- Change requires effort/budget
-- No forcing function yet
-${v ? `- In this sector, buyers often say: ${v.objections.slice(0, 2).map((o) => `"${o.objection}"`).join(' and ')}\n` : ''}
-**Breaking status quo**:
-- Quantify cost of the current approach in the buyer's own figures
-- Show what the alternatives cannot do
-- Create urgency with a dated event (a renewal, an audit, a season, a target)
-
-### 3. Do Nothing (Accept the Problem)
-**Why they might do nothing**:
-- Problem not painful enough yet
-- Other priorities more urgent
-- Previous attempts failed
-
-**Combating do nothing**:
-- Calculate cost of inaction
-- Show competitive risk
-- Identify triggering events
+The weaknesses and strengths in this answer are your own notes, to test with buyers; none of them is a verified fact, and nothing about a competitor was looked up.
+${describedOnly ? '\nThese are alternatives described in words, not named vendors. Add the names of the products your buyers compare you with to `competitors` for parts that carry real names.\n' : ''}${weakBlock}${vendors.length ? vendors.map((c, i) => card(c, i, 'vendor')).join('\n') : '\nNo named competitor was given, so no rival is described here. The status quo below is the alternative every deal faces.'}
 
 ---
 
-## Competitive Whitespace Analysis
-${customInsights}
-### Differentiation Axes
-${strengthItems.length || v ? `| Axis | Where it comes from | Your potential position |
-|------|---------------------|------------------------|
-${strengthShort.map((x) => `| ${x} | Your strength (your words) | Lead with it, and back it with proof ${v ? `of the shape this sector trusts (see the sector view)` : 'a buyer can check'} |`).join('\n')}${strengthItems.length && v ? '\n' : ''}${v ? lz.metrics.slice(0, 4).map((m) => `| ${m} | What buyers in this sector measure | Ask buyers how the alternatives do here; lead only where you can show a figure |`).join('\n') : ''}` : 'No strengths were supplied and no sector was clear, so there are no axes to show. Add `your_strengths` (one per line) or name your industry in `your_product`.'}
-
----
-
-## Positioning Territory Map
-
-\`\`\`
-                    ENTERPRISE
-                        │
-    ┌───────────────────┼───────────────────┐
-    │                   │                   │
-    │${mapCell(mapLabels[0])}│${mapCell('YOUR WHITESPACE')}│
-    │                   │                   │
-COMPLEX ────────────────┼──────────────────── SIMPLE
-    │                   │                   │
-    │${mapCell(mapLabels[1])}│${mapCell(mapLabels[2])}│
-    │                   │                   │
-    └───────────────────┼───────────────────┘
-                        │
-                      SMB
-\`\`\`
-
-(placement is a placeholder: move each name to where buyers put it)${mapLegend.length ? `\n\n${mapLegend.join('; ')}` : ''}
-
-**Whitespace Identification Questions**:
-1. Which quadrant has the fewest strong competitors?
-2. Which customer segment is underserved?
-3. What complexity level is poorly addressed?
-4. Where do your strengths naturally fit?
-
----
-
-## Competitive Battle Strategy
-${vendors.map((c, i) => {
-                const n = nameOf(c);
-                const w = matched.get(c) || [];
-                return `
-### Against ${n}
-**Their likely strength (not known from your inputs: ask buyers)**: why they put ${n} on the shortlist in the first place
-**Weakness to test with buyers**: ${w.length ? w.map((x) => shortText(x)).join('; ') + ' (your note, not a verified fact)' : untied.length ? 'none of the weaknesses you gave names this one; test the ones listed under "Weaknesses you gave"' : 'none supplied'}
-**Your attack angle**: ${strengthShort.length ? `lead with the key differentiator that answers ${w.length ? `this weakness (${q(shortText(w[0], 90))})` : 'what buyers like least about it'}; your differentiators are listed once under Your Key Differentiators` : 'add your_strengths to get an angle'}
-**Landmine question**: ask the buyer to describe the last time the points above came up with ${n}, and what it cost them${lz.questions.length ? ` (in this sector: ${q(lz.questions[(i + 2) % lz.questions.length])})` : ''}`;
-            }).join('\n')}
-${statusQuo.map((c) => `
-### Against ${nameOf(c)}
-**Their strength**: No change required, no new budget needed
-**Their weakness**: ${(matched.get(c) || []).length ? `${(matched.get(c) || []).map((x) => shortText(x)).join('; ')} (your note, not a verified fact)` : 'none supplied for this one: ask buyers what it costs them today (the landmine question below)'}
-**Your attack angle**: "What is the cost of continuing this way for another year?"
-**Landmine question**: "How many hours a week does your team spend on this today, and who does it?"`).join('\n') || `
-### Against Status Quo
-**Their strength**: No change required, no budget needed
-**Their weakness**: Does not scale, manual errors, opportunity cost
-**Your attack angle**: "What is the cost of continuing this way for another year?"
-**Landmine question**: "How many hours per week does your team spend on this manually?"`}
+## Status Quo (Current Manual/DIY Approach)
+${statusQuo.length ? `\n**What your buyers use today** (in your words):\n${statusQuo.map((c, i) => card(c, i, 'status')).join('\n')}\n` : `\n**What they may be doing instead** (common patterns for this kind of seller; check them with buyers):\n${list(defaults)}\n`}
+${v ? `Buyers in this sector often say: ${v.objections.slice(0, 2).map((o) => `"${o.objection}"`).join(' and ')}. The status quo persists while changing costs more effort or budget than the problem costs today, so put the cost of the current approach in the buyer's own figures${lz.metrics.length ? ` (${lz.metrics.slice(0, 3).join(', ')})` : ''} and tie the change to a dated event such as a renewal, an audit, a season or a target.` : "The status quo persists while changing costs more effort or budget than the problem costs today, so put the cost of the current approach in the buyer's own figures and tie the change to a dated event such as a renewal, an audit, a season or a target."}
 
 ### Against Do Nothing
-**Their strength**: Zero effort, zero risk
-**Their weakness**: Competitive disadvantage, compounding problem
-**Your attack angle**: show what others in the buyer's sector already do about this, but only where you can name it and cite it
-**Landmine question**: "What happens to your results if this problem grows next year?"
+Not buying is the alternative every deal faces: it wins when the problem does not yet cost the buyer enough to act. Ask what it costs in the buyer's own figures${lz.metrics.length ? `, for example ${lz.metrics.slice(0, 2).join(' or ')}` : ''}, and what changes if it grows next year.
 
+---
+
+## Where you can lead
+${pairLines.length ? `\nYour strengths, set against what you reported (your words, not verified facts):\n${pairLines.join('\n')}\n` : '\nNo strengths were given, so nothing is set against the weaknesses yet.\n'}${v && lz.metrics.length ? `\nBuyers in ${lz.fn ? `a ${fnName(lz.fn)} team` : v.name} compare alternatives on these measures: ${lz.metrics.slice(0, 4).join(', ')}. Ask them how each alternative does on these, and lead only where you can show proof of the shape this sector trusts: ${lz.proof}\n` : ''}
 ---
 
 ## Discovery Questions for Competitive Intel
 
 Ask prospects these questions to understand their competitive context:
 
-${numbered([
-                '"What have you tried before to solve this?"',
-                '"What other solutions are you evaluating?"',
-                ...(vendors.length ? vendors.slice(0, 2).map((c) => (nameLike(c) ? `"What would make you choose ${nameOf(c)} over us?"` : `"What keeps you with ${labelOf(c)} today, and what would make you change?"`)) : ['"What would make you choose a competitor over us?"']),
-                '"What didn\'t work about your previous approach?"',
-                '"What\'s missing from solutions you\'ve seen?"',
-            ])}
-${v ? `\n${sectorBlock(v, lz.fn ? ['committee', 'objections'] : ['vocabulary', 'committee', 'objections', 'discovery'], 'Sector view')}${lz.fn ? `\n${teamBlock(lz.fn, v)}` : ''}\n` : ''}
+${numbered(dq)}
+${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
 **Next Step**: Use \`impact_pinpoint_value\` to articulate your unique differentiation
 `;
         }
@@ -1810,48 +1786,118 @@ ${v ? `\n${sectorBlock(v, lz.fn ? ['committee', 'objections'] : ['vocabulary', '
             required: ['target_customer', 'key_outcome', 'unique_capability']
         },
         execute: (args) => {
-            const P = runningName((args.product_name || '').trim()) || 'your product';
-            const categoryTyped = (args.category || '').trim() || 'solution';
-            // In a sentence the category is its leading noun phrase ("predictive cybersecurity: attack path intelligence ..." reads "predictive cybersecurity"); the full text stays in the inputs.
-            const category = catNoun(noNotes(categoryTyped).split(/\s*[:;]\s*/)[0] || categoryTyped);
-            const metrics = (args.customer_metrics || '').trim();
-            const metricItems = splitItems(metrics).map((m) => shortText(m));
+            // Run 22 rewrite: a finished value proposition built from the user's own words. Every input is used where it matters, in whole sentences; a supplied result goes to
+            // the proof tier it belongs to with its own label; nothing is invented; what is missing is named once, at the end.
+            const named = (args.product_name || '').trim();
+            const P = (0, rw_impact_ts_1.plainName)(named, runningName(named.replace(/\s*\([^)]*\)/g, ''))) || 'our product';
+            const catTyped = (args.category || '').trim();
+            const catSource = catTyped || 'solution';
+            // In a sentence the category is its leading noun phrase ("predictive cybersecurity: attack path intelligence ..." reads "predictive cybersecurity").
+            const catPlain = noNotes(catSource).split(/\s*[:;]\s*/)[0] || catSource;
+            const category = (0, rw_impact_ts_1.categoryNoun)(catPlain);
+            const quotedCat = /^[“"‘']/.test(catPlain);
+            const catMid = quotedCat ? category : mid(category);
+            const catPlainMid = quotedCat ? catPlain : mid(catPlain);
+            const catRest = noNotes(catSource).split(/\s*[:;]\s*/).slice(1).join('; ');
             const ctx = readContext(args.business_model, { core: [args.category], later: [args.unique_capability], names: [args.product_name], context: [args.key_outcome], buyer: [args.target_customer] });
             const v = ctx.v;
             const notes = MODEL_NOTES[ctx.model || 'unknown'];
             const lz = lensOf(v, args.category, args.key_outcome, args.unique_capability, args.target_customer);
-            const signer = lz.fn ? lz.fn.buyer : v ? committeeParts(v).signer : 'the budget owner';
-            const aud = mid(noNotes(args.target_customer).length <= 90 ? noNotes(args.target_customer) : shortAudience(args.target_customer));
-            const sa = shortAudience(shortText(noNotes(args.target_customer)));
-            const outcome = shortText(args.key_outcome, FRAME_AT);
-            const capab = shortText(args.unique_capability, FRAME_AT);
-            const catPlain = noNotes(categoryTyped).split(/\s*[:;]\s*/)[0] || categoryTyped;
+            const com = v ? committeeParts(v) : null;
+            // A role read from the sector's committee sentence is used only when it reads as a role (a sentence with a colon or a full stop is not one).
+            const roleOk = (r) => (r && r.length <= 70 && !/[.:]/.test(r) ? r : '');
+            const signer = (lz.fn ? lz.fn.buyer : com ? roleOk(com.signer) : '') || 'the budget owner';
+            const champion = lz.fn ? lz.fn.champion : com ? roleOk(com.champion) : '';
+            const rv0 = !lz.fn && com && com.reviewers.length ? com.reviewers[0] : null;
+            const evaluator = lz.fn ? lz.fn.tech : rv0 ? roleOk(rv0.role) : '';
+            const evaluatorChecks = rv0 && roleOk(rv0.role) && rv0.what && !/[.:]/.test(rv0.what) ? `In this sector, ${rv0.role} ${rv0.does} ${rv0.what}.` : '';
+            // The audience: the full clause once, a short form inside sentences. A count after a semicolon ("; more than 9,000 teams use it") is a fact for the proof tiers.
+            const target = args.target_customer.trim();
+            const audFull = noNotes(target);
+            const extraFact = (target.match(/\s*[;:]\s*((?:more than|over|about)?\s*[\d,]+\+?\s.*)$/i) || [])[1] || '';
+            const aud = mid(audFull.length <= 90 ? audFull : shortAudience(target));
+            const sa0 = shortAudience(audFull.length > LONG_AT ? audFull : shortText(audFull));
+            const sa = (/\.\.\./.test(sa0) || !audFull.toLowerCase().startsWith(sa0.toLowerCase().slice(0, 10))) && (0, rw_impact_ts_1.leadAud)(audFull) ? mid((0, rw_impact_ts_1.leadAud)(audFull)) : sa0;
+            // The outcome as one grammatical clause (the first two results inside the statements, all of them in the matrix); a text that is not a plain result is quoted.
+            const oc = (0, rw_impact_ts_1.outcomeItems)(args.key_outcome, RW_KIT);
+            const lab = oc.label ? ` ${oc.label}` : '';
+            const outLeadItems = (0, rw_impact_ts_1.leadItems)(oc.items, 260, 2).map((x) => (0, rw_impact_ts_1.clip)(x, 260));
+            const outLead = (0, rw_impact_ts_1.outcomeClause)(outLeadItems, RW_KIT) ?? `achieve this: ${q((0, rw_impact_ts_1.clip)(clean(args.key_outcome), FRAME_AT))}`;
+            const outFirst = (0, rw_impact_ts_1.outcomeClause)(outLeadItems.slice(0, 1), RW_KIT) ?? outLead;
+            // The capability: a short text stands whole; a long list gives its first items and "and more" (the evaluator part lists all of it).
+            const capText = clean(args.unique_capability);
+            const capItems = (0, rw_impact_ts_1.topLevel)(capText);
+            const capLong = capText.length > 220 && capItems.length >= 2;
+            const capLeadList = capLong ? (0, rw_impact_ts_1.leadItems)(capItems, 150, 4) : capItems;
+            const capLead = capLong ? `${capLeadList.join(capLeadList.some((x) => /,/.test(x)) ? '; ' : ', ')}${capLeadList.length < capItems.length ? ' and more' : ''}` : (capText.length > 220 ? (0, rw_impact_ts_1.clip)(capText, 200) : capText);
+            const capShown = capLong ? capLeadList : [capText.length > 220 ? (0, rw_impact_ts_1.clip)(capText, 200) : capText];
+            const capSentence = diffSentence(P, capLead);
             const onlyWith = (d) => { const k = kindOf(d); const t = lowerFirst(clean(d)); if (isNamedClause(clean(d)))
                 return `where ${clean(d)}`; return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
-            // Run 20 round 2: the matrix starts from the user's own outcome and shows, for each measure, what the user's inputs already say about it
-            // (a supplied result or a clause of the outcome that shares the measure's words); the before and after cells stay for the customer's numbers.
-            const evidence = [...metricItems, ...splitItems(args.key_outcome).map((x) => shortText(x, 160))];
-            const saysFor = (m) => {
+            // The supplied results, placed by what each one is.
+            const given = splitItems(args.customer_metrics || '').map((text) => ({ text, ...(0, rw_impact_ts_1.classifyProof)(text) }));
+            if (extraFact && !given.some((g) => (extraFact.match(/\d[\d,.]*/g) || []).every((n) => g.text.includes(n))))
+                given.push({ text: extraFact.replace(/[.!]+$/, ''), ...(0, rw_impact_ts_1.classifyProof)(extraFact) });
+            const tier = (n, kinds) => given.filter((g) => g.tier === n && (!kinds || kinds.includes(g.kind)));
+            const results = tier(1);
+            const cite = (results.find((r) => r.text.length <= 180) || { text: '' }).text;
+            // The value matrix: the measures the user's own inputs already speak to, each next to what they say; a measure with nothing behind it is not an empty row.
+            const evidence = [...given.map((g) => ({ text: g.text, label: '' })), ...oc.items.map((x) => ({ text: x, label: oc.label }))];
+            const cell = (s) => s.replace(/\|/g, '/').replace(/\s+/g, ' ').trim();
+            const measures = rankMeasures(lz.metrics, `${args.key_outcome} ${args.customer_metrics || ''}`, args.unique_capability);
+            const rows = [];
+            const bare = [];
+            const shownFor = new Set();
+            for (const m of measures) {
                 const ms = contentStems(m);
                 const need = Math.min(2, ms.size);
-                const byWords = (e) => need > 0 && [...contentStems(e)].filter((x) => ms.has(x)).length >= need;
-                const hits = evidence.filter((e) => byWords(e) || MEASURE_CONCEPTS.some(([mr, er]) => mr.test(m) && er.test(e)));
-                return hits.length ? hits.slice(0, 2).map((h) => clean(h)).join('; ') : 'nothing in your inputs yet';
-            };
-            const matrixRows = [
-                `| Your stated outcome | ${clean(shortText(args.key_outcome, 160))} | | | Your key_outcome |`,
-                ...(lz.metrics.length ? lz.metrics.slice(0, 5).map((m) => `| ${m} | ${saysFor(m)} | | | Fill from the customer's own data |`) : ['| A measure of time | nothing in your inputs yet | | | |', '| A measure of quality | nothing in your inputs yet | | | |', '| A measure of money | nothing in your inputs yet | | | |']),
-            ];
-            return `# Value Proposition Analysis
+                const hits = evidence.filter((e) => (need > 0 && [...contentStems(e.text)].filter((x) => ms.has(x)).length >= need) || rw_impact_ts_1.MEASURE_LINKS.some(([mr, er]) => mr.test(m) && er.test(e.text)));
+                const key = hits.map((h) => h.text).join('|');
+                if (hits.length && shownFor.has(key))
+                    continue;
+                shownFor.add(key);
+                if (hits.length)
+                    rows.push(`| ${m} | ${cell(hits.slice(0, 2).map((h) => clean(h.text) + (h.label ? ` ${h.label}` : '')).join('; '))} | ${hits.some((h) => h.label) ? 'with the label you gave' : 'your inputs'} |`);
+                else
+                    bare.push(m);
+            }
+            const matrix = [`| Your stated outcome | ${cell(clean(args.key_outcome))}${oc.label && !/\(/.test(args.key_outcome) ? ` ${oc.label}` : ''} | your key_outcome |`, ...rows.slice(0, 6)].join('\n');
+            const matrixNote = v && bare.length ? `\nOther measures that ${lz.fn ? `a ${fnName(lz.fn)} team watches` : `buyers in ${v.name} watch`}, where your inputs give no figure yet: ${bare.slice(0, 5).join(', ')}. Add the ones your best customers can show before and after.` : '';
+            const hero = (() => {
+                let text = '';
+                for (const it of oc.items) {
+                    const sc = shortClause(clean(it), 11);
+                    if (sc && sc.split(/\s+/).length >= 3) {
+                        text = sc;
+                        break;
+                    }
+                }
+                if (!text)
+                    text = firstWords(clean(oc.items[0] || args.key_outcome), 8);
+                const k = kindOf(text);
+                return k === 'base' || /\bfor\b/i.test(text) ? `${capFirst(text)}. Built for ${sa}.` : `${capFirst(text)} for ${sa}.`;
+            })();
+            const heroLabel = oc.label && /\d/.test(hero) ? ` ${oc.label}` : '';
+            const cta = (0, rw_impact_ts_1.ctaNoun)(callsToAction(v, ctx.model)[0]);
+            const tailMissing = [];
+            if (!named)
+                tailMissing.push({ give: 'product_name', changes: 'every statement, which now says "our product"' });
+            if (!catTyped)
+                tailMissing.push({ give: 'category', changes: 'the "only" line and the sector read, which now rest on the other inputs' });
+            if (!(args.customer_metrics || '').trim())
+                tailMissing.push({ give: 'customer_metrics (one real customer result with its source)', changes: 'Tier 1 and the matrix, which quote no customer result today' });
+            if (!args.business_model && (!ctx.model || /assumed/.test(ctx.line)))
+                tailMissing.push({ give: 'business_model', changes: 'the proof types and calls to action, which follow the usual model of the sector today' });
+            tailMissing.push({ give: "the buyer's current pain and a payback period from your best customers", changes: 'the economic buyer statement, which has no payback figure to cite' });
+            const sharpen = (0, rw_impact_ts_1.sharpenLine)(tailMissing);
+            const objections = v ? `\n**Objections to prepare for** (the pattern of a good answer, from the sector notes):\n${v.objections.map((o) => `- "${o.objection}"${ctx.model === 'saas' || ctx.model === null || !verticals_ts_1.SAAS_ONLY.test(o.response) ? `: ${o.response}` : ''}`).join('\n')}\n` : '';
+            const sectorPart0 = v ? `\n${sectorBlock(v, lz.fn ? [] : ['vocabulary', 'committee'], 'Sector view')}${lz.fn ? `\n- **Who usually buys:** ${lz.fn.buyer} signs; ${lz.fn.champion} champions; ${lz.fn.tech} check the fit.\n${teamBlock(lz.fn, v)}` : ''}\n${objections}` : '';
+            const sectorPart = ctx.model === 'saas' || ctx.model === null ? sectorPart0 : (0, rw_impact_ts_1.noSeatWords)(sectorPart0);
+            const longAud = audFull.length > LONG_AT;
+            return `# Value Proposition${named ? `: ${named.length <= 60 ? named : P}` : ' Analysis'}
 
-## Positioning Inputs
-**Product**: ${args.product_name || 'not supplied'}
-**Category**: ${args.category || 'not supplied (the lines below say "solution")'}
-**Target Customer**: ${args.target_customer}
-**Key Outcome**: ${args.key_outcome}
-**Unique Capability**: ${args.unique_capability}
-${metrics ? `**Reported Metrics** (supplied by you: use only what is real and you can show): ${metrics}` : '**Reported Metrics**: not supplied, so no result is quoted below; add customer_metrics to fill the matrix and the proof lines'}
-${ctx.line}${longNote(args.target_customer, args.key_outcome, args.unique_capability, args.customer_metrics)}
+${longAud ? `**Who this is for:** ${audFull}.` : `**Who this is for:** ${capFirst(audFull)}.`}${catTyped ? ` ${capFirst(P)} is ${aOrAn(catMid)} ${catMid}.${catRest ? ` It covers ${catRest}.` : ''}` : ''}
+${ctx.line}
 
 ---
 
@@ -1860,46 +1906,46 @@ ${ctx.line}${longNote(args.target_customer, args.key_outcome, args.unique_capabi
 The "only" claim stays inside brackets until it is true and you can prove it.
 
 ### Version 1 (Category-focused)
-> [Only if true and provable: **${P}** is the only ${mid(category)} ${onlyWith(capab)}. It gives ${aud} this result: ${q(outcome)}.]
+> [Only if true and provable: **${P}** is the only ${catMid} ${onlyWith(capLead)}. It helps ${aud} ${outLead}${lab}.]
 
 ### Version 2 (Outcome-focused)
-> We help **${aud}** ${inf(outcome)}. ${capFirst(diffSentence(P, capab))}. [Only if true and provable: no other ${mid(category)} can say the same.]
+> We help **${aud}** ${outLead}${lab}. ${capFirst(capSentence)}. [Only if true and provable: no other ${catMid} can say the same.]
 
-### Version 3 (Problem-focused)
-> [Only if true and provable: Unlike the alternatives in ${mid(catPlain)},] ${capFirst(diffSentence(P, capab))}, so ${aud} can ${inf(outcome)}.
+### Version 3 (Capability-focused)
+> [Only if true and provable: Unlike the alternatives in ${catPlainMid},] ${capSentence}, so ${aud} can ${outLead}${lab}.
 
 ---
 
 ## Value Quantification Matrix
 
-This tool adds no figure of its own. The first row is your outcome; the other rows are the measures ${v ? `${lz.fn ? `a ${fnName(lz.fn)} team` : `buyers in ${v.name}`} already watch` : 'to fill'}, with what your inputs say about each; the before and after cells are for your numbers${metricItems.length ? '. The results you supplied are listed under Tier 1 below, because most are results or recognition rather than a before and after measure' : ''}.
-| What to measure | What your inputs say | Before (their number) | With ${P} (their number) | Source |
-|-----------------|----------------------|-----------------------|--------------------------|--------|
-${matrixRows.join('\n')}
+This tool adds no figure of its own. The first row is your outcome; the other rows are the measures ${v ? `${lz.fn ? `a ${fnName(lz.fn)} team already watches` : `buyers in ${v.name} already watch`}` : 'your inputs speak to'} that your inputs already answer. At each customer, measure the same thing before and after, from the customer's own data, and name the period.
+
+| What to measure | What your inputs say | Where it comes from |
+|-----------------|----------------------|---------------------|
+${matrix}
+${matrixNote}
 
 ---
 
 ## Proof Point Framework
 
 ### Tier 1: Customer Results (Strongest)
-Use these patterns to document customer success:
+${results.length ? `Results you supplied (supplied by you: use one only if it is real and you can show it):\n${list(results.map((r) => r.text))}` : `You supplied no customer result, so none is quoted in this answer. The strongest proof for ${P} is one named customer with a before and after on ${measures[0] ? measures[0] : 'the result your outcome names'}, from the customer's own data and with the period named.`}
 
-> **"<A named customer> improved ${v ? lz.metrics[0] : '<the measure>'} from <before> to <after> over <time frame>"**  (the pattern: fill it only from a customer's own figures)
-${metricItems.length ? `\n**Results you supplied** (use one only if it is real and you can show it):\n${list(metricItems)}\n` : ''}
-**Proof Collection Questions** (ask your existing customers):
-1. "What measure improved most after implementing us?"
+**Proof collection questions** (ask your existing customers):
+1. "What measure improved most after working with ${named ? P : 'us'}?"
 2. "How much time does your team save, and on what?"
-3. "What would you have to spend to achieve this otherwise?"
+3. "What would you have had to spend to achieve this otherwise?"
 4. "What was the payback period?"
 ${v ? `\n**What a good proof point looks like in ${v.name}:** ${lz.proof}\n` : ''}
 ### Tier 2: Third-Party Validation
-- ${notes.proofTiers[0]}
+${tier(2).length ? `Recognition you supplied (supplied by you: use it only as worded and sourced):\n${list(tier(2).map((r) => r.text))}\n\n` : ''}${tier(2).length ? 'Also worth collecting' : 'To collect'}: ${lc1(notes.proofTiers[0])}.
 
 ### Tier 3: Technical or Operational Proof
-- ${notes.proofTiers[1]}
+- ${notes.proofTiers[1]}${capShown.length && !capShown.some((x) => /^(?:[“"])/.test(x)) ? `\n- For the technical evaluator, line up evidence for the first claims in your capability list: ${capShown.join(capShown.some((x) => /,/.test(x)) ? '; ' : ', ')}.` : ''}
 
 ### Tier 4: Social Proof
-- ${notes.proofTiers[2]}
+${tier(4).length ? `Scale and voices you supplied (supplied by you: keep the label you gave):\n${list(tier(4).map((r) => r.text))}\n\n` : ''}${tier(4).length ? 'Also worth collecting' : 'To collect'}: ${lc1(notes.proofTiers[2])}.
 
 ---
 
@@ -1907,30 +1953,30 @@ ${v ? `\n**What a good proof point looks like in ${v.name}:** ${lz.proof}\n` : '
 
 ### For Different Audiences
 
-**For Champions (${shortText(noNotes(args.target_customer))})**:
-> "${capFirst(P)} helps you ${inf(outcome)}. ${metricItems.length ? `A result to cite (yours, only if real): ${shortText(metricItems[0], 260)}.` : 'No customer result was supplied, so none is quoted: add customer_metrics.'}"
+**For the champion (${champion || sa}):**
+> "${capFirst(P)} helps you ${outLead}${lab}."
 
-**For Economic Buyers (${signer})**:
-> "${capFirst(P)} helps ${aud} ${inf(outcome)}. ${metricItems.length ? `A result to cite (yours, only if real): ${shortText(metricItems[0], 260)}. ` : ''}${notes.cost ? `[Only if true and provable: ${notes.cost} than the alternatives.]` : ''}"
+**For the economic buyer (${signer}):**
+> "${capFirst(P)} helps ${aud} ${outLead}${lab}.${cite ? ` A result to cite: ${clean(cite)}.` : ''}"
 
-**For Technical Evaluators**:
-> "${capFirst(diffSentence(P, capab))}."
+The ${signer === 'the budget owner' ? 'budget owner' : signer} will weigh ${notes.commercial}; have an answer ready for each.
 
-*Not filled, because your inputs do not give them: the current pain point, a payback period and how it fits the systems the buyer already runs. Ask your best customers for them (see the proof questions above).*
+**For the technical evaluator${evaluator ? ` (${evaluator}${evaluator === champion ? ', who also champion it' : ''})` : ''}:**${evaluatorChecks ? `\n${evaluatorChecks}` : ''}
+> "${capFirst(P)}: ${capText}."
 
 ### For Different Channels
 
-**Website Hero** (15 words max):
-> "${heroLine(outcome, sa, catPlain && args.category ? `${catPlain}` : P)}"
+**Website Hero** (one line):
+> "${hero}"${heroLabel}
 
 **LinkedIn Post** (Hook):
-> "${capFirst(sa)}: is this on your list this year: ${q(outcome)}? ${capFirst(diffSentence(P, capab))}."
+> "${capFirst(sa)}: what would it change if you could ${outFirst}${oc.label && /\d/.test(outFirst) ? ` ${oc.label}` : ''}? Here is how: ${capFirst(capSentence)}."
 
 **Cold Email** (Value prop):
-> "We help companies like yours ${inf(outcome)}. ${metricItems.length ? `A recent result (yours, only if real): ${shortText(metricItems[0], 260)}.` : 'No customer result was supplied, so none is quoted.'}"
+> "Hello, we help ${aud} ${outLead}${lab}.${cite ? ` For example: ${clean(cite)}.` : ''} Would ${cta} be useful?"
 
 **Sales Deck** (Slide title):
-> [Only if true and provable: "The only ${mid(category)} ${onlyWith(capab)}"]
+> [Only if true and provable: "The only ${catMid} ${onlyWith(capLead)}"]
 
 ---
 
@@ -1942,10 +1988,9 @@ Before finalizing, validate with prospects:
 2. **Relevance**: "How important is this result to you right now?"
 3. **Differentiation**: "Have you heard anything like this from other vendors?"
 4. **Believability**: "What would you need to see to believe this?"
-${v ? `\n${sectorBlock(v, lz.fn ? ['objections'] : ['vocabulary', 'committee', 'objections'], 'Sector view')}${lz.fn ? `\n- **Who usually buys:** ${lz.fn.buyer} signs; ${lz.fn.champion} champions; ${lz.fn.tech} check the fit.\n${teamBlock(lz.fn, v)}` : ''}\n` : ''}
+${sectorPart}
+${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
 **Next Step**: Use \`impact_anchor_market\` to select your beachhead market segment
-
-${SUGGESTED}
 `;
         }
     },
@@ -2126,30 +2171,59 @@ ${SUGGESTED}
             const segLine = segGiven ? '' : '\nExample segment: replace with your own.\n';
             const acvShown = acvGiven ? `${acvGiven}${/\bACV\b/i.test(acvGiven) ? '' : ' ACV'}` : 'your price';
             const c = v ? committeeParts(v) : null;
-            // Run 20 round 3: a short section built from the user's own inputs comes before the keyword scores (the scores themselves are unchanged, D80).
+            // Run 22 rewrite: from here down the answer is a finished analysis. The scores, the presets and the sizing arithmetic are unchanged (D80, D94); what is new is a plain
+            // verdict first, the user's own inputs used segment by segment, and one closing list of what is missing.
+            const prodName = (0, rw_impact_ts_1.plainName)(args.product_description, runningName(args.product_description.trim())) || 'Your product';
+            const prodText = args.product_description.trim().length <= 400 ? args.product_description.trim() : (0, rw_impact_ts_1.clip)(args.product_description, 300);
             const ccText = (args.current_customers || '').trim();
             const ccStems = contentStems(ccText);
             const overlap = (seg) => [...contentStems(seg.replace(/\([^)]*\)/g, ''))].filter((x) => ccStems.has(x));
+            const prodStems = contentStems(args.product_description);
+            const prodShare = (seg) => [...contentStems(seg.replace(/\([^)]*\)/g, ''))].filter((x) => prodStems.has(x));
+            // The words behind a shared stem, as the segment name spells them ("retai" is the stem of "retail").
+            const real = (seg, stems) => [...new Set((seg.toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => stems.includes(w.slice(0, 5))))];
             const matchedSegs = segmentScores.map((x) => ({ x, hit: overlap(x.name) })).filter((m) => m.hit.length).sort((a, b) => b.hit.length - a.hit.length);
             const secondView = ccText
                 ? matchedSegs.length
-                    ? `**Second view (from your current customers; it is separate from the keyword scores below and does not change them).** These segments share words with the customers you described, strongest first: ${matchedSegs.map((m) => `${m.x.name} (shares "${m.hit.join('", "')}")`).join('; ')}. The segment where your customers already are is the strongest candidate for a first beachhead.`
-                    : `**Second view.** None of the segment names shares a word with the customers you described (${q(shortText(ccText, 120))}). Say which segment each of your customers belongs to, and the segment with the most customers is your strongest candidate.`
-                : 'Add current_customers (who your best customers are today, in the segments you listed) to get a second view that ranks the segments by where your customers already are. Until then the scores below are only a keyword match.';
+                    ? `**Second view (from your current customers; it is separate from the keyword scores below and does not change them).** These segments share words with the customers you described, strongest first: ${matchedSegs.map((m) => `${m.x.name} (shares "${real(m.x.name, m.hit).join('", "')}")`).join('; ')}. The segment where your customers already are is the strongest candidate for a first beachhead.`
+                    : `**Second view.** None of the segment names shares a word with the customers you described. Say which segment each of your customers belongs to, and the segment with the most customers is your strongest candidate.`
+                : 'No current_customers were given, so no segment can be tied to where your customers already are, and the scores below are only a keyword match.';
+            const dealWord = acvGiven ? acvGiven : 'your price';
+            const nSeg = segmentScores.length;
+            const topShares = beachhead.ownRef.length || beachhead.ownPain.length
+                ? `, because its name shares ${[beachhead.ownRef.length ? `"${real(beachhead.name, beachhead.ownRef).join('", "')}" with your customers` : '', beachhead.ownPain.length ? `"${real(beachhead.name, beachhead.ownPain).join('", "')}" with your pain` : ''].filter(Boolean).join(' and ')}`
+                : '';
+            const inShort = ownMethod
+                ? (allTied
+                    ? `${prodName}: none of your ${nSeg} segment names shares a word with your customers or your pain, so the scores built from them tie and choose nothing. Use the checks below to choose.`
+                    : `${prodName}: your ${nSeg} segments were ranked from your own customers, pain and deal size, and ${beachhead.name} comes first${topShares}.${tied.length > 1 ? ` ${tied.map((t) => t.name).join(' and ')} tie for the top score, and ${beachhead.name} is shown first only because you listed it first.` : ''} The match is by words, so ask three buyers in ${tied.length > 1 ? 'those segments' : beachhead.name} which problem they raise first before you commit.`)
+                : (tied.length > 1
+                    ? `${prodName}: the segments were scored with keyword presets (${missingForOwn.join(', ')} not given), and the presets cannot separate ${tied.length === nSeg ? `any of your ${nSeg} segments` : `the top ${tied.length} segments (${tied.map((t) => t.name).join(', ')})`}. Choose between them with the segment-by-segment checks below, which use your deal size${cycleGiven ? ' and sales cycle' : ''}.`
+                    : `${prodName}: the segments were scored with keyword presets (${missingForOwn.join(', ')} not given). ${beachhead.name} comes first only because its name contains the keyword "${beachhead.kw}"; the score does not use your deal size${acvGiven ? ` of ${acvGiven}` : ''}${cycleGiven ? `, your sales cycle of ${cycleGiven}` : ''} or anything known about your market. Treat ${beachhead.name} as the segment to test first, and settle the ranking with the segment-by-segment checks below.`);
+            const nsw = (t) => (ctx.model === 'saas' || ctx.model === null ? t : (0, rw_impact_ts_1.noSeatWords)(t));
+            const askQ = (i) => nsw(v && v.discovery.length ? v.discovery[i % v.discovery.length] : 'Which problem do you raise first, and what have you tried before?');
+            const perSegment = segmentScores.map((s, i) => {
+                const pshare = prodShare(s.name), cshare = overlap(s.name);
+                return `**${s.name}** (${ownMethod ? `${s.total} of 25 from your own inputs` : s.keyword ? `${s.total} of 25 from the keyword "${s.kw}"` : `${s.total} of 25, no keyword`}).${pshare.length ? ` Your product description shares "${real(s.name, pshare).join('", "')}" with this segment name.` : ''}${cshare.length ? ` Your customers share "${real(s.name, cshare).join('", "')}" with it.` : ''} Ask three buyers there: ${q(askQ(i))}`;
+            }).join('\n\n');
             const howToDecideKeyword = `## How to decide, from your own inputs
 
-What you gave: deal size ${acvGiven || 'not given'}, sales cycle ${cycleGiven || 'not given'}, current customers ${ccText ? 'given' : 'not given'}. The keyword scores below do not use any of these, so use them first:
+What you gave: deal size ${acvGiven || 'not given'}, sales cycle ${cycleGiven || 'not given'}, current customers ${ccText ? `(${q((0, rw_impact_ts_1.clip)(ccText, 200))})` : 'not given'}. The keyword scores below do not use any of these, so use them first:
 
 - ${secondView}
-- **Deal size and cycle.** ${acvGiven || cycleGiven ? `A deal of ${acvGiven || 'your size'}${cycleGiven ? ` with a cycle of ${cycleGiven}` : ''} needs, in each segment, a buyer who can approve that amount and a team that can run a process of that length. Check that for each segment before you rank it.` : 'Add average_deal_size and sales_cycle: each segment must have a buyer who can approve that amount and run a process of that length.'}
-- **Strongest pain.** Ask three buyers in each segment which problem they raise first; the segment where it is raised unprompted comes first.
+- **Deal size and cycle.** ${acvGiven || cycleGiven ? `A deal of ${acvGiven || 'your size'}${cycleGiven ? ` with a cycle of ${cycleGiven}` : ''} needs, in each segment, a buyer who can approve that amount and a team that can run a process of that length. Check that for each segment before you rank it.` : 'Each segment must have a buyer who can approve your price and a team that can run a process of your sales length. Check that for each segment before you rank it.'}
+- **Strongest pain.** ${painText ? `Your customers describe it as ${q((0, rw_impact_ts_1.clip)(painText, 200))}. Ask three buyers in each segment whether they raise that first; the segment where it is raised unprompted comes first.` : 'Ask three buyers in each segment which problem they raise first; the segment where it is raised unprompted comes first.'}
+
+### Segment by segment
+
+${perSegment}
 
 ---
 
 `;
             const howToDecide = ownMethod ? `## How the segments were ranked, from your own inputs
 
-What you gave: deal size ${acvGiven}, sales cycle ${cycleGiven || 'not given'}, current customers given, customer pain given. The scores below are built from your customers, your pain and your deal size (see "Method used" above), not from keywords in the segment names.
+What you gave: deal size ${acvGiven}, sales cycle ${cycleGiven || 'not given'}, current customers (${q((0, rw_impact_ts_1.clip)(ccText, 200))}) and customer pain (${q((0, rw_impact_ts_1.clip)(painText, 200))}). The scores below are built from your customers, your pain and your deal size (see "Method used" above), not from keywords in the segment names.
 
 - **Check it with buyers.** The ranking shows where the words of your own customers and your pain point; ask three buyers in the segment at the top which problem they raise first before you commit.
 - **Deal size and cycle.** A deal of ${acvGiven}${cycleGiven ? ` with a cycle of ${cycleGiven}` : ''} needs, in each segment, a buyer who can approve that amount and a team that can run a process of that length. Check that for each segment before you rank it.
@@ -2157,17 +2231,37 @@ What you gave: deal size ${acvGiven}, sales cycle ${cycleGiven || 'not given'}, 
 ---
 
 ` : howToDecideKeyword;
+            const sharpenItems = [];
+            if (!segGiven)
+                sharpenItems.push({ give: 'potential_segments', changes: 'the whole answer, which now scores three example segments' });
+            if (!ccText0)
+                sharpenItems.push({ give: 'current_customers', changes: 'the ranking, which would follow where your best customers already are' });
+            if (!painText)
+                sharpenItems.push({ give: 'customer_pain', changes: 'the ranking, which would follow the problem your customers describe; with current_customers and average_deal_size it replaces the keyword presets' });
+            if (!acvNumber)
+                sharpenItems.push({ give: 'average_deal_size', changes: 'the deal-fit checks and the sizing, which now say "your price"' });
+            if (!cycleGiven)
+                sharpenItems.push({ give: 'sales_cycle', changes: 'the deal-fit checks, which cannot name how long a decision may take' });
+            if (beachCount === null)
+                sharpenItems.push({ give: counts.length ? `company_counts for ${beachhead.name} (a line written as "${beachhead.name}: " followed by the number)` : 'company_counts, one line per segment', changes: 'the sizing, which cannot yet count companies' + (ownMethod ? ' and the budget score' : '') });
+            if (pct === null)
+                sharpenItems.push({ give: 'percent_matching_icp', changes: 'SAM, which cannot be calculated yet' });
+            if (share === null)
+                sharpenItems.push({ give: 'year_one_share_percent', changes: 'SOM and the Year 1 customer goal' });
+            const sharpen = (0, rw_impact_ts_1.sharpenLine)(sharpenItems);
             return `# Beachhead Market Selection
 
+## In short
+
+${inShort}${segGiven ? '' : ' You gave no segments, so the segments below are examples.'}
+
 ## Market Context
-**Product**: ${args.product_description}
-**Average Deal Size**: ${acvGiven || 'not supplied (market sizing needs it: add average_deal_size, for example "$50,000")'}
-**Sales Cycle**: ${cycleGiven || 'not supplied'}
-${args.current_customers ? `**Current Customers**: ${args.current_customers}` : ''}
-${painText ? `**Customer Pain**: ${painText}` : ''}
+
+**Product**: ${prodText}
+**Average Deal Size**: ${acvGiven || 'not given'}
+**Sales Cycle**: ${cycleGiven || 'not given'}
 **Method used: ${ownMethod ? 'ranked from your own customers, pain and deal size' : `keyword presets (not given: ${missingForOwn.join(', ')}; with potential_segments, current_customers, customer_pain and average_deal_size the segments are ranked from your own inputs instead)`}.**
-${dropped.length ? `**Segments listed twice**: ${dropped.map((d) => `"${d}"`).join(', ')} was listed more than once and is scored once (duplicate dropped).` : ''}
-${ctx.line}
+${dropped.length ? `**Segments listed twice**: ${dropped.map((d) => `"${d}"`).join(', ')} was listed more than once and is scored once (duplicate dropped).\n` : ''}${ctx.line}
 
 ---
 
@@ -2191,38 +2285,38 @@ ${segmentScores.map((s, i) => `| ${i === 0 && !allTied ? '**' + s.name + '** (be
 ---
 
 ## ${allTied ? `No segment is chosen by the scores: ${tied.length} segments tie` : `Recommended Beachhead: ${beachhead.name}`}
-${segLine}${tieLine}${!ownMethod && tied.length === 1 && beachhead.keyword ? `\n*Read this as the highest keyword match only: ${beachhead.name} scores highest because its name contains the keyword "${beachhead.kw}", not because of anything known about your market. Score each segment yourself with your own data before you commit.*\n` : ''}
-**What decided each score:** ${segmentScores.map((x) => ownMethod ? `${x.name}: ${x.ownRef.length ? `shares "${x.ownRef.join('", "')}" with your customers` : 'shares no word with your customers'}; ${x.ownPain.length ? `shares "${x.ownPain.join('", "')}" with your pain` : 'shares no word with your pain'}; ${x.ownTam !== null && maxTam ? `market value ${usdFull(x.ownTam)} from your counts and deal size` : 'budget at the middle score (no counts for two segments)'}` : `${x.name}: ${x.keyword ? `the word "${x.kw}"` : 'no keyword, so the middle score'}`).join('; ')}.
+${tieLine}${!ownMethod && tied.length === 1 && beachhead.keyword ? `\n*Read this as the highest keyword match only: ${beachhead.name} scores highest because its name contains the keyword "${beachhead.kw}", not because of anything known about your market. Score each segment yourself with your own data before you commit.*\n` : ''}
+**What decided each score:** ${segmentScores.map((x) => ownMethod ? `${x.name}: ${x.ownRef.length ? `shares "${real(x.name, x.ownRef).join('", "')}" with your customers` : 'shares no word with your customers'}; ${x.ownPain.length ? `shares "${real(x.name, x.ownPain).join('", "')}" with your pain` : 'shares no word with your pain'}; ${x.ownTam !== null && maxTam ? `market value ${usdFull(x.ownTam)} from your counts and deal size` : 'budget at the middle score (no counts for two segments)'}` : `${x.name}: ${x.keyword ? `the word "${x.kw}"` : 'no keyword, so the middle score'}`).join('; ')}.
 
 ${tied.length > 1 || (!ownMethod && beachhead.keyword) ? `### ${tied.length > 1 ? 'What would break the tie' : 'Before you trust this ranking'}
 
-${ownMethod ? 'The ranking uses the words your segment names share with your customers and your pain, so name the segment in your own words where you can.' : 'The scores come from words in the segment names, so these inputs would give a real answer.'} Ask for them before you pick a beachhead:
-1. **Which segment already holds your own customers?** Put them in \`current_customers\` (today they are shown but do not change the scores). The segment where your customers already are is the strongest candidate for a first beachhead.
+${ownMethod ? 'The ranking uses the words your segment names share with your customers and your pain, so name the segment in your own words where you can.' : 'The scores come from words in the segment names, so settle the ranking with these checks:'}
+1. **Which segment already holds your own customers?** The segment where your customers already are is the strongest candidate for a first beachhead.
 2. **Where is the strongest pain?** In which segment do buyers raise this problem first, or lose most to it? Ask three buyers in each segment.
 3. **Which segment can pay ${acvGiven ? acvShown : 'your price'} and has a buyer you can reach?** The roles in the sector view below say who to look for.
-4. Drop the segments that fail, run the tool again with the one or two that are left, and add \`company_counts\`, \`percent_matching_icp\` and \`year_one_share_percent\` for the sizing.
+4. Drop the segments that fail and keep the one or two that are left for the sizing below.
 
 ` : ''}### How This Segment Scored
 
 ${EXAMPLES}
 **${tied.length > 1 ? 'Joint highest score' : 'Highest score'} (${beachhead.total}/25)**, ${ownMethod ? 'from your own inputs' : 'from the presets'}:
 - Pain Intensity ${beachhead.pain}/5 | Budget ${beachhead.budget}/5 | Accessibility ${beachhead.access}/5 | Reference Value ${beachhead.reference}/5 | Competition (less contested is higher) ${beachhead.competition}/5
-${ownMethod ? `- Budget ${beachhead.budget}/5 comes from ${beachhead.ownTam !== null && maxTam ? 'your company counts times your deal size' : 'the middle score (give company_counts for at least two segments to score it from your own figures)'}; Accessibility and Competition are the middle score 3 because your inputs say nothing about them.` : beachhead.budget >= 4 ? `- Budget ${beachhead.budget}/5 is a preset for this keyword: check it against your own price${acvGiven ? ` (${acvShown})` : ''} before you rely on it.` : `- Budget ${beachhead.budget}/5 is a preset: ${acvGiven ? `check whether ${acvShown} fits this segment's budgets` : 'add average_deal_size to compare with your price'}.`}
+${ownMethod ? `- Budget ${beachhead.budget}/5 comes from ${beachhead.ownTam !== null && maxTam ? 'your company counts times your deal size' : 'the middle score (company_counts for at least two segments would score it from your own figures)'}; Accessibility and Competition are the middle score 3 because your inputs say nothing about them.` : beachhead.budget >= 4 ? `- Budget ${beachhead.budget}/5 is a preset for this keyword: check it against your own price${acvGiven ? ` (${acvShown})` : ''} before you rely on it.` : `- Budget ${beachhead.budget}/5 is a preset: ${acvGiven ? `check whether ${acvShown} fits what this segment can spend.` : 'check it against your own price.'}`}
 ${!ownMethod && beachhead.access <= 2 ? `- Accessibility ${beachhead.access}/5 is low in the preset: plan how you will reach these buyers (a channel, a partner or a referral).` : ''}
 
-${v ? `${sectorBlock(v, ['vocabulary', 'committee', 'metrics', 'proof', 'motion'], 'What to check in each segment (sector view)')}\n\nBefore you commit to a segment, check that the roles above exist in its companies, that they can reach your price, and that the sector's usual objections do not block the first sale.${ctx.model ? ` In a business like yours, buyers also weigh: ${MODEL_NOTES[ctx.model].commercial}.` : ''}\n` : ''}
+${v ? `${ctx.model === 'saas' || ctx.model === null ? sectorBlock(v, ['vocabulary', 'committee', 'metrics', 'proof', 'motion'], 'What to check in each segment (sector view)') : (0, rw_impact_ts_1.noSeatWords)(sectorBlock(v, ['vocabulary', 'committee', 'metrics', 'proof', 'motion'], 'What to check in each segment (sector view)'))}\n\nBefore you commit to a segment, check that the roles above exist in its companies, that they can reach your price, and that the sector's usual objections do not block the first sale.${ctx.model ? ` In a business like yours, buyers also weigh: ${MODEL_NOTES[ctx.model].commercial}.` : ''}\n` : ''}
 ---
 
 ## Market Sizing (your figures only)
 
 This tool adds no company count, ICP share, market share or deal size of its own. TAM, SAM and SOM are calculated only from the figures you supply: company_counts, average_deal_size, percent_matching_icp and year_one_share_percent.
-${segLine}
+
 | Figure | Value | Source |
 |--------|-------|--------|
-| Companies in ${beachhead.name} | ${beachCount !== null ? beachCount.toLocaleString('en-US') : 'not supplied'} | ${beachCount !== null ? 'your company_counts' : 'add company_counts'} |
-| Average deal size | ${acvGiven || 'not supplied'} | ${acvGiven ? 'your average_deal_size' : 'add average_deal_size'} |
-| % that match your ICP | ${pct !== null ? `${pctText(pct)}%` : 'not supplied'} | ${pct !== null ? 'your percent_matching_icp' : 'add percent_matching_icp'} |
-| Year 1 share | ${share !== null ? `${pctText(share)}%` : 'not supplied'} | ${share !== null ? 'your year_one_share_percent' : 'add year_one_share_percent'} |
+| Companies in ${beachhead.name} | ${beachCount !== null ? beachCount.toLocaleString('en-US') : 'not supplied'} | ${beachCount !== null ? 'your company_counts' : 'not supplied'} |
+| Average deal size | ${acvGiven || 'not supplied'} | ${acvGiven ? 'your average_deal_size' : 'not supplied'} |
+| % that match your ICP | ${pct !== null ? `${pctText(pct)}%` : 'not supplied'} | ${pct !== null ? 'your percent_matching_icp' : 'not supplied'} |
+| Year 1 share | ${share !== null ? `${pctText(share)}%` : 'not supplied'} | ${share !== null ? 'your year_one_share_percent' : 'not supplied'} |
 ${[pct, share].some((x) => x !== null && pctText(x) !== String(x)) ? '\n*Percentages are shown to one decimal; the sizing uses the exact figures you gave.*\n' : ''}${unreadable.length ? `\nNot read as a count (no number in it): ${unreadable.map((u) => `"${u}"`).join('; ')}.\n` : ''}
 \`\`\`
 TAM = Total potential customers × ACV
@@ -2234,45 +2328,41 @@ ${sam !== null ? `SAM = ${usd(tam)} × ${pctText(pct)}%\nSAM = ${usdFull(sam)} (
 SOM = SAM × expected market share (Year 1)
 ${som !== null ? `SOM = ${usd(sam)} × ${pctText(share)}%\nSOM = ${usdFull(som)} (${usd(som)})` : `SOM: cannot be calculated yet`}
 \`\`\`
-${needs.length ? `\n**To finish the sizing, add:** ${needs.join('; ')}.\n` : ''}${counts.length > 1 && acvNumber ? `\n### TAM by segment (your counts × your deal size)\n| Segment | Companies | TAM |\n|---------|-----------|-----|\n${segmentScores.map((s) => { const n = countFor(s.name); return n === null ? null : `| ${s.name} | ${n.toLocaleString('en-US')} | ${usd(n * acvNumber)} |`; }).filter(Boolean).join('\n')}\n` : ''}
-**Validation Required**: Check your counts with:
-1. Industry databases or analyst reports you trust
-2. LinkedIn Sales Navigator company counts
-3. Customer interviews on how the segment sees the problem
+${counts.length > 1 && acvNumber ? `\n### TAM by segment (your counts × your deal size)\n| Segment | Companies | TAM |\n|---------|-----------|-----|\n${segmentScores.map((s) => { const n = countFor(s.name); return n === null ? null : `| ${s.name} | ${n.toLocaleString('en-US')} | ${usd(n * acvNumber)} |`; }).filter(Boolean).join('\n')}\n` : ''}
+**Validation Required**: Check your counts with industry databases or analyst reports you trust, with LinkedIn Sales Navigator company counts, and in customer interviews on how the segment sees the problem.
 
 ---
 
 ## Beachhead Expansion Path
 
-### Year 1: ${allTied ? `Start with the segment you choose (shown here: ${beachhead.name}, the first you listed)` : `Dominate ${beachhead.name}`}
-${segLine}- Focus: your whole GTM effort on this segment
-- Goal: ${customers !== null ? customersText(customers) + ' (your counts and percentages)' : 'not given: the customer target comes from the sizing above once you give company_counts, percent_matching_icp and year_one_share_percent'}
-- Revenue: ${som !== null ? `${usd(som)} (SOM, from your figures)` : 'not given: it comes from the same sizing'}
+### Year 1: ${allTied ? `Start with the segment you choose (shown here: ${beachhead.name}, the first you listed)` : `Focus on ${beachhead.name}`}
+- Focus: your whole GTM effort on this segment
+- Goal: ${customers !== null ? customersText(customers) + ' (your counts and percentages)' : 'the customer target comes from the sizing above once company_counts, percent_matching_icp and year_one_share_percent are given'}
+- Revenue: ${som !== null ? `${usd(som)} (SOM, from your figures)` : 'comes from the same sizing'}
 
 ### Year 2: Adjacent Expansion
 - Add: ${allTied ? 'the segment you rank next after the first one is chosen and its results are in (the scores tie, so none is ahead)' : `${segmentScores[1]?.name || 'the next highest-scoring segment'}${segmentScores[1] ? segEx : ''}`}
-- Leverage: References from beachhead customers
+- Leverage: references from beachhead customers
 - Goal: set it after the first beachhead results are in
 
 ### Year 3: Market Leadership
-- Expand: Full SAM coverage
-- Position: ${allTied ? 'set it once you have chosen a first segment and have its results' : `Category leader in ${beachhead.name}${segEx}`}
+- Expand: full SAM coverage
+- Position: ${allTied ? 'set it once you have chosen a first segment and have its results' : `decide it from the Year 1 and Year 2 results in ${beachhead.name}${segEx}`}
 
 ---
 
 ## ICP Hypothesis for ${beachhead.name}${allTied ? ' (the first segment you listed; the scores tie)' : ''}
-${segLine}
-Based on beachhead selection, your ICP likely includes:
+
+Based on the beachhead selection, your ICP likely includes:
 
 **Company Characteristics**:
 - Industry: ${beachhead.name.split('(')[0].trim()}
-- Size: ${(() => { const br = beachhead.name.match(/\(([^)]+)\)/)?.[1]; return br && /\d|employees|revenue|small|large|mid/i.test(br) ? `${br}${!segGiven ? ` ${EXAMPLE}` : ''}` : 'not given: describe the size of your best customers (current_customers is shown at the top but does not change the scores)'; })()}
-- Systems it must work with: not given: ask your best customers which systems yours must work with
-${c ? `\n**Buying Characteristics**:\n- Decision maker: ${c.signer} signs; ${c.champion} is the likeliest champion (this sector's usual committee)` : '\n**Buying Characteristics**:\n- Decision maker: not clear, because no sector was read: name the industry in product_description for the usual committee'}
-- Budget: ${acvGiven ? `your price is ${acvGiven}; confirm that this segment's budget holders can approve that amount` : 'not given: add average_deal_size'}
-- Sales cycle: ${cycleGiven || 'not supplied'}
-- Buying trigger: ${v ? `ask your best customers what set off their purchase. In this sector: ${v.salesMotion}` : 'ask your best customers what set off their purchase (an audit finding, a season or a competitive threat are common)'}
-
+- Size: ${(() => { const br = beachhead.name.match(/\(([^)]+)\)/)?.[1]; return br && /\d|employees|revenue|small|large|mid/i.test(br) ? `${br}${!segGiven ? ` ${EXAMPLE}` : ''}` : 'not given, so no size is assumed'; })()}
+${c ? `\n**Buying Characteristics**:\n- Decision maker: ${c.signer} signs; ${c.champion} is the likeliest champion (this sector's usual committee)` : '\n**Buying Characteristics**:\n- Decision maker: no sector was read, so no committee is assumed'}
+- Budget: ${acvGiven ? `your price is ${acvGiven}; confirm that this segment's budget holders can approve that amount` : 'no price was given, so no budget is assumed'}
+- Sales cycle: ${cycleGiven || 'not given'}
+- Buying trigger: ${v ? `ask your best customers what set off their purchase. In this sector: ${nsw(v.salesMotion)}` : 'ask your best customers what set off their purchase (an audit finding, a season or a competitive threat are common)'}
+${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
 **Next Step**: Use \`impact_craft_message\` to build positioning for this beachhead
 `;
         }
