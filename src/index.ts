@@ -325,14 +325,14 @@ const clean = (s: string): string => s.trim().replace(/[.!]+$/, '');
 // The sector and the business model read from the inputs, with one line saying how they were read.
 // Run 20 round 1: the seller's own fields go first and the buyer's fields second (src/verticals.ts reads them in that order).
 // `core` is what the user wrote to say what the product is (description, category); `later` is the other text about the product
-// (capability, differentiation, positioning); `names` are brand names, which can mislead ("Sonata Software" is not a software
+// (capability, differentiation, positioning); `names` are brand names, which can mislead ("Brightfield Software" is not a software
 // subscription) and are read last. The sector is taken from `core` when it names one, then from core plus later plus names, then
 // from the deal text, job titles and the buyer. The business model is read from core plus later only.
 interface Read { core?: unknown[]; later?: unknown[]; names?: unknown[]; context?: unknown[]; role?: unknown[]; buyer?: unknown[]; }
 function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; model: BusinessModel | null; line: string } {
-  // A brand name is not a sector word ("Sonata Software" is not a software product): it is taken out of the other texts before they are read.
+  // A brand name is not a sector word ("Brightfield Software" is not a software product): it is taken out of the other texts before they are read.
   const nameList = (r.names || []).filter((x): x is string => typeof x === 'string' && x.trim().length >= 3).map((x) => x.trim());
-  const brand = /\b[A-Z][\w-]*\s+(?:Software|Technologies|Systems|Solutions|Labs|Infotech)\b/g; // "Sonata Software" is a company name, not a product word
+  const brand = /\b[A-Z][\w-]*\s+(?:Software|Technologies|Systems|Solutions|Labs|Infotech)\b/g; // "Brightfield Software" is a company name, not a product word
   const strip = (x: unknown): unknown => (typeof x === 'string' ? nameList.reduce((t, nm) => t.split(new RegExp(nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')).join(' '), x).replace(brand, ' ') : x);
   const coreT = (r.core || []).map(strip), laterT = (r.later || []).map(strip);
   const descr = [...coreT, ...laterT];

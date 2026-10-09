@@ -365,9 +365,9 @@ function q(s) {
 }
 const clean = (s) => s.trim().replace(/[.!]+$/, '');
 function readContext(explicitModel, r) {
-    // A brand name is not a sector word ("Sonata Software" is not a software product): it is taken out of the other texts before they are read.
+    // A brand name is not a sector word ("Brightfield Software" is not a software product): it is taken out of the other texts before they are read.
     const nameList = (r.names || []).filter((x) => typeof x === 'string' && x.trim().length >= 3).map((x) => x.trim());
-    const brand = /\b[A-Z][\w-]*\s+(?:Software|Technologies|Systems|Solutions|Labs|Infotech)\b/g; // "Sonata Software" is a company name, not a product word
+    const brand = /\b[A-Z][\w-]*\s+(?:Software|Technologies|Systems|Solutions|Labs|Infotech)\b/g; // "Brightfield Software" is a company name, not a product word
     const strip = (x) => (typeof x === 'string' ? nameList.reduce((t, nm) => t.split(new RegExp(nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')).join(' '), x).replace(brand, ' ') : x);
     const coreT = (r.core || []).map(strip), laterT = (r.later || []).map(strip);
     const descr = [...coreT, ...laterT];
