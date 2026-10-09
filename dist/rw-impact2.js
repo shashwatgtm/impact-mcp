@@ -288,22 +288,22 @@ function shortPhrase(b, max, kit, min = 3) {
     };
     return pass(false) ?? pass(true) ?? whole();
 }
-/** The first clause of a long text (before its first "with", "so that", comma or "that" once 25 characters are in), or null when the text is short or has no such boundary. */
+/** The first clause of a long text (before its first "with", "so that", comma or "that" once 18 characters are in), or null when the text is short or has no such boundary. */
 function leadClause(text, max = 110, need = false, tight = false) {
     const t = endStop(WS(text));
     if (t.length <= max)
         return null;
     const re = need ? /\s(?:so|while|but|because)\s|,\s|;\s/g : tight ? /\s(?:with|so that|so|which|that|while|because|using|across|including|for|within|from|over)\s|,\s|;\s/g : /\s(?:with|so that|so|which|that|while|because|using|across|including)\s|,\s|;\s/g;
-    let m;
-    while ((m = re.exec(t))) {
-        if (m.index >= 18 && m.index <= max) {
+    for (const m of t.matchAll(re)) {
+        const at = m.index ?? 0;
+        if (at >= 18 && at <= max) {
             // a comma inside a list ("combines A, B and C") is not a clause boundary: the piece after it is one to five words and the list goes on
             if (m[0].startsWith(',')) {
-                const after = t.slice(m.index + 2).split(/,|;|\sand\s|\sor\s/)[0].trim().split(/\s+/).length;
+                const after = t.slice(at + 2).split(/,|;|\sand\s|\sor\s/)[0].trim().split(/\s+/).length;
                 if (after <= 5)
                     continue;
             }
-            const left = t.slice(0, m.index).trim();
+            const left = t.slice(0, at).trim();
             if (/^\s(?:with|by|from|for|to)\s/.test(m[0]) && /(?:ed|ing)$/i.test(left.split(/\s+/).pop() || ''))
                 continue;
             const open = (left.match(/\(/g) || []).length - (left.match(/\)/g) || []).length;
@@ -412,7 +412,9 @@ function parseAlternative(text, kit) {
     const base = bracket ? bracket[1].trim() : t;
     const note = bracket ? bracket[2].trim() : '';
     const w0 = (base.split(/\s+/)[0] || '').toLowerCase();
-    const m = base.match(/^(.{3,}?)(?:,\s*|\s+)((?:that|which|who|where|whose|relying|relies|because|with)\b.*)$/i);
+    // "the old model: one firm writes the strategy, another builds the tech": the head before the colon names the alternative, what follows says how it works
+    const colon = base.match(/^([^:]{4,50}):\s+(.{12,})$/);
+    const m = colon && colon[1].split(/\s+/).length <= 6 ? [base, colon[1], colon[2]] : base.match(/^(.{3,}?)(?:,\s*|\s+)((?:that|which|who|where|whose|relying|relies|because|with)\b.*)$/i);
     let label = m && m[1].split(/\s+/).length >= 2 ? m[1].trim() : base;
     let tail = m && m[1].split(/\s+/).length >= 2 ? m[2].trim() : '';
     if (!tail && note)

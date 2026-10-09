@@ -37,7 +37,7 @@ test("craft: every input is used where it matters, in whole sentences", async ()
     const t = await call(TOOL, a);
     assert.ok(t.includes(a.product_name), a.product_name);
     for (const k of ["customer_need", "product_category", "competitor", "differentiation"]) {
-      for (const it of String(a[k]).split(/;\s+/).map((x) => x.replace(/\(page claim\)/, "").trim().replace(k === "competitor" ? /\s+(?:that|which|who|with|where|relying|relies|because|whose)\b.*$/ : /$^/, ""))) assert.ok(uses(t, it), `${a.product_name}: ${k} item not used: ${it}`);
+      for (const it of String(a[k]).split(/;\s+/).map((x) => x.replace(/\(page claim\)/, "").trim().replace(k === "competitor" ? /(?:\s+(?:that|which|who|with|where|relying|relies|because|whose)\b|:\s).*$/ : /$^/, ""))) assert.ok(uses(t, it), `${a.product_name}: ${k} item not used: ${it}`);
     }
     for (const it of String(a.key_benefit).split(/[:;]\s+/).map((x) => x.replace(/^the platform page states\s+/, ""))) assert.ok(uses(t, it), `${a.product_name}: benefit part not used: ${it.slice(0, 60)}`);
   }
@@ -206,7 +206,7 @@ test("craft: the pool scenarios give clean, complete answers", { skip: !pool }, 
     const cu = cuts(t); if (cu.length) bad.push(`${id}: cut text: ${cu[0]}`);
     if (/reach this result \(|face this problem \(|delivers this result \(/.test(t)) bad.push(`${id}: stock phrase with a pasted fragment`);
     const nm = (args.product_name || "").replace(/\s*\([^)]*\)/g, "").split(/[:;,]/)[0].trim().split(/\s+/).slice(0, 2).join(" "); if (nm && !t.includes(nm)) bad.push(`${id}: product name missing: ${nm}`);
-    for (const k of ["customer_need", "differentiation", "competitor"]) { const first = String(args[k] || "").split(/[;]\s+/)[0].split(/,\s+/)[0].replace(k === "competitor" ? /\s+(?:that|which|who|with|where|relying|relies|because|whose)\b.*$/ : /$^/, ""); if (first && first.split(" ").length > 2 && !uses(t, first)) bad.push(`${id}: ${k} not used: ${first.slice(0, 60)}`); }
+    for (const k of ["customer_need", "differentiation", "competitor"]) { const first = String(args[k] || "").split(/[;]\s+/)[0].split(/,\s+/)[0].replace(k === "competitor" ? /(?:\s+(?:that|which|who|with|where|relying|relies|because|whose)\b|:\s).*$/ : /$^/, ""); if (first && first.split(" ").length > 2 && !uses(t, first)) bad.push(`${id}: ${k} not used: ${first.slice(0, 60)}`); }
     const firstBenefit = String(args.key_benefit || "").split(/[:;,]\s+/)[0]; if (firstBenefit.split(" ").length > 2 && !uses(t, firstBenefit)) bad.push(`${id}: key_benefit not used: ${firstBenefit.slice(0, 60)}`);
     if (/Business model: (?:services|connectivity)/.test(t) && SAAS_ONLY.test(t) && !SAAS_ONLY.test(Object.values(args).join(" "))) bad.push(`${id}: SaaS-only word for a services or connectivity business`);
     if (sharpen(t) > 1) bad.push(`${id}: sharpen line more than once`);

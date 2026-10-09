@@ -37,7 +37,7 @@ export declare function firstParts(parts: Piece[], n?: number, max?: number): Pi
 /** A short phrase (3 to max words) that can stand alone as a headline or tagline: the headline, a part, the start of a part cut at a comma, or its first clause. A phrase with a figure is a last
  *  resort (a headline carries no claim without its label). Never cut mid phrase; null when none exists. */
 export declare function shortPhrase(b: Benefit, max: number, kit: Kit2, min?: number): string | null;
-/** The first clause of a long text (before its first "with", "so that", comma or "that" once 25 characters are in), or null when the text is short or has no such boundary. */
+/** The first clause of a long text (before its first "with", "so that", comma or "that" once 18 characters are in), or null when the text is short or has no such boundary. */
 export declare function leadClause(text: string, max?: number, need?: boolean, tight?: boolean): string | null;
 /** The buyer's problem as a sentence: a result verb takes "They", a noun phrase or gerund "They struggle with", a clause stands as it is, anything else follows "Their problem today:". */
 export declare function needSentence(need: string, kit: Kit2): string;

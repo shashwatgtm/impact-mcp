@@ -2365,7 +2365,8 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const haveProof = counts.length + recog.length + resultFigs.length > 0;
       const m0 = lz.metrics[0] || '';
       const m1 = lz.metrics[1] || '';
-      const objection0 = v ? v.objections[0] : null;
+      const seatless = (t: string): string => (ctx.model && ctx.model !== 'saas' ? t.replace(/\b([Pp])er seat or /g, '$1er ') : t);
+      const objection0 = v ? { ...v.objections[0], objection: seatless(v.objections[0].objection) } : null;
       const needPcs = args.customer_need ? needPieces(args.customer_need) : [];
       const needFirst = needPcs.length ? clip(needPcs[0], 420) : '';
       const needMore = ((): string[] => {
@@ -2381,7 +2382,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
         if (!alt || !alt.tail) return '';
         const t = alt.tail.replace(/^[,;\s]+/, '');
         const m = t.match(/^(that|which|who|where|whose)\s+(.*)$/i);
-        if (m) return `it ${clean(m[2])}`;
+        if (m) return `${/[a-z]s$/i.test(alt.label) && !/(?:ss|us|is)$/i.test(alt.label) ? 'they' : 'it'} ${clean(m[2])}`;
         if (/^relying\b/i.test(t)) return `it relies${clean(t).slice('relying'.length)}`;
         if (/^relies\b/i.test(t)) return `it ${clean(t)}`;
         if (/^because\b/i.test(t)) return `it falls short ${clean(t)}`;
@@ -2509,7 +2510,7 @@ ${proofLines.length ? `> ${proofLines.join('\n> ')}\n> Use each only as worded a
 > ${youCan ? fresh(`${PC} gives you a way to ${youCan}${altBack ? `, instead of ${altBack}` : ''}.`, `${PC} gives you a way to ${youCan}.`) : fresh(`For you, the difference is this: ${plain(diffLead || diffMain)}`)}
 
 **For the economic buyer (${signer}):**
-> ${youCan ? fresh(`${PC} lets your team ${youCan}.`, `With ${P}, your team can ${youCan}.`) : fresh(`${PC} is built for ${aud}.`)} ${m0 ? `Measure it in ${m0}${m1 ? ` and ${m1}` : ''}, the figures this sector already watches.` : 'Measure it in a figure your buyer already watches.'} They will also weigh ${notes.commercial}.
+> ${youCan ? fresh(`${PC} lets your team ${youCan}.`, `With ${P}, your team can ${youCan}.`) : B.headline && headShape !== 'clause' ? fresh(`With ${P}, your team gets ${kit.lowerFirst(clean(B.headline))}.`, `Your team gets ${kit.lowerFirst(clean(B.headline))} with ${P}.`) : fresh(`${PC} is built for ${aud}.`)} ${m0 ? `Measure it in ${m0}${m1 ? ` and ${m1}` : ''}, the figures this sector already watches.` : 'Measure it in a figure your buyer already watches.'} They will also weigh ${notes.commercial}.
 
 **For the technical evaluator (${evaluator}):**
 > ${[...(diffSents.length > 1 ? diffSents.slice(1, 3) : [diffRest || diffLead || diffMain]).map((x) => fresh(x, `For the technical review: ${plain(x)}`)), ...(catPlain ? [`${PC} is ${artOf(catPlain)}${catCovers ? ` that covers ${clean(catCovers)}` : ''}.`] : [])].join(' ')}
@@ -2521,7 +2522,7 @@ ${proofLines.length ? `> ${proofLines.join('\n> ')}\n> Use each only as worded a
       void 0;
       if (alt) rows.push(`- **"${altObjection(alt).replace(/\.$/, '')}."** Acknowledge it${alt.note ? ` (${alt.note})` : ''}, then ${altGap ? `point to the gap: ${altGap}.` : `ask where it leaves ${aud} short.`} Then show the difference: ${plain(diffLead || diffMain)}`);
       rows.push(`- **"The price is too high."** Tie the price to ${m0 || 'a figure the buyer already measures'}, measured in the buyer's own data, and agree how the cost will be compared (${notes.commercial}).`);
-      for (const o of (v ? v.objections : []).slice(0, 4)) rows.push(`- **"${o.objection.replace(/[.?!]+$/, '')}."** ${ctx.model && ctx.model !== 'saas' ? noSeatWords(o.response) : o.response}`);
+      for (const o of (v ? v.objections : []).slice(0, 4)) rows.push(`- **"${(ctx.model && ctx.model !== 'saas' ? o.objection.replace(/\b([Pp])er seat or /g, '$1er ') : o.objection).replace(/[.?!]+$/, '')}."** ${ctx.model && ctx.model !== 'saas' ? noSeatWords(o.response) : o.response}`);
       out.push(`## Objection Handling
 
 ${rows.join('\n')}
@@ -2701,7 +2702,8 @@ ${rows.join('\n')}
       const proofText = (f: Piece): string => { const t = partText(f); return A.aud && t.toLowerCase().startsWith(A.aud.toLowerCase().slice(0, 18)) ? `Used by ${kit.lowerFirst(t)}` : capFirst(t); };
       const m0 = lz.metrics.length ? lz.metrics[0] : '';
       const m1 = lz.metrics.length ? lz.metrics[1] || lz.metrics[0] : '';
-      const objection0 = v ? v.objections[0] : null;
+      const seatless = (t: string): string => (ctx.model && ctx.model !== 'saas' ? t.replace(/\b([Pp])er seat or /g, '$1er ') : t);
+      const objection0 = v ? { ...v.objections[0], objection: seatless(v.objections[0].objection) } : null;
       const inHouse = !!alt && /in[- ]house|internal|\bDIY\b|ourselves|yourself/i.test(SP.alt);
       const qs = lz.questions.filter((x) => !(inHouse && /provider|incumbent|vendor/i.test(x)));
       const needS = SP.need ? shapeOf(SP.need, kit) : 'np';
@@ -2714,7 +2716,7 @@ ${rows.join('\n')}
         const t = a.tail.replace(/^[,;\s]+/, '');
         if (!t) return '';
         const m = t.match(/^(that|which|who|where|whose)\s+(.*)$/i);
-        if (m) return `it ${clean(m[2])}`;
+        if (m) return `${/[a-z]s$/i.test(a.label) && !/(?:ss|us|is)$/i.test(a.label) ? 'they' : 'it'} ${clean(m[2])}`;
         if (/^relying\b/i.test(t)) return `it relies${clean(t).slice('relying'.length)}`;
         if (/^relies\b/i.test(t)) return `it ${clean(t)}`;
         if (/^because\b/i.test(t)) return `it falls short ${clean(t)}`;
@@ -2841,7 +2843,7 @@ ${signOff}
 | 3 | Cost of Inaction | The cost of staying as things are, in the measures your buyer tracks: ${m0 ? [m0, m1].filter((x, i, a) => x && a.indexOf(x) === i).join('; ') : 'the main measures your buyer tracks'} (use the buyer's own figures) |
 | 4 | The Solution | ${nextRes()} |
 | 5 | How It Works | ${dItems.length ? dItems.slice(0, 3).map((d) => capFirst(clean(takeLabel(d).body.length > 150 ? leadOf(takeLabel(d).body, 120) : takeLabel(d).body))).join('; ') : 'The three things your buyer must understand to say yes'} |
-| 6 | Differentiation | ${alt ? `Why ${P} and not ${alt.label}` : 'Why we are different (your positioning)'} |
+| 6 | Differentiation | ${alt ? `Why ${P} rather than ${alt.label}` : 'Why we are different (your positioning)'} |
 | 7 | Results | ${proofAll.length ? proofAll.slice(0, 3).map((f) => partText(f)).join('; ') : proofSector || 'Customer outcomes and metrics, with sources'} |
 | 8 | Case Study | One real customer story, with the customer's consent |
 | 9 | Commercials | ${capFirst(notes.commercial)} |
@@ -2868,7 +2870,7 @@ Result: ${m0 ? `the figure your buyer already tracks (${m0}), from a real custom
 > "Based on our conversation, here is what I will show you: how ${P} helps ${aud} ${youCan || 'reach the result they came for'}."${hook ? `\nA question to open with, in this sector's language: ${q(hook)}` : ''}
 
 **2-8 min: Core Value Demonstration**
-${dItems.length ? `Start with what sets ${P} apart: ${dItems.slice(0, 3).map((d) => clean(takeLabel(d).body.length > 150 ? leadOf(takeLabel(d).body, 120) : takeLabel(d).body)).join('; ')}. ` : ''}Then show the two or three features that answer the buyer's stated needs, in the order of what this sector measures${lz.metrics.length ? `: ${lz.metrics.slice(0, 3).join(', ')}` : ''}.
+${dItems.length ? `Start with what sets ${P} apart. ${[nextDiff(), ...dSents.slice(1, 3).map((x) => fresh(x, `Also: ${plain(x)}`))].filter(Boolean).join(' ')} ` : ''}Then show the two or three features that answer the buyer's stated needs, in the order of what this sector measures${lz.metrics.length ? `: ${lz.metrics.slice(0, 3).join(', ')}` : ''}.
 
 **8-12 min: Differentiation Proof**
 > "You might be wondering how this compares to ${alt ? alt.label : 'what you use today'}. Let me show you."
