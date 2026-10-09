@@ -120,7 +120,7 @@ test("anchor: a how-to-decide section comes first; with current_customers a seco
   const base = { product_description: "Routeline last-mile delivery software", potential_segments: ["Retail", "FMCG", "3PL"], average_deal_size: "$60,000", sales_cycle: "90 days" };
   const without = await call("impact_anchor_market", base);
   assert.ok(without.indexOf("## How to decide, from your own inputs") < without.indexOf("## Segment Scoring Matrix"));
-  assert.match(without, /Add current_customers/);
+  assert.match(without, /To sharpen this, give:[^]*current_customers/, "Run 22: the missing current_customers is asked for once, at the end");
   const withc = await call("impact_anchor_market", { ...base, current_customers: "Two FMCG brands and a regional retailer" });
   const second = withc.split("## How to decide, from your own inputs")[1].split("## Segment Scoring Matrix")[0];
   assert.match(second, /Second view/);

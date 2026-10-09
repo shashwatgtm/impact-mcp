@@ -28,7 +28,7 @@ export function topLevel(text: string): string[] {
     const ch = t[i];
     if (ch === '(' || ch === '[') depth++;
     else if (ch === ')' || ch === ']') depth = Math.max(0, depth - 1);
-    const thousands = ch === ',' && /\d$/.test(cur) && /^\d{3}(?!\d)/.test(t.slice(i + 1));
+    const thousands = ch === ',' && /\d$/.test(cur) && /^\d{2,3}(?:,\d{2,3})*(?!\d)/.test(t.slice(i + 1));  // 25,000 and 2,15,000 are one number
     if (depth === 0 && !thousands && (ch === ',' || ch === ';')) { out.push(cur); cur = ''; } else cur += ch;
   }
   out.push(cur);
@@ -73,7 +73,10 @@ export function outcomeItems(text: string, kit: Kit): { items: string[]; label: 
   const items: string[] = [];
   for (const p of topLevel(body)) {
     const starts = /^[\d$€£]/.test(p) || kit.kindOf(p) !== 'other';
-    if (!items.length || (starts && !/^not\b/i.test(p))) items.push(p); else items[items.length - 1] += `, ${p}`;
+    // "faster, safer and more accountable change": a lone comparative before a comma is a list of adjectives for one noun, not a result of its own
+    const prev = items[items.length - 1] || '';
+    const adjective = prev.split(/\s+/).length <= 2 && /^(?:faster|slower|safer|cheaper|simpler|easier|smarter|better|higher|lower|fewer|more|less|quicker|leaner|clearer|stronger|bigger|smaller)\b/i.test(prev) && kit.kindOf(p) === 'noun';
+    if (!items.length || (starts && !/^not\b/i.test(p) && !adjective)) items.push(p); else items[items.length - 1] += `, ${p}`;
   }
   return { items, label };
 }
@@ -120,13 +123,13 @@ export function leadItems(items: string[], n = 150, max = 4): string[] {
 export type ProofKind = 'result' | 'recognition' | 'scale' | 'quote';
 const RECOGNITION = /\b(?:awards?|award[- ]winning|frost radar|gartner|forrester|idc|g2|capterra|trustradius|magic quadrant|analyst|wave|leaders?|named|recogni[sz]ed|ranked|certified|certifications?|soc ?2|iso ?\d{4,5}|finalist|winner|cool vendor|top[- ]rated|customers'? choice)\b/i;
 const RESULT = /\b(?:success stor(?:y|ies)|story title|secured|averted|protected|blocked|remediated|detected|uncovered|identified|resolved|eliminated|cut|cuts|reduc\w+|increas\w+|improv\w+|grew|grow\w*|raised|lifted|saved|saving|savings|lower\w*|faster|fewer|unlock\w*|achiev\w+|reach\w*|boost\w*|doubled|halved|shorten\w*|expanded|recovered|closed|won|generated|avoided|prevented|stopped|from \S+ to \S+|up from|down from)\b/i;
-const SCALE = /(?:\b\d[\d,.]*\+?\s*(?:[km]\b)?\s*(?:[a-z-]+\s+){0,2}(?:fintechs?|companies|teams|customers|users|brands|businesses|organi[sz]ations|developers|enterprises|merchants|sites|countries|clients|logos|employees|downloads|installs|adults|banks|retailers|shippers|carriers|partners|offices|locations|integrations|sources|customers)\b|\b\d+ in \d+\b|\bbuilt on\b|\btrusted by\b|\bused by\b|\bmore than [\d,]+|\bover [\d,]+|\b[\d,]+\+)/i;
+const SCALE = /(?:\b(?:rely|relies|trust|trusts|choose|chooses|use|uses|used)\b|\b\d+(?:\.\d+)?%\s+of\s+the\s+(?:largest|top|world's|biggest)|\b\d[\d,.]*\+?\s*(?:[km]\b)?\s*(?:[a-z-]+\s+){0,2}(?:fintechs?|companies|teams|customers|users|brands|businesses|organi[sz]ations|developers|enterprises|merchants|sites|countries|clients|logos|employees|downloads|installs|adults|banks|retailers|shippers|carriers|partners|offices|locations|integrations|sources|customers)\b|\b\d+ in \d+\b|\bbuilt on\b|\btrusted by\b|\bused by\b|\bmore than [\d,]+|\bover [\d,]+|\b[\d,]+\+)/i;
 /** What kind of proof a supplied item is, and the tier it belongs to (1 customer result, 2 third party, 4 social). */
 export function classifyProof(item: string): { tier: 1 | 2 | 4; kind: ProofKind } {
   const t = item.trim();
   if (/\bquote from\b|\btestimonial\b/i.test(t) || /^["“]/.test(t) || /["“][^"”]{12,}["”]/.test(t)) return { tier: 4, kind: 'quote' };
   if (RECOGNITION.test(t) && !/^[A-Z][\w-]+(?: [A-Z][\w-]+)? (?:cut|reduced|increased|improved|raised|saved)\b/.test(t)) return { tier: 2, kind: 'recognition' };
-  if (RESULT.test(t)) return { tier: 1, kind: 'result' };
+  if (RESULT.test(t) && !/\b(?:rely|relies|trust|trusts)\b/i.test(t)) return { tier: 1, kind: 'result' };
   if (SCALE.test(t)) return { tier: 4, kind: 'scale' };
   return /\d/.test(t) ? { tier: 1, kind: 'result' } : { tier: 4, kind: 'scale' };
 }
@@ -184,4 +187,16 @@ export function leadAud(text: string): string | null {
 /** A sentence of the sector notes with the words of another business model taken out ("per seat or hour" reads "per hour" for a services firm). */
 export function noSeatWords(t: string): string {
   return t.replace(/\bper seat or /g, 'per ').replace(/\bseat,\s*/g, '').replace(/\bper seat\b/g, 'per user');
+}
+
+/** Strengths typed as one comma list are shared out over the cards (a "(page claims)" note at the end goes with every part); an item without such a list stays whole. */
+export function splitStrengths(items: string[]): string[] {
+  const out: string[] = [];
+  for (const it of items) {
+    const note = /\((?:page claims?)\)\s*$/i.test(it) ? ' (page claim)' : '';
+    const body = it.replace(/\s*\((?:page claims?)\)\s*$/i, '');
+    const parts = topLevel(body).filter((x) => x.split(/\s+/).length >= 2);
+    if (parts.length >= 2 && topLevel(body).length === parts.length) out.push(...parts.map((x) => x + note)); else out.push(it);
+  }
+  return out;
 }

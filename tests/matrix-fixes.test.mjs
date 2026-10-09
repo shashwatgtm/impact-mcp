@@ -47,10 +47,12 @@ test("anchor market: an empty segment list is treated like no list, with the exa
   assert.match(r.text, /You supplied no segments, so the segments are examples too\./);
 });
 
-test("map alternatives: placeholder competitors are labelled as examples; an empty list is treated like no list", async () => {
+test("map alternatives: with no competitors given, none is invented (Run 22: the example names Competitor A and B are gone); an empty list is treated like no list", async () => {
   for (const extra of [{}, { competitors: [] }]) {
     const r = await call("impact_map_alternatives", { your_product: "Cloudmoat", category: "Cloud security monitoring", ...extra });
-    assert.match(r.text, /\*\*Analyzed Competitors\*\*: Competitor A, Competitor B, Status Quo \(examples: you supplied no competitors; replace them with your own\)/);
+    assert.match(r.text, /\*\*Analyzed Competitors\*\*: none given/);
+    assert.doesNotMatch(r.text, /Competitor [AB]\b/);
+    assert.match(r.text, /you gave no competitors|you gave none/);
   }
   const given = await call("impact_map_alternatives", { your_product: "Cloudmoat", category: "Cloud security monitoring", competitors: ["Competitor A"] });
   assert.match(given.text, /\*\*Analyzed Competitors\*\*: Competitor A\n/);

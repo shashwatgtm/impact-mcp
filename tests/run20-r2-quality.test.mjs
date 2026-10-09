@@ -32,11 +32,13 @@ test("map: the strengths string is not pasted into every attack angle; the legen
   for (const c of cards) if (!/^Do Nothing/.test(c)) assert.doesNotMatch(c.split("###")[0], /legacy TMS runs on modules/, "the legacy TMS weakness names neither alternative");
   assert.match(t, /Weaknesses you gave/);
 });
-test("map: a legend entry for a long alternative ends at a clause, not mid phrase", async () => {
+test("map: a long alternative gets a heading that ends at a clause, and its description stays whole in its own part (Run 22: the ascii map and its legend are gone)", async () => {
   const t = await call("impact_map_alternatives", { your_product: "Ledgerline spend management", category: "spend management", competitors: ["old legacy systems from companies launched in the 90s that only brought basic automation", "manual expense filing and manual bill checking", "cash advances and corporate debit or credit cards"] });
-  const legend = t.split("\n").find((l) => /^Alt 1 =/.test(l));
-  assert.ok(legend, "legend");
-  assert.doesNotMatch(legend, /launched;|launched$/);
+  const heading = t.split("\n").find((l) => /^### Against old legacy systems/.test(l));
+  assert.ok(heading, "heading");
+  assert.doesNotMatch(heading, /launched|\b(?:that|from|with|and)$/);
+  assert.match(t, /old legacy systems from companies launched in the 90s that only brought basic automation/);
+  assert.doesNotMatch(t, /^Alt 1 =|┌/m);
 });
 
 // (2) cut-offs

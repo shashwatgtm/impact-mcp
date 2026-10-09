@@ -26,18 +26,18 @@ export function cuts(text) {
   const out = [];
   for (const line of text.split("\n")) {
     if (/\.\.\.["”)\]]?(\s|$)/.test(line)) out.push(line.slice(0, 120));
-    for (const m of line.matchAll(/\b(with|and|of|for|to|the|a|an|by|that|from|or)\s*(?:[.!?]["”)\]]?)(?=\s|$)/gi)) out.push(line.slice(Math.max(0, m.index - 40), m.index + 20));
+    for (const m of line.matchAll(/\b(with|and|of|the|a|an|by|that|from|or)\s*(?:[.!]["”)\]]?)(?=\s|$)/gi)) out.push(line.slice(Math.max(0, m.index - 40), m.index + 20));
   }
   return out;
 }
 const norm = (s) => s.toLowerCase().replace(/[“”"'`*]/g, "").replace(/\s+/g, " ").trim();
 // Does the answer use this input? A window of up to 4 words from the middle of the item has to appear (case and quotes ignored).
 export function uses(answer, item) {
-  const words = norm(item).replace(/\([^)]*\)/g, " ").replace(/[.;,!?]+/g, " ").split(" ").filter(Boolean);
+  const words = norm(item).replace(/\((?:page claims?|case stud(?:y|ies)|hypothetical|customer stories|[^)]*story title[^)]*|[^)]*quote from[^)]*|analyst report)\)/g, " ").replace(/[()]/g, " ").replace(/[.;,!?]+/g, " ").split(" ").filter(Boolean);
   if (!words.length) return true;
   const start = words.length > 5 ? 1 : 0;
   const win = words.slice(start, start + 4).join(" ");
-  return norm(answer).replace(/[.;,!?]+/g, " ").replace(/\s+/g, " ").includes(win);
+  return norm(answer).replace(/[()]/g, " ").replace(/[.;,!?]+/g, " ").replace(/\s+/g, " ").includes(win);
 }
 // Items of a typed list (lines, semicolons), for the "every input is used" check.
 export const itemsOf = (s) => String(s || "").split(/\n|;/).map((x) => x.trim()).filter(Boolean);

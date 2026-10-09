@@ -54,7 +54,7 @@ test("map: the strengths are not all pasted into every part, and a part without 
   const parts = t.split(/^### Against /m).slice(1);
   for (const p of parts) assert.ok((p.match(/25,000\+ sources monitored/g) || []).length <= 1);
   assert.match(t, /real time detection of credential leaks/);
-  assert.match(t, /\(page claims\)/);
+  assert.match(t, /\(page claims?\)/);
   assert.doesNotMatch(t, /Differentiate on|a common complaint in this category|Poor support/);
 });
 
@@ -72,8 +72,8 @@ test("map: no placeholder, no ascii map, no repeated sentence, no cut text, for 
 test("map: every input is used where it matters", async () => {
   for (const args of [LANE, CLOUD, BRANCH]) {
     const t = await call(TOOL, args);
-    for (const c of args.competitors) assert.ok(uses(t, c.replace(/\s*\([^)]*\)/g, "")), `competitor ${c}`);
-    for (const s of itemsOf(args.your_strengths)) assert.ok(uses(t, s.replace(/\s*\([^)]*\)\s*$/, "")), `strength ${s}`);
+    for (const c of args.competitors) assert.ok(uses(t, c), `competitor ${c}`);
+    for (const s of itemsOf(args.your_strengths).flatMap((x) => x.replace(/\s*\([^)]*\)\s*$/, "").split(/,\s+(?:and\s+)?/)).filter((x) => x.split(" ").length > 2)) assert.ok(uses(t, s), `strength ${s}`);
     if (args.competitor_weaknesses) for (const w of args.competitor_weaknesses.split(/;|,\s+(?:and\s+)?/).filter((x) => x.split(" ").length > 3)) assert.ok(uses(t, w), `weakness ${w}`);
     assert.ok(uses(t, args.category), "category");
   }
@@ -129,8 +129,8 @@ test("map: the pool scenarios give clean, complete answers", { skip: !pool }, as
     const rep = repeatedSentences(t); if (rep.length) bad.push(`${id}: repeated sentence: ${rep[0].slice(0, 80)}`);
     const cu = cuts(t); if (cu.length) bad.push(`${id}: cut text: ${cu[0]}`);
     if (/┌|└/.test(t)) bad.push(`${id}: placeholder map`);
-    for (const c of args.competitors || []) if (!uses(t, c.replace(/\s*\([^)]*\)/g, ""))) bad.push(`${id}: competitor not used: ${c.slice(0, 50)}`);
-    for (const s of itemsOf(args.your_strengths)) if (!uses(t, s.replace(/\s*\([^)]*\)\s*$/, ""))) bad.push(`${id}: strength not used: ${s.slice(0, 50)}`);
+    for (const c of args.competitors || []) if (!uses(t, c)) bad.push(`${id}: competitor not used: ${c.slice(0, 50)}`);
+    for (const s of itemsOf(args.your_strengths).flatMap((x) => x.replace(/\s*\([^)]*\)\s*$/, "").split(/,\s+(?:and\s+)?/)).filter((x) => x.split(" ").length > 2)) if (!uses(t, s)) bad.push(`${id}: strength not used: ${s.slice(0, 50)}`);
     if (args.competitor_weaknesses && !uses(t, args.competitor_weaknesses.split(/;|,\s+/)[0])) bad.push(`${id}: weakness not used`);
     if (/Business model: (?:services|connectivity)/.test(t) && SAAS_ONLY.test(t) && !SAAS_ONLY.test(Object.values(args).flat().join(" "))) bad.push(`${id}: SaaS-only word for a services or connectivity business`);
     if (t.length > 26000) bad.push(`${id}: answer too long (${t.length})`);

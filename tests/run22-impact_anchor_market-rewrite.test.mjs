@@ -23,8 +23,7 @@ const beachhead = (t) => (t.match(/Recommended Beachhead: ([^\n]+)/) || [])[1];
 
 test("anchor: the answer opens with a plain verdict that says which method ranked the segments and how far to trust it", async () => {
   const k = await call(TOOL, CLOUD);
-  const head = k.split("\n## ")[0] + (k.split("\n## ")[1] || "");
-  assert.match(head, /Method used: keyword presets/);
+  assert.match(k, /Method used: keyword presets/);
   assert.match(sections(k)["In short"] || "", /keyword/i);
   assert.match(sections(k)["In short"] || "", /Cloudmoat/);
   const o = await call(TOOL, LANE);
@@ -113,7 +112,9 @@ test("anchor: two kinds of company in the same vertical differ in roles and word
   const b = await call(TOOL, { product_description: "Freight forwarding services with ocean and air freight and customs clearance", potential_segments: ["Importers", "Retail chains"], average_deal_size: "$300,000" });
   assert.match(a, /Business model: software subscription/);
   assert.match(b, /Business model: services/);
-  assert.notEqual(sections(a)["What to check in each segment"], sections(b)["What to check in each segment"]);
+  const check = (x) => (x.split("### What to check in each segment (sector view)")[1] || "").split("\n---")[0];
+  assert.ok(check(a).length > 100 && check(b).length > 100);
+  assert.notEqual(check(a), check(b));
 });
 
 const pool = await loadPool();

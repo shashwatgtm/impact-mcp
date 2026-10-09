@@ -20,7 +20,8 @@ const SENTENCE = "Your current customers and sales cycle are shown for context; 
 const BASE = { product_description: "Cloud security monitoring for fintech teams", potential_segments: ["Mid-market SaaS (50-500 employees)", "Enterprise Finance", "Retail chains"], average_deal_size: "$24,000" };
 
 // Everything from the scoring matrix down, minus the two lines that print the inputs themselves.
-const scoring = (t) => t.slice(t.indexOf("## Segment Scoring Matrix")).split("\n").filter((l) => !/^- Sales cycle:/.test(l)).join("\n");
+// Run 22: the closing "To sharpen this, give:" line names the inputs that are missing, so it differs by definition when current_customers is given or not; it is the only line left out besides the sales cycle.
+const scoring = (t) => t.slice(t.indexOf("## Segment Scoring Matrix")).split("\n").filter((l) => !/^- Sales cycle:|^\*\*To sharpen this, give:/.test(l)).join("\n");
 
 test("C-IMP-03: the answer says once that current customers and sales cycle do not change the scores or sizes", async () => {
   const out = await call({ ...BASE, current_customers: "Three lenders in Pune", sales_cycle: "2 months" });
