@@ -2248,27 +2248,46 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
                 ? `, because its name shares ${[beachhead.ownRef.length ? `"${real(beachhead.name, beachhead.ownRef).join('", "')}" with your customers` : '', beachhead.ownPain.length ? `"${real(beachhead.name, beachhead.ownPain).join('", "')}" with your pain` : ''].filter(Boolean).join(' and ')}`
                 : '';
             const nsw = (t) => (ctx.model === 'saas' || ctx.model === null ? t : (0, rw_impact_ts_1.noSeatWords)(t));
-            const oneFact = ` The one fact that would settle it: which of these segments already buys from you (current_customers)${painText ? '' : ', or where buyers raise your problem first (customer_pain)'}.`;
+            const oneFact = ` Two or three facts per segment, from the sector notes and your own deal size and cycle, would break it for this product; the one that helps most is which of these segments already buys from you (current_customers)${painText ? '' : ', or where buyers raise your problem first (customer_pain)'}.`;
             const inShort = ownMethod
                 ? (allTied
                     ? `None of your ${nSeg} segment names shares a word with your customers or your pain, so the scores built from them tie and choose nothing for ${prodName}. Use the checks below to choose.`
                     : `${beachhead.name} comes first for ${prodName}${topShares}: your ${nSeg} segments were ranked from your own customers, pain and deal size.${tied.length > 1 ? ` ${tied.map((t) => t.name).join(' and ')} tie for the top score, and ${beachhead.name} is shown first only because you listed it first.` : ''} The match is by words, so ask three buyers in ${tied.length > 1 ? 'those segments' : beachhead.name} which problem they raise first before you commit.`)
                 : (tied.length > 1
-                    ? `The keyword presets cannot separate ${tied.length === nSeg ? `any of your ${nSeg} segments` : `the top ${tied.length} segments (${tied.map((t) => t.name).join(', ')})`}, so nothing here chooses a beachhead for ${prodName}; ${missingForOwn.join(' and ')} ${missingForOwn.length > 1 ? 'were' : 'was'} not given. Choose with the segment-by-segment checks below, which use your deal size${acvGiven ? ` of ${acvGiven}` : ''}${cycleGiven ? ` and sales cycle of ${cycleGiven}` : ''} and the parts of your product description.${oneFact}`
-                    : `${capFirst(beachhead.name)} comes first only because its name contains the keyword "${beachhead.kw}": the presets do not use your deal size${acvGiven ? ` of ${acvGiven}` : ''}${cycleGiven ? `, your sales cycle of ${cycleGiven}` : ''} or anything known about your market (${missingForOwn.join(' and ')} ${missingForOwn.length > 1 ? 'were' : 'was'} not given). Treat ${beachhead.name} as the segment to test first for ${prodName}, and settle the ranking with the segment-by-segment checks below.${oneFact}`);
+                    ? `The keyword presets cannot separate ${tied.length === nSeg ? `any of your ${nSeg} segments` : `the top ${tied.length} segments (${tied.map((t) => t.name).join(', ')})`}, so nothing here chooses a beachhead for ${prodName}; ${missingForOwn.join(' and ')} ${missingForOwn.length > 1 ? 'were' : 'was'} not given. Choose with the segment-by-segment facts below.${oneFact}`
+                    : `${capFirst(beachhead.name)} comes first only because its name contains the keyword "${beachhead.kw}": the presets do not use your deal size${acvGiven ? ` of ${acvGiven}` : ''}${cycleGiven ? `, your sales cycle of ${cycleGiven}` : ''} or anything known about your market (${missingForOwn.join(' and ')} ${missingForOwn.length > 1 ? 'were' : 'was'} not given). Treat ${beachhead.name} as the segment to test first for ${prodName}.${oneFact}`);
             const askQ = (i) => nsw(v && v.discovery.length ? v.discovery[i % v.discovery.length] : 'Which problem do you raise first, and what have you tried before?');
             const prodParts = (0, rw_impact_ts_1.productParts)(args.product_description);
-            const perSegment = segmentScores.map((s, i) => {
-                const pshare = prodShare(s.name), cshare = overlap(s.name);
+            const named = prodParts.slice(1); // the parts named after the lead description (platforms, modules, products)
+            const comm = v ? committeeParts(v) : null;
+            const typeSeen = new Map();
+            const usedObjections = new Set(), usedMeasures = new Set(), usedKinds = new Map();
+            const perSegment = segmentScores.map((s) => {
+                const cshare = overlap(s.name);
                 const fit = (0, rw_impact_ts_1.segmentFit)(s.name, prodParts);
-                return `**${s.name}** (${ownMethod ? `${s.total} of 25 from your own inputs` : s.keyword ? `${s.total} of 25 from the keyword "${s.kw}"` : `${s.total} of 25, no keyword`}).${fit.length ? ` Of the parts in your product description, ${(0, rw_impact_ts_1.joinAnd)(fit.map((x) => q((0, rw_impact_ts_1.clip)(x, 90))))} sit${fit.length === 1 ? 's' : ''} closest to the words ${q(s.name)}; ask whether buyers there name ${fit.length === 1 ? 'it' : 'them'} first.` : pshare.length ? ` Your product description shares "${real(s.name, pshare).join('", "')}" with this segment name.` : ''}${cshare.length ? ` Your customers share "${real(s.name, cshare).join('", "')}" with it.` : ''} In ${s.name}, ask three buyers who signs${acvGiven ? ` a deal of ${acvGiven}` : ' your price'}${cycleGiven ? `, whether that buyer decides within ${cycleGiven}` : ''}, and which part of your offer comes first for them.`;
+                const type = (0, rw_impact_ts_1.segmentType)(s.name);
+                const order = typeSeen.get(type) || 0;
+                typeSeen.set(type, order + 1);
+                const facts = (0, rw_impact_ts_1.segmentFacts)({
+                    seg: s.name, deal: acvGiven.replace(/\s*\([^)]*\)\s*$/, ''), cycle: cycleGiven.replace(/\s*\([^)]*\)\s*$/, ''), signer: comm ? (0, rw_impact_ts_1.roleOk)(comm.signer) : '', motion: v ? nsw(v.salesMotion) : '',
+                    objections: v ? v.objections.map((o) => ({ objection: nsw(o.objection), response: nsw(o.response) })) : [], metrics: v ? v.metrics : [], parts: named, fit, usedObjections, usedMeasures, usedKinds,
+                }, order);
+                return `**${s.name}** (${ownMethod ? `${s.total} of 25 from your own inputs` : s.keyword ? `${s.total} of 25 from the keyword "${s.kw}"` : `${s.total} of 25, no keyword`}).${cshare.length ? ` Your customers share "${real(s.name, cshare).join('", "')}" with it.` : ''} Find out ${facts.map((f, k) => `(${k + 1}) ${f}`).join('; ')}.`;
             }).join('\n\n');
+            // The product fit: which segments the parts of the product text sit closest to (words only; it never changes a score).
+            const fitOrder = segmentScores.map((x) => ({ x, fit: (0, rw_impact_ts_1.segmentFit)(x.name, prodParts) })).filter((r) => r.fit.length).sort((a, b) => b.fit.length - a.fit.length);
+            const fitTop = fitOrder.filter((r) => r.fit.length === (fitOrder[0] ? fitOrder[0].fit.length : 0)).slice(0, 3);
+            const presetFirst = tied.length === 1 ? beachhead.name : '';
+            const productFit = fitTop.length
+                ? `**Product fit.** The parts of your product text sit closest to ${(0, rw_impact_ts_1.joinAnd)(fitTop.map((r) => `${r.x.name} (${(0, rw_impact_ts_1.joinAnd)(r.fit.map((p) => q((0, rw_impact_ts_1.clip)(p, 80))))})`))}; this is a reading of words, not a score. ${presetFirst ? (fitTop.some((r) => r.x.name === presetFirst) ? `That agrees with the presets, which put ${presetFirst} first.` : `This differs from the presets, which put ${presetFirst} first, so weigh the presets less.`) : 'The presets give no order here, so start the checks with these segments.'}`
+                : `**Product fit.** No part of your product text sits close to a segment name by its words, so the facts below carry the decision.${named.filter(rw_impact_ts_1.isNamedPart).length >= 2 ? ` Your description names ${(0, rw_impact_ts_1.joinAnd)(named.filter(rw_impact_ts_1.isNamedPart).slice(0, 5).map((x) => q((0, rw_impact_ts_1.clip)(x, 70))))}; ask each segment which of them it wants first.` : ''}`;
             const overlapNotes = (0, rw_impact_ts_1.segmentOverlap)(segmentScores.map((x) => x.name));
             const howToDecideKeyword = `## How to decide, from your own inputs
 
 What you gave: deal size ${acvGiven || 'not given'}, sales cycle ${cycleGiven || 'not given'}, current customers ${ccText ? `(${q((0, rw_impact_ts_1.clip)(ccText, 200))})` : 'not given'}. The keyword scores below do not use any of these, so use them first:
 
 - ${secondView}
+- ${productFit}
 - **Deal size and cycle.** ${acvGiven || cycleGiven ? `A deal of ${acvGiven || 'your size'}${cycleGiven ? ` with a cycle of ${cycleGiven}` : ''} needs, in each segment, a buyer who can approve that amount and a team that can run a process of that length. Check that for each segment before you rank it.` : 'Each segment must have a buyer who can approve your price and a team that can run a process of your sales length. Check that for each segment before you rank it.'}
 - **Strongest pain.** ${painText ? `Your customers describe it as ${q((0, rw_impact_ts_1.clip)(painText, 200))}. Ask three buyers in each segment whether they raise that first; the segment where it is raised unprompted comes first.` : 'Ask three buyers in each segment which problem they raise first; the segment where it is raised unprompted comes first.'}${overlapNotes.length ? `\n- **Overlap.** ${overlapNotes.join(' ')}` : ''}
 

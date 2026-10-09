@@ -261,7 +261,7 @@ export function productParts(desc: string): string[] {
   const t = desc.replace(/\s+/g, ' ').trim();
   const [first, ...rest] = t.split(/\s*[:;]\s+|\s+(?:including|made of|made up of|consisting of|comprising|with)\s+/i);
   // the lead description stays whole, without the brand names in front of "a ..." ("Wisely from Tanla Platforms, Wisely, a single API led platform ..." gives "a single API led platform ...")
-  const lead = first.replace(/^(?:[^,]{1,60},\s+){1,2}(?=(?:an?|the)\s)/, '').trim();
+  const lead = first.replace(/^(?:[^,]{1,60},\s+){1,2}(?=(?:an?|the)\s)/, '').replace(/\s+(?:that|which|who)(?:\s+\w+)?$/i, '').trim();   // no half-open tail ("... platform that connects")
   if (lead.split(/\s+/).length >= 2) out.push(lead);
   for (const seg of rest) for (const piece of topLevel(seg)) for (const f of piece.replace(/\([^)]*\)/g, (m) => m.replace(/ /g, '\u0001')).split(/\s+and\s+(?=[A-Z])|\s+under\s+/)) {   // a bracket is never split
     const x = f.replace(/\u0001/g, ' ').replace(/^(?:and|or|with|including)\s+/i, '').trim();
@@ -299,6 +299,9 @@ const SEGMENT_CUES: [RegExp, RegExp][] = [
   [/\b(?:retail\w*|e-?commerce|merchant\w*|shop\w*|consumer|fmcg|grocery|apparel)\b/i, /\b(?:checkout|catalog\w*|inventory|delivery|shipping|returns?|storefront|orders?|pos|billing|loyalty)\b/i],
   [/\b(?:telecom\w*|telco\w*|operators?|isp)\b/i, /\b(?:network\w*|sms|voice|messaging|connectivity|sim|routing|spam|fraud)\b/i],
   [/\b(?:technology|software|saas|tech|developer\w*|startups?)\b/i, /\b(?:api\w*|sdk|developer\w*|integration\w*|automation|cloud|testing|ci|devops)\b/i],
+  [/\b(?:apps?|games?|gaming|mobile)\b/i, /\b(?:sdk|apps?|mobile|games?|over-the-air|ota|release\w*|store)\b/i],
+  [/\b(?:media|publishing|broadcast\w*|entertainment|news|streaming)\b/i, /\b(?:content|translation|subtitl\w*|caption\w*|articles?|publishing|voice|speech|audio|video)\b/i],
+  [/\b(?:e-?commerce|online (?:stores?|sellers?|retail\w*)|merchants?)\b/i, /\b(?:websites?|storefront|catalog\w*|product pages?|checkout|shipping|orders?|shop\w*)\b/i],
   [/\b(?:manufactur\w*|industrial|automotive|chemical\w*|machinery|factory|factories)\b/i, /\b(?:plant|supply chain|maintenance|quality|inspection|traceab\w*|logistics|freight|shipments?)\b/i],
 ];
 /** The parts of a product description whose words sit close to a segment's name: shared words, or a cue pair. At most three. */
@@ -329,5 +332,132 @@ export function segmentOverlap(names: string[]): string[] {
     for (const b of names) if (a !== b) for (const [pr, ch] of SEGMENT_PARENTS) if (pr.test(a) && ch.test(b) && !pr.test(b)) kids.add(b);
     if (kids.size && !done.has(a)) { done.add(a); out.push(`${joinAnd([...kids])} may sit inside ${a}: decide whether you treat ${kids.size > 1 ? 'them' : 'it'} as part of ${a} or as ${kids.size > 1 ? 'segments' : 'a segment'} of ${kids.size > 1 ? 'their' : 'its'} own before you rank them.`); }
   }
+  return out;
+}
+
+
+// ---- Round 3, impact_anchor_market: facts to find out per segment ---------------------------------------------------------------------------------------------------
+// A segment name tells how its buyers probably buy only through cue words (a public body, a regulated firm, a size word, an industry). The cue words choose WHICH question is asked about the
+// segment; the question is never an answer, and nothing here is a figure. The sector notes (verticals.ts) supply the signer, the usual sales path, the objections and the measures.
+export type SegType = 'education' | 'public' | 'regulated' | 'large' | 'small' | 'mid' | 'industrial' | 'retail' | 'tech' | 'telecom' | 'media' | 'other';
+const SEG_TYPES: [SegType, RegExp][] = [
+  ['education', /\b(?:education\w*|school\w*|universit\w*|college\w*|edtech)\b/i],
+  ['public', /\b(?:government|public sector|ministr\w*|municipal\w*|defen[cs]e|state[- ]owned|non-?profit|ngo)\b/i],
+  ['regulated', /\b(?:bank\w*|financ\w*|insur\w*|lending|nbfc|fintech|payments?|bfsi|asset|wealth|pension\w*|capital markets?)\b/i],
+  ['large', /\b(?:enterprise\w*|large|global|fortune|multinational)\b/i],
+  ['small', /\b(?:smb|small|startups?|micro|sole)\b/i],
+  ['mid', /\b(?:mid[- ]?market|mid[- ]?size\w*|medium)\b/i],
+  ['industrial', /\b(?:manufactur\w*|industrial|automotive|chemical\w*|machinery|factory|factories|energy|oil|mining|steel|construction|utilit\w*)\b/i],
+  ['retail', /\b(?:retail\w*|e-?commerce|merchant\w*|consumer|fmcg|grocery|apparel|food|beverage|hospitality|restaurant\w*|travel|luxury|department stores?)\b/i],
+  ['tech', /\b(?:technology|software|saas|tech|developer\w*|it services|cloud|ai|apps?|games?|gaming|digital)\b/i],
+  ['telecom', /\b(?:telecom\w*|telco\w*|operators?|isp|carriers?)\b/i],
+  ['media', /\b(?:media|publishing|broadcast\w*|entertainment|news)\b/i],
+];
+export function segmentType(name: string): SegType {
+  const t = name.replace(/\([^)]*\)/g, ' ');
+  for (const [k, re] of SEG_TYPES) if (re.test(t)) return k;
+  return 'other';
+}
+const PREFS: Record<SegType, string[]> = {
+  education: ['cycle', 'product', 'signer', 'measure'],
+  public: ['cycle', 'signer', 'objection', 'product'],
+  regulated: ['objection', 'cycle', 'signer', 'measure'],
+  large: ['signer', 'cycle', 'pilot', 'objection'],
+  small: ['cycle', 'pilot', 'measure', 'product'],
+  mid: ['signer', 'pilot', 'measure', 'cycle'],
+  industrial: ['pilot', 'measure', 'cycle', 'signer'],
+  retail: ['measure', 'pilot', 'product', 'signer'],
+  tech: ['product', 'pilot', 'objection', 'signer'],
+  telecom: ['measure', 'product', 'cycle', 'objection'],
+  media: ['product', 'measure', 'signer', 'pilot'],
+  other: ['product', 'measure', 'signer', 'cycle', 'pilot'],
+};
+const OBJ_WORDS: Record<SegType, RegExp> = {
+  education: /cost|budget|price|data|adoption|teacher|staff|time/i,
+  public: /cost|budget|data|local|price|complian\w*|regulat\w*|security|licen\w*/i,
+  regulated: /complian\w*|regulat\w*|security|licen\w*|risk|audit|data/i,
+  large: /integrat\w*|security|system|already|switch\w*|approval/i,
+  small: /cost|effort|time|price|trial|already|expensive/i,
+  mid: /integrat\w*|already|cost|adoption|team/i,
+  industrial: /integrat\w*|operations|change|system|cost|site/i,
+  retail: /price|cost|integrat\w*|already|channel|peak/i,
+  tech: /already|integrat\w*|security|build|open|switch\w*/i,
+  telecom: /price|reliab\w*|switch\w*|migrat\w*|complian\w*/i,
+  media: /cost|rights|already|integrat\w*|quality/i,
+  other: /already|cost|integrat\w*/i,
+};
+const METRIC_WORDS: Record<SegType, RegExp> = {
+  education: /adoption|coverage|cost|accuracy|resolution|time/i,
+  public: /coverage|adoption|cost|uptime|accuracy|resolution|audit/i,
+  regulated: /complian\w*|audit|risk|breach|fraud|exposure|uptime|false|error|escalat\w*/i,
+  large: /adoption|uptime|cost|audit|coverage/i,
+  small: /cost|time to|adoption/i,
+  mid: /adoption|cost|cycle/i,
+  industrial: /cost|cycle|error|throughput|uptime|on time|delay|exception/i,
+  retail: /conversion|delivery|cost|cycle|satisf\w*|resolution|return/i,
+  tech: /release|latency|uptime|error rate|accuracy|adoption/i,
+  telecom: /delivery|uptime|latency|repair|cost/i,
+  media: /accuracy|cost|latency|quality/i,
+  other: /cost|time to|cycle/i,
+};
+/** A part of a product description that carries a product name ("RapidX for AI driven development", "Auth (verify bank account numbers)"), not a plain phrase ("AI enhanced engineering teams"). */
+export function isNamedPart(x: string): boolean {
+  return /^(?!AI\b)[A-Z][A-Za-z0-9]{2,}(?:\s+[A-Z][A-Za-z0-9]+)?\s*(?:\(|\bfor\b|\bto\b|\bas\b|\bby\b|$)/.test(x.trim());
+}
+export interface FactCtx { seg: string; deal: string; cycle: string; signer: string; motion: string; objections: { objection: string; response: string }[]; metrics: string[]; parts: string[]; fit: string[]; usedObjections: Set<string>; usedMeasures: Set<string>; usedKinds: Map<string, number>; }
+const firstClause = (t: string): string => t.replace(/\s+/g, ' ').split(/;\s|\.\s/)[0].replace(/[.]+$/, '').trim();
+function pilotPhrase(motion: string): string {
+  const m = motion.match(/\b(?:(?:a|an)\s+)?(?:paid\s+)?(?:pilot|trial|proof of value|back test|sandbox|demo|discovery stage|parallel pay run)[^;,.]*/i);
+  if (!m) return '';
+  let t = m[0].trim().replace(/^./, (x) => x.toLowerCase());
+  while ((t.match(/\)/g) || []).length > (t.match(/\(/g) || []).length) t = t.replace(/\)\s*$/, '').trim();   // a bracket cut in the middle is not carried over
+  return /^(?:a|an) /.test(t) ? t : `a ${t}`;
+}
+/** Two or three facts to find out about one segment, taken from the sector notes and the user's own inputs; `order` is the position among segments of the same kind, so two such segments differ. */
+export function segmentFacts(c: FactCtx, order: number): string[] {
+  const type = segmentType(c.seg);
+  const deal = c.deal || 'your price', cycle = c.cycle || 'your sales cycle';
+  const pool: Record<string, string | null> = {};
+  const steps = c.motion.split(/;\s+|,\s+then\s+|\.\s+/).map((x) => x.replace(/[.]+$/, '').trim().replace(/^./, (y) => y.toLowerCase())).filter((x) => x.length > 12);
+  pool.cycle = ({
+    education: `whether a purchase of ${deal} in ${c.seg} is an institution budget decision or needs a committee or a tender, and whether it waits for the start of a term or a budget year, against ${cycle}`,
+    public: `whether a purchase of ${deal} in ${c.seg} is a department decision or goes through a formal tender or procurement round, and how long that takes against ${cycle}`,
+    regulated: `how long the security, vendor risk and compliance review takes in ${c.seg} before a purchase of ${deal} can be signed, against ${cycle}`,
+    large: `whether procurement and a security review join a purchase of ${deal} in ${c.seg}, and what that does to ${cycle}`,
+    small: `whether one owner or department head in ${c.seg} can decide a purchase of ${deal} alone, and whether ${cycle} is longer than they need`,
+    mid: `which department head in ${c.seg} holds a budget of ${deal}, and whether they decide inside ${cycle}`,
+    industrial: `how long a purchase of ${deal} takes in ${c.seg} from first call to signature, and whether a site visit or plant approval adds to ${cycle}`,
+    retail: `whether a purchase of ${deal} in ${c.seg} is timed around a peak season or a budget year, and how that fits ${cycle}`,
+    tech: `whether a team in ${c.seg} can start on its own and how long a company decision on ${deal} takes after that, against ${cycle}`,
+    telecom: `how long a purchase of ${deal} takes in ${c.seg} from first test to contract, against ${cycle}`,
+    media: `who approves a purchase of ${deal} in ${c.seg} and how long it takes, against ${cycle}`,
+    other: `how long a purchase of ${deal} takes in ${c.seg} from first call to signature, against ${cycle}${steps.length ? ` (the sector notes describe the usual path in steps; one of them is: ${steps[order % steps.length]})` : ''}`,
+  } as Record<SegType, string>)[type];
+  pool.signer = c.signer
+    ? `who signs ${deal} in ${c.seg}: the sector notes say "${c.signer}", so ask whether that holds here${type === 'large' || type === 'public' || type === 'regulated' ? ' or whether a committee approves it' : ' and whether that person alone approves it'}`
+    : `who signs ${deal} in ${c.seg}, and whether that person alone approves it`;
+  const pilot = pilotPhrase(c.motion);
+  pool.pilot = pilot ? `whether ${pilot} is how ${c.seg} buyers start, and whether it fits inside ${cycle}` : null;
+  const ow = OBJ_WORDS[type];
+  const rankedO = c.objections.map((o, i) => ({ o, n: (`${o.objection} ${o.response}`.match(new RegExp(ow.source, 'gi')) || []).length * 10 - i })).sort((x, y) => y.n - x.n).map((x) => x.o);
+  const o = rankedO.find((x) => !c.usedObjections.has(x.objection)) || rankedO[0] || null;
+  pool.objection = o ? `the objection to expect in ${c.seg}: "${o.objection}", with this pattern of answer from the sector notes: ${firstClause(o.response).replace(/^./, (x) => x.toLowerCase())}` : null;
+  const mw = METRIC_WORDS[type];
+  const ms = c.metrics.filter((m) => mw.test(m));
+  const m1 = ms.find((m) => !c.usedMeasures.has(m)) || '';
+  pool.measure = m1 ? `which measure ${c.seg} buyers would judge you on, for example ${m1}, and whether they already track it` : null;
+  const namedParts = c.parts.filter(isNamedPart);
+  const pf = c.fit.length ? c.fit : namedParts.slice(0, 3);
+  pool.product = pf.length >= 1 && (c.fit.length || namedParts.length >= 2) ? (pf.length === 1 ? `whether ${c.seg} buyers name "${pf[0].length > 80 ? clip(pf[0], 80) : pf[0]}" first` : `which of ${joinAnd(pf.map((x) => `"${x.length > 80 ? clip(x, 80) : x}"`))} ${c.seg} buyers name first`) : null;
+  // The kinds of fact this segment's kind of buyer is asked about first; a kind already used for another segment of the same kind comes later, so two such segments differ.
+  const prefs = [...PREFS[type], ...['cycle', 'signer', 'objection', 'pilot', 'measure', 'product'].filter((k) => !PREFS[type].includes(k))];
+  // the buying cycle against the user's cycle is always asked (its wording follows the kind of buyer); one or two more facts follow, in the order this kind of buyer is asked
+  const ranked = prefs.map((k, i) => ({ k, i, used: c.usedKinds.get(`${type}:${k}`) || 0 })).filter((r) => pool[r.k] && r.k !== 'cycle').sort((x, y) => x.used - y.used || x.i - y.i).slice(0, 2);
+  const chosen = [{ k: 'cycle', i: prefs.indexOf('cycle'), used: 0 }, ...ranked].sort((x, y) => x.i - y.i);
+  const out: string[] = [];
+  for (const r of chosen) { const f = pool[r.k] as string; if (f && !out.includes(f)) { out.push(f); if (r.k !== 'cycle') c.usedKinds.set(`${type}:${r.k}`, r.used + 1); } }
+  for (const k of ['signer']) { const f = pool[k]; if (out.length < 2 && f && !out.includes(f)) out.push(f); }
+  if (o && pool.objection && out.includes(pool.objection)) c.usedObjections.add(o.objection);
+  if (m1 && pool.measure && out.includes(pool.measure)) c.usedMeasures.add(m1);
   return out;
 }
