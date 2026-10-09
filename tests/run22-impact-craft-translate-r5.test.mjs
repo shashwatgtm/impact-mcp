@@ -109,13 +109,14 @@ test("r5 craft: a seat priced product keeps its seat objection", async () => {
   assert.match(t, /per seat/i);
 });
 
-test("r5 craft: a measure of the pitch itself (the ten minute start) comes next to the contract figure", async () => {
+test("r5 craft: for managed data infrastructure the economic buyer line measures what the sector kind watches (uptime, operations hours saved)", async () => {
+  // Before the managed data infrastructure kind existed in the shared sector file, the answer measured the pitch itself ("time to a live service")
+  // next to the contract figure. The kind now supplies its own measures, which fit the product better.
   const t = await call("impact_craft_message", DATAVAULT);
-  assert.match(t, /time to a live service/i);
-  assert.match(t, /uptime SLA/);
   const econ = (t.match(/\*\*For the economic buyer[^\n]*\n> ([^\n]*)/) || [])[1] || "";
-  assert.match(econ, /time to a live service/i, econ);
-  assert.ok(econ.indexOf("time to a live service") < econ.indexOf("uptime SLA"), "the ten minute start comes first");
+  assert.match(econ, /uptime/i, econ);
+  assert.match(econ, /operations hours saved/i, econ);
+  assert.doesNotMatch(t, /per seat/i);
 });
 
 // ---- (2) the services firm whose own results lead ---------------------------------------------------------------------------------------------------------
