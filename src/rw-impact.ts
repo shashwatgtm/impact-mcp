@@ -167,7 +167,9 @@ export function categoryNoun(category: string): string {
   // the head of the phrase is what comes before its first preposition ("financial data network and financial APIs for building ...")
   const head = bare.split(/\s(?:with|for|of|that|which|in|on|to|from|by|using)\s/i)[0];
   const last = (head.split(/\s+/).pop() || '').replace(/[^A-Za-z]/g, '');
-  if ((/s$/i.test(head) && !/(ss|us|is)$/i.test(head)) || FIELD_WORD.test(last)) return `provider of ${t}`;
+  const lastRaw = head.split(/\s+/).pop() || '';
+  const plural = /s$/i.test(lastRaw) && (!/(ss|us|is)$/i.test(lastRaw) || /^[A-Z]{2,}s$/.test(lastRaw));   // "APIs" is a plural, "analysis" is not
+  if (plural || FIELD_WORD.test(last)) return `provider of ${t}`;
   return t;
 }
 
