@@ -215,7 +215,8 @@ export function tidyLabel(label: string): string {
  *  the noun phrase before the first clause word is used instead (at most 7 words). A name typed as a name is returned as it came. */
 export function plainName(text: string, candidate: string): string {
   const t = text.replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
-  if (!candidate || candidate.split(/\s+/).length >= 2 || t.split(/\s+/).length <= 3) return candidate;
+  const cand = candidate.replace(/^(?:an?|the)\s+/i, '');   // "a cloud-native" is one word of a name, not a name
+  if (!candidate || cand.split(/\s+/).length >= 2 || t.split(/\s+/).length <= 3) return candidate;
   const w = t.replace(/^(?:an?|the)\s+/i, '').split(/\s+/);
   const stop = w.findIndex((x, i) => i >= 2 && /^(?:that|which|who|where|for|with|by|from|to|connects?|helps?|lets?|gives?|makes?|builds?|runs?|turns?|unifies?|uses?|delivered|provided|offered|powered|built|based)$/i.test(x.replace(/[,;:]+$/, '')));
   const lead = (stop >= 2 ? w.slice(0, stop) : w.slice(0, 5)).slice(0, 7);
@@ -262,8 +263,8 @@ export function productParts(desc: string): string[] {
   // the lead description stays whole, without the brand names in front of "a ..." ("Wisely from Tanla Platforms, Wisely, a single API led platform ..." gives "a single API led platform ...")
   const lead = first.replace(/^(?:[^,]{1,60},\s+){1,2}(?=(?:an?|the)\s)/, '').trim();
   if (lead.split(/\s+/).length >= 2) out.push(lead);
-  for (const seg of rest) for (const piece of topLevel(seg)) for (const f of piece.split(/\s+and\s+(?=[A-Z])|\s+under\s+/)) {
-    const x = f.replace(/^(?:and|or|with|including)\s+/i, '').trim();
+  for (const seg of rest) for (const piece of topLevel(seg)) for (const f of piece.replace(/\([^)]*\)/g, (m) => m.replace(/ /g, '\u0001')).split(/\s+and\s+(?=[A-Z])|\s+under\s+/)) {   // a bracket is never split
+    const x = f.replace(/\u0001/g, ' ').replace(/^(?:and|or|with|including)\s+/i, '').trim();
     if (x && (x.split(/\s+/).length >= 2 || /^[A-Z][a-z]+/.test(x)) && !out.includes(x)) out.push(x);
   }
   return out;
@@ -275,8 +276,9 @@ export function isCompanyFact(s: string): boolean {
 /** The brand at the start of a description ("Plaid, a financial data network ..." gives "Plaid"; "Wisely from Tanla Platforms, Wisely, ..." gives "Wisely from Tanla Platforms"), or the fallback. */
 export function brandName(desc: string, fallback: string): string {
   const t = desc.replace(/\s*\([^)]*\)/g, '').trim();
-  const m = t.match(/^([A-Z][^,:;]{1,60}?),\s/);
-  if (m && m[1].split(/\s+/).length <= 8 && /^[A-Z]/.test(m[1]) && !/\b(?:is|are|that|which|who)\b/.test(m[1])) return m[1].trim();
+  const m = t.match(/^([A-Z][^,:;]{1,60}?),\s+(\S+)/);
+  // a single capitalised word is a brand only when an article follows ("Plaid, a financial data network"); "Operations, data and customer services" is a list
+  if (m && (m[1].split(/\s+/).length >= 2 || /^(?:an?|the)$/i.test(m[2])) && m[1].split(/\s+/).length <= 8 && /^[A-Z]/.test(m[1]) && !/\b(?:is|are|that|which|who)\b/.test(m[1])) return m[1].trim();
   return fallback;
 }
 
