@@ -229,15 +229,17 @@ export function leadClause(text: string, max = 110, need = false, tight = false)
   for (const m of t.matchAll(re)) {
     const at = m.index ?? 0;
     if (at >= 18 && at <= max) {
+      // a comma before a conjunction ("..., while the roadmap waits") ends a clause whatever follows it
+      const conj = m[0].startsWith(',') && /^(?:while|but|so|because|whereas|although|yet)\b/i.test(t.slice(at + 2));
       // a comma inside a list ("combines A, B and C") is not a clause boundary: the piece after it is one to five words and the list goes on
-      if (m[0].startsWith(',')) {
+      if (m[0].startsWith(',') && !conj) {
         const after = t.slice(at + 2).split(/,|;|\sand\s|\sor\s/)[0].trim().split(/\s+/).length;
         if (after <= 5) continue;
       }
       const left = t.slice(0, at).trim();
       if (/^\s(?:with|by|from|for|to)\s/.test(m[0]) && /(?:ed|ing)$/i.test(left.split(/\s+/).pop() || '')) continue;
       const open = (left.match(/\(/g) || []).length - (left.match(/\)/g) || []).length;
-      if (open <= 0 && !/\b(?:and|or|of|for|to|the|a|an|by|from|in|on)$/i.test(left)) return left;
+      if (open <= 0 && (conj || !/\b(?:and|or|of|for|to|the|a|an|by|from|in|on)$/i.test(left))) return left;
     }
   }
   return null;
@@ -488,14 +490,19 @@ export function keepLabel(item: string, cut: string): string {
   return lab && sup && !cut.includes(lab[0]) && item.indexOf(lab[0]) >= cut.length ? `${cut} ${lab[0]}` : cut;
 }
 
-/** A short quotation of the user's words around a concern word ("patching, scaling, security and uptime handled"), or '' when no text holds it. */
+/** A short quotation of the user's words around a concern word ("patching, scaling, security and uptime handled"), or '' when no text holds it. A window that is only a list of
+ *  service lines ("network, cloud, security, interactions and IoT") names what is sold, not what is proved, so it is passed over. */
 export function quoteAround(texts: string[], concern: RegExp): string {
   for (const t of texts) {
     const w = WS(t).replace(/\([^)]*\)/g, ' ').split(/\s+/);
-    const i = w.findIndex((x) => concern.test(x));
-    if (i < 0) continue;
-    const from = Math.max(0, i - 2); const to = Math.min(w.length, i + 4);
-    return endStop(w.slice(from, to).join(' ')).replace(/^(?:(?:with|and|the|a|an|of|to|in|on|under|by|for)\s+)+/i, '').replace(/(?:\s+(?:with|and|the|a|an|of|to|in|on|by|for|or))+$/i, '');
+    for (let i = 0; i < w.length; i++) {
+      if (!concern.test(w[i])) continue;
+      const from = Math.max(0, i - 2); const to = Math.min(w.length, i + 4);
+      const win = w.slice(from, to);
+      const commas = win.filter((x) => /,$/.test(x)).length;
+      if ((commas >= 2 || (commas >= 1 && win.includes('and'))) && !win.some((x) => /(?:ed|ing|able)$/i.test(x.replace(/[^A-Za-z]/g, '')))) continue;
+      return endStop(win.join(' ')).replace(/^(?:(?:with|and|the|a|an|of|to|in|on|under|by|for)\s+)+/i, '').replace(/(?:\s+(?:with|and|the|a|an|of|to|in|on|by|for|or))+$/i, '');
+    }
   }
   return '';
 }
@@ -518,7 +525,55 @@ export function figureClause(text: string): string {
   }
   return '';
 }
-/** Advice written to the seller ("the buyer's own transaction data") read as copy to the buyer ("your own transaction data"). */
+/** The verb of "the buyer cares about" in the form that follows "you" ("cares" gives "care", "has" gives "have", "tries" gives "try"). */
+const afterYou = (w: string): string => {
+  const x = w.toLowerCase();
+  const irregular: Record<string, string> = { has: 'have', is: 'are', does: 'do', goes: 'go' };
+  if (irregular[x]) return irregular[x];
+  if (/ies$/.test(x) && x.length > 4) return `${x.slice(0, -3)}y`;
+  if (/(?:ch|sh|ss|x|z)es$/.test(x)) return x.slice(0, -2);
+  return x.slice(0, -1);
+};
+/** Advice written to the seller ("the buyer's own transaction data", "the outcome the buyer cares about") read as copy to the buyer ("your own transaction data", "the outcome you care about"). */
 export function toYou(t: string): string {
-  return t.replace(/\bthe buyer's own\b/gi, 'your own').replace(/\bthe buyer's\b/gi, 'your').replace(/\bthe buyer\b/gi, 'you').replace(/\bbuyers'? own\b/gi, 'your own');
+  return t
+    .replace(/\bthe buyer ([a-z]+s)\b/gi, (m, w: string) => (/(?:ss|us)$/i.test(w) || (/is$/i.test(w) && w.toLowerCase() !== 'is') ? m : `you ${afterYou(w)}`))
+    .replace(/\bthe buyer's own\b/gi, 'your own').replace(/\bthe buyer's\b/gi, 'your').replace(/\bthe buyer\b/gi, 'you').replace(/\bbuyers'? own\b/gi, 'your own');
+}
+
+// ---- the user's own measures, price basis and nouns ------------------------------------------------------------------------------------
+/** A time the user promises ("a new service live in under 10 minutes") read as a measure ("time to a live service"). Only a state word after a noun is read; nothing is added. */
+export function durationMeasures(texts: string[]): string[] {
+  const out: string[] = [];
+  const re = /(?:\b([A-Za-z-]+)\s+)?\b([A-Za-z-]{3,})\s+(live|ready|running|working|operational)\s+(?:in|within)\s+(?:under|less than|just|about|only|around)?\s*\d[\d.,]*\s*(?:seconds?|minutes?|hours?|days?|weeks?)\b/gi;
+  // the word before "live" has to be a thing ("service", "sites"), not a verb or a pronoun's verb ("it goes live in ...")
+  const NOT_THING = /^(?:goes|go|went|gone|going|is|are|was|were|be|been|being|gets|get|got|getting|becomes|become|stays|stay|remains|remain|runs|run|works|work|then|and|or|it|they|that|which|who|ready|live)$/i;
+  const PRONOUN = /^(?:it|they|you|we|he|she|which|that|who|can|will|could|would|to|then|and|or|goes|get|gets)$/i;
+  for (const t of texts) for (const m of WS(t).matchAll(re)) {
+    const noun = m[2].toLowerCase();
+    if (NOT_THING.test(noun) || (m[1] && PRONOUN.test(m[1]))) continue;
+    const x = /s$/.test(noun) && !/(?:ss|us|is)$/.test(noun) ? `time to ${m[3].toLowerCase()} ${noun}` : `time to a ${m[3].toLowerCase()} ${noun}`;
+    if (!out.includes(x)) out.push(x);
+  }
+  return out;
+}
+
+/** How the product is priced, read from the user's own words: per seat, or by usage (usage, credits, pay as you go, a unit price; or a product that is infrastructure the buyer's workloads run on). */
+export function priceBasis(texts: string[], kindTexts: string[]): { kind: 'usage' | 'seat' | ''; words: string[] } {
+  const t = texts.filter(Boolean).join(' \n ');
+  if (/\b(?:per[- ](?:seat|user|licen[cs]e|agent|rep|head)|seats?|licen[cs]es?)\b/i.test(t)) return { kind: 'seat', words: [] };
+  const words = [...new Set((t.match(/\b(?:usage[- ]based|usage[- ]priced|usage pricing|pay[- ]as[- ]you[- ]go|pay only for|metered|consumption|credits?|per[- ](?:gb|tb|request|call|message|minute|hour|event|transaction|query|node|instance|cluster|use))\b/gi) || []).map((x) => x.toLowerCase()))];
+  const infra = /\b(?:infrastructure|databases?|hosting|data platform|cloud platform|cloud service|managed services?)\b/i.test(kindTexts.filter(Boolean).join(' \n '));
+  return words.length || infra ? { kind: 'usage', words } : { kind: '', words: [] };
+}
+
+/** The subject of a clause ("customer experience management is the new battleground" gives "customer experience management"); a short noun phrase is its own subject; otherwise ''. */
+export function subjectOf(text: string, kit: Kit2): string {
+  const t = endStop(WS(text)).replace(/\s*\([^)]*\)/g, '');
+  const w = t.split(/\s+/);
+  if (w.length <= 4 && shapeOf(t, kit) !== 'clause' && shapeOf(t, kit) !== 'verb') return t;
+  for (let i = 1; i <= Math.min(5, w.length - 1); i++) {
+    if (shapeOf(w.slice(0, i + 1).join(' '), kit) === 'clause') return w.slice(0, i).join(' ');
+  }
+  return '';
 }

@@ -103,12 +103,22 @@ export declare function shared(item: string, inputs: Set<string>): number;
 export declare function figureMeasures(texts: string[]): string[];
 /** The label "(page claims)" that belongs to a cut of an item: kept when the cut holds a superlative ("the most extensively licensed ...") and the item carries the label further on. */
 export declare function keepLabel(item: string, cut: string): string;
-/** A short quotation of the user's words around a concern word ("patching, scaling, security and uptime handled"), or '' when no text holds it. */
+/** A short quotation of the user's words around a concern word ("patching, scaling, security and uptime handled"), or '' when no text holds it. A window that is only a list of
+ *  service lines ("network, cloud, security, interactions and IoT") names what is sold, not what is proved, so it is passed over. */
 export declare function quoteAround(texts: string[], concern: RegExp): string;
 /** A product name typed as "Brand lowerwords, ..." where the lower word starts a list ("eClerx digital, data and ..."): the brand alone. */
 export declare function brandOnly(named: string): string;
 /** The clause of a text that holds a percentage or a multiplier ("zero-downtime upgrades and a 99.99% uptime SLA on production plans" gives "a 99.99% uptime SLA on production plans"). '' when there is none. */
 export declare function figureClause(text: string): string;
-/** Advice written to the seller ("the buyer's own transaction data") read as copy to the buyer ("your own transaction data"). */
+/** Advice written to the seller ("the buyer's own transaction data", "the outcome the buyer cares about") read as copy to the buyer ("your own transaction data", "the outcome you care about"). */
 export declare function toYou(t: string): string;
+/** A time the user promises ("a new service live in under 10 minutes") read as a measure ("time to a live service"). Only a state word after a noun is read; nothing is added. */
+export declare function durationMeasures(texts: string[]): string[];
+/** How the product is priced, read from the user's own words: per seat, or by usage (usage, credits, pay as you go, a unit price; or a product that is infrastructure the buyer's workloads run on). */
+export declare function priceBasis(texts: string[], kindTexts: string[]): {
+    kind: 'usage' | 'seat' | '';
+    words: string[];
+};
+/** The subject of a clause ("customer experience management is the new battleground" gives "customer experience management"); a short noun phrase is its own subject; otherwise ''. */
+export declare function subjectOf(text: string, kit: Kit2): string;
 //# sourceMappingURL=rw-impact2.d.ts.map
