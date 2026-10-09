@@ -39,11 +39,14 @@ test("map: the status quo follows the seller (investment, developer platform), n
   assert.doesNotMatch(api, /Junior staff|Spreadsheets and manual/);
   assert.match(api, /tools already in place|disconnected tools/i);
 });
-test("map: each card has its own content, and a described alternative is not asked 'would you choose X over us'", async () => {
+test("map: each card has its own content, and a described alternative is not asked 'would you choose X over us' (Run 22 round 2: a strength is set against an alternative only when it shares meaning with it)", async () => {
   const t = await call("impact_map_alternatives", { your_product: "Meshline managed SD-WAN", category: "managed network services", competitors: ["legacy WAN built on hardware", "multiple network providers selling overpriced MPLS and leased lines", "traditional VPNs"], your_strengths: "SLA backed repair within a fixed window, one contract for all branch links, 24x7 expert support" });
   const leads = t.split("\n").filter((l) => /^- Where you can lead:/.test(l));
-  assert.equal(leads.length, 3);
-  assert.equal(new Set(leads).size, 3, "three different lines");
+  assert.ok(leads.length >= 1 && leads.length <= 3, "only the alternatives that a strength answers by meaning get a lead line");
+  assert.equal(new Set(leads).size, leads.length, "all different lines");
+  const multi = t.split("### Against ").find((c) => /^multiple network providers/.test(c)) || "";
+  assert.match(multi.split("\n###")[0], /one contract for all branch links/, "the one contract strength answers the many providers");
+  for (const c of t.split("### Against ").slice(1)) if (!/^multiple network providers|^Do Nothing/.test(c)) assert.doesNotMatch(c.split("\n###")[0], /one contract for all branch links|24x7 expert support/, "an unrelated strength is not set against this alternative");
   assert.doesNotMatch(t, /choose legacy WAN built on hardware over us|choose traditional VPNs over us/);
 });
 

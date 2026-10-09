@@ -7,7 +7,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { neutraliseDeep, neutraliseText } from './echo-safe.ts';
-import { plainName, tidyLabel, splitStrengths, leadAud, noSeatWords, categoryNoun, takeLabel, topLevel, joinAnd, clip, outcomeItems, outcomeClause, leadItems, classifyProof, MEASURE_LINKS, ctaNoun, sharpenLine, type Kit, type ProofKind } from './rw-impact.ts';
+import { segmentFit, segmentOverlap, roleOk, linkScore, productParts, isCompanyFact, brandName, plainName, tidyLabel, splitStrengths, leadAud, noSeatWords, categoryNoun, takeLabel, topLevel, joinAnd, clip, outcomeItems, outcomeClause, leadItems, classifyProof, MEASURE_LINKS, ctaNoun, sharpenLine, type Kit, type ProofKind } from './rw-impact.ts';
 import { detectVertical, detectModel, explainSector, profileFor, SAAS_ONLY, SUBTYPES, SECTOR_MODEL, MODEL_NAME, BUSINESS_MODELS, VERTICALS, type Vertical, type VerticalId, type BusinessModel, type ReaderInput } from './verticals.ts';
 
 // =============================================================================
@@ -1476,7 +1476,7 @@ ${SUGGESTED}
       // and no competitor, strength or fact that you did not give. What is missing is named once, at the end.
       const competitorsGiven = !!(args.competitors && args.competitors.filter((c) => c && c.trim()).length);
       const named = competitorsGiven ? (args.competitors as string[]).filter((c) => c && c.trim()).map((c) => c.trim()) : [];
-      const weaknessItems = splitWeaknesses(args.competitor_weaknesses);
+      const weaknessItems0 = splitWeaknesses(args.competitor_weaknesses);
       const strengthItems = splitItems(args.your_strengths);
       const rc = readContext(undefined, { core: [args.category, args.your_product], later: [args.your_strengths], context: [args.competitor_weaknesses] });
       const v = rc.v;
@@ -1484,6 +1484,9 @@ ${SUGGESTED}
       const nsw = (t: string): string => (rc.model === 'saas' || rc.model === null ? t : noSeatWords(t));
       const vendors = named.filter((c) => !STATUS_QUO.test(nameOf(c)) && nameOf(c).toLowerCase() !== 'status quo' && nameOf(c).toLowerCase() !== 'do nothing');
       const statusQuo = named.filter((c) => !vendors.includes(c));
+      // A weakness typed as two clauses ("A, and B") is split in two when each half belongs to a different alternative by meaning.
+      const altOf = (t: string): string | null => { let b: string | null = null; let bn = 1; let tie = false; for (const c of named) { const n = linkScore(t, c); if (n > bn) { b = c; bn = n; tie = false; } else if (n === bn && n > 1) tie = true; } return tie ? null : b; };
+      const weaknessItems = weaknessItems0.flatMap((w) => { const h = w.split(/,\s+and\s+(?=\S)/); if (named.length > 1 && h.length === 2 && h.every((x) => x.trim().split(/\s+/).length >= 4)) { const a = altOf(h[0]), b = altOf(h[1]); if (a && b && a !== b) return h.map((x) => x.trim()); } return [w]; });
       // A weakness is shown on the card of the alternative it names. One that shares at least two content words with an alternative's description belongs there too;
       // the rest are listed once under "Weaknesses you gave" and never hung on an alternative they do not describe.
       const matched = new Map<string, string[]>();
@@ -1496,11 +1499,13 @@ ${SUGGESTED}
       // A weakness about doing the work by hand fits the one status-quo option you listed, when you listed exactly one.
       const sqOnly = named.filter((c) => STATUS_QUO.test(nameOf(c)) && nameOf(c).toLowerCase() !== 'do nothing');
       if (sqOnly.length === 1) for (const w of weaknessItems) if (!used.has(w) && /\b(?:by hand|spreadsheets?|in-house|paper|excel)\b/i.test(w)) { matched.set(sqOnly[0], [...(matched.get(sqOnly[0]) || []), w]); used.add(w); }
+      // Run 22 round 2: a weakness belongs to an alternative only when it shares meaning with it (at least two specific words, or one meaning pair), and to one alternative alone;
+      // with exactly one alternative given, every weakness is about it.
       for (const w of weaknessItems) {
         if (used.has(w)) continue;
-        const ws = contentStems(w);
+        if (named.length === 1) { matched.set(named[0], [...(matched.get(named[0]) || []), w]); used.add(w); continue; }
         let best: string | null = null; let bestN = 1; let tie = false;
-        for (const c of named) { const n = [...contentStems(c)].filter((x) => ws.has(x)).length; if (n > bestN) { best = c; bestN = n; tie = false; } else if (n === bestN && n > 1) tie = true; }
+        for (const c of named) { const n = linkScore(w, c); if (n > bestN) { best = c; bestN = n; tie = false; } else if (n === bestN && n > 1) tie = true; }
         if (tie) best = null;
         if (best) { matched.set(best, [...(matched.get(best) || []), w]); used.add(w); }
       }
@@ -1509,59 +1514,89 @@ ${SUGGESTED}
       const describedOnly = vendors.length > 0 && !vendors.some(nameLike);
       const sParts = splitStrengths(strengthItems);
       const descriptor = (c: string) => { if (!nameLike(c)) return ''; const m = c.match(/\(([^)]*)\)/); return m ? m[1].trim() : ''; };
-      const head = (c: string) => (nameLike(c) ? nameOf(c) : nameOf(c).split(/\s+/).length <= 9 && nameOf(c).length <= 70 ? nameOf(c) : tidyLabel(labelOf(c)));
-      // The strength that answers a weakness: the one that shares the most content words with it (none when no word is shared).
-      const answerFor = (w: string): string | null => {
-        const ws = contentStems(w);
-        let best: string | null = null; let bestN = 0;
-        for (const s of sParts) { const n = [...contentStems(s)].filter((x) => ws.has(x)).length; if (n > bestN) { best = s; bestN = n; } }
-        return best;
+      const head = (c: string): string => {
+        if (nameLike(c)) return nameOf(c);
+        const pre = nameOf(c).split(/:\s/)[0];   // "the old model: one firm writes the strategy ..." is headed "the old model"
+        if (pre !== nameOf(c) && pre.split(/\s+/).length >= 2 && pre.split(/\s+/).length <= 6) return pre;
+        return nameOf(c).split(/\s+/).length <= 9 && nameOf(c).length <= 70 ? nameOf(c) : tidyLabel(labelOf(c));
       };
-      const lead = (c: string, i: number): string => {
+      // Run 22 round 2: the lead against an alternative is the part of your own product description (and, where one fits, the strength) that answers what you said about it;
+      // an unrelated strength is never set against an alternative. A part or strength qualifies only when it shares meaning with the weakness or the description.
+      const pParts = productParts(args.your_product);
+      const factFree = sParts.filter((x) => !isCompanyFact(x));
+      const x_long = (x: string): boolean => x.split(/\s+/).length > 12;
+      const best = (pool: string[], target: string, min = 2): string[] => {
+        const scored = pool.map((x) => ({ x, n: linkScore(x, target) })).filter((r) => r.n >= (x_long(r.x) ? min + 1 : min)).sort((a, b) => b.n - a.n);
+        return scored.slice(0, 3).map((r) => r.x);
+      };
+      const answerFor = (w: string): string | null => best(factFree, w)[0] || null;
+      const leadFor = (c: string): string => {
         const w = matched.get(c) || [];
-        for (const x of w) { const a = answerFor(x); if (a) return `start with ${q(clip(a, 130))} (your words), which answers the weakness you reported (${q(clip(x, 90))}); ask the buyer how ${head(c)} does on it`; }
-        return sParts.length ? `no weakness you gave ties a strength to ${head(c)}; the one to test against it first is ${q(clip(sParts[i % sParts.length], 130))} (your words): ask the buyer how ${head(c)} does on it` : 'none of your strengths was given, so no angle is drafted';
+        const target = `${w.join(' ')} ${nameLike(c) ? descriptor(c) : c}`;
+        const parts = best(pParts, target);
+        const strong = best(factFree, target)[0];
+        const what = w.length ? `the weakness you reported (${q(clip(w[0], 90))})` : `what you described (${q(clip(nameLike(c) ? descriptor(c) || nameOf(c) : c, 90))})`;
+        if (parts.length) return `your own product text names ${joinAnd(parts.map((x) => q(clip(x, 110))))}, which answers ${what}${strong ? `; your strength ${q(clip(strong, 110))} backs it` : ''}`;
+        if (strong) return `your strength ${q(clip(strong, 110))} (your words) answers ${what}`;
+        return '';
       };
-      // One neutral question per card, never the same twice (the sector's own questions first, then three general ones; a card past the end has none).
-      const qPool = [...lz.questions, 'What would have to be true for you to change how you do this today?', 'Who else is involved when this decision comes up?', 'How do you measure this today, and who reviews the number?'];
-      let qUsed = 0;
+      // One neutral question per card, built from the weakness (or the alternative) and from a sector measure that shares its meaning.
+      const askFor = (c: string): string => {
+        const w = matched.get(c) || [];
+        const text = w.length ? w.join(' ') : c;
+        const meas = lz.metrics.find((m) => linkScore(m, text) >= 1);
+        if (w.length) return `Does ${q(clip(w[0], 90))} describe what you see today, and what does it cost you${meas ? ` in ${meas}` : ''}?`;
+        if (nameLike(c)) return `What made you choose ${nameOf(c)}, and what would make you look at an alternative?`;
+        return `How do you handle ${q(clip(nameOf(c), 90))} today, and what does it cost you${meas ? ` in ${meas}` : ''}?`;
+      };
       const card = (c: string, i: number, kind: 'vendor' | 'status') => {
         const w = matched.get(c) || [];
         const d = descriptor(c);
         const who = kind === 'status'
           ? `a way your buyers cope today, in your words: ${q(nameLike(c) ? nameOf(c) : clip(c, 240))}`
           : `${d ? q(d) : !nameLike(c) ? `the description ${q(clip(c, 240))}, which is not a company name` : 'only the name'}`;
-        const q1 = qPool[qUsed++];
+        const ld = leadFor(c);
         return `
 ### Against ${head(c)}
 **${nameLike(c) ? nameOf(c) : head(c)}**${d ? ` (${d})` : ''}
 - What you told us about them: ${who}
-${w.length ? `- Weaknesses you reported:\n${w.map((x) => `  - ${x}`).join('\n')}\n` : ''}- Where you can lead: ${lead(c, i)}
-${q1 ? `- A neutral question to ask a buyer about them: "${q1.replace(/\?$/, '')}?"` : ''}`;
+${w.length ? `- Weaknesses you reported:\n${w.map((x) => `  - ${x}`).join('\n')}\n` : ''}${ld ? `- Where you can lead: ${ld}\n` : ''}- A neutral question to ask a buyer about them: ${askFor(c)}`;
       };
       const weakBlock = untied.length ? `\n**Weaknesses you gave** (about the alternatives as a group, not tied to one of them; test each with buyers, they are your notes and not verified facts):\n${list(untied)}\n` : '';
       const defaults = statusQuoDefaults(v, rc.model);
-      const prodName = plainName(args.your_product, runningName(args.your_product.replace(/\s*\([^)]*\)/g, '').trim())) || 'Your product';
-      const answered = strengthItems.length ? sParts.filter((s) => weaknessItems.some((w) => answerFor(w) === s)) : [];
-      const inShort = `${prodName} is mapped against ${vendors.length ? `${vendors.length} ${describedOnly ? 'alternative' : 'competitor'}${vendors.length > 1 ? 's' : ''} you ${describedOnly ? 'described' : 'named'}` : 'no named competitor (you gave none)'}${statusQuo.length ? ` and ${statusQuo.length} way${statusQuo.length > 1 ? 's' : ''} your buyers cope without a vendor` : ''}. ${weaknessItems.length ? `You reported ${weaknessItems.length} weakness${weaknessItems.length > 1 ? 'es' : ''}: ${weaknessItems.length - untied.length} tied to a single alternative${untied.length ? ` and ${untied.length} about the group` : ''}.` : 'You reported no weaknesses, so each card says so and asks the buyer instead.'} ${strengthItems.length ? `${answered.length ? `${answered.length === 1 ? 'One' : answered.length} of your strengths answers a reported weakness directly; the others need proof that a buyer can check.` : 'None of your strengths answers a reported weakness directly by its words, so each needs proof a buyer can check.'}` : 'You gave no strengths, so no angle is drafted.'}${competitorsGiven ? '' : ' Because you gave no competitors, the answer below maps the usual alternatives for a seller like you and names no rival.'}`;
+      const prodName = brandName(args.your_product, plainName(args.your_product, runningName(args.your_product.replace(/\s*\([^)]*\)/g, '').trim()))) || 'Your product';
+      const linkedStrengths = factFree.filter((x) => weaknessItems.some((w) => answerFor(w) === x));
+      const partWeak = weaknessItems.filter((w) => best(pParts, w).length);
+      const inShort = `${prodName} is mapped against ${vendors.length ? `${vendors.length} ${describedOnly ? 'alternative' : 'competitor'}${vendors.length > 1 ? 's' : ''} you ${describedOnly ? 'described' : 'named'}` : 'no named competitor (you gave none)'}${statusQuo.length ? ` and ${statusQuo.length} way${statusQuo.length > 1 ? 's' : ''} your buyers cope without a vendor` : ''}. ${weaknessItems.length ? `You reported ${weaknessItems.length} weakness${weaknessItems.length > 1 ? 'es' : ''}: ${weaknessItems.length - untied.length} tied to a single alternative${untied.length ? ` and ${untied.length} about the group` : ''}; ${partWeak.length ? `your own product text answers ${partWeak.length === weaknessItems.length ? 'all of them' : `${partWeak.length} of them`}` : 'your product text answers none of them by its words'}${linkedStrengths.length ? ` and ${linkedStrengths.length} of your strengths ${linkedStrengths.length === 1 ? 'backs' : 'back'} an answer` : ''}.` : 'You reported no weaknesses, so each part asks the buyer instead.'}${strengthItems.length ? '' : ' You gave no strengths, so only your product text is used as a lead.'}${competitorsGiven ? '' : ' Because you gave no competitors, the answer below maps the usual alternatives for a seller like you and names no rival.'}`;
 
       const missing: { give: string; changes: string }[] = [];
       if (!competitorsGiven) missing.push({ give: 'competitors (the rivals and the status-quo options your buyers use)', changes: 'the whole answer, which would get one part per alternative' });
       if (!weaknessItems.length) missing.push({ give: 'competitor_weaknesses (what buyers complain about)', changes: 'each part, which now has no weakness to test' });
-      if (!strengthItems.length) missing.push({ give: 'your_strengths', changes: 'the "Where you can lead" lines, which now draft no angle' });
+      if (!strengthItems.length) missing.push({ give: 'your_strengths', changes: 'the "Where you can lead" lines, which now rest on your product text alone' });
       const sharpen = sharpenLine(missing);
 
       const dq = [
         '"What have you tried before to solve this?"',
         '"What other solutions are you evaluating?"',
-        ...(vendors.length ? vendors.slice(0, 2).map((c) => (nameLike(c) ? `"What would make you choose ${nameOf(c)} over us?"` : `"What keeps you with ${labelOf(c)} today, and what would make you change?"`)) : ['"What would make you choose a competitor over us?"']),
+        ...(vendors.length ? vendors.slice(0, 2).map((c) => (nameLike(c) ? `"What would make you choose ${nameOf(c)} over us?"` : `"What keeps you with ${head(c)} today, and what would make you change?"`)) : ['"What would make you choose a competitor over us?"']),
         '"What didn\'t work about your previous approach?"',
         '"What\'s missing from solutions you\'ve seen?"',
       ];
-      const pairLines = strengthItems.length ? sParts.map((s) => {
-        const w = weaknessItems.find((x) => answerFor(x) === s);
-        return `- ${s}: ${w ? `answers the weakness you reported, ${q(clip(w, 110))}` : 'no weakness you gave is answered by these words directly, so back it with proof a buyer can check'}`;
-      }) : [];
+      const unlinked = factFree.filter((x) => !linkedStrengths.includes(x));
+      const facts = sParts.filter(isCompanyFact);
+      const testQ = (st: string): string => { const m = lz.metrics.find((x) => linkScore(x, st) >= 1); return m ? `How do you measure ${m} today, and what does a miss cost you?` : `Does ${q(clip(st.replace(/\s*\([^)]*\)\s*$/, ''), 110))} matter when you choose a supplier, and who checks it?`; };
+      const ownerOf = (w: string): string => named.find((c) => (matched.get(c) || []).includes(w)) || '';
+      const weakLines = weaknessItems.map((w) => {
+        const parts = best(pParts, `${w} ${ownerOf(w)}`);
+        const st = best(factFree, `${w} ${ownerOf(w)}`)[0] || null;
+        const own = ownerOf(w);
+        return `- ${q(clip(w, 260))} (${own ? `about ${head(own)}` : 'about the alternatives as a group'}): ${parts.length ? `your product text names ${joinAnd(parts.map((x) => q(clip(x, 110))))}${st ? `; your strength ${q(clip(st, 260))} (your words) backs it` : ''}` : st ? `your strength ${q(clip(st, 260))} (your words) answers it` : 'nothing you gave answers this by its meaning yet, so find the proof that would'}`;
+      });
+      const pairLines = [
+        ...(weakLines.length ? ['\n**Weaknesses you gave, and what in your own words answers them** (your notes, to test with buyers; not verified facts):', ...weakLines] : []),
+        ...(unlinked.length ? ['\n**Other strengths: no weakness answered yet** (each needs a question that tests it):', ...unlinked.map((x) => `- ${x}: to test it, ask buyers: ${testQ(x)}`)] : []),
+        ...(facts.length ? ['\n**Company facts, not reasons to choose you** (keep them for credibility):', ...facts.map((x) => `- ${x}`)] : []),
+      ];
       const sectorPart = v ? `\n${nsw(sectorBlock(v, lz.fn ? ['committee', 'objections'] : ['vocabulary', 'committee', 'objections', 'discovery'], 'Sector view'))}${lz.fn ? `\n${teamBlock(lz.fn, v)}` : ''}\n` : '';
 
       return `# Competitive Landscape Analysis
@@ -1578,10 +1613,14 @@ ${rc.line}
 
 ---
 
+## Where you can lead
+${pairLines.length ? `${pairLines.join('\n')}\n` : '\nNo weaknesses or strengths were given, so nothing is set against anything yet.\n'}${v && lz.metrics.length ? `\nBuyers in ${lz.fn ? `a ${fnName(lz.fn)} team` : v.name} compare alternatives on these measures: ${lz.metrics.slice(0, 4).join(', ')}. Ask them how each alternative does on these, and lead only where you can show proof of the shape this sector trusts: ${lz.proof}\n` : ''}
+---
+
 ## ${describedOnly ? 'Alternatives You Described (no company names were given)' : 'Direct Competitors (Same Solution, Same Problem)'}
 
 The weaknesses and strengths in this answer are your own notes, to test with buyers; none of them is a verified fact, and nothing about a competitor was looked up.
-${describedOnly ? '\nThese are alternatives described in words, not named vendors. Add the names of the products your buyers compare you with to `competitors` for parts that carry real names.\n' : ''}${weakBlock}${vendors.length ? vendors.map((c, i) => card(c, i, 'vendor')).join('\n') : '\nNo named competitor was given, so no rival is described here. The status quo below is the alternative every deal faces.'}
+${describedOnly ? '\nThese are alternatives described in words, not named vendors. Add the names of the products your buyers compare you with to `competitors` for parts that carry real names.\n' : ''}${vendors.length ? vendors.map((c, i) => card(c, i, 'vendor')).join('\n') : '\nNo named competitor was given, so no rival is described here. The status quo below is the alternative every deal faces.'}
 
 ---
 
@@ -1592,10 +1631,6 @@ ${v ? `Buyers in this sector often say: ${v.objections.slice(0, 2).map((o) => `"
 ### Against Do Nothing
 Not buying is the alternative every deal faces: it wins when the problem does not yet cost the buyer enough to act. Ask what it costs in the buyer's own figures${lz.metrics.length ? `, for example ${lz.metrics.slice(0, 2).join(' or ')}` : ''}, and what changes if it grows next year.
 
----
-
-## Where you can lead
-${pairLines.length ? `\nYour strengths, set against what you reported (your words, not verified facts):\n${pairLines.join('\n')}\n` : '\nNo strengths were given, so nothing is set against the weaknesses yet.\n'}${v && lz.metrics.length ? `\nBuyers in ${lz.fn ? `a ${fnName(lz.fn)} team` : v.name} compare alternatives on these measures: ${lz.metrics.slice(0, 4).join(', ')}. Ask them how each alternative does on these, and lead only where you can show proof of the shape this sector trusts: ${lz.proof}\n` : ''}
 ---
 
 ## Discovery Questions for Competitive Intel
@@ -1677,7 +1712,6 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const lz = lensOf(v, args.category, args.key_outcome, args.unique_capability, args.target_customer);
       const com = v ? committeeParts(v) : null;
       // A role read from the sector's committee sentence is used only when it reads as a role (a sentence with a colon or a full stop is not one).
-      const roleOk = (r: string | undefined): string => (r && r.length <= 70 && !/[.:]/.test(r) ? r : '');
       const signer = (lz.fn ? lz.fn.buyer : com ? roleOk(com.signer) : '') || 'the budget owner';
       const champion = lz.fn ? lz.fn.champion : com ? roleOk(com.champion) : '';
       const rv0 = !lz.fn && com && com.reviewers.length ? com.reviewers[0] : null;
@@ -1690,12 +1724,18 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const extraFact = (target.match(/\s*[;:]\s*((?:more than|over|about)?\s*[\d,]+\+?\s.*)$/i) || [])[1] || '';
       const aud = mid(audFull.length <= 90 ? audFull : shortAudience(target));
       const sa0 = shortAudience(audFull.length > LONG_AT ? audFull : shortText(audFull));
-      const sa = (/\.\.\./.test(sa0) || !audFull.toLowerCase().startsWith(sa0.toLowerCase().slice(0, 10))) && leadAud(audFull) ? mid(leadAud(audFull) as string) : sa0;
+      const rest0 = audFull.toLowerCase().startsWith(sa0.toLowerCase()) ? audFull.slice(sa0.length).trim() : '';
+      const saBad = /\.\.\./.test(sa0) || !audFull.toLowerCase().startsWith(sa0.toLowerCase().slice(0, 10)) || /^(?:and|or)\b/i.test(rest0);
+      const aItems = topLevel(audFull).map((x) => x.trim()).filter(Boolean);
+      // a short audience that is not the start of the typed one ("large online") is replaced by the typed audience's lead words, or by its first one or two list items
+      const saLead = saBad ? ((/^(?:and|or)\b/i.test(rest0) ? null : leadAud(audFull)) || (aItems.length >= 2 && aItems.slice(0, 2).every((x) => x.split(/\s+/).length <= 3) ? `${aItems[0]} and ${aItems[1]}` : aItems[0] && aItems[0].split(/\s+/).length <= 6 ? aItems[0] : audFull.split(/\s+/).slice(0, 5).join(' '))) : '';
+      const sa = saBad && saLead ? mid(saLead) : sa0;
 
       // The outcome as one grammatical clause (the first two results inside the statements, all of them in the matrix); a text that is not a plain result is quoted.
       const oc = outcomeItems(args.key_outcome, RW_KIT);
-      const lab = oc.label ? ` ${oc.label}` : '';
       const outLeadItems = leadItems(oc.items, 260, 2).map((x) => clip(x, 260));
+      // the source label of the outcome stays beside a figure; a claim with no figure carries it in the matrix only (no "(page words)" tag inside a draft line)
+      const lab = oc.label && /\d/.test(outLeadItems.join(' ')) ? ` ${oc.label}` : '';
       const outLead = outcomeClause(outLeadItems, RW_KIT) ?? `achieve this: ${q(clip(clean(args.key_outcome), FRAME_AT))}`;
       const outFirst = outcomeClause(outLeadItems.slice(0, 1), RW_KIT) ?? outLead;
 
@@ -2043,7 +2083,7 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
 
       // Run 22 rewrite: from here down the answer is a finished analysis. The scores, the presets and the sizing arithmetic are unchanged (D80, D94); what is new is a plain
       // verdict first, the user's own inputs used segment by segment, and one closing list of what is missing.
-      const prodName = plainName(args.product_description, runningName(args.product_description.replace(/\s*\([^)]*\)/g, '').trim())) || 'Your product';
+      const prodName = brandName(args.product_description, plainName(args.product_description, runningName(args.product_description.replace(/\s*\([^)]*\)/g, '').trim()))) || 'Your product';
       const prodText = args.product_description.trim().length <= 400 ? args.product_description.trim() : clip(args.product_description, 300);
       const ccText = (args.current_customers || '').trim();
       const ccStems = contentStems(ccText);
@@ -2063,26 +2103,30 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const topShares = beachhead.ownRef.length || beachhead.ownPain.length
         ? `, because its name shares ${[beachhead.ownRef.length ? `"${real(beachhead.name, beachhead.ownRef).join('", "')}" with your customers` : '', beachhead.ownPain.length ? `"${real(beachhead.name, beachhead.ownPain).join('", "')}" with your pain` : ''].filter(Boolean).join(' and ')}`
         : '';
+      const nsw = (t: string): string => (ctx.model === 'saas' || ctx.model === null ? t : noSeatWords(t));
+      const oneFact = ` The one fact that would settle it: which of these segments already buys from you (current_customers)${painText ? '' : ', or where buyers raise your problem first (customer_pain)'}.`;
       const inShort = ownMethod
         ? (allTied
-          ? `${prodName}: none of your ${nSeg} segment names shares a word with your customers or your pain, so the scores built from them tie and choose nothing. Use the checks below to choose.`
-          : `${prodName}: your ${nSeg} segments were ranked from your own customers, pain and deal size, and ${beachhead.name} comes first${topShares}.${tied.length > 1 ? ` ${tied.map((t) => t.name).join(' and ')} tie for the top score, and ${beachhead.name} is shown first only because you listed it first.` : ''} The match is by words, so ask three buyers in ${tied.length > 1 ? 'those segments' : beachhead.name} which problem they raise first before you commit.`)
+          ? `None of your ${nSeg} segment names shares a word with your customers or your pain, so the scores built from them tie and choose nothing for ${prodName}. Use the checks below to choose.`
+          : `${beachhead.name} comes first for ${prodName}${topShares}: your ${nSeg} segments were ranked from your own customers, pain and deal size.${tied.length > 1 ? ` ${tied.map((t) => t.name).join(' and ')} tie for the top score, and ${beachhead.name} is shown first only because you listed it first.` : ''} The match is by words, so ask three buyers in ${tied.length > 1 ? 'those segments' : beachhead.name} which problem they raise first before you commit.`)
         : (tied.length > 1
-          ? `${prodName}: the segments were scored with keyword presets (${missingForOwn.join(', ')} not given), and the presets cannot separate ${tied.length === nSeg ? `any of your ${nSeg} segments` : `the top ${tied.length} segments (${tied.map((t) => t.name).join(', ')})`}. Choose between them with the segment-by-segment checks below, which use your deal size${cycleGiven ? ' and sales cycle' : ''}.`
-          : `${prodName}: the segments were scored with keyword presets (${missingForOwn.join(', ')} not given). ${beachhead.name} comes first only because its name contains the keyword "${beachhead.kw}"; the score does not use your deal size${acvGiven ? ` of ${acvGiven}` : ''}${cycleGiven ? `, your sales cycle of ${cycleGiven}` : ''} or anything known about your market. Treat ${beachhead.name} as the segment to test first, and settle the ranking with the segment-by-segment checks below.`);
-      const nsw = (t: string): string => (ctx.model === 'saas' || ctx.model === null ? t : noSeatWords(t));
+          ? `The keyword presets cannot separate ${tied.length === nSeg ? `any of your ${nSeg} segments` : `the top ${tied.length} segments (${tied.map((t) => t.name).join(', ')})`}, so nothing here chooses a beachhead for ${prodName}; ${missingForOwn.join(' and ')} ${missingForOwn.length > 1 ? 'were' : 'was'} not given. Choose with the segment-by-segment checks below, which use your deal size${acvGiven ? ` of ${acvGiven}` : ''}${cycleGiven ? ` and sales cycle of ${cycleGiven}` : ''} and the parts of your product description.${oneFact}`
+          : `${capFirst(beachhead.name)} comes first only because its name contains the keyword "${beachhead.kw}": the presets do not use your deal size${acvGiven ? ` of ${acvGiven}` : ''}${cycleGiven ? `, your sales cycle of ${cycleGiven}` : ''} or anything known about your market (${missingForOwn.join(' and ')} ${missingForOwn.length > 1 ? 'were' : 'was'} not given). Treat ${beachhead.name} as the segment to test first for ${prodName}, and settle the ranking with the segment-by-segment checks below.${oneFact}`);
       const askQ = (i: number): string => nsw(v && v.discovery.length ? v.discovery[i % v.discovery.length] : 'Which problem do you raise first, and what have you tried before?');
+      const prodParts = productParts(args.product_description);
       const perSegment = segmentScores.map((s, i) => {
         const pshare = prodShare(s.name), cshare = overlap(s.name);
-        return `**${s.name}** (${ownMethod ? `${s.total} of 25 from your own inputs` : s.keyword ? `${s.total} of 25 from the keyword "${s.kw}"` : `${s.total} of 25, no keyword`}).${pshare.length ? ` Your product description shares "${real(s.name, pshare).join('", "')}" with this segment name.` : ''}${cshare.length ? ` Your customers share "${real(s.name, cshare).join('", "')}" with it.` : ''} Ask three buyers there: ${q(askQ(i))}`;
+        const fit = segmentFit(s.name, prodParts);
+        return `**${s.name}** (${ownMethod ? `${s.total} of 25 from your own inputs` : s.keyword ? `${s.total} of 25 from the keyword "${s.kw}"` : `${s.total} of 25, no keyword`}).${fit.length ? ` Of the parts in your product description, ${joinAnd(fit.map((x) => q(clip(x, 90))))} sit${fit.length === 1 ? 's' : ''} closest to the words ${q(s.name)}; ask whether buyers there name ${fit.length === 1 ? 'it' : 'them'} first.` : pshare.length ? ` Your product description shares "${real(s.name, pshare).join('", "')}" with this segment name.` : ''}${cshare.length ? ` Your customers share "${real(s.name, cshare).join('", "')}" with it.` : ''} In ${s.name}, ask three buyers who signs${acvGiven ? ` a deal of ${acvGiven}` : ' your price'}${cycleGiven ? `, whether that buyer decides within ${cycleGiven}` : ''}, and which part of your offer comes first for them.`;
       }).join('\n\n');
+      const overlapNotes = segmentOverlap(segmentScores.map((x) => x.name));
       const howToDecideKeyword = `## How to decide, from your own inputs
 
 What you gave: deal size ${acvGiven || 'not given'}, sales cycle ${cycleGiven || 'not given'}, current customers ${ccText ? `(${q(clip(ccText, 200))})` : 'not given'}. The keyword scores below do not use any of these, so use them first:
 
 - ${secondView}
 - **Deal size and cycle.** ${acvGiven || cycleGiven ? `A deal of ${acvGiven || 'your size'}${cycleGiven ? ` with a cycle of ${cycleGiven}` : ''} needs, in each segment, a buyer who can approve that amount and a team that can run a process of that length. Check that for each segment before you rank it.` : 'Each segment must have a buyer who can approve your price and a team that can run a process of your sales length. Check that for each segment before you rank it.'}
-- **Strongest pain.** ${painText ? `Your customers describe it as ${q(clip(painText, 200))}. Ask three buyers in each segment whether they raise that first; the segment where it is raised unprompted comes first.` : 'Ask three buyers in each segment which problem they raise first; the segment where it is raised unprompted comes first.'}
+- **Strongest pain.** ${painText ? `Your customers describe it as ${q(clip(painText, 200))}. Ask three buyers in each segment whether they raise that first; the segment where it is raised unprompted comes first.` : 'Ask three buyers in each segment which problem they raise first; the segment where it is raised unprompted comes first.'}${overlapNotes.length ? `\n- **Overlap.** ${overlapNotes.join(' ')}` : ''}
 
 ### Segment by segment
 
@@ -2222,7 +2266,7 @@ Based on the beachhead selection, your ICP likely includes:
 **Company Characteristics**:
 - Industry: ${beachhead.name.split('(')[0].trim()}
 - Size: ${(() => { const br = beachhead.name.match(/\(([^)]+)\)/)?.[1]; return br && /\d|employees|revenue|small|large|mid/i.test(br) ? `${br}${!segGiven ? ` ${EXAMPLE}` : ''}` : 'not given, so no size is assumed'; })()}
-${c ? `\n**Buying Characteristics**:\n- Decision maker: ${c.signer} signs; ${c.champion} is the likeliest champion (this sector's usual committee)` : '\n**Buying Characteristics**:\n- Decision maker: no sector was read, so no committee is assumed'}
+${c ? `\n**Buying Characteristics**:\n- Decision maker: ${roleOk(c.signer) && roleOk(c.champion) ? `${roleOk(c.signer)} signs; ${roleOk(c.champion)} is the likeliest champion (this sector's usual committee)` : roleOk(c.signer) ? `${roleOk(c.signer)} signs (this sector's usual committee; see the sector view above for the rest)` : "see the sector view above for the usual committee"}` : '\n**Buying Characteristics**:\n- Decision maker: no sector was read, so no committee is assumed'}
 - Budget: ${acvGiven ? `your price is ${acvGiven}; confirm that this segment's budget holders can approve that amount` : 'no price was given, so no budget is assumed'}
 - Sales cycle: ${cycleGiven || 'not given'}
 - Buying trigger: ${v ? `ask your best customers what set off their purchase. In this sector: ${nsw(v.salesMotion)}` : 'ask your best customers what set off their purchase (an audit finding, a season or a competitive threat are common)'}

@@ -51,4 +51,19 @@ export declare function tidyLabel(label: string): string;
 /** A running name for a product typed as a description: when the shared rule leaves one word of it ("cloud-native" from "a cloud-native, composable core banking platform ..."),
  *  the noun phrase before the first clause word is used instead (at most 7 words). A name typed as a name is returned as it came. */
 export declare function plainName(text: string, candidate: string): string;
+export declare function specificKeys(text: string): Map<string, number>;
+/** How strongly two texts are about the same thing: shared specific words (1 each, 2 for a word of six letters or more) plus 2 for a meaning pair. 0 means no link. */
+export declare function linkScore(a: string, b: string): number;
+/** The fragments of a product description that can stand as a lead: the items after a colon or "with", a clause after "under" or "on" (Plaid style lists keep their brackets whole). */
+export declare function productParts(desc: string): string[];
+/** Facts about the company that are not a reason to choose it (a funding round, a founding year, headcount). */
+export declare function isCompanyFact(s: string): boolean;
+/** The brand at the start of a description ("Plaid, a financial data network ..." gives "Plaid"; "Wisely from Tanla Platforms, Wisely, ..." gives "Wisely from Tanla Platforms"), or the fallback. */
+export declare function brandName(desc: string, fallback: string): string;
+/** A role read from a committee sentence is used only when it reads as a role: short, no verb or sentence glue, no half-open end ("finance and executive assistants are often the targets and" is not one). */
+export declare function roleOk(r: string | undefined): string;
+/** The parts of a product description whose words sit close to a segment's name: shared words, or a cue pair. At most three. */
+export declare function segmentFit(segment: string, parts: string[]): string[];
+/** Notes on segments that overlap: "Banking" inside "Financial services". */
+export declare function segmentOverlap(names: string[]): string[];
 //# sourceMappingURL=rw-impact.d.ts.map

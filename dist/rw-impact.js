@@ -22,8 +22,16 @@ exports.noSeatWords = noSeatWords;
 exports.splitStrengths = splitStrengths;
 exports.tidyLabel = tidyLabel;
 exports.plainName = plainName;
+exports.specificKeys = specificKeys;
+exports.linkScore = linkScore;
+exports.productParts = productParts;
+exports.isCompanyFact = isCompanyFact;
+exports.brandName = brandName;
+exports.roleOk = roleOk;
+exports.segmentFit = segmentFit;
+exports.segmentOverlap = segmentOverlap;
 // A source label at the end of a typed text: "(page claim)", "(case study)", "(hypothetical)", "(quote from the head of payments at X)".
-const LABEL = /\s*\(([^()]*\b(?:page claims?|hypothetical|customer stor(?:y|ies)|story titles?|case stud(?:y|ies)|analyst reports?|press release|quote from|testimonial|review sites?|sources?)\b[^()]*)\)\s*[.!]?\s*$/i;
+const LABEL = /\s*\(([^()]*\b(?:page claims?|page words?|page text|page quote|customer words|hypothetical|customer stor(?:y|ies)|story titles?|case stud(?:y|ies)|analyst reports?|press release|quote from|testimonial|review sites?|sources?)\b[^()]*)\)\s*[.!]?\s*$/i;
 function takeLabel(text) {
     const t = text.trim();
     const m = t.match(LABEL);
@@ -168,7 +176,6 @@ function classifyProof(item) {
 // The measure words of a result, by meaning (stricter than the shared table: a bare "5X" or "in 12 months" is not a time measure).
 exports.MEASURE_LINKS = [
     [/uptime|availability|outage|incident/i, /uptime|availability|outage|incident/i],
-    [/cycle|time to|lead time|turnaround|handling time|approval|speed|latency|repair|resolve|planning time|build time|sites live|settlement|first live/i, /\b\d+(?:\.\d+)?x\s+(?:faster|quicker)|\bfaster\b|half the time|\bquicker\b/i],
     [/cost|saving|spend|expense|price|per ticket|per fte|payback|fee/i, /\bcosts?\b|saving|\bsaved\b|expense|\bfees?\b|\bspend\b|payback/i],
     [/error|accuracy|defect|breach|finding|audit|quality|compliance|violation|policy|fraud|risk|return/i, /error|accuracy|defect|compliance|violation|policy|audit|mistake|exposure|fraud|returns?\b/i],
     [/adoption|coverage|calls|productive|usage|utili[sz]ation|active/i, /adoption|coverage|productive|usage|digiti[sz]ed|utili[sz]ation/i],
@@ -228,12 +235,15 @@ function noSeatWords(t) {
 /** Strengths typed as one comma list are shared out over the cards (a "(page claims)" note at the end goes with every part); an item without such a list stays whole. */
 function splitStrengths(items) {
     const out = [];
+    const JOINERS = /^(?:as|with|in|of|for|and|to|that|which|from|by|at|on|plus|but|while|who)\b/i;
     for (const it of items) {
         const note = /\((?:page claims?)\)\s*$/i.test(it) ? ' (page claim)' : '';
         const body = it.replace(/\s*\((?:page claims?)\)\s*$/i, '');
-        const parts = topLevel(body).filter((x) => x.split(/\s+/).length >= 2);
-        if (parts.length >= 2 && topLevel(body).length === parts.length)
-            out.push(...parts.map((x) => x + note));
+        const all = topLevel(body);
+        // a comma list is shared out only when it has at least three items, each of two to nine words and none starting with a joining word ("founded in 2015 as a research-driven, foundational AI company" stays whole)
+        const ok = all.length >= 3 && all.every((x) => { const n = x.split(/\s+/).length; return n >= 2 && n <= 14 && !JOINERS.test(x); });
+        if (ok)
+            out.push(...all.map((x) => x + note));
         else
             out.push(it);
     }
@@ -259,5 +269,137 @@ function plainName(text, candidate) {
         lead.pop();
     const out = lead.join(' ').replace(/[,;:]+$/, '');
     return out.split(/\s+/).length >= 2 ? out : candidate;
+}
+// ---- Meaning links: a strength, a part of the product or a weakness is set against another only when they share meaning, not just a letter stem ----------------------
+const GENERIC = new Set(('platform solution solutions service services system systems provider providers market share customer customers business businesses global enterprise data company companies product products tools tool software digital technology based using their from that with your have more than most over into about through across each every high real time rate fast faster speed cost costs days page claims claim years year first single many multiple other same also only such like leading best large small new help helps work works need needs make makes take takes keep keeps give gives get gets built build ' +
+    'bank banks banking people lets companies connect connects network layer one two three four five manual automated decisions legacy various multiple judged human').split(/\s+/));
+const keyOf = (w) => w.replace(/(?:ies|es|s)$/, '').slice(0, 5);
+function specificKeys(text) {
+    const m = new Map();
+    for (const w of (text.toLowerCase().match(/[a-z]{4,}/g) || []))
+        if (!GENERIC.has(w))
+            m.set(keyOf(w), Math.max(m.get(keyOf(w)) || 0, w.length >= 6 ? 2 : 1));
+    return m;
+}
+// Pairs of word groups that mean the same thing from two sides (the left describes what the seller offers, the right what the buyer suffers), in both directions.
+const CONCEPTS = [
+    [/\b(?:one|single|unified|integrated|all[- ]in[- ]one|end[- ]to[- ]end|connected|one platform)\b.*\b(?:contract|team|platform|api|vendor|partner|view|source|system|workflow)\b|\b(?:unif\w+|consolidat\w+)\b/i, /\b(?:fragment\w*|silo\w*|separate|disconnected|stitched|(?:many|several|multiple|separate) (?:\w+ )?(?:tools|vendors|providers|suppliers|channels|partners|systems|files|carriers|portals)|one by one|gaps? between|accountab\w*|handoffs?|point tools?)\b/i],
+    [/\b(?:blockchain|ledger|audit trail|traceab\w*|tamper\w*)\b/i, /\b(?:traceab\w*|trace|tamper\w*|audit\w*|evidence)\b/i],
+    [/\b(?:real[- ]time|instant|rtp|fednow|same[- ]day|live)\b/i, /\b(?:delay\w*|slow\w*|days|settlement|waiting|overnight|batch)\b/i],
+    [/\b(?:uptime|availability|failover|redundan\w*|sla)\b/i, /\b(?:outage\w*|downtime|unreliable|unreliab\w*|disconnect\w*|drops?|fail\w*)\b/i],
+    [/\b(?:accura\w*|validate\w*|verified|confidence)\b/i, /\b(?:false positives?|inaccura\w*|errors?|noisy|noise|guess\w*|theoretical)\b/i],
+    [/\b(?:adaptive|machine learning|ai[- ]\w+|learns?|models?|intelligent|smart)\b/i, /\b(?:rule[- ]based|static|fixed|slow to adapt|manual|keyword based|one[- ]size)\b/i],
+    [/\b(?:automat\w*|workflow|orchestrat\w*)\b/i, /\b(?:manual|by hand|spreadsheets?|email threads?|admin)\b/i],
+    [/\b(?:visibility|tracking|dashboard|reporting|insight\w*)\b/i, /\b(?:blind|no (?:view|visibility)|unreported|low reporting|can'?t see|cannot see|opaque|problems coming)\b/i],
+    [/\b(?:sovereign|data residency|self[- ]hosted|on[- ]prem\w*|in[- ]country)\b/i, /\b(?:data leaves|residency|privacy|sovereign\w*|compliance)\b/i],
+];
+/** How strongly two texts are about the same thing: shared specific words (1 each, 2 for a word of six letters or more) plus 2 for a meaning pair. 0 means no link. */
+function linkScore(a, b) {
+    const ka = specificKeys(a), kb = specificKeys(b);
+    let n = 0;
+    for (const [k, wt] of ka)
+        if (kb.has(k))
+            n += Math.min(wt, kb.get(k));
+    for (const [l, r] of CONCEPTS)
+        if ((l.test(a) && r.test(b)) || (l.test(b) && r.test(a))) {
+            n += 2;
+            break;
+        }
+    return n;
+}
+/** The fragments of a product description that can stand as a lead: the items after a colon or "with", a clause after "under" or "on" (Plaid style lists keep their brackets whole). */
+function productParts(desc) {
+    const out = [];
+    const t = desc.replace(/\s+/g, ' ').trim();
+    const [first, ...rest] = t.split(/\s*[:;]\s+|\s+(?:including|made of|made up of|consisting of|comprising|with)\s+/i);
+    // the lead description stays whole, without the brand names in front of "a ..." ("Wisely from Tanla Platforms, Wisely, a single API led platform ..." gives "a single API led platform ...")
+    const lead = first.replace(/^(?:[^,]{1,60},\s+){1,2}(?=(?:an?|the)\s)/, '').trim();
+    if (lead.split(/\s+/).length >= 2)
+        out.push(lead);
+    for (const seg of rest)
+        for (const piece of topLevel(seg))
+            for (const f of piece.split(/\s+and\s+(?=[A-Z])|\s+under\s+/)) {
+                const x = f.replace(/^(?:and|or|with|including)\s+/i, '').trim();
+                if (x && (x.split(/\s+/).length >= 2 || /^[A-Z][a-z]+/.test(x)) && !out.includes(x))
+                    out.push(x);
+            }
+    return out;
+}
+/** Facts about the company that are not a reason to choose it (a funding round, a founding year, headcount). */
+function isCompanyFact(s) {
+    return /\b(?:founded in|raised|funding|series [a-f]\b|valuation|investors?|headquarter\w*|employees|since \d{4}|ipo|publicly listed)\b/i.test(s);
+}
+/** The brand at the start of a description ("Plaid, a financial data network ..." gives "Plaid"; "Wisely from Tanla Platforms, Wisely, ..." gives "Wisely from Tanla Platforms"), or the fallback. */
+function brandName(desc, fallback) {
+    const t = desc.replace(/\s*\([^)]*\)/g, '').trim();
+    const m = t.match(/^([A-Z][^,:;]{1,60}?),\s/);
+    if (m && m[1].split(/\s+/).length <= 8 && /^[A-Z]/.test(m[1]) && !/\b(?:is|are|that|which|who)\b/.test(m[1]))
+        return m[1].trim();
+    return fallback;
+}
+/** A role read from a committee sentence is used only when it reads as a role: short, no verb or sentence glue, no half-open end ("finance and executive assistants are often the targets and" is not one). */
+function roleOk(r) {
+    const t = (r || '').trim();
+    if (!t || t.length > 70 || t.split(/\s+/).length > 9)
+        return '';
+    if (/[.:;()]/.test(t) || /\b(?:is|are|was|were|often|usually|typically|who|that|which|because|when|while|can|will|may|must|should)\b/i.test(t))
+        return '';
+    if (JOIN_END.test(t.split(/\s+/).pop() || ''))
+        return '';
+    return t;
+}
+// ---- Segments: cue words only. A cue pair says "a product part with these words may matter to a segment with those words"; the answer words it as a question, never as a fact. ----
+const SEGMENT_CUES = [
+    [/\b(?:bank\w*|financ\w*|insur\w*|lending|nbfc|fintech|payments?|bfsi)\b/i, /\b(?:compliance|fraud|kyc|aml|risk|payments?|ledger|reconcil\w*|audit\w*|regulat\w*|underwrit\w*|lend\w*|credit|collections?|banking)\b/i],
+    [/\b(?:government|public sector|ministr\w*|municipal\w*|defen[cs]e|state)\b/i, /\b(?:sovereign\w*|data residency|compliance|local language\w*|indic|on[- ]prem\w*|audit\w*|citizen\w*|document\w*|translation|speech)\b/i],
+    [/\b(?:educat\w*|school\w*|universit\w*|college\w*|learning|edtech)\b/i, /\b(?:learn\w*|student\w*|language\w*|content|translation|teach\w*|exam\w*|speech)\b/i],
+    [/\b(?:retail\w*|e-?commerce|merchant\w*|shop\w*|consumer|fmcg|grocery|apparel)\b/i, /\b(?:checkout|catalog\w*|inventory|delivery|shipping|returns?|storefront|orders?|pos|billing|loyalty)\b/i],
+    [/\b(?:telecom\w*|telco\w*|operators?|isp)\b/i, /\b(?:network\w*|sms|voice|messaging|connectivity|sim|routing|spam|fraud)\b/i],
+    [/\b(?:technology|software|saas|tech|developer\w*|startups?)\b/i, /\b(?:api\w*|sdk|developer\w*|integration\w*|automation|cloud|testing|ci|devops)\b/i],
+    [/\b(?:manufactur\w*|industrial|automotive|chemical\w*|machinery|factory|factories)\b/i, /\b(?:plant|supply chain|maintenance|quality|inspection|traceab\w*|logistics|freight|shipments?)\b/i],
+];
+/** The parts of a product description whose words sit close to a segment's name: shared words, or a cue pair. At most three. */
+function segmentFit(segment, parts) {
+    const seg = segment.replace(/\([^)]*\)/g, ' ');
+    const scored = parts.map((x, i) => {
+        let n = 0;
+        const ks = specificKeys(seg), kx = specificKeys(x);
+        for (const [k, wt] of ks)
+            if (kx.has(k))
+                n += Math.min(wt, kx.get(k));
+        // the lead description (the first part) counts by shared words only; a cue pair is read on the named parts after it
+        if (i > 0)
+            for (const [l, r] of SEGMENT_CUES)
+                if (l.test(seg) && r.test(x)) {
+                    n += 2;
+                    break;
+                }
+        return { x, n };
+    }).filter((r) => r.n >= 2).sort((a, b) => b.n - a.n);
+    return scored.slice(0, 3).map((r) => r.x);
+}
+const SEGMENT_PARENTS = [
+    [/\bfinanci\w*/i, /\b(?:banking|banks?|insur\w*|lending|nbfc|fintech|payments?|asset|wealth|bfsi)\b/i],
+    [/\bmanufactur\w*/i, /\b(?:automotive|chemical\w*|machinery|industrial|electronics|steel)\b/i],
+    [/\b(?:technology|software)\b/i, /\b(?:saas|cloud|cyber\w*|telecom\w*|it services)\b/i],
+    [/\bretail\b/i, /\b(?:fmcg|apparel|grocery|department stores|luxury retail|food and beverage)\b/i],
+];
+/** Notes on segments that overlap: "Banking" inside "Financial services". */
+function segmentOverlap(names) {
+    const out = [];
+    const done = new Set();
+    for (const a of names) {
+        const kids = new Set();
+        for (const b of names)
+            if (a !== b)
+                for (const [pr, ch] of SEGMENT_PARENTS)
+                    if (pr.test(a) && ch.test(b) && !pr.test(b))
+                        kids.add(b);
+        if (kids.size && !done.has(a)) {
+            done.add(a);
+            out.push(`${joinAnd([...kids])} may sit inside ${a}: decide whether you treat ${kids.size > 1 ? 'them' : 'it'} as part of ${a} or as ${kids.size > 1 ? 'segments' : 'a segment'} of ${kids.size > 1 ? 'their' : 'its'} own before you rank them.`);
+        }
+    }
+    return out;
 }
 //# sourceMappingURL=rw-impact.js.map
