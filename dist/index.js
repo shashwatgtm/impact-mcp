@@ -386,7 +386,11 @@ function readContext(explicitModel, r) {
     // The model is read from what the product is (core) first; the capability and positioning text can mention "tools" or "cloud" in any business.
     const first = coreT.length ? (0, verticals_ts_1.detectModel)(explicitModel, { seller: coreT }) : null;
     const read = first && (first.how === 'input' || first.how === 'read') ? first : (0, verticals_ts_1.detectModel)(explicitModel, { seller: descr });
-    const m = read.how === 'input' || read.how === 'read' ? read : v0 ? { model: (v0.subtype ? verticals_ts_1.SUBTYPES.find((x) => x.id === v0.subtype)?.model : undefined) ?? verticals_ts_1.SECTOR_MODEL[v0.id], how: 'sector' } : read;
+    const m0 = read.how === 'input' || read.how === 'read' ? read : v0 ? { model: (v0.subtype ? verticals_ts_1.SUBTYPES.find((x) => x.id === v0.subtype)?.model : undefined) ?? verticals_ts_1.SECTOR_MODEL[v0.id], how: 'sector' } : read;
+    // Run 22: a services firm that names "AI-powered tools" or a platform among its capabilities is still a services firm: when the whole text reads as ITeS and
+    // only a tool word made it a subscription, the model is services (the shared reader does the same when it sees the whole text).
+    const saasWords = /\b(?:saas|subscriptions?|per seat|per user|licen[cs]es?)\b/i;
+    const m = v0 && v0.id === 'ites' && m0.model === 'saas' && m0.how === 'read' && !saasWords.test(descr.filter((x) => typeof x === 'string').join(' ')) ? { model: 'services', how: 'sector' } : m0;
     // A seller that manages money gets the investment roles and measures, not the sector's own (shared sector file, profileFor).
     const v = (0, verticals_ts_1.profileFor)(v0, m.model, full);
     const from = ex.source === 'context' ? ' (from the deal text, because your own description names no sector)' : ex.source === 'role' ? ' (from the job titles, because your own description names no sector)' : ex.source === 'buyer' ? ' (from who you sell to, because your own description names no sector)' : '';
