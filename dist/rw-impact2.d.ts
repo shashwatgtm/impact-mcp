@@ -51,6 +51,7 @@ export interface Audience {
     exclusion: string;
     facts: Piece[];
     rest: string;
+    offers: Piece[];
 }
 export declare function parseAudience(target: string, kit: Kit2): Audience;
 /** The audience in running text: the whole phrase when it is up to 90 characters (a list that shares one noun stays whole), else its lead words. */
@@ -87,6 +88,7 @@ export interface StatementParts {
     category: string;
     need: string;
     features: string[];
+    facts: string[];
 }
 /** The pieces of a positioning statement that the channel copy needs: the alternative ("Unlike X," or "Alternatives buyers use today: X"), the differences ("What sets it apart: ..." or the rest of the
  *  "Unlike" sentence), the category ("P is the C that ...") and the need ("who struggle with N, P is"). Anything it cannot read is left empty; nothing is guessed. */
@@ -105,4 +107,8 @@ export declare function keepLabel(item: string, cut: string): string;
 export declare function quoteAround(texts: string[], concern: RegExp): string;
 /** A product name typed as "Brand lowerwords, ..." where the lower word starts a list ("eClerx digital, data and ..."): the brand alone. */
 export declare function brandOnly(named: string): string;
+/** The clause of a text that holds a percentage or a multiplier ("zero-downtime upgrades and a 99.99% uptime SLA on production plans" gives "a 99.99% uptime SLA on production plans"). '' when there is none. */
+export declare function figureClause(text: string): string;
+/** Advice written to the seller ("the buyer's own transaction data") read as copy to the buyer ("your own transaction data"). */
+export declare function toYou(t: string): string;
 //# sourceMappingURL=rw-impact2.d.ts.map

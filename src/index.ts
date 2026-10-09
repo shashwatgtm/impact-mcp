@@ -8,7 +8,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { neutraliseDeep, neutraliseText } from './echo-safe.ts';
 import { partLabel, isNamedPart, segmentFacts, segmentType, segmentFit, segmentOverlap, roleOk, linkScore, productParts, isCompanyFact, brandName, plainName, tidyLabel, splitStrengths, leadAud, noSeatWords, categoryNoun, takeLabel, topLevel, joinAnd, clip, outcomeItems, outcomeClause, leadItems, classifyProof, MEASURE_LINKS, ctaNoun, sharpenLine, type Kit, type ProofKind } from './rw-impact.ts';
-import { type Kit2, type Piece, partText, sentence, shapeOf, parseBenefit, partsInline, resultClause, firstParts, shortPhrase, needSentence, needPieces, differenceSentence, parseAudience, audienceShort, parseAlternative, altObjection, parseDifference, sharpenText, makeFresh, baseForm, leadClause, parseStatement, plainResult, stemSet, shared, figureMeasures, keepLabel, quoteAround, brandOnly, type Alternative } from './rw-impact2.ts';
+import { type Kit2, type Piece, partText, sentence, shapeOf, parseBenefit, partsInline, resultClause, firstParts, shortPhrase, needSentence, needPieces, differenceSentence, parseAudience, audienceShort, parseAlternative, altObjection, parseDifference, sharpenText, makeFresh, baseForm, leadClause, parseStatement, plainResult, stemSet, shared, figureMeasures, keepLabel, quoteAround, brandOnly, figureClause, toYou, type Alternative } from './rw-impact2.ts';
 import { detectVertical, detectModel, explainSector, profileFor, SAAS_ONLY, SUBTYPES, SECTOR_MODEL, MODEL_NAME, BUSINESS_MODELS, VERTICALS, type Vertical, type VerticalId, type BusinessModel, type ReaderInput } from './verticals.ts';
 
 // =============================================================================
@@ -2376,14 +2376,17 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const measuresAreSector = measures === metricsRel || measures === lz.metrics;
       const proofSector0 = ctx.model && ctx.model !== 'saas' ? noSeatWords(lz.proof) : lz.proof;
       const proofSector = !weak && (metricsRel.length > 0 || relevantTo(proofSector0, 2)) ? proofSector0 : '';
-      const vocabShown = weak ? [] : lz.vocab.filter((w) => !SAAS_ONLY.test(w) || inputStems.has(w.toLowerCase().replace(/s$/, '').slice(0, 5)));
+      // the user's own results name what is measured (two or more own measures) and no sector measure touches them: the sector's words, roles and objections are those of another field
+      const ownLed = !weak && metricsRel.length === 0 && ownMeasures.length >= 2;
+      const allStems = stemSet(args.target_customer, args.customer_need || '', args.product_category || '', args.key_benefit, args.competitor || '', args.differentiation);
+      const vocabShown = weak || ownLed ? [] : lz.vocab.filter((w) => !SAAS_ONLY.test(w) || inputStems.has(w.toLowerCase().replace(/s$/, '').slice(0, 5)));
       const notes = MODEL_NOTES[ctx.model || 'unknown'];
       const com = v ? committeeParts(v) : null;
       const roleOk = (r: string | undefined): string => (r && r.length <= 70 && !/[.:]/.test(r) ? r : '');
-      const champion = (lz.fn ? lz.fn.champion : com ? roleOk(com.champion) : '') || 'the person who owns the problem';
-      const signer = (lz.fn ? lz.fn.buyer : com ? roleOk(com.signer) : '') || 'the budget owner';
+      const champion = (ownLed ? '' : lz.fn ? lz.fn.champion : com ? roleOk(com.champion) : '') || 'the person who owns the problem';
+      const signer = (ownLed ? '' : lz.fn ? lz.fn.buyer : com ? roleOk(com.signer) : '') || 'the budget owner';
       const rv0 = !lz.fn && com && com.reviewers.length ? com.reviewers[0] : null;
-      const evaluator = (lz.fn ? lz.fn.tech : rv0 ? roleOk(rv0.role) : '') || 'the technical evaluator';
+      const evaluator = (ownLed ? '' : lz.fn ? lz.fn.tech : rv0 ? roleOk(rv0.role) : '') || 'the technical evaluator';
 
       // The audience, with the notes typed inside the target text.
       const A = parseAudience(args.target_customer, kit);
@@ -2393,8 +2396,13 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const catTyped = (args.product_category || '').trim();
       const catNoteM = catTyped.match(/\s*\(((?:in )?its own words|the page calls[^)]*?)[:,]?\s*([^)]*)\)\s*$/i);
       const catBody = (catNoteM ? catTyped.slice(0, catNoteM.index) : catTyped).trim();
-      const catHeadSrc = catBody.split(/\s*:\s+/)[0] || catBody;
-      const catCovers = catBody.split(/\s*:\s+/).slice(1).join(': ');
+      // a category that arrives wrapped in quotes (the entry point quotes a text that looks like a chat marker, such as "System:") keeps its quotes around each part when it is split at the colon
+      const catWrapped = catBody.match(/^([“"])([^]*)([”"])$/);
+      const catInner = catWrapped ? catWrapped[2] : catBody;
+      const catHead0 = catInner.split(/\s*:\s+/)[0] || catInner;
+      const catCovers0 = catInner.split(/\s*:\s+/).slice(1).join(': ');
+      const catHeadSrc = catWrapped ? (catCovers0 ? `“${catHead0}”` : catBody) : catHead0;
+      const catCovers = catWrapped && catCovers0 ? `“${catCovers0}”` : catCovers0;
       // A phrase with a head noun before a participle ("Frontier AI company building voice AI ...") is a noun phrase, not a field of work.
       const catCut = catHeadSrc.split(/\s(?:building|offering|providing|delivering|developing|creating|making|selling|running|powering|helping|that|which)\s/)[0];
       const category = catHeadSrc ? (catCut !== catHeadSrc && !/^provider of/i.test(categoryNoun(catCut)) ? catHeadSrc : categoryNoun(catHeadSrc)) : '';
@@ -2440,11 +2448,11 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const counts: Piece[] = A.facts;
       const recog: Piece[] = [...D.recognition, ...parseDifference(args.key_benefit).recognition.filter((r) => !D.recognition.some((x) => x.text === r.text))];
       const resultFigs: Piece[] = [...B.parts.filter((p) => /\d/.test(p.text)), ...B.claims];
-      const haveProof = counts.length + recog.length + resultFigs.length > 0;
+      const haveProof = counts.length + recog.length + resultFigs.length + diffItems.filter((d) => figureClause(d)).length > 0;
       const m0 = measures[0] || '';
       const m1 = measures[1] || '';
       const seatless = (t: string): string => (ctx.model && ctx.model !== 'saas' ? t.replace(/\b([Pp])er seat or /g, '$1er ') : t);
-      const objsRel = v ? v.objections : [];
+      const objsRel = v ? (ownLed ? v.objections.filter((o) => shared(o.objection, allStems) >= 1) : v.objections) : [];
       const objection0 = objsRel.length ? { ...objsRel[0], objection: seatless(objsRel[0].objection) } : null;
       const needPcs = args.customer_need ? needPieces(args.customer_need) : [];
       const needFirst = needPcs.length ? clip(needPcs[0], 420) : '';
@@ -2504,7 +2512,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const diffShortSrc = takeLabel(diffItems[0]).body;
       const diffShort = ((): string | null => { const sc = shortClause(diffShortSrc, 6); return sc && !hasFiniteVerb(sc) && !(sc.length < diffShortSrc.length && /(?:ed|ing)$/i.test(sc.split(/\s+/).pop() || '')) ? sc.replace(/[\s:;,.]+$/, '') : null; })();
       const tagAud0 = shortAudience(shortText(noNotes(args.target_customer)));
-      const tagAud = /\.\.\.|\d$|^(?:the|a|an)\s+\S+\s+\S+$/i.test(tagAud0) || !tagAud0 ? aud : tagAud0;
+      const tagAud = /\.\.\.|\d|^(?:the|a|an)\s+\S+\s+\S+$/i.test(tagAud0) || !tagAud0 ? aud : tagAud0;
       const tags: string[] = [];
       if (outShort) tags.push(`| **Outcome** | "${capFirst(outShort)}" | Clarity |`);
       if (diffShort && !SUPERLATIVE.test(diffItems[0])) tags.push(`| **Differentiator** | "${capFirst(diffShort)}" | Uniqueness |`);
@@ -2579,7 +2587,9 @@ ${vocabShown.length >= 2 ? `Words this sector's buyers use, to check your wordin
       const varB = `${PC}: ${capFirst(outShort || clip(clean(B.headline || oneBare), 90))}. ${fresh(`Built for ${aud}.`, `Designed for ${aud}.`, `For ${aud}.`)}`;
       const stillQ = alt ? `Still ${altBack}?` : '';
       const varC = alt && startsWithP(diffMain) ? fresh(`${stillQ} ${plain(diffLead || diffMain)}`, `${stillQ} The alternative is this: ${plain(diffLead || diffMain)}`) : '';
-      const proofLines = [...counts.slice(0, 2).map((f) => `${capFirst(clean(partText(f)))}.`), ...recog.slice(0, 1).map((r) => `${capFirst(partText(r))}.`), ...B.claims.slice(0, 3).map((r) => `${capFirst(partText(r))}.`)];
+      // a percentage or multiplier typed inside a result or a difference is a proof line too, with the label of its text
+      const figLines: Piece[] = [...B.parts.filter((p) => p.label), ...diffItems.map((d) => takeLabel(d)).map((l) => ({ text: l.body, label: l.label }))].map((p) => ({ c: figureClause(p.text), label: p.label })).filter((x) => x.c && !B.claims.some((q) => q.text.includes(x.c))).map((x) => ({ text: x.c, label: x.label }));
+      const proofLines = [...counts.slice(0, 2).map((f) => `${capFirst(clean(partText(f)))}.`), ...recog.slice(0, 1).map((r) => `${capFirst(partText(r))}.`), ...B.claims.slice(0, 3).map((r) => `${capFirst(partText(r))}.`), ...figLines.slice(0, 2).map((r) => `${capFirst(partText(r))}.`)];
       out.push(`## Message Variations
 
 **Variation A: lead with the problem**
@@ -2709,9 +2719,12 @@ ${rows.join('\n')}
       const proofSector = !weak && (metricsRel.length > 0 || relevantTo(proofSector0, 2)) ? proofSector0 : '';
       const vocab = weak ? [] : lz.vocab.filter((w) => !SAAS_ONLY.test(w) || inputStems.has(w.toLowerCase().replace(/s$/, '').slice(0, 5)));
       const committee = lz.fn ? { signer: lz.fn.buyer, champion: lz.fn.champion, championInferred: false, users: null, reviewers: [] } as Committee : v ? committeeParts(v) : null;
-      const primary = ctas[0];
-      const secondary = ctas.find((c) => c !== primary && !/only if/i.test(c)) || 'See how it works';
-      const nextStep = `If useful, the next step is ${ctaNoun(primary)}.`;
+      // a developer led software product starts with a try on a real project; the demo stays as the second step
+      const devLed = (ctx.model === 'saas' || ctx.model === null) && !!v && v.id === 'software' && /developer|engineer/i.test(args.target_customer);
+      const primary = devLed ? 'Try it on one real project' : ctas[0];
+      const secondary = devLed ? ctas[0] : ctas.find((c) => c !== primary && !/only if/i.test(c)) || 'See how it works';
+      const nextNoun = devLed ? 'to try it on one real project' : ctaNoun(primary);
+      const nextStep = `If useful, the next step is ${nextNoun}.`;
       const demoWord = ctx.model === 'saas' || ctx.model === null ? 'demo' : 'walkthrough';
 
       // Channels: the input selects the sections. Unknown names are listed as not covered.
@@ -2798,7 +2811,13 @@ ${rows.join('\n')}
       const counts: Piece[] = A.facts;
       const recog: Piece[] = [...D.recognition, ...parseDifference(args.key_benefit).recognition];
       const claims: Piece[] = B.claims;
-      const proofAll: Piece[] = [...counts, ...claims, ...recog];
+      const scaleFacts: Piece[] = SP.facts.map((x) => ({ text: x, label: '' }));
+      const proofAll: Piece[] = [...counts, ...claims, ...recog, ...scaleFacts];
+      // a percentage typed inside a result is a proof line as well ("a 99.99% uptime SLA on production plans"); the sentence of the result itself stays in the headline and the statement
+      const figProof: Piece[] = [...B.parts, ...dItems.map((d) => takeLabel(d))].map((p) => ({ p, c: figureClause('body' in p ? p.body : p.text) })).filter((x) => x.c).map((x) => ({ text: x.c, label: 'label' in x.p ? (x.p as { label: string }).label : '' }));
+      const resultProof: Piece[] = [...proofAll, ...figProof.filter((f) => !proofAll.some((q) => q.text.includes(f.text)))];
+      const offers: Piece[] = A.offers;
+      const proofYou = proofSector ? toYou(lc1(clean(proofSector))) : '';
       const proofText = (f: Piece): string => { const t = partText(f); return A.aud && t.toLowerCase().startsWith(A.aud.toLowerCase().slice(0, 18)) ? `Used by ${kit.lowerFirst(t)}` : capFirst(t); };
       const measuresAreSector2 = measures === metricsRel || measures === lz.metrics;
       const m0 = measures.length ? measures[0] : '';
@@ -2851,7 +2870,7 @@ ${rows.join('\n')}
 **Subheadline**
 > ${nextRes()}${detail ? ` ${fresh(detail)}` : ''}
 
-${bullets.length > 1 && !detail ? `**Benefit points under the hero**\n${bullets.slice(clauseShort ? 1 : 0, 5).map((b) => `- ${b}`).join('\n')}\n\n` : ''}${feats.length ? `**What it includes**\n${feats.map((x) => `- ${x}`).join('\n')}\n\n` : ''}${proofStrip ? `**Proof strip**\n${proofStrip}\n\n` : ''}${dMain ? `**Why ${P}**\n> ${nextDiff()}\n\n` : ''}**Calls to action**
+${bullets.length > 1 && !detail ? `**Benefit points under the hero**\n${bullets.slice(clauseShort ? 1 : 0, 5).map((b) => `- ${b}`).join('\n')}\n\n` : ''}${feats.length ? `**What it includes**\n${feats.map((x) => `- ${x}`).join('\n')}\n\n` : ''}${proofStrip ? `**Proof strip**\n${proofStrip}\n\n` : ''}${dMain ? `**Why ${P}**\n> ${nextDiff()}\n\n` : ''}${offers.length ? `**Offer**\n- ${capFirst(partText(offers[0]))}\n\n` : ''}**Calls to action**
 - Primary: "${primary}"
 - Secondary: "${secondary}"
 ${vocab.length ? `\nWords ${lz.fn ? 'buyers in this team' : "this sector's buyers"} use, to work into the page: ${vocab.slice(0, 5).join(', ')}.\n` : ''}${proofSector ? `\nUnder the fold, ${lc1(clean(proofSector))}: use a real result of yours in that shape and its source.\n` : ''}`);
@@ -2862,8 +2881,10 @@ ${vocab.length ? `\nWords ${lz.fn ? 'buyers in this team' : "this sector's buyer
         const taglineA = headVerb ? `Helping ${aud} ${bareHead}` : plainRes ? `Helping ${aud} ${plainRes}` : '';
         const tagline = taglineA && taglineA.length <= 125 ? taglineA : `${PC}: ${subject}`;
         const post1 = [nextHook(), '', nextRes(), dMain ? nextDiff() : '', '', hook2 ? `A question to put to your own team this week: ${hook2}` : 'Ask your own team how they handle this today.'].filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i > 0)).join('\n');
-        const claimLine = [...claims, ...recog].slice(0, 2).map((f) => `Proof point: ${kit.lowerFirst(partText(f))}.`).join(' ');
-        const post2 = [`${fresh(`How we would show it, not just say it: ${proofSector ? lc1(clean(proofSector)) : 'one customer, one measure, before and after'}.`)}`, measures.length ? `The figures that matter here: ${measures.slice(0, 3).join(', ')}.` : '', claimLine, '', objection0 ? `The question we hear most: "${objection0.objection.replace(/[.?!]+$/, '')}". Our answer: ${ctx.model && ctx.model !== 'saas' ? noSeatWords(objection0.response) : objection0.response}` : alt ? `The question we hear most: "${altObjection(alt).replace(/\.$/, '')}". Our answer: ${altGapOf(alt) ? `start from the gap (${altGapOf(alt)})` : `ask where it leaves ${aud} short`}${dMain ? ` and show the difference: ${plain(dLead || dMain)}` : ''}` : 'The question we hear most is about switching. We answer it with a pilot.'].filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i > 0)).join('\n');
+        const claimLine = [...claims, ...recog, ...scaleFacts, ...figProof].slice(0, 3).map((f) => `Proof point: ${kit.lowerFirst(partText(f))}.`).join(' ');
+        const featLine = feats.length ? `What is in it: ${feats.slice(0, 4).join('; ')}.` : '';
+        const offerLine = offers.length ? `Worth knowing: ${kit.lowerFirst(partText(offers[0]))}.` : '';
+        const post2 = [`${fresh(`How we would show it, not just say it: ${proofYou || 'one customer, one measure, before and after'}.`)}`, measures.length ? `The figures that matter here: ${measures.slice(0, 3).join(', ')}.` : '', featLine, claimLine, offerLine, '', objection0 ? `A fair question: "${objection0.objection.replace(/[.?!]+$/, '')}". Our answer: ${toYou(ctx.model && ctx.model !== 'saas' ? noSeatWords(objection0.response) : objection0.response)}` : alt ? `A fair question: "${altObjection(alt).replace(/\.$/, '')}". Our answer: ${altGapOf(alt) ? `start from the gap (${altGapOf(alt)})` : `ask where it leaves ${aud} short`}${dMain ? ` and show the difference: ${plain(dLead || dMain)}` : ''}` : 'A fair question is what switching involves. We would answer it with a pilot.'].filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i > 0)).join('\n');
         sections.push(`## LinkedIn Execution
 
 ### Company Page Tagline
@@ -2915,7 +2936,7 @@ ${signOff}
 \`\`\`
 Hello,
 
-Following up with how we would show the result, not just claim it: ${proofSector ? lc1(clean(proofSector)) : 'one measure, before and after, on one team, agreed with you in advance'}.${proofAll.length ? `\n\n${proofAll.slice(0, 2).map((f) => `For context: ${kit.lowerFirst(proofText(f))}.`).join(' ')}` : ''}
+Following up with how we would show the result, not just claim it: ${proofYou || 'one measure, before and after, on one team, agreed with you in advance'}.${feats.length ? `\n\nWhat it covers: ${feats.slice(0, 3).join('; ')}.` : ''}${resultProof.length ? `\n\n${resultProof.slice(0, 3).map((f) => `For context: ${kit.lowerFirst(proofText(f))}.`).join(' ')}` : ''}${offers.length ? `\n\nOne more thing: ${kit.lowerFirst(partText(offers[0]))}.` : ''}
 
 Worth a conversation?
 
@@ -2940,7 +2961,7 @@ ${signOff}
       }
 
       if (chosen.has('sales_deck')) {
-        const problemSlide = SP.need ? needPieces(SP.need).slice(0, 2).map((p) => sentence(clip(p, 240), kit)).join(' ') : `What ${aud} deal with today${vocab.length >= 2 ? `, in the words of this sector: ${vocab.slice(0, 3).join(', ')}` : ''}`;
+        const problemSlide = SP.need ? needPieces(SP.need).slice(0, 2).map((p) => sentence(clip(p, 420), kit)).join(' ') : `What ${aud} deal with today${vocab.length >= 2 ? `, in the words of this sector: ${vocab.slice(0, 3).join(', ')}` : ''}`;
         sections.push(`## Sales Deck Execution
 
 ### Slide Structure
@@ -2952,8 +2973,8 @@ ${signOff}
 | 3 | Cost of Inaction | The cost of staying as things are, in the measures your buyer tracks: ${m0 ? [m0, m1].filter((x, i, a) => x && a.indexOf(x) === i).join('; ') : 'the main measures your buyer tracks'} |
 | 4 | The Solution | ${nextRes()} |
 | 5 | How It Works | ${feats.length ? feats.slice(0, 4).join('; ') : dItems.length ? dItems.slice(0, 3).map((d) => capFirst(clean(takeLabel(d).body.length > 150 ? leadOf(takeLabel(d).body, 120) : takeLabel(d).body))).join('; ') : 'The three things your buyer must understand to say yes'} |
-| 6 | Differentiation | ${alt ? `Why ${P} rather than ${alt.label}` : 'Why we are different (your positioning)'} |
-| 7 | Results | ${proofAll.length ? proofAll.slice(0, 3).map((f) => partText(f)).join('; ') : proofSector || 'The results a customer measured, before and after'} |
+| 6 | Differentiation | ${alt ? `Why ${P} rather than ${alt.label}` : `${PC} against ${statusQuoDefaults(v, ctx.model)[0].replace(/^./, (c) => c.toLowerCase())}`}${dItems.length ? `: ${weRest(dLead || dMain)}` : `: ${kit.lowerFirst(clean(heroLine))}`} |
+| 7 | Results | ${resultProof.length ? resultProof.slice(0, 4).map((f) => partText(f)).join('; ') : proofYou || `${PC}: the result a customer measured, before and after`} |
 | 8 | Case Study | A customer story: the situation, the measure before, what changed and the measure now |
 | 9 | Commercials | ${capFirst(notes.commercial)} |
 | 10 | Next Steps | ${primary} |
@@ -2987,7 +3008,7 @@ Show one thing they cannot get from ${alt ? alt.label : 'their current approach'
 
 **12-15 min: Close and Next Steps**
 > "What would success look like for you in the first 90 days?"
-> "The next step is ${ctaNoun(primary)}."
+> "The next step is ${nextNoun}."
 
 ### Best Practices
 - Customise to their specific use case.
