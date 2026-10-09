@@ -86,10 +86,23 @@ export interface StatementParts {
     diff: string[];
     category: string;
     need: string;
+    features: string[];
 }
 /** The pieces of a positioning statement that the channel copy needs: the alternative ("Unlike X," or "Alternatives buyers use today: X"), the differences ("What sets it apart: ..." or the rest of the
  *  "Unlike" sentence), the category ("P is the C that ...") and the need ("who struggle with N, P is"). Anything it cannot read is left empty; nothing is guessed. */
-export declare function parseStatement(statement: string, product: string): StatementParts;
+export declare function parseStatement(statement: string, products: string | string[]): StatementParts;
 /** The first result of a benefit without any figure or label, as an infinitive clause ("instantly save on shipping"): for a tagline, which carries no claim. null when there is none. */
 export declare function plainResult(b: Benefit, kit: Kit2): string | null;
+/** The stems (first five letters, plural cut) of the words of 4 letters or more of some texts, without the words that fit any business. */
+export declare function stemSet(...texts: string[]): Set<string>;
+/** How many different stems of an item (a sector measure, objection, question or word) the user's own inputs share. */
+export declare function shared(item: string, inputs: Set<string>): number;
+/** Measures read from the user's own figures: "99.99% uptime SLA on production plans" gives "uptime SLA", "a 51% reduction in review time" gives "review time". */
+export declare function figureMeasures(texts: string[]): string[];
+/** The label "(page claims)" that belongs to a cut of an item: kept when the cut holds a superlative ("the most extensively licensed ...") and the item carries the label further on. */
+export declare function keepLabel(item: string, cut: string): string;
+/** A short quotation of the user's words around a concern word ("patching, scaling, security and uptime handled"), or '' when no text holds it. */
+export declare function quoteAround(texts: string[], concern: RegExp): string;
+/** A product name typed as "Brand lowerwords, ..." where the lower word starts a list ("eClerx digital, data and ..."): the brand alone. */
+export declare function brandOnly(named: string): string;
 //# sourceMappingURL=rw-impact2.d.ts.map
