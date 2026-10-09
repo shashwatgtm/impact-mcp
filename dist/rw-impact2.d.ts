@@ -9,6 +9,7 @@ export interface Kit2 extends Kit {
 export interface Piece {
     text: string;
     label: string;
+    lead?: string;
 }
 export declare const partText: (p: Piece) => string;
 /** A sentence: first letter up (a word with an inner capital such as eBay is kept), one full stop. */
@@ -121,4 +122,12 @@ export declare function priceBasis(texts: string[], kindTexts: string[]): {
 };
 /** The subject of a clause ("customer experience management is the new battleground" gives "customer experience management"); a short noun phrase is its own subject; otherwise ''. */
 export declare function subjectOf(text: string, kit: Kit2): string;
+/** The label of a figure the user typed without a source. */
+export declare const NO_SOURCE = "(your figure, source not stated)";
+/** The label of a figure: the one the user typed, else the note that no source was stated; a text that already ends with its own note in brackets needs no more. */
+export declare const sourceOr: (text: string, label: string) => string;
+/** "thousands of companies run on it" says nothing on its own: the pronoun that ends a fact about the product is the product's name. */
+export declare function selfRef(text: string, name: string): string;
+/** The user's own nouns: the subjects of the problem, the measures of the results and the head of the difference, each as typed (at most six). They stand in for a sector word list when the sector notes are not used. */
+export declare function ownNounsOf(needPcs: string[], measures: string[], diffItems: string[], kit: Kit2): string[];
 //# sourceMappingURL=rw-impact2.d.ts.map

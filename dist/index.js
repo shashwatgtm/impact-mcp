@@ -2585,8 +2585,8 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             const clauseShort = lead.length ? (0, rw_impact2_ts_1.resultClause)([{ text: leadOf(lead[0].text, 100), label: lead[0].label }], kit) : null;
             // What the product does, as a clause that follows "that" and as a sentence of its own.
             const npLead = !B.headline && B.parts.length && ['np', 'noun'].includes((0, rw_impact2_ts_1.shapeOf)(B.parts[0].text, kit)) && !clauseLead ? (0, rw_impact2_ts_1.partsInline)(B.parts).map((x) => clean(x)).join(', ') : '';
-            const resultThat = headVerb ? `helps them ${bareHead}` : B.headline && headShape !== 'clause' ? `delivers ${kit.lowerFirst(clean(B.headline))}` : !B.headline && clauseLead ? `helps them ${clauseLead}` : npLead ? `delivers ${kit.lowerFirst(npLead)}` : '';
-            const resultOwn = (() => (headShape === 'clause' && B.headline ? (0, rw_impact2_ts_1.sentence)(B.headline, kit) : !resultThat ? `What ${P} delivers, in your words: ${clean(oneBare)}.` : ''))();
+            const resultThat = headVerb ? `helps them ${bareHead}` : B.headline && headShape !== 'clause' ? `delivers ${kit.lowerFirst(clean(B.headline))}` : !B.headline && clauseLead ? `helps them ${clauseLead.includes(';') ? clauseOne || clauseLead : clauseLead}` : npLead ? `delivers ${kit.lowerFirst(npLead)}` : '';
+            const resultOwn = (() => (headShape === 'clause' && B.headline ? (0, rw_impact2_ts_1.sentence)(B.headline, kit) : !resultThat ? `The result ${P} is built for: ${clean(oneBare)}.` : ''))();
             const detail = (() => {
                 if (!B.parts.length || !B.headline)
                     return '';
@@ -2604,7 +2604,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             const diffMain = diffSents[0];
             const startsWithP = (s) => plain(s).startsWith(PC);
             // Proof the user already gave: counts about customers, recognition, figures with their labels.
-            const counts = A.facts;
+            const counts = A.facts.map((f) => ({ ...f, text: (0, rw_impact2_ts_1.selfRef)(f.text, P) }));
             const recog = [...D.recognition, ...(0, rw_impact2_ts_1.parseDifference)(args.key_benefit).recognition.filter((r) => !D.recognition.some((x) => x.text === r.text))];
             const resultFigs = [...B.parts.filter((p) => /\d/.test(p.text)), ...B.claims];
             const haveProof = counts.length + recog.length + resultFigs.length + diffItems.filter((d) => (0, rw_impact2_ts_1.figureClause)(d)).length > 0;
@@ -2658,32 +2658,8 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
                     return `it comes ${clean(t)}`;
                 return clean(t);
             })();
-            // The user's own nouns: the subjects of the problem, the measures of the results and the head of the difference, each as typed. They stand in for a sector word list when the sector notes are not used.
-            const headNp = (d) => {
-                const c = (0, rw_impact_ts_1.takeLabel)(d).body.split(/\s(?:combined|with|and|that|which|of|for|on|in|across|so|but|while)\s|[,;:]/)[0].trim();
-                const n = c.split(/\s+/).length;
-                return n >= 2 && n <= 4 && ['np', 'noun'].includes((0, rw_impact2_ts_1.shapeOf)(c, kit)) ? c : '';
-            };
-            const ownNouns = (() => {
-                const got = [];
-                const add = (x) => {
-                    // a noun phrase with a determiner ("the right tool for each workload") is a piece of a sentence, not a term; a quantity word is dropped ("one control plane")
-                    if (/^(?:the|a|an|our|their|your|this|that)\s/i.test(x.trim()))
-                        return;
-                    const y = x.replace(/^(?:one|two|three|each|every|any|all)\s+/i, '').trim();
-                    if (y.length < 6 || y.split(/\s+/).length > 4 || /^(?:it|they|we|you|this|that|these|those|there)\b/i.test(y) || /^(?:work|time|data|costs?|technology|things?|everything|teams?)$/i.test(y))
-                        return;
-                    if (!got.some((g) => g.toLowerCase() === y.toLowerCase()))
-                        got.push(y);
-                };
-                for (const p of needPcs)
-                    add((0, rw_impact2_ts_1.subjectOf)(clean(p), kit));
-                for (const m of ownMeasures)
-                    add(m);
-                for (const d of diffItems)
-                    add(headNp(d));
-                return got.slice(0, 6);
-            })();
+            // The user's own nouns stand in for a sector word list when the sector notes are not used.
+            const ownNouns = (0, rw_impact2_ts_1.ownNounsOf)(needPcs, ownMeasures, diffItems, kit);
             const vocabNeutral = (ownLed || !v) && vocabShown.length < 2 && ownNouns.length >= 3 ? ownNouns : [];
             // Objections the inputs themselves raise, when the sector has none that fit: the alternative, the price, the proof, the not-now and the switch, each answered from the user's own words and figures.
             const neutralObjs = ownLed || !objsRel.length;
@@ -2695,6 +2671,11 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
                 ...(needLeadQ ? [{ objection: 'This is not a priority right now', response: `Go back to the problem in your own words: "${needLeadQ}". Ask who owns it and what another quarter of waiting costs, then agree one small first step.` }] : []),
                 ...(alt ? [{ objection: 'Switching is a risk for us', response: `Start with one scope next to ${alt.label} instead of replacing it, measure ${m0 || 'one figure the buyer already watches'} on both, and agree the cost and the exit up front: ${commercial}.` }] : []),
             ];
+            // a figure inside the difference ("direct connection to 35% of Internet routes") is proof of the difference; without a source typed it says so
+            const diffFigs = diffItems.map((d) => (0, rw_impact_ts_1.takeLabel)(d)).map((l) => ({ text: (0, rw_impact2_ts_1.figureClause)(l.body), label: (0, rw_impact2_ts_1.sourceOr)((0, rw_impact2_ts_1.figureClause)(l.body), l.label) })).filter((x) => x.text && !B.claims.some((q) => q.text.includes(x.text)));
+            // the products named in the brackets of the product name
+            const prodItems = (() => { const m = named.match(/\(([^()]*)\)\s*$/); const it = m ? m[1].split(/\s*(?:,|;|\sand\s)\s*/).map((x) => x.trim()).filter(Boolean) : []; return it.length >= 2 && it.every((x) => x.split(/\s+/).length <= 5) ? it : []; })();
+            const prodList = prodItems.length ? (0, rw_impact_ts_1.joinAnd)(prodItems) : '';
             const out = [];
             out.push(`# Positioning and Messaging${named ? `: ${P}` : ''}`);
             out.push(ctx.line);
@@ -2708,8 +2689,14 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
                 return resultThat ? `For ${audGlossed}, ${P} ${resultThat.replace(/^helps them/, `helps ${aud}`)}.` : `${PC} is built for ${audGlossed}.`;
             })();
             const stmt = [firstSentence];
+            // when the first sentence carries only the first result (the others would read as a semicolon list), the others follow as a sentence of their own
+            const clauseRest = !B.headline && clauseLead && clauseLead.includes(';') && lead.length > 1 ? (0, rw_impact2_ts_1.resultClause)(lead.slice(1), kit) : null;
+            if (clauseRest && !clauseRest.includes(';') && !(clauseOne && clauseOne.includes(';')))
+                stmt.push(`It also helps them ${clauseRest}.`);
             if (catBracket)
                 stmt.push(catBracket);
+            if (prodList && !`${stmt.join(' ')} ${catCovers}`.includes(prodList))
+                stmt.push(`It includes ${prodList}.`);
             if (catCovers)
                 stmt.push(`It covers ${clean(catCovers)}.`);
             if (needFirst)
@@ -2831,7 +2818,7 @@ ${optM ? `\n**Mechanism first**\n> ${optM}\n` : ''}
 - Proof to collect: ${proofSector ? lc1(proofSector) : `one customer, one measure${m0 ? ` (${m0})` : ''}, before and after, from the customer's own data`}
 
 **Pillar 2: the difference.** ${diffLead ? fresh(`At its core: ${plain(diffLead)}`, `What sets it apart: ${plain(diffLead)}`) : fresh(`What sets it apart: ${plain(diffMain)}`, `At its core: ${plain(diffMain)}`)}${diffSents.length > 1 ? ` ${diffSents.slice(1, 3).map((x) => fresh(x, `Also: ${x}`)).join(' ')}` : ''}
-- Proof you have: ${recog.length ? (0, rw_impact2_ts_1.partsInline)(recog).join('; ') + '.' : 'none given for the difference yet.'}
+- Proof you have: ${recog.length || diffFigs.length ? [...(0, rw_impact2_ts_1.partsInline)(recog), ...diffFigs.map(rw_impact2_ts_1.partText)].join('; ') + '.' : 'none given for the difference yet.'}
 - Proof to collect: a side by side with ${alt ? alt.label : 'the way your buyers do it today'} on the same customer data${m0 ? `, for ${m0}${m1 ? ` and ${m1}` : ''}` : ''}.
 
 **Pillar 3: why it is safe to buy.** ${objection0 ? `Buyers in this sector often raise "${objection0.objection.replace(/[.?!]+$/, '')}"; the answer is under Objection Handling.` : `Buyers often raise "${proofObj}"; the answer is under Objection Handling. Tell the buyer what a first step costs and how it works: ${commercial}.`}
@@ -2856,7 +2843,7 @@ ${vocabShown.length >= 2 ? `Words this sector's buyers use, to check your wordin
             const stillQ = alt ? `Still ${altBack}?` : '';
             const varC = alt && startsWithP(diffMain) ? fresh(`${stillQ} ${plain(diffLead || diffMain)}`, `${stillQ} The alternative is this: ${plain(diffLead || diffMain)}`) : '';
             // a percentage or multiplier typed inside a result or a difference is a proof line too, with the label of its text
-            const figLines = [...B.parts.filter((p) => p.label), ...diffItems.map((d) => (0, rw_impact_ts_1.takeLabel)(d)).map((l) => ({ text: l.body, label: l.label }))].map((p) => ({ c: (0, rw_impact2_ts_1.figureClause)(p.text), label: p.label })).filter((x) => x.c && !B.claims.some((q) => q.text.includes(x.c))).map((x) => ({ text: x.c, label: x.label }));
+            const figLines = [...B.parts.filter((p) => p.label), ...diffItems.map((d) => (0, rw_impact_ts_1.takeLabel)(d)).map((l) => ({ text: l.body, label: l.label }))].map((p) => ({ c: (0, rw_impact2_ts_1.figureClause)(p.text), label: (0, rw_impact2_ts_1.sourceOr)((0, rw_impact2_ts_1.figureClause)(p.text), p.label) })).filter((x) => x.c && !B.claims.some((q) => q.text.includes(x.c))).map((x) => ({ text: x.c, label: x.label }));
             const proofLines = [...counts.slice(0, 2).map((f) => `${capFirst(clean((0, rw_impact2_ts_1.partText)(f)))}.`), ...recog.slice(0, 1).map((r) => `${capFirst((0, rw_impact2_ts_1.partText)(r))}.`), ...B.claims.slice(0, 3).map((r) => `${capFirst((0, rw_impact2_ts_1.partText)(r))}.`), ...figLines.slice(0, 2).map((r) => `${capFirst((0, rw_impact2_ts_1.partText)(r))}.`)];
             out.push(`## Message Variations
 
@@ -2878,7 +2865,7 @@ ${proofLines.length ? `> ${proofLines.join('\n> ')}\n> Use each only as worded a
 > ${youCan ? fresh(`${PC} lets your team ${youCan}.`, `With ${P}, your team can ${youCan}.`) : B.headline && headShape !== 'clause' ? fresh(`With ${P}, your team gets ${kit.lowerFirst(clean(B.headline))}.`, `Your team gets ${kit.lowerFirst(clean(B.headline))} with ${P}.`) : fresh(`${PC} is built for ${aud}.`)} ${m0 ? `Measure it in ${m0}${m1 ? ` and ${m1}` : ''}, ${measuresAreSector ? 'the figures this sector already watches' : m1 ? 'the figures in your own results' : 'the figure in your own results'}.` : 'Measure it in a figure your buyer already watches.'} They will also weigh ${commercial}.
 
 **For the technical evaluator${evaluator === 'the technical evaluator' ? '' : ` (${evaluator})`}:**
-> ${[evalConcern, ...evalPicked.map((x, i) => fresh(x, i === 0 ? `For the ${evalWord} review: ${plain(x)}` : `Also: ${plain(x)}`, `And: ${plain(x)}`)), ...(catPlain ? [`${PC} is ${artOf(catPlain)}${catCovers ? ` that covers ${clean(catCovers)}` : ''}.`] : [])].filter(Boolean).join(' ')}
+> ${[evalConcern, ...evalPicked.map((x, i) => fresh(x, i === 0 ? `For the ${evalWord} review: ${plain(x)}` : `Also: ${plain(x)}`, `And: ${plain(x)}`)), ...(catPlain ? [`${PC} is ${artOf(catPlain)}${catCovers ? ` that covers ${clean(catCovers)}` : ''}.`] : []), ...(prodList ? [`A reviewer can look at ${prodList}.`] : [])].filter(Boolean).join(' ')}
 
 ---`);
             // ---- objections
@@ -2996,6 +2983,12 @@ ${rows.join('\n')}
             const secondary = devLed ? ctas[0] : ctas.find((c) => c !== primary && !/only if/i.test(c)) || 'See how it works';
             const nextNoun = devLed ? 'to try it on one real project' : (0, rw_impact_ts_1.ctaNoun)(primary);
             const nextStep = `If useful, the next step is ${nextNoun}.`;
+            // what the price is based on: the user's words, or an API that handles calls, conversations or messages is priced on usage; a seat word keeps the seat wording
+            const pbT = (0, rw_impact2_ts_1.priceBasis)([args.product_name || '', SP.category, args.key_benefit, statement, args.target_customer], [args.product_name || '', SP.category]);
+            const volumeApi = pbT.kind !== 'seat' && /\bAPIs?\b/.test(`${args.key_benefit} ${statement}`) && /\b(?:calls?|conversations?|minutes|messages?|requests?|transactions?|queries|events)\b/i.test(`${args.key_benefit} ${statement}`);
+            const usageT = (pbT.kind === 'usage' || volumeApi) && (!ctx.model || ctx.model === 'saas');
+            const usageWordsT = ['usage', ...pbT.words.filter((w) => !/^usage/.test(w))];
+            const commercialT = usageT ? `${usageWordsT.length > 1 ? `${usageWordsT.slice(0, -1).join(', ')} and ${usageWordsT[usageWordsT.length - 1]}` : usageWordsT[0]}, term length and how the price grows` : notes.commercial;
             const demoWord = ctx.model === 'saas' || ctx.model === null ? 'demo' : 'walkthrough';
             // Channels: the input selects the sections. Unknown names are listed as not covered.
             const CHANNEL_WORDS = [
@@ -3055,7 +3048,10 @@ ${rows.join('\n')}
             const clauseAt = (n) => {
                 if (!lead.length)
                     return null;
-                const cut = lead[0].text.length > 85 ? tightOf(lead[0].text, n) : lead[0].text;
+                const np0 = ['np', 'noun'].includes((0, rw_impact2_ts_1.shapeOf)(lead[0].text, kit));
+                // a noun phrase result is cut at its list ("one secure integration for local payment methods, regional expansion and ..." gives the part before the comma), never at the first "for"
+                const npItem = np0 ? lead[0].text.split(/,\s+/)[0] : '';
+                const cut = lead[0].text.length > 85 ? (np0 && npItem.length >= 20 && npItem.length <= 89 && npItem.split(/\s+/).length >= 4 ? npItem : tightOf(lead[0].text, n)) : lead[0].text;
                 return (0, rw_impact2_ts_1.resultClause)([{ text: cut, label: /\d/.test(cut) ? lead[0].label : '' }], kit);
             };
             const youCan = headVerb ? (bareHead.length > 85 ? tightOf(bareHead, 80) : bareHead) : clauseAt(80) || clauseShort || '';
@@ -3086,13 +3082,14 @@ ${rows.join('\n')}
                 return '';
             })();
             const bullets = (B.parts.length ? B.parts : B.headline ? [{ text: B.headline, label: '' }] : []).filter((p) => !heroPhrase || clean(p.text).toLowerCase() !== heroPhrase.toLowerCase()).map((p) => capFirst(clean((0, rw_impact2_ts_1.partText)(p).length > 150 ? `${leadOf(p.text, 110)}${p.label ? ` ${p.label}` : ''}` : (0, rw_impact2_ts_1.partText)(p))));
-            const counts = A.facts;
+            const counts = A.facts.map((f) => ({ ...f, text: (0, rw_impact2_ts_1.selfRef)(f.text, P) }));
             const recog = [...D.recognition, ...(0, rw_impact2_ts_1.parseDifference)(args.key_benefit).recognition];
             const claims = B.claims;
-            const scaleFacts = SP.facts.map((x) => ({ text: x, label: '' }));
+            // a count or a share typed without a source says so; a certification is proof as typed
+            const scaleFacts = SP.facts.map((x) => ({ text: x, label: /^\d|%/.test(x) && !/\b(?:page claims?|about page|source)\b/i.test(x) ? (0, rw_impact2_ts_1.sourceOr)(x, '') : '' }));
             const proofAll = [...counts, ...claims, ...recog, ...scaleFacts];
             // a percentage typed inside a result is a proof line as well ("a 99.99% uptime SLA on production plans"); the sentence of the result itself stays in the headline and the statement
-            const figProof = [...B.parts, ...dItems.map((d) => (0, rw_impact_ts_1.takeLabel)(d))].map((p) => ({ p, c: (0, rw_impact2_ts_1.figureClause)('body' in p ? p.body : p.text) })).filter((x) => x.c).map((x) => ({ text: x.c, label: 'label' in x.p ? x.p.label : '' }));
+            const figProof = [...B.parts, ...dItems.map((d) => (0, rw_impact_ts_1.takeLabel)(d))].map((p) => ({ p, c: (0, rw_impact2_ts_1.figureClause)('body' in p ? p.body : p.text) })).filter((x) => x.c).map((x) => ({ text: x.c, label: (0, rw_impact2_ts_1.sourceOr)(x.c, 'label' in x.p ? x.p.label : '') }));
             const resultProof = [...proofAll, ...figProof.filter((f) => !proofAll.some((q) => q.text.includes(f.text)))];
             const offers = A.offers;
             const proofYou = proofSector ? (0, rw_impact2_ts_1.toYou)(lc1(clean(proofSector))) : '';
@@ -3104,15 +3101,28 @@ ${rows.join('\n')}
             const objsFit = v ? v.objections.filter((o) => !weak || relevantTo(o.objection)) : [];
             const objection0 = objsFit.length ? { ...objsFit[0], objection: seatless(objsFit[0].objection) } : null;
             const inHouse = !!alt && /in[- ]house|internal|\bDIY\b|ourselves|yourself/i.test(SP.alt);
-            const qs = lz.questions.filter((x) => !(inHouse && /provider|incumbent|vendor/i.test(x))).filter((x) => !weak || relevantTo(x));
+            const qs = lz.questions.filter((x) => !(inHouse && /provider|incumbent|vendor/i.test(x))).filter((x) => !weak || relevantTo(x)).map((x) => (ctx.model && ctx.model !== 'saas' ? (0, rw_impact_ts_1.noSeatWords)(x) : x));
+            // a sector question is used only when it shares words with the problem or the result the user typed; else the user's own problem is the hook
+            const needStems = (0, rw_impact2_ts_1.stemSet)(SP.need || args.key_benefit);
             const needS = SP.need ? (0, rw_impact2_ts_1.shapeOf)(SP.need, kit) : 'np';
             const needHook = SP.need && needS === 'verb' && SP.need.split(/\s+/).length <= 14 ? `Do you ${(0, rw_impact2_ts_1.baseForm)(SP.need, kit)}?` : '';
-            const needLeadQ = SP.need ? ((0, rw_impact2_ts_1.leadClause)(clean(SP.need), 100, true) || (() => { const p0 = (0, rw_impact2_ts_1.needPieces)(SP.need)[0] || clean(SP.need); return p0.length > 140 ? (0, rw_impact_ts_1.clip)(p0, 140) : p0; })()) : '';
-            const needAsk = !needHook && SP.need && (weak || !qs.length) ? `Does this sound familiar: ${kit.lowerFirst(needLeadQ)}?` : '';
-            const hook = needHook || needAsk || (qs.length ? qs[0] : '');
-            const hookForms = needHook ? [needHook, `Do you recognise this: ${kit.lowerFirst(needLeadQ)}?`] : needAsk ? [needAsk, `Is this your situation: ${kit.lowerFirst(needLeadQ)}?`, `Sound familiar: ${kit.lowerFirst(needLeadQ)}?`] : qs.slice(0, 2);
+            // the hook is the first piece of the user's problem, whole when it is not long, else up to a clause boundary; a cut that leaves a fragment is not used as a hook
+            const needInfo = (() => {
+                if (!SP.need)
+                    return { t: '', ok: false };
+                const p0 = clean((0, rw_impact2_ts_1.needPieces)(SP.need)[0] || SP.need);
+                const t = p0.length <= 170 ? p0 : (0, rw_impact2_ts_1.leadClause)(p0, 130, true) || (0, rw_impact2_ts_1.leadClause)(p0, 240, true) || '';
+                if (!t)
+                    return { t: (0, rw_impact_ts_1.clip)(p0, 140), ok: false };
+                return { t, ok: t.split(/\s+/).length >= 6 && !/\b(?:and|or|of|for|to|the|a|an|by|from|in|on|with|that|either|neither|both|also|not)$/i.test(t) };
+            })();
+            const needLeadQ = needInfo.t;
+            const qsFit = needInfo.ok ? qs.filter((x) => (0, rw_impact2_ts_1.shared)(x, needStems) >= 1) : qs;
+            const needAsk = !needHook && SP.need && (weak || !qsFit.length) ? `Does this sound familiar: ${kit.lowerFirst(needLeadQ)}?` : '';
+            const hook = needHook || needAsk || (qsFit.length ? qsFit[0] : '');
+            const hookForms = needHook ? [needHook, `Do you recognise this: ${kit.lowerFirst(needLeadQ)}?`] : needAsk ? [needAsk, `Is this your situation: ${kit.lowerFirst(needLeadQ)}?`, `Sound familiar: ${kit.lowerFirst(needLeadQ)}?`] : qsFit.slice(0, 2);
             const nextHook = () => (hookForms.length ? fresh(...hookForms) : '');
-            const hook2 = qs.length ? ((needHook || needAsk) ? qs[0] : qs[1] || '') : '';
+            const hook2 = qsFit.length ? ((needHook || needAsk) ? qsFit[0] : qsFit[1] || '') : '';
             const altBack = alt ? (alt.kind === 'activity' ? alt.label : alt.kind === 'name' ? `relying on ${alt.label}` : `living with ${alt.label}`) : '';
             const subject = heroPhrase ? capFirst(heroPhrase) : capFirst((0, rw_impact_ts_1.clip)(clean(B.headline || oneBare), 60));
             const altGapOf = (a) => {
@@ -3140,8 +3150,9 @@ ${rows.join('\n')}
             ] : [];
             const nextDiff = () => (diffForms.length ? fresh(...diffForms) : '');
             const signOff = P.split(/\s+/).length > 3 ? 'The team' : `The ${P} team`;
-            const feats = SP.features.slice(0, 8).map((x) => capFirst(clean(x)));
+            const feats = SP.features.slice(0, 12).map((x) => capFirst(clean(x)));
             const sections = [];
+            const langNouns = (0, rw_impact2_ts_1.ownNounsOf)(SP.need ? (0, rw_impact2_ts_1.needPieces)(SP.need) : [], ownMeasures, dItems, kit);
             if (chosen.has('website')) {
                 const proofStrip = proofAll.length ? proofAll.map((f) => `- ${proofText(f)}`).join('\n') : '';
                 sections.push(`## Website Execution
@@ -3163,10 +3174,18 @@ ${vocab.length ? `\nWords ${lz.fn ? 'buyers in this team' : "this sector's buyer
                 const taglineA = headVerb ? `Helping ${aud} ${bareHead}` : plainRes ? `Helping ${aud} ${plainRes}` : '';
                 const tagline = taglineA && taglineA.length <= 125 ? taglineA : `${PC}: ${subject}`;
                 const post1 = [nextHook(), '', nextRes(), dMain ? nextDiff() : '', '', hook2 ? `A question to put to your own team this week: ${hook2}` : 'Ask your own team how they handle this today.'].filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i > 0)).join('\n');
-                const claimLine = [...claims, ...recog, ...scaleFacts, ...figProof].slice(0, 3).map((f) => `Proof point: ${kit.lowerFirst((0, rw_impact2_ts_1.partText)(f))}.`).join(' ');
-                const featLine = feats.length ? `What is in it: ${feats.slice(0, 4).join('; ')}.` : '';
+                const stand = [...claims, ...recog, ...scaleFacts, ...figProof].slice(0, 4).map((f) => kit.lowerFirst((0, rw_impact2_ts_1.partText)(f)));
+                const claimLine = stand.length ? `What stands behind it: ${stand.join('; ')}.` : '';
+                const featLine = feats.length ? `${PC} includes ${feats.slice(0, 4).map((x) => kit.lowerFirst(x)).join('; ')}.` : '';
+                // the answer to the alternative's objection says what the product does about the gap the user named (the alternative's tail and the problem sentences that name it), else it shows the difference
+                const gapPieces = alt && SP.need ? (0, rw_impact2_ts_1.needPieces)(SP.need).filter((x) => x.toLowerCase().includes(alt.label.toLowerCase().split(/\s+/).slice(0, 3).join(' '))) : [];
+                const gapStems = alt ? (0, rw_impact2_ts_1.stemSet)(alt.tail, ...gapPieces) : new Set();
+                const whatItDoes = firstNp ? clean(firstNp) : B.headline && ['np', 'noun'].includes(headShape) ? clean(B.headline) : '';
+                const doesScore = whatItDoes ? (0, rw_impact2_ts_1.shared)(whatItDoes, gapStems) : youCan ? (0, rw_impact2_ts_1.shared)(youCan, gapStems) : 0;
+                const diffScore = dMain ? (0, rw_impact2_ts_1.shared)(plain(dLead || dMain), gapStems) : 0;
+                const altShow = doesScore > diffScore ? (whatItDoes ? ` and show what it does instead: ${kit.lowerFirst(whatItDoes)}` : ` and show how ${P} lets them ${youCan}`) : dMain ? ` and show the difference: ${plain(dLead || dMain)}` : '';
                 const offerLine = offers.length ? `Worth knowing: ${kit.lowerFirst((0, rw_impact2_ts_1.partText)(offers[0]))}.` : '';
-                const post2 = [`${fresh(`How we would show it, not just say it: ${proofYou || 'one customer, one measure, before and after'}.`)}`, measures.length ? `The figures that matter here: ${measures.slice(0, 3).join(', ')}.` : '', featLine, claimLine, offerLine, '', objection0 ? `A fair question: "${objection0.objection.replace(/[.?!]+$/, '')}". Our answer: ${(0, rw_impact2_ts_1.toYou)(ctx.model && ctx.model !== 'saas' ? (0, rw_impact_ts_1.noSeatWords)(objection0.response) : objection0.response)}` : alt ? `A fair question: "${(0, rw_impact2_ts_1.altObjection)(alt).replace(/\.$/, '')}". Our answer: ${altGapOf(alt) ? `start from the gap (${altGapOf(alt)})` : `ask where it leaves ${aud} short`}${dMain ? ` and show the difference: ${plain(dLead || dMain)}` : ''}` : 'A fair question is what switching involves. We would answer it with a pilot.'].filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i > 0)).join('\n');
+                const post2 = [`${fresh(`How we would show it, not just say it: ${proofYou || 'one customer, one measure, before and after'}.`)}`, measures.length ? `The figures that matter here are ${measures.slice(0, 3).join(', ')}.` : '', featLine, claimLine, offerLine, '', objection0 ? `A fair question: "${objection0.objection.replace(/[.?!]+$/, '')}". Our answer: ${(0, rw_impact2_ts_1.toYou)(ctx.model && ctx.model !== 'saas' ? (0, rw_impact_ts_1.noSeatWords)(objection0.response) : objection0.response)}` : alt ? `A fair question: "${(0, rw_impact2_ts_1.altObjection)(alt).replace(/\.$/, '')}". Our answer: ${altGapOf(alt) ? `start from the gap (${altGapOf(alt)})` : `ask where it leaves ${aud} short`}${altShow}` : 'A fair question is what switching involves. We would answer it with a pilot.'].filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i > 0)).join('\n');
                 sections.push(`## LinkedIn Execution
 
 ### Company Page Tagline
@@ -3272,11 +3291,11 @@ ${signOff}
 | 2 | The Problem | ${problemSlide} |
 | 3 | Cost of Inaction | The cost of staying as things are, in the measures your buyer tracks: ${m0 ? [m0, m1].filter((x, i, a) => x && a.indexOf(x) === i).join('; ') : 'the main measures your buyer tracks'} |
 | 4 | The Solution | ${nextRes()} |
-| 5 | How It Works | ${feats.length ? feats.slice(0, 4).join('; ') : dItems.length ? dItems.slice(0, 3).map((d) => capFirst(clean((0, rw_impact_ts_1.takeLabel)(d).body.length > 150 ? leadOf((0, rw_impact_ts_1.takeLabel)(d).body, 120) : (0, rw_impact_ts_1.takeLabel)(d).body))).join('; ') : 'The three things your buyer must understand to say yes'} |
+| 5 | How It Works | ${feats.length ? feats.slice(0, 6).join('; ') : dItems.length ? dItems.slice(0, 3).map((d) => capFirst(clean((0, rw_impact_ts_1.takeLabel)(d).body.length > 150 ? leadOf((0, rw_impact_ts_1.takeLabel)(d).body, 120) : (0, rw_impact_ts_1.takeLabel)(d).body))).join('; ') : 'The three things your buyer must understand to say yes'} |
 | 6 | Differentiation | ${alt ? `Why ${P} rather than ${alt.label}` : `${PC} against ${statusQuoDefaults(v, ctx.model)[0].replace(/^./, (c) => c.toLowerCase())}`}${dItems.length ? `: ${weRest(dLead || dMain)}` : `: ${kit.lowerFirst(clean(heroLine))}`} |
 | 7 | Results | ${resultProof.length ? resultProof.slice(0, 4).map((f) => (0, rw_impact2_ts_1.partText)(f)).join('; ') : proofYou || `${PC}: the result a customer measured, before and after`} |
 | 8 | Case Study | A customer story: the situation, the measure before, what changed and the measure now |
-| 9 | Commercials | ${capFirst(notes.commercial)} |
+| 9 | Commercials | ${capFirst(commercialT)} |
 | 10 | Next Steps | ${primary} |
 
 ### Key Slide: Differentiation
@@ -3299,7 +3318,7 @@ Result: ${m0 ? `the figure your buyer already tracks (${m0}), from a real custom
 > "Based on our conversation, here is what I will show you: how ${P} helps ${aud} ${youCan || 'reach the result they came for'}."${hook ? `\nA question to open with, in this sector's language: ${q(hook)}` : ''}
 
 **2-8 min: Core Value Demonstration**
-${dItems.length ? `Start with what sets ${P} apart. ${[nextDiff(), ...dSents.slice(1, 3).map((x) => fresh(x, `Also: ${plain(x)}`))].filter(Boolean).join(' ')} ` : ''}${feats.length ? `Then walk through what it includes, in this order: ${feats.slice(0, 5).join('; ')}. ` : "Then show the two or three features that answer the buyer's stated needs. "}Keep the order of what the buyer measures${measures.length ? `: ${measures.slice(0, 3).join(', ')}` : ''}.
+${dItems.length ? `Start with what sets ${P} apart. ${[nextDiff(), ...dSents.slice(1, 3).map((x) => fresh(x, `Also: ${plain(x)}`))].filter(Boolean).join(' ')} ` : ''}${feats.length ? `Then walk through what it includes, in this order: ${feats.slice(0, 8).join('; ')}. ` : "Then show the two or three features that answer the buyer's stated needs. "}Keep the order of what the buyer measures${measures.length ? `: ${measures.slice(0, 3).join(', ')}` : ''}.
 
 **8-12 min: Differentiation Proof**
 > "You might be wondering how this compares to ${alt ? alt.label : 'what you use today'}. Let me show you."
@@ -3316,11 +3335,15 @@ Show one thing they cannot get from ${alt ? alt.label : 'their current approach'
 - Leave time for questions and agree the next step before the end.
 `);
             }
+            // generic roles ("owner of the process the AI changes") are tied to the user's own words: the work the audience runs and the measure it carries
+            const genericRoles = !!committee && !/\b(?:head|chief|officer|director|manager|vp|cto|cio|cfo|coo|ceo|ciso|cmo|president|controller|administrator)\b/i.test(`${committee.signer} ${committee.champion}`);
+            const roleTopic = (() => { const m = A.aud.match(/\b(?:that|who|which)\s+(?:run|runs|handle|handles|manage|manages|operate|operates|own|owns)\s+(.{6,60}?)(?:,|;|$)/i); return m ? m[1].trim() : ''; })();
+            const roleTail = genericRoles && roleTopic ? `; in your inputs, that means whoever owns ${roleTopic}${m0 ? ` and carries ${m0}` : ''}` : '';
             // One list: the order follows how buyers in this sector usually buy.
             const selfServe = ctx.model === 'saas' && !(v && ['cybersecurity', 'fintech', 'logistics-tech', 'vertical-saas', 'ai-native'].includes(v.id));
             const order = (selfServe
                 ? [['website', 'Website + SEO', 'foundation: buyers research you here before they reply'], ['linkedin', 'LinkedIn Organic', 'awareness among your target roles'], ['cold_email', 'Cold Email', 'pipeline from named accounts'], ['sales_deck', 'Sales Deck', 'conversion once there is a conversation'], ['product_demo', 'Demo', 'proof of capability']]
-                : [['cold_email', 'Cold Email', `direct outreach to the roles that buy${committee ? `: ${committee.signer}; ${committee.champion}` : ''}`], ['linkedin', 'LinkedIn Organic', 'awareness among those same roles'], ['sales_deck', 'Sales Deck', 'the story you tell once there is a meeting'], ['website', 'Website', 'credibility: proof, references and the facts buyers check'], ['product_demo', ctx.model === 'saas' || ctx.model === null ? 'Demo' : 'Walkthrough or pilot review', 'proof of capability']]).filter(([k]) => chosen.has(k));
+                : [['cold_email', 'Cold Email', `direct outreach to the roles that buy${committee ? `: ${committee.signer}; ${committee.champion}${roleTail}` : ''}`], ['linkedin', 'LinkedIn Organic', 'awareness among those same roles'], ['sales_deck', 'Sales Deck', 'the story you tell once there is a meeting'], ['website', 'Website', 'credibility: proof, references and the facts buyers check'], ['product_demo', ctx.model === 'saas' || ctx.model === null ? 'Demo' : 'Walkthrough or pilot review', 'proof of capability']]).filter(([k]) => chosen.has(k));
             const missing = [];
             if (!named)
                 missing.push({ give: 'product_name', changes: 'every line, which now says "the product"' });
@@ -3351,7 +3374,13 @@ ${v && !weak ? `
 Use the words buyers in ${lz.fn ? fnName(lz.fn) : v.name} use, and keep claims to what you can show. ${vocab.length ? `Words ${lz.fn ? 'buyers in this team' : 'this sector\'s buyers'} use: ${vocab.join(', ')}. ` : ''}${measures.length ? `What ${measuresAreSector2 ? (lz.fn ? 'this team' : 'the sector') : 'your results'} measure${measuresAreSector2 ? 's' : ''}: ${measures.join(', ')}.` : ''}${proofSector ? ` A proof point that lands: ${proofSector}` : ''}
 
 ---
-` : ''}
+` : (langNouns.length >= 3 ? `
+## Language from Your Inputs
+
+Use the words your own inputs use, and keep claims to what you can show. Words from your inputs: ${langNouns.join(', ')}.${measures.length ? ` What your results measure: ${measures.slice(0, 3).join(', ')}.` : ''}
+
+---
+` : '')}
 ## Channel Priority
 
 ${v ? `The order follows how deals usually run in ${v.name}: ${ctx.model && ctx.model !== 'saas' ? (0, rw_impact_ts_1.noSeatWords)(v.salesMotion) : v.salesMotion}\n\n` : ''}**Recommended Priority Order**:

@@ -7,7 +7,7 @@ import { takeLabel, topLevel, joinAnd, clip, outcomeItems, asInfinitive, classif
 export interface Kit2 extends Kit { capFirst(t: string): string; mid(t: string): string; noNotes(t: string): string; shortAud(t: string): string }
 
 /** A phrase of the user's with its source label ("(page claim)") kept apart. */
-export interface Piece { text: string; label: string }
+export interface Piece { text: string; label: string; lead?: string }
 export const partText = (p: Piece): string => (p.label ? `${p.text} ${p.label}` : p.text);
 const hasFigure = (t: string): boolean => /\d/.test(t);
 const WS = (t: string): string => t.replace(/\s+/g, ' ').trim();
@@ -140,15 +140,33 @@ export function parseBenefit(text: string, kit: Kit2): Benefit {
       const m = seg.match(/^([^:()]{8,110}?):\s+(.{8,})$/);
       if (m && m[1].split(/\s+/).length <= 14 && !/^examples?\b/i.test(m[1])) { out.headline = m[1].trim(); body = m[2]; }
     }
+    const kept: Piece[] = [];
     for (let p of partsOf(body, kit)) {
       // "understand context and act in real time, with enterprises typically seeing a 60% reduction ...": the tail after "with" is a result somebody got, so it is proof
       const wt = p.text.match(/^(.*?),\s+with\s+((?:[a-z]+\s+){0,2}(?:seeing|seen|reporting|achieving|getting|reaching|saving|cutting|gaining|average|typically)\b.*\d.*)$/i);
       if (wt && !hasFigure(wt[1])) { out.claims.push({ text: wt[2].trim(), label: p.label }); p = { text: wt[1].trim(), label: '' }; }
       // "one customer went from discovery to go-live in 6 days": a result somebody else got is proof, not what the product does
-      if (hasFigure(p.text) && shapeOf(p.text, kit) !== 'verb' && CUSTOMER_RESULT.test(p.text)) out.claims.push(p); else out.parts.push(p);
+      // a clause with a figure and a source label ("hoteliers using it see 8.7% revenue growth (page claim)") is a result somebody got, so it is proof as well
+      if (hasFigure(p.text) && ((shapeOf(p.text, kit) !== 'verb' && CUSTOMER_RESULT.test(p.text)) || (p.label && shapeOf(p.text, kit) === 'clause'))) out.claims.push(p); else kept.push(p);
     }
+    out.parts.push(...mergeRelative(kept, kit));
   });
   return out;
+}
+/** "AI agents that automate conversations, understand context and act in real time" is read as items ("AI agents that automate conversations", "understand context and act in real time"): the verbs
+ *  that follow continue the relative clause of the first item (the agents understand and act, not the buyer), so they are joined back to it. */
+function mergeRelative(parts: Piece[], kit: Kit2): Piece[] {
+  if (parts.length < 2 || hasFigure(parts[0].text)) return parts;
+  const m = parts[0].text.match(/^.{3,60}?\s+(?:that|which|who)\s+([a-z]+)\b/i);
+  if (!m) return parts;
+  const k0 = kit.kindOf(m[1]);
+  if (k0 !== 'base' && k0 !== 'third') return parts;
+  let end = 1;
+  while (end < parts.length && !hasFigure(parts[end].text) && shapeOf(parts[end].text, kit) === 'verb' && kit.kindOf(parts[end].text) === k0) end++;
+  if (end === 1) return parts;
+  const tail = parts.slice(1, end).map((p) => endStop(p.text));
+  const joined = tail.length === 1 ? tail[0] : `${tail.slice(0, -1).join(', ')} and ${tail[tail.length - 1]}`;
+  return [{ text: `${endStop(parts[0].text)}, ${joined}`, label: parts[end - 1].label || parts[0].label, lead: endStop(parts[0].text) }, ...parts.slice(end)];
 }
 
 /** The label to show after a group of parts: one shared label once at the end (plural when it is shared), or each part with its own. */
@@ -196,7 +214,7 @@ export function firstParts(parts: Piece[], n = 230, max = 3): Piece[] {
 /** A short phrase (3 to max words) that can stand alone as a headline or tagline: the headline, a part, the start of a part cut at a comma, or its first clause. A phrase with a figure is a last
  *  resort (a headline carries no claim without its label). Never cut mid phrase; null when none exists. */
 export function shortPhrase(b: Benefit, max: number, kit: Kit2, min = 3): string | null {
-  const cands = [b.headline, ...b.parts.map((p) => p.text)].filter(Boolean);
+  const cands = [b.headline, ...b.parts.flatMap((p) => (p.lead ? [p.lead, p.text] : [p.text]))].filter(Boolean);
   const bad = /\b(?:for|with|to|of|and|a|the|by|in|that|from|at|or)$/i;
   const ok = (t: string): boolean => { const n = t.split(/\s+/).length; return n >= min && n <= max && !bad.test(t) && !/^(?:from|with|by|so|to)\b/i.test(t) && !/[:;,]$/.test(t); };
   // a cut at a comma must not leave a relative clause open ("One fabric that connects network" from "... connects network, cloud, security and IoT")
@@ -420,7 +438,9 @@ export function parseStatement(statement: string, products: string | string[]): 
         const commas = topLevel(body).map((x) => endStop(x)).filter((x) => x.length >= 4 && x.split(/\s+/).length <= 12 && !/\b(?:so|because|while)\b/i.test(x));
         if (commas.length >= 4 && commas.filter((x) => /\(/.test(x)).length >= 2) items = commas;
       }
-      if (items.length >= 3) { out.features = items.filter((x) => !/^\d/.test(x)); out.facts = items.filter((x) => /^\d/.test(x)); }
+      // a count starts with a digit ("190+ countries voice footprint"); "24/7 live chat support" is a service line, and a certification ("PCI DSS Level 1") is proof
+      const isFact = (x: string): boolean => (/^\d/.test(x) && !/^24\s*[/x]\s*7\b/i.test(x)) || /\b(?:PCI(?:\s+DSS)?|SOC\s?2|ISO\s?\d{3,}|GDPR|HIPAA|certified|certification|accredited)\b/i.test(x);
+      if (items.length >= 3) { out.features = items.filter((x) => !isFact(x)); out.facts = items.filter(isFact); }
     }
   }
   if (nameRe) {
@@ -449,7 +469,7 @@ export function plainResult(b: Benefit, kit: Kit2): string | null {
 }
 
 // ---- relevance: what a sector note says against what the user's own inputs describe ----------------------------------------------------
-const GENERIC_STEM = new Set(['rate', 'time', 'share', 'effort', 'cost', 'numbe', 'count', 'avera', 'total', 'quali', 'custo', 'servi', 'busin', 'compa', 'manag', 'syste', 'platf', 'solut', 'produ', 'team', 'user', 'tool', 'work', 'with', 'that', 'this', 'your', 'from', 'have', 'they', 'what', 'each', 'more', 'less', 'data', 'help', 'mean', 'every', 'under', 'while', 'basic', 'start', 'stop', 'build', 'live', 'plan', 'tied', 'run', 'need', 'make', 'take', 'only', 'also', 'into', 'over', 'across', 'their', 'there', 'about']);
+const GENERIC_STEM = new Set(['doe', 'does', 'today', 'which', 'whom', 'when', 'been', 'will', 'would', 'could', 'shoul', 'than', 'then', 'them', 'their', 'there', 'these', 'those', 'about', 'after', 'also', 'just', 'like', 'many', 'most', 'much', 'only', 'over', 'some', 'such', 'very', 'well', 'were', 'whose', 'while', 'where', 'rate', 'time', 'share', 'effort', 'cost', 'numbe', 'count', 'avera', 'total', 'quali', 'custo', 'servi', 'busin', 'compa', 'manag', 'syste', 'platf', 'solut', 'produ', 'team', 'user', 'tool', 'work', 'with', 'that', 'this', 'your', 'from', 'have', 'they', 'what', 'each', 'more', 'less', 'data', 'help', 'mean', 'every', 'under', 'while', 'basic', 'start', 'stop', 'build', 'live', 'plan', 'tied', 'run', 'need', 'make', 'take', 'only', 'also', 'into', 'over', 'across', 'their', 'there', 'about']);
 /** The stems (first five letters, plural cut) of the words of 4 letters or more of some texts, without the words that fit any business. */
 export function stemSet(...texts: string[]): Set<string> {
   const out = new Set<string>();
@@ -521,7 +541,7 @@ export function figureClause(text: string): string {
     if (!/\d[\d.,]*\+?\s?%|\b\d+(?:\.\d+)?[xX]\b/.test(frag)) continue;
     const and = frag.split(/\s+and\s+/);
     const hit = and.filter((x) => /\d[\d.,]*\+?\s?%|\b\d+(?:\.\d+)?[xX]\b/.test(x)).pop() || frag;
-    return hit.trim().replace(/^(?:with|and)\s+/i, '');
+    return hit.trim().replace(/^(?:with|and|on)\s+/i, '');
   }
   return '';
 }
@@ -576,4 +596,35 @@ export function subjectOf(text: string, kit: Kit2): string {
     if (shapeOf(w.slice(0, i + 1).join(' '), kit) === 'clause') return w.slice(0, i).join(' ');
   }
   return '';
+}
+
+/** The label of a figure the user typed without a source. */
+export const NO_SOURCE = '(your figure, source not stated)';
+/** The label of a figure: the one the user typed, else the note that no source was stated; a text that already ends with its own note in brackets needs no more. */
+export const sourceOr = (text: string, label: string): string => label || (/\([^)]*\)\s*$/.test(text) ? '' : NO_SOURCE);
+/** "thousands of companies run on it" says nothing on its own: the pronoun that ends a fact about the product is the product's name. */
+export function selfRef(text: string, name: string): string {
+  return text.replace(/(\b(?:on|with|by|use|uses|trust|trusts|choose|chooses|rely on|relies on|depend on|depends on))\s+(?:it|us)(?=\s*(?:\([^)]*\))?\s*$)/i, `$1 ${name}`);
+}
+/** The user's own nouns: the subjects of the problem, the measures of the results and the head of the difference, each as typed (at most six). They stand in for a sector word list when the sector notes are not used. */
+export function ownNounsOf(needPcs: string[], measures: string[], diffItems: string[], kit: Kit2): string[] {
+  const got: string[] = [];
+  const add = (x: string): void => {
+    // a noun phrase with a determiner ("the right tool for each workload") is a piece of a sentence, not a term; a quantity word is dropped ("one control plane")
+    if (/^(?:the|a|an|our|their|your|this|that|most|many|all|some|several|few|more|less)\s/i.test(x.trim())) return;
+    // a phrase that starts with a verb ("owns every layer") is a clause, not a noun
+    if (kit.kindOf(x.trim()) === 'base' || kit.kindOf(x.trim()) === 'third' || THIRD_MORE.has((x.trim().split(/\s+/)[0] || '').toLowerCase())) return;
+    const y = x.replace(/^(?:one|two|three|each|every|any)\s+/i, '').trim();
+    if (y.length < 6 || y.split(/\s+/).length > 4 || /^(?:it|they|we|you|this|that|these|those|there)\b/i.test(y) || /^(?:work|time|data|costs?|technology|things?|everything|teams?)$/i.test(y)) return;
+    if (!got.some((g) => g.toLowerCase() === y.toLowerCase())) got.push(y);
+  };
+  const headNp = (d: string): string => {
+    const c = takeLabel(d).body.split(/\s(?:combined|with|and|that|which|of|for|on|in|across|so|but|while)\s|[,;:]/)[0].trim();
+    const n = c.split(/\s+/).length;
+    return n >= 2 && n <= 4 && ['np', 'noun'].includes(shapeOf(c, kit)) ? c : '';
+  };
+  for (const p of needPcs) add(subjectOf(endStop(WS(p)), kit));
+  for (const m of measures) add(m);
+  for (const d of diffItems) add(headNp(d));
+  return got.slice(0, 6);
 }
