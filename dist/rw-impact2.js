@@ -29,6 +29,8 @@ exports.figureMeasures = figureMeasures;
 exports.keepLabel = keepLabel;
 exports.quoteAround = quoteAround;
 exports.brandOnly = brandOnly;
+exports.figureClause = figureClause;
+exports.toYou = toYou;
 // Run 22 rewrite of impact_craft_message and impact_translate_execution: text helpers only.
 // Everything here is pure string work (no network, no file access, no environment, no logging). It reads the shape of what a user typed (a result, a problem, a
 // difference, an alternative, an audience with its notes) and puts the pieces into clean sentences. It holds no sector knowledge (that stays in verticals.ts, rule B82)
@@ -361,7 +363,7 @@ const EXCLUDES = /\b(?:served by|handled by|sold by|covered by|belong(?:s)? to)\
 function parseAudience(target, kit) {
     const segs = splitSemi(WS(target));
     let first = segs[0] || '';
-    const out = { aud: '', gloss: '', exclusion: '', facts: [], rest: '' };
+    const out = { aud: '', gloss: '', exclusion: '', facts: [], rest: '', offers: [] };
     for (const s of segs.slice(1)) {
         if (EXCLUDES.test(s))
             out.exclusion = endStop(s);
@@ -372,6 +374,11 @@ function parseAudience(target, kit) {
         else
             out.rest = out.rest ? `${out.rest}; ${s}` : s;
     }
+    // a bracketed note with a figure in the middle of the audience text ("startups (eligible startups can receive up to $100,000 in credits for 12 months)") is an offer of the seller
+    const anyLabel = (target.match(/\((?:page claims?|case stud(?:y|ies)|analyst reports?)\)/i) || [''])[0];
+    for (const m of first.matchAll(/\(([^()]{12,160})\)/g))
+        if (hasFigure(m[1]) && !/page claim|about page|source|analyst|story/i.test(m[1]) && !first.trim().endsWith(m[0]))
+            out.offers.push({ text: m[1].trim(), label: anyLabel });
     const g = first.match(/^(.+?)\s*\(([^()]{6,90})\)\s*$/);
     if (g && hasFigure(g[2]) && !/\b(?:page claims?|about page|the site|the page)\b/i.test(g[2])) {
         out.facts.push({ text: g[2].trim(), label: '' });
@@ -490,7 +497,7 @@ function sharpenText(missing) {
  *  "Unlike" sentence), the category ("P is the C that ...") and the need ("who struggle with N, P is"). Anything it cannot read is left empty; nothing is guessed. */
 function parseStatement(statement, products) {
     const names = (Array.isArray(products) ? products : [products]).map((x) => x.trim()).filter((x) => x.length >= 2);
-    const out = { alt: '', diff: [], category: '', need: '', features: [] };
+    const out = { alt: '', diff: [], category: '', need: '', features: [], facts: [] };
     const text = WS(statement);
     const sents = text.split(/(?<=[.!?])\s+(?=[A-Z])/);
     for (const s0 of sents) {
@@ -536,9 +543,17 @@ function parseStatement(statement, products) {
         if (th) {
             const sentenceEnd = th[1].search(/\.\s+[A-Z]|\.$/);
             const body = sentenceEnd >= 0 ? th[1].slice(0, sentenceEnd) : th[1];
-            const items = splitSemi(body).map((x) => endStop(x)).filter((x) => x.length >= 4 && x.split(/\s+/).length <= 14);
-            if (items.length >= 3)
-                out.features = items;
+            let items = splitSemi(body).map((x) => endStop(x)).filter((x) => x.length >= 4 && x.split(/\s+/).length <= 26);
+            // a list written with commas and bracketed groups ("network (A, B), cloud (C, D), IoT (E, F), 190+ countries voice footprint") is a list of what the product includes as well
+            if (items.length < 3) {
+                const commas = (0, rw_impact_ts_1.topLevel)(body).map((x) => endStop(x)).filter((x) => x.length >= 4 && x.split(/\s+/).length <= 12 && !/\b(?:so|because|while)\b/i.test(x));
+                if (commas.length >= 4 && commas.filter((x) => /\(/.test(x)).length >= 2)
+                    items = commas;
+            }
+            if (items.length >= 3) {
+                out.features = items.filter((x) => !/^\d/.test(x));
+                out.facts = items.filter((x) => /^\d/.test(x));
+            }
         }
     }
     if (nameRe) {
@@ -643,5 +658,21 @@ function brandOnly(named) {
     const m = named.trim().match(/^(\S+)\s+([a-z]+),\s/);
     // only a word that is built like a name (an inner capital, a digit or a dot: eClerx, Fin2go, Voxa.ai) is taken as a brand; an ordinary capitalised word that opens a description ("Modern cloud, security ...") is not
     return m && /^[A-Za-z][\w.-]*$/.test(m[1]) && (/[a-z][A-Z]/.test(m[1]) || /\d/.test(m[1]) || /[a-z]\.[a-z]/i.test(m[1])) ? m[1] : '';
+}
+/** The clause of a text that holds a percentage or a multiplier ("zero-downtime upgrades and a 99.99% uptime SLA on production plans" gives "a 99.99% uptime SLA on production plans"). '' when there is none. */
+function figureClause(text) {
+    const t = WS(text).replace(/\s*\((?:page claims?|case stud(?:y|ies)|hypothetical|analyst reports?)\)\s*$/i, '');
+    for (const frag of t.split(/,\s+|;\s+/)) {
+        if (!/\d[\d.,]*\+?\s?%|\b\d+(?:\.\d+)?[xX]\b/.test(frag))
+            continue;
+        const and = frag.split(/\s+and\s+/);
+        const hit = and.filter((x) => /\d[\d.,]*\+?\s?%|\b\d+(?:\.\d+)?[xX]\b/.test(x)).pop() || frag;
+        return hit.trim().replace(/^(?:with|and)\s+/i, '');
+    }
+    return '';
+}
+/** Advice written to the seller ("the buyer's own transaction data") read as copy to the buyer ("your own transaction data"). */
+function toYou(t) {
+    return t.replace(/\bthe buyer's own\b/gi, 'your own').replace(/\bthe buyer's\b/gi, 'your').replace(/\bthe buyer\b/gi, 'you').replace(/\bbuyers'? own\b/gi, 'your own');
 }
 //# sourceMappingURL=rw-impact2.js.map
