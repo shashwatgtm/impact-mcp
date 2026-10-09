@@ -448,7 +448,7 @@ export function segmentFacts(c: FactCtx, order: number): string[] {
   pool.measure = m1 ? `which measure ${c.seg} buyers would judge you on, for example ${m1}, and whether they already track it` : null;
   const namedParts = c.parts.filter(isNamedPart);
   const pf = c.fit.length ? c.fit : namedParts.slice(0, 3);
-  pool.product = pf.length >= 1 && (c.fit.length || namedParts.length >= 2) ? (pf.length === 1 ? `whether ${c.seg} buyers name "${pf[0].length > 80 ? clip(pf[0], 80) : pf[0]}" first` : `which of ${joinAnd(pf.map((x) => `"${x.length > 80 ? clip(x, 80) : x}"`))} ${c.seg} buyers name first`) : null;
+  pool.product = pf.length >= 1 && (c.fit.length || namedParts.length >= 2) ? (pf.length === 1 ? `whether ${c.seg} buyers name "${partLabel(pf[0])}" first` : `which of ${joinAnd(pf.map((x) => `"${partLabel(x)}"`))} ${c.seg} buyers name first`) : null;
   // The kinds of fact this segment's kind of buyer is asked about first; a kind already used for another segment of the same kind comes later, so two such segments differ.
   const prefs = [...PREFS[type], ...['cycle', 'signer', 'objection', 'pilot', 'measure', 'product'].filter((k) => !PREFS[type].includes(k))];
   // the buying cycle against the user's cycle is always asked (its wording follows the kind of buyer); one or two more facts follow, in the order this kind of buyer is asked
@@ -460,4 +460,12 @@ export function segmentFacts(c: FactCtx, order: number): string[] {
   if (o && pool.objection && out.includes(pool.objection)) c.usedObjections.add(o.objection);
   if (m1 && pool.measure && out.includes(pool.measure)) c.usedMeasures.add(m1);
   return out;
+}
+
+/** A part of a product description as a short label: a long lead sentence is cut before its first clause word ("an AI localization and translation management platform that connects to ..." gives "an AI localization and translation management platform"). */
+export function partLabel(x: string): string {
+  const t = x.trim();
+  if (t.length <= 70) return t;
+  const head = t.split(/\s(?:that|which|who|so|to|with|for)\s/)[0].trim();
+  return head.split(/\s+/).length >= 3 && head.length <= 90 ? head : clip(t, 70);
 }

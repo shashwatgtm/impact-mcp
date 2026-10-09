@@ -7,7 +7,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { neutraliseDeep, neutraliseText } from './echo-safe.ts';
-import { isNamedPart, segmentFacts, segmentType, segmentFit, segmentOverlap, roleOk, linkScore, productParts, isCompanyFact, brandName, plainName, tidyLabel, splitStrengths, leadAud, noSeatWords, categoryNoun, takeLabel, topLevel, joinAnd, clip, outcomeItems, outcomeClause, leadItems, classifyProof, MEASURE_LINKS, ctaNoun, sharpenLine, type Kit, type ProofKind } from './rw-impact.ts';
+import { partLabel, isNamedPart, segmentFacts, segmentType, segmentFit, segmentOverlap, roleOk, linkScore, productParts, isCompanyFact, brandName, plainName, tidyLabel, splitStrengths, leadAud, noSeatWords, categoryNoun, takeLabel, topLevel, joinAnd, clip, outcomeItems, outcomeClause, leadItems, classifyProof, MEASURE_LINKS, ctaNoun, sharpenLine, type Kit, type ProofKind } from './rw-impact.ts';
 import { type Kit2, type Piece, partText, sentence, shapeOf, parseBenefit, partsInline, resultClause, firstParts, shortPhrase, needSentence, needPieces, differenceSentence, parseAudience, audienceShort, parseAlternative, altObjection, parseDifference, sharpenText, makeFresh, baseForm, leadClause, parseStatement, plainResult, stemSet, shared, figureMeasures, keepLabel, quoteAround, brandOnly, type Alternative } from './rw-impact2.ts';
 import { detectVertical, detectModel, explainSector, profileFor, SAAS_ONLY, SUBTYPES, SECTOR_MODEL, MODEL_NAME, BUSINESS_MODELS, VERTICALS, type Vertical, type VerticalId, type BusinessModel, type ReaderInput } from './verticals.ts';
 
@@ -2139,7 +2139,7 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const fitTop = fitOrder.filter((r) => r.fit.length === (fitOrder[0] ? fitOrder[0].fit.length : 0)).slice(0, 3);
       const presetFirst = tied.length === 1 ? beachhead.name : '';
       const productFit = fitTop.length
-        ? `**Product fit.** The parts of your product text sit closest to ${joinAnd(fitTop.map((r) => `${r.x.name} (${joinAnd(r.fit.map((p) => q(clip(p, 80))))})`))}; this is a reading of words, not a score. ${presetFirst ? (fitTop.some((r) => r.x.name === presetFirst) ? `That agrees with the presets, which put ${presetFirst} first.` : `This differs from the presets, which put ${presetFirst} first, so weigh the presets less.`) : 'The presets give no order here, so start the checks with these segments.'}`
+        ? `**Product fit.** The parts of your product text sit closest to ${joinAnd(fitTop.map((r) => `${r.x.name} (${joinAnd(r.fit.map((p) => q(partLabel(p))))})`))}; this is a reading of words, not a score. ${presetFirst ? (fitTop.some((r) => r.x.name === presetFirst) ? `That agrees with the presets, which put ${presetFirst} first.` : `This differs from the presets, which put ${presetFirst} first, so weigh the presets less.`) : 'The presets give no order here, so start the checks with these segments.'}`
         : `**Product fit.** No part of your product text sits close to a segment name by its words, so the facts below carry the decision.${named.filter(isNamedPart).length >= 2 ? ` Your description names ${joinAnd(named.filter(isNamedPart).slice(0, 5).map((x) => q(clip(x, 70))))}; ask each segment which of them it wants first.` : ''}`;
       const overlapNotes = segmentOverlap(segmentScores.map((x) => x.name));
       const howToDecideKeyword = `## How to decide, from your own inputs

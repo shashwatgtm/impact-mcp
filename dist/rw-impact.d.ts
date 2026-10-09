@@ -89,4 +89,6 @@ export interface FactCtx {
 }
 /** Two or three facts to find out about one segment, taken from the sector notes and the user's own inputs; `order` is the position among segments of the same kind, so two such segments differ. */
 export declare function segmentFacts(c: FactCtx, order: number): string[];
+/** A part of a product description as a short label: a long lead sentence is cut before its first clause word ("an AI localization and translation management platform that connects to ..." gives "an AI localization and translation management platform"). */
+export declare function partLabel(x: string): string;
 //# sourceMappingURL=rw-impact.d.ts.map
