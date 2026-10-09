@@ -66,4 +66,29 @@ export declare function roleOk(r: string | undefined): string;
 export declare function segmentFit(segment: string, parts: string[]): string[];
 /** Notes on segments that overlap: "Banking" inside "Financial services". */
 export declare function segmentOverlap(names: string[]): string[];
+export type SegType = 'education' | 'public' | 'regulated' | 'large' | 'small' | 'mid' | 'industrial' | 'retail' | 'tech' | 'telecom' | 'media' | 'other';
+export declare function segmentType(name: string): SegType;
+/** A part of a product description that carries a product name ("RapidX for AI driven development", "Auth (verify bank account numbers)"), not a plain phrase ("AI enhanced engineering teams"). */
+export declare function isNamedPart(x: string): boolean;
+export interface FactCtx {
+    seg: string;
+    deal: string;
+    cycle: string;
+    signer: string;
+    motion: string;
+    objections: {
+        objection: string;
+        response: string;
+    }[];
+    metrics: string[];
+    parts: string[];
+    fit: string[];
+    usedObjections: Set<string>;
+    usedMeasures: Set<string>;
+    usedKinds: Map<string, number>;
+}
+/** Two or three facts to find out about one segment, taken from the sector notes and the user's own inputs; `order` is the position among segments of the same kind, so two such segments differ. */
+export declare function segmentFacts(c: FactCtx, order: number): string[];
+/** A part of a product description as a short label: a long lead sentence is cut before its first clause word ("an AI localization and translation management platform that connects to ..." gives "an AI localization and translation management platform"). */
+export declare function partLabel(x: string): string;
 //# sourceMappingURL=rw-impact.d.ts.map
