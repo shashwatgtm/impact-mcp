@@ -23,6 +23,12 @@ exports.proofFrom = proofFrom;
 exports.sharpenText = sharpenText;
 exports.parseStatement = parseStatement;
 exports.plainResult = plainResult;
+exports.stemSet = stemSet;
+exports.shared = shared;
+exports.figureMeasures = figureMeasures;
+exports.keepLabel = keepLabel;
+exports.quoteAround = quoteAround;
+exports.brandOnly = brandOnly;
 // Run 22 rewrite of impact_craft_message and impact_translate_execution: text helpers only.
 // Everything here is pure string work (no network, no file access, no environment, no logging). It reads the shape of what a user typed (a result, a problem, a
 // difference, an alternative, an audience with its notes) and puts the pieces into clean sentences. It holds no sector knowledge (that stays in verticals.ts, rule B82)
@@ -45,7 +51,7 @@ function sentence(t, kit) {
 const EXTRA_VERBS = new Set('act free end accelerate allow consolidate centralise centralize standardise standardize extend gain drive maximise maximize minimise minimize optimise optimize strengthen widen empower equip predict disrupt keep deliver ship scale lift cut stop shorten simplify unify give take make let bring put reach build fix find see know push pull manage handle win land run track'.split(' '));
 const ADVERB = /^[a-z]+ly\s+/i;
 // Finite verbs that are rarely anything else: after a subject they make the phrase a clause.
-const STRONG = new Set('is are was were has have had can cannot will would should must may might does do did arrives arrive breaks break spreads spread comes come lacks lack wants want expects expect suffers suffer relies rely drifts drift captures happens happen causes cause piles pile hands hand fails fail loses lose spends spend juggles juggle bleeds bleed chases chase needs need leaves leave creates create forces force slows slow stays stay sits sit falls fall struggles struggle becomes become remains remain requires require includes include makes make takes take gives give lets keeps keep shows show finds find knows know offers offer provides provide helps help connects connect combines combine delivers deliver automates automate supports support enables enable reduces reduce saves save raises raise runs run learns learn validates validate captures turns turn tracks track sends send sees see'.split(' '));
+const STRONG = new Set('is are was were has have had can cannot will would should must may might does do did arrives arrive breaks break spreads spread comes come lacks lack wants want expects expect suffers suffer relies rely drifts drift captures happens happen causes cause piles pile hands hand fails fail loses lose spends spend juggles juggle bleeds bleed chases chase needs need leaves leave creates create forces force slows slow stays stay sits sit falls fall struggles struggle becomes become remains remain requires require includes include makes make takes take gives give let lets keeps keep shows show finds find knows know offers offer provides provide helps help connects connect combines combine delivers deliver automates automate supports support enables enable reduces reduce saves save raises raise runs run learns learn validates validate captures turns turn tracks track sends send sees see'.split(' '));
 // Words that can be a verb or a noun: they count as a verb only after a plural noun or a name ("teams manage", "AI agents run").
 const AFTER_PLURAL = new Set('manage handle run work move use rank track plan score test order price load pick pay bill hold grow rise cost lead end result miss wait try trust mean waste face go fall'.split(' '));
 const NEED_VERBS = new Set('bleed lose waste chase juggle spend struggle miss wait drown rely depend burn leak guess hunt scramble wrestle pay fight stitch patch copy re-key rekey retype chase reconcile'.split(' '));
@@ -256,37 +262,35 @@ function firstParts(parts, n = 230, max = 3) {
 function shortPhrase(b, max, kit, min = 3) {
     const cands = [b.headline, ...b.parts.map((p) => p.text)].filter(Boolean);
     const bad = /\b(?:for|with|to|of|and|a|the|by|in|that|from|at|or)$/i;
-    const ok = (t) => { const n = t.split(/\s+/).length; return n >= min && n <= max && !bad.test(t) && !/^(?:from|with|by|so|to)\b/i.test(t); };
+    const ok = (t) => { const n = t.split(/\s+/).length; return n >= min && n <= max && !bad.test(t) && !/^(?:from|with|by|so|to)\b/i.test(t) && !/[:;,]$/.test(t); };
+    // a cut at a comma must not leave a relative clause open ("One fabric that connects network" from "... connects network, cloud, security and IoT")
+    const openClause = (f) => /\b(?:that|which|who|where)\s+\w+/i.test(f);
     const pass = (fig) => {
+        // the first candidate that gives a phrase wins, so the headline of a list is its first part and never a later, weaker one
         for (const c of cands) {
             const t = endStop(WS(c));
             if (ok(t) && (fig || !hasFigure(t)))
                 return t;
-        }
-        for (const c of cands) {
-            const t = endStop(WS(c));
             const f = (t.split(/,\s+|\s+and\s+(?=\S+\s+\S+\s+\S+)/)[0] || '').trim();
-            if (f !== t && ok(f) && (fig || !hasFigure(f)))
+            if (f !== t && ok(f) && !openClause(f) && (fig || !hasFigure(f)))
                 return f;
-        }
-        for (const c of cands) {
-            const t = endStop(WS(c));
-            const f = leadClause(t, 90) || '';
-            if (f && f !== t && ok(f.replace(/\s*\([^)]*\)\s*$/, '')) && (fig || !hasFigure(f)))
-                return f;
+            const g = leadClause(t, 90) || '';
+            if (g && g !== t && ok(g.replace(/\s*\([^)]*\)\s*$/, '')) && !openClause(g) && (fig || !hasFigure(g)))
+                return g;
         }
         return null;
     };
-    const whole = () => {
+    const whole = (fig) => {
         for (const c of cands) {
             const t = endStop(WS(c));
             const n = t.split(/\s+/).length;
-            if (n >= min && n <= max + 4 && !bad.test(t) && !/^(?:from|with|by|so|to)\b/i.test(t))
+            if (n >= min && n <= max + 4 && !bad.test(t) && !/^(?:from|with|by|so|to)\b/i.test(t) && (fig || !hasFigure(t)))
                 return t;
         }
         return null;
     };
-    return pass(false) ?? pass(true) ?? whole();
+    // a whole first part of a few words more than the limit beats a later part that carries a figure
+    return pass(false) ?? whole(false) ?? pass(true) ?? whole(true);
 }
 /** The first clause of a long text (before its first "with", "so that", comma or "that" once 18 characters are in), or null when the text is short or has no such boundary. */
 function leadClause(text, max = 110, need = false, tight = false) {
@@ -453,7 +457,7 @@ function parseDifference(text) {
     for (const seg of splitSemi(WS(text))) {
         const l = (0, rw_impact_ts_1.takeLabel)(seg);
         const isRec = (x) => (0, rw_impact_ts_1.classifyProof)(x).kind === 'recognition' && /\b(?:named|ranked|recogni[sz]ed|leader|winner|award|certified|rated)\b/i.test(x);
-        const tail = l.body.match(/^(.{25,}?)\s*,?\s+(?:and\s+)?((?:ranked|named|rated|certified|recogni[sz]ed|awarded|voted)\b.*)$/i);
+        const tail = l.body.match(/^(.{25,}?)\s*(?:,|\s+and)\s+((?:ranked|named|rated|recogni[sz]ed|awarded|voted)\b.*|certified\s+(?:as|by|for)\b.*)$/i);
         if (isRec(l.body) && /^(?:named|ranked|recogni[sz]ed|rated|certified|awarded|voted|winner|finalist|(?:an?\s+)?leader\b|an?\s+award)/i.test(l.body))
             recognition.push({ text: l.body, label: l.label });
         else if (tail && /\d|#\d|leader|first/i.test(tail[2])) {
@@ -484,8 +488,9 @@ function sharpenText(missing) {
 }
 /** The pieces of a positioning statement that the channel copy needs: the alternative ("Unlike X," or "Alternatives buyers use today: X"), the differences ("What sets it apart: ..." or the rest of the
  *  "Unlike" sentence), the category ("P is the C that ...") and the need ("who struggle with N, P is"). Anything it cannot read is left empty; nothing is guessed. */
-function parseStatement(statement, product) {
-    const out = { alt: '', diff: [], category: '', need: '' };
+function parseStatement(statement, products) {
+    const names = (Array.isArray(products) ? products : [products]).map((x) => x.trim()).filter((x) => x.length >= 2);
+    const out = { alt: '', diff: [], category: '', need: '', features: [] };
     const text = WS(statement);
     const sents = text.split(/(?<=[.!?])\s+(?=[A-Z])/);
     for (const s0 of sents) {
@@ -505,8 +510,9 @@ function parseStatement(statement, product) {
             continue;
         }
     }
-    const escP = product ? product.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
-    const cm = (escP ? text.match(new RegExp(`${escP}\\s+(?:is|are)\\s+(?:an?|the)\\s+`, 'i')) : null) || text.match(/\b(?:is|are)\s+(?:an?|the)\s+/i);
+    const esc1 = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const nameRe = names.length ? `(?:${names.map(esc1).join('|')})` : '';
+    const cm = (nameRe ? text.match(new RegExp(`${nameRe}\\s+(?:is|are)\\s+(?:an?|the)\\s+`, 'i')) : null) || text.match(/\b(?:is|are)\s+(?:an?|the)\s+/i);
     if (cm && cm.index !== undefined) {
         const rest = text.slice(cm.index + cm[0].length);
         let depth = 0;
@@ -525,10 +531,18 @@ function parseStatement(statement, product) {
         const c = rest.slice(0, end).trim();
         if (c.split(/\s+/).length >= 1 && c.split(/\s+/).length <= 32 && c.length >= 3 && !/\bunlike\b/i.test(c))
             out.category = c;
+        // "... that 20+ payment methods; unified API and hosted checkout; embedded 3D Secure; ...": a list of what the product includes, written after "that" and separated by semicolons
+        const th = rest.slice(end).match(/^\s(?:that|which)\s+([^]*)$/);
+        if (th) {
+            const sentenceEnd = th[1].search(/\.\s+[A-Z]|\.$/);
+            const body = sentenceEnd >= 0 ? th[1].slice(0, sentenceEnd) : th[1];
+            const items = splitSemi(body).map((x) => endStop(x)).filter((x) => x.length >= 4 && x.split(/\s+/).length <= 14);
+            if (items.length >= 3)
+                out.features = items;
+        }
     }
-    if (product) {
-        const esc = product.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const nd = text.match(new RegExp(`\\bwho\\s+(.{6,400}?),\\s+(?:the\\s+)?${esc}\\s+(?:is|are|helps?|gives?)\\b`, 'i'));
+    if (nameRe) {
+        const nd = text.match(new RegExp(`\\bwho\\s+(.{6,400}?),\\s+(?:the\\s+)?${nameRe}\\s+(?:is|are|helps?|gives?)\\b`, 'i'));
         if (nd)
             out.need = nd[1].trim().replace(/^struggle with\s+/i, '');
     }
@@ -549,7 +563,7 @@ function plainResult(b, kit) {
         let t = endStop(WS(p.text));
         // a figure the user typed with a source label is a claim and stays out of a tagline; a figure typed without one is the user's own message
         if ((hasFigure(t) && p.label) || t.length > 80)
-            t = leadClause(t, 80) || (hasFigure(t) && p.label ? '' : (0, rw_impact_ts_1.clip)(t, 70));
+            t = leadClause(t, 80) || (hasFigure(t) && p.label ? '' : t.length <= 110 ? t : (0, rw_impact_ts_1.clip)(t, 70));
         if (!t || (hasFigure(t) && p.label) || t.split(/\s+/).length < 2)
             continue;
         const c = resultClause([{ text: t, label: '' }], kit);
@@ -557,5 +571,77 @@ function plainResult(b, kit) {
             return c;
     }
     return null;
+}
+// ---- relevance: what a sector note says against what the user's own inputs describe ----------------------------------------------------
+const GENERIC_STEM = new Set(['rate', 'time', 'share', 'effort', 'cost', 'numbe', 'count', 'avera', 'total', 'quali', 'custo', 'servi', 'busin', 'compa', 'manag', 'syste', 'platf', 'solut', 'produ', 'team', 'user', 'tool', 'work', 'with', 'that', 'this', 'your', 'from', 'have', 'they', 'what', 'each', 'more', 'less', 'data', 'help', 'mean', 'every', 'under', 'while', 'basic', 'start', 'stop', 'build', 'live', 'plan', 'tied', 'run', 'need', 'make', 'take', 'only', 'also', 'into', 'over', 'across', 'their', 'there', 'about']);
+/** The stems (first five letters, plural cut) of the words of 4 letters or more of some texts, without the words that fit any business. */
+function stemSet(...texts) {
+    const out = new Set();
+    for (const w of texts.join(' ').toLowerCase().match(/[a-z][a-z-]{3,}/g) || []) {
+        const st = w.replace(/s$/, '').slice(0, 5);
+        if (!GENERIC_STEM.has(st))
+            out.add(st);
+    }
+    return out;
+}
+/** How many different stems of an item (a sector measure, objection, question or word) the user's own inputs share. */
+function shared(item, inputs) {
+    let n = 0;
+    for (const st of stemSet(item))
+        if (inputs.has(st))
+            n++;
+    return n;
+}
+/** Measures read from the user's own figures: "99.99% uptime SLA on production plans" gives "uptime SLA", "a 51% reduction in review time" gives "review time". */
+function figureMeasures(texts) {
+    const out = [];
+    const STOP = /^(?:on|in|for|of|with|and|to|by|from|at|over|after|before|across|per|using|when|while|within|than|or|plans?|off|up|as)$/i;
+    const SKIP = /^(?:faster|slower|lower|higher|fewer|more|less|better|quicker|reduction|increase|improvement|growth|drop|decrease|gain|rise|cut)$/i;
+    const THIN = /^(?:time|rate|cost|value|number|speed|users?|customers?|companies|businesses|enterprises|teams?)$/i;
+    // only a percentage or a multiplier says that the words after it are a measure ("99.99% uptime SLA"); a count of things ("14 million hours", "40+ languages") is not
+    for (const t of texts)
+        for (const m of WS(t).matchAll(/(?:\d[\d.,]*\+?\s?%|\b\d+(?:\.\d+)?[xX]\b)\s+((?:[A-Za-z-]+(?:\s+|(?=[;,.)]|$))){1,6})/g)) {
+            const words = m[1].trim().split(/\s+/);
+            let i = 0;
+            while (i < words.length && SKIP.test(words[i]))
+                i++;
+            if (i > 0 && /^(?:in|of)$/i.test(words[i] || ''))
+                i++;
+            const pick = [];
+            for (; i < words.length && pick.length < 3; i++) {
+                if (STOP.test(words[i]))
+                    break;
+                pick.push(words[i]);
+            }
+            const phrase = pick.join(' ');
+            if (phrase.length >= 4 && !(pick.length === 1 && THIN.test(phrase)) && !out.some((x) => x.toLowerCase() === phrase.toLowerCase()))
+                out.push(phrase);
+        }
+    return out;
+}
+/** The label "(page claims)" that belongs to a cut of an item: kept when the cut holds a superlative ("the most extensively licensed ...") and the item carries the label further on. */
+function keepLabel(item, cut) {
+    const lab = item.match(/\((?:[^()]*\b(?:page claims?|case stud(?:y|ies)|analyst reports?|sources?)\b[^()]*)\)/i);
+    const sup = /\b(?:most|first|only|best|largest|leading|#\d|number one|top)\b/i.test(cut);
+    return lab && sup && !cut.includes(lab[0]) && item.indexOf(lab[0]) >= cut.length ? `${cut} ${lab[0]}` : cut;
+}
+/** A short quotation of the user's words around a concern word ("patching, scaling, security and uptime handled"), or '' when no text holds it. */
+function quoteAround(texts, concern) {
+    for (const t of texts) {
+        const w = WS(t).replace(/\([^)]*\)/g, ' ').split(/\s+/);
+        const i = w.findIndex((x) => concern.test(x));
+        if (i < 0)
+            continue;
+        const from = Math.max(0, i - 2);
+        const to = Math.min(w.length, i + 4);
+        return endStop(w.slice(from, to).join(' ')).replace(/^(?:(?:with|and|the|a|an|of|to|in|on|under|by|for)\s+)+/i, '').replace(/(?:\s+(?:with|and|the|a|an|of|to|in|on|by|for|or))+$/i, '');
+    }
+    return '';
+}
+/** A product name typed as "Brand lowerwords, ..." where the lower word starts a list ("eClerx digital, data and ..."): the brand alone. */
+function brandOnly(named) {
+    const m = named.trim().match(/^(\S+)\s+([a-z]+),\s/);
+    // only a word that is built like a name (an inner capital, a digit or a dot: eClerx, Fin2go, Voxa.ai) is taken as a brand; an ordinary capitalised word that opens a description ("Modern cloud, security ...") is not
+    return m && /^[A-Za-z][\w.-]*$/.test(m[1]) && (/[a-z][A-Z]/.test(m[1]) || /\d/.test(m[1]) || /[a-z]\.[a-z]/i.test(m[1])) ? m[1] : '';
 }
 //# sourceMappingURL=rw-impact2.js.map
