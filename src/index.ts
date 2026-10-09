@@ -7,7 +7,8 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { neutraliseDeep, neutraliseText } from './echo-safe.ts';
-import { detectVertical, detectModel, explainSector, profileFor, SUBTYPES, SECTOR_MODEL, MODEL_NAME, BUSINESS_MODELS, VERTICALS, type Vertical, type VerticalId, type BusinessModel, type ReaderInput } from './verticals.ts';
+import { leadAud, noSeatWords, categoryNoun, takeLabel, topLevel, joinAnd, clip, outcomeItems, outcomeClause, leadItems, classifyProof, MEASURE_LINKS, ctaNoun, sharpenLine, type Kit, type ProofKind } from './rw-impact.ts';
+import { detectVertical, detectModel, explainSector, profileFor, SAAS_ONLY, SUBTYPES, SECTOR_MODEL, MODEL_NAME, BUSINESS_MODELS, VERTICALS, type Vertical, type VerticalId, type BusinessModel, type ReaderInput } from './verticals.ts';
 
 // =============================================================================
 // IMPACT MCP v2.0.0 - Hypothesis-Driven B2B Positioning Engine
@@ -893,6 +894,9 @@ const sameName = (a: string, b: string): boolean => {
 // TOOL DEFINITIONS
 // =============================================================================
 
+// Run 22: the helpers of this file that the rewrite helpers in rw-impact.ts need.
+const RW_KIT: Kit = { kindOf, lowerFirst, toBaseVerb };
+
 const tools = {
   // ---------------------------------------------------------------------------
   // Tool 1: Get Framework Overview
@@ -1695,49 +1699,107 @@ ${v ? `\n${sectorBlock(v, lz.fn ? ['committee', 'objections'] : ['vocabulary', '
       customer_metrics?: string;
       business_model?: string;
     }) => {
-      const P = runningName((args.product_name || '').trim()) || 'your product';
-      const categoryTyped = (args.category || '').trim() || 'solution';
-      // In a sentence the category is its leading noun phrase ("predictive cybersecurity: attack path intelligence ..." reads "predictive cybersecurity"); the full text stays in the inputs.
-      const category = catNoun(noNotes(categoryTyped).split(/\s*[:;]\s*/)[0] || categoryTyped);
-      const metrics = (args.customer_metrics || '').trim();
-      const metricItems = splitItems(metrics).map((m) => shortText(m));
+      // Run 22 rewrite: a finished value proposition built from the user's own words. Every input is used where it matters, in whole sentences; a supplied result goes to
+      // the proof tier it belongs to with its own label; nothing is invented; what is missing is named once, at the end.
+      const named = (args.product_name || '').trim();
+      const P = runningName(named.replace(/\s*\([^)]*\)/g, '')) || 'our product';
+      const catTyped = (args.category || '').trim();
+      const catSource = catTyped || 'solution';
+      // In a sentence the category is its leading noun phrase ("predictive cybersecurity: attack path intelligence ..." reads "predictive cybersecurity").
+      const catPlain = noNotes(catSource).split(/\s*[:;]\s*/)[0] || catSource;
+      const category = categoryNoun(catPlain);
       const ctx = readContext(args.business_model, { core: [args.category], later: [args.unique_capability], names: [args.product_name], context: [args.key_outcome], buyer: [args.target_customer] });
       const v = ctx.v;
       const notes = MODEL_NOTES[ctx.model || 'unknown'];
       const lz = lensOf(v, args.category, args.key_outcome, args.unique_capability, args.target_customer);
-      const signer = lz.fn ? lz.fn.buyer : v ? committeeParts(v).signer : 'the budget owner';
-      const aud = mid(noNotes(args.target_customer).length <= 90 ? noNotes(args.target_customer) : shortAudience(args.target_customer));
-      const sa = shortAudience(shortText(noNotes(args.target_customer)));
-      const outcome = shortText(args.key_outcome, FRAME_AT);
-      const capab = shortText(args.unique_capability, FRAME_AT);
-      const catPlain = noNotes(categoryTyped).split(/\s*[:;]\s*/)[0] || categoryTyped;
+      const com = v ? committeeParts(v) : null;
+      // A role read from the sector's committee sentence is used only when it reads as a role (a sentence with a colon or a full stop is not one).
+      const roleOk = (r: string | undefined): string => (r && r.length <= 70 && !/[.:]/.test(r) ? r : '');
+      const signer = (lz.fn ? lz.fn.buyer : com ? roleOk(com.signer) : '') || 'the budget owner';
+      const champion = lz.fn ? lz.fn.champion : com ? roleOk(com.champion) : '';
+      const rv0 = !lz.fn && com && com.reviewers.length ? com.reviewers[0] : null;
+      const evaluator = lz.fn ? lz.fn.tech : rv0 ? roleOk(rv0.role) : '';
+      const evaluatorChecks = rv0 && roleOk(rv0.role) && rv0.what && !/[.:]/.test(rv0.what) ? `In this sector, ${rv0.role} ${rv0.does} ${rv0.what}.` : '';
+
+      // The audience: the full clause once, a short form inside sentences. A count after a semicolon ("; more than 9,000 teams use it") is a fact for the proof tiers.
+      const target = args.target_customer.trim();
+      const audFull = noNotes(target);
+      const extraFact = (target.match(/\s*[;:]\s*((?:more than|over|about)?\s*[\d,]+\+?\s.*)$/i) || [])[1] || '';
+      const aud = mid(audFull.length <= 90 ? audFull : shortAudience(target));
+      const sa0 = shortAudience(audFull.length > LONG_AT ? audFull : shortText(audFull));
+      const sa = (/\.\.\./.test(sa0) || !audFull.toLowerCase().startsWith(sa0.toLowerCase().slice(0, 10))) && leadAud(audFull) ? mid(leadAud(audFull) as string) : sa0;
+
+      // The outcome as one grammatical clause (the first two results inside the statements, all of them in the matrix); a text that is not a plain result is quoted.
+      const oc = outcomeItems(args.key_outcome, RW_KIT);
+      const lab = oc.label ? ` ${oc.label}` : '';
+      const outLeadItems = leadItems(oc.items, 260, 2).map((x) => clip(x, 260));
+      const outLead = outcomeClause(outLeadItems, RW_KIT) ?? `achieve this: ${q(clip(clean(args.key_outcome), FRAME_AT))}`;
+      const outFirst = outcomeClause(outLeadItems.slice(0, 1), RW_KIT) ?? outLead;
+
+      // The capability: a short text stands whole; a long list gives its first items and "and more" (the evaluator part lists all of it).
+      const capText = clean(args.unique_capability);
+      const capItems = topLevel(capText);
+      const capLong = capText.length > 220 && capItems.length >= 2;
+      const capLeadList = capLong ? leadItems(capItems, 150, 4) : capItems;
+      const capLead = capLong ? `${capLeadList.join(capLeadList.some((x) => /,/.test(x)) ? '; ' : ', ')}${capLeadList.length < capItems.length ? ' and more' : ''}` : (capText.length > 220 ? clip(capText, 200) : capText);
+      const capSentence = diffSentence(P, capLead);
       const onlyWith = (d: string) => { const k = kindOf(d); const t = lowerFirst(clean(d)); if (isNamedClause(clean(d))) return `where ${clean(d)}`; return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
 
-      // Run 20 round 2: the matrix starts from the user's own outcome and shows, for each measure, what the user's inputs already say about it
-      // (a supplied result or a clause of the outcome that shares the measure's words); the before and after cells stay for the customer's numbers.
-      const evidence = [...metricItems, ...splitItems(args.key_outcome).map((x) => shortText(x, 160))];
-      const saysFor = (m: string): string => {
+      // The supplied results, placed by what each one is.
+      const given = splitItems(args.customer_metrics || '').map((text) => ({ text, ...classifyProof(text) }));
+      if (extraFact && !given.some((g) => (extraFact.match(/\d[\d,.]*/g) || []).every((n) => g.text.includes(n)))) given.push({ text: extraFact.replace(/[.!]+$/, ''), ...classifyProof(extraFact) });
+      const tier = (n: 1 | 2 | 4, kinds?: ProofKind[]) => given.filter((g) => g.tier === n && (!kinds || kinds.includes(g.kind)));
+      const results = tier(1);
+      const cite = results.length ? results[0].text : '';
+
+      // The value matrix: the measures the user's own inputs already speak to, each next to what they say; a measure with nothing behind it is not an empty row.
+      const evidence = [...given.map((g) => ({ text: g.text, label: '' })), ...oc.items.map((x) => ({ text: x, label: oc.label }))];
+      const cell = (s: string) => s.replace(/\|/g, '/').replace(/\s+/g, ' ').trim();
+      const measures = rankMeasures(lz.metrics, `${args.key_outcome} ${args.customer_metrics || ''}`, args.unique_capability);
+      const rows: string[] = [];
+      const bare: string[] = [];
+      const shownFor = new Set<string>();
+      for (const m of measures) {
         const ms = contentStems(m);
         const need = Math.min(2, ms.size);
-        const byWords = (e: string) => need > 0 && [...contentStems(e)].filter((x) => ms.has(x)).length >= need;
-        const hits = evidence.filter((e) => byWords(e) || MEASURE_CONCEPTS.some(([mr, er]) => mr.test(m) && er.test(e)));
-        return hits.length ? hits.slice(0, 2).map((h) => clean(h)).join('; ') : 'nothing in your inputs yet';
-      };
-      const matrixRows = [
-        `| Your stated outcome | ${clean(shortText(args.key_outcome, 160))} | | | Your key_outcome |`,
-        ...(lz.metrics.length ? lz.metrics.slice(0, 5).map((m) => `| ${m} | ${saysFor(m)} | | | Fill from the customer's own data |`) : ['| A measure of time | nothing in your inputs yet | | | |', '| A measure of quality | nothing in your inputs yet | | | |', '| A measure of money | nothing in your inputs yet | | | |']),
-      ];
+        const hits = evidence.filter((e) => (need > 0 && [...contentStems(e.text)].filter((x) => ms.has(x)).length >= need) || MEASURE_LINKS.some(([mr, er]) => mr.test(m) && er.test(e.text)));
+        const key = hits.map((h) => h.text).join('|');
+        if (hits.length && shownFor.has(key)) continue;
+        shownFor.add(key);
+        if (hits.length) rows.push(`| ${m} | ${cell(hits.slice(0, 2).map((h) => clean(h.text) + (h.label ? ` ${h.label}` : '')).join('; '))} | ${hits.some((h) => h.label) ? 'with the label you gave' : 'your inputs'} |`);
+        else bare.push(m);
+      }
+      const matrix = [`| Your stated outcome | ${cell(clean(args.key_outcome))}${oc.label && !/\(/.test(args.key_outcome) ? ` ${oc.label}` : ''} | your key_outcome |`, ...rows.slice(0, 6)].join('\n');
+      const matrixNote = v && bare.length ? `\nOther measures that ${lz.fn ? `a ${fnName(lz.fn)} team` : `buyers in ${v.name}`} watch, where your inputs give no figure yet: ${bare.slice(0, 5).join(', ')}. Add the ones your best customers can show before and after.` : '';
 
-      return `# Value Proposition Analysis
+      const hero = (() => {
+        let text = '';
+        for (const it of oc.items) { const sc = shortClause(clean(it), 11); if (sc && sc.split(/\s+/).length >= 3) { text = sc; break; } }
+        if (!text) text = firstWords(clean(oc.items[0] || args.key_outcome), 8);
+        const k = kindOf(text);
+        return k === 'base' || /\bfor\b/i.test(text) ? `${capFirst(text)}. Built for ${sa}.` : `${capFirst(text)} for ${sa}.`;
+      })();
+      const heroLabel = oc.label && /\d/.test(hero) ? ` ${oc.label}` : '';
+      const cta = ctaNoun(callsToAction(v, ctx.model)[0]);
 
-## Positioning Inputs
-**Product**: ${args.product_name || 'not supplied'}
-**Category**: ${args.category || 'not supplied (the lines below say "solution")'}
-**Target Customer**: ${args.target_customer}
-**Key Outcome**: ${args.key_outcome}
-**Unique Capability**: ${args.unique_capability}
-${metrics ? `**Reported Metrics** (supplied by you: use only what is real and you can show): ${metrics}` : '**Reported Metrics**: not supplied, so no result is quoted below; add customer_metrics to fill the matrix and the proof lines'}
-${ctx.line}${longNote(args.target_customer, args.key_outcome, args.unique_capability, args.customer_metrics)}
+      const tailMissing: { give: string; changes: string }[] = [];
+      if (!named) tailMissing.push({ give: 'product_name', changes: 'every statement, which now says "our product"' });
+      if (!catTyped) tailMissing.push({ give: 'category', changes: 'the "only" line and the sector read, which now rest on the other inputs' });
+      if (!(args.customer_metrics || '').trim()) tailMissing.push({ give: 'customer_metrics (one real customer result with its source)', changes: 'Tier 1 and the matrix, which quote no customer result today' });
+      if (!args.business_model && (!ctx.model || /assumed/.test(ctx.line))) tailMissing.push({ give: 'business_model', changes: 'the proof types and calls to action, which follow the usual model of the sector today' });
+      tailMissing.push({ give: "the buyer's current pain and a payback period from your best customers", changes: 'the economic buyer statement, which has no payback figure to cite' });
+      const sharpen = sharpenLine(tailMissing);
+
+      const objections = v ? `\n**Objections to prepare for** (the pattern of a good answer, from the sector notes):\n${v.objections.map((o) => `- "${o.objection}"${ctx.model === 'saas' || ctx.model === null || !SAAS_ONLY.test(o.response) ? `: ${o.response}` : ''}`).join('\n')}\n` : '';
+      const sectorPart0 = v ? `\n${sectorBlock(v, lz.fn ? [] : ['vocabulary', 'committee'], 'Sector view')}${lz.fn ? `\n- **Who usually buys:** ${lz.fn.buyer} signs; ${lz.fn.champion} champions; ${lz.fn.tech} check the fit.\n${teamBlock(lz.fn, v)}` : ''}\n${objections}` : '';
+      const sectorPart = ctx.model === 'saas' || ctx.model === null ? sectorPart0 : noSeatWords(sectorPart0);
+
+      const longAud = audFull.length > LONG_AT;
+
+      return `# Value Proposition${named ? `: ${named.length <= 60 ? named : P}` : ' Analysis'}
+
+${longAud ? `**Who this is for:** ${audFull}.` : `**Who this is for:** ${capFirst(audFull)}.`}${catTyped ? ` ${capFirst(P)} is ${aOrAn(mid(category))} ${mid(category)}.` : ''}
+${ctx.line}
 
 ---
 
@@ -1746,46 +1808,46 @@ ${ctx.line}${longNote(args.target_customer, args.key_outcome, args.unique_capabi
 The "only" claim stays inside brackets until it is true and you can prove it.
 
 ### Version 1 (Category-focused)
-> [Only if true and provable: **${P}** is the only ${mid(category)} ${onlyWith(capab)}. It gives ${aud} this result: ${q(outcome)}.]
+> [Only if true and provable: **${P}** is the only ${mid(category)} ${onlyWith(capLead)}. It helps ${aud} ${outLead}${lab}.]
 
 ### Version 2 (Outcome-focused)
-> We help **${aud}** ${inf(outcome)}. ${capFirst(diffSentence(P, capab))}. [Only if true and provable: no other ${mid(category)} can say the same.]
+> We help **${aud}** ${outLead}${lab}. ${capFirst(capSentence)}. [Only if true and provable: no other ${mid(category)} can say the same.]
 
-### Version 3 (Problem-focused)
-> [Only if true and provable: Unlike the alternatives in ${mid(catPlain)},] ${capFirst(diffSentence(P, capab))}, so ${aud} can ${inf(outcome)}.
+### Version 3 (Capability-focused)
+> [Only if true and provable: Unlike the alternatives in ${mid(catPlain)},] ${capSentence}, so ${aud} can ${outLead}${lab}.
 
 ---
 
 ## Value Quantification Matrix
 
-This tool adds no figure of its own. The first row is your outcome; the other rows are the measures ${v ? `${lz.fn ? `a ${fnName(lz.fn)} team` : `buyers in ${v.name}`} already watch` : 'to fill'}, with what your inputs say about each; the before and after cells are for your numbers${metricItems.length ? '. The results you supplied are listed under Tier 1 below, because most are results or recognition rather than a before and after measure' : ''}.
-| What to measure | What your inputs say | Before (their number) | With ${P} (their number) | Source |
-|-----------------|----------------------|-----------------------|--------------------------|--------|
-${matrixRows.join('\n')}
+This tool adds no figure of its own. The first row is your outcome; the other rows are the measures ${v ? `${lz.fn ? `a ${fnName(lz.fn)} team` : `buyers in ${v.name}`} already watch` : 'your inputs speak to'} that your inputs already answer. At each customer, measure the same thing before and after, from the customer's own data, and name the period.
+
+| What to measure | What your inputs say | Where it comes from |
+|-----------------|----------------------|---------------------|
+${matrix}
+${matrixNote}
 
 ---
 
 ## Proof Point Framework
 
 ### Tier 1: Customer Results (Strongest)
-Use these patterns to document customer success:
+${results.length ? `Results you supplied (supplied by you: use one only if it is real and you can show it):\n${list(results.map((r) => r.text))}` : `You supplied no customer result, so none is quoted in this answer. The strongest proof for ${P} is one named customer with a before and after on ${measures[0] ? measures[0] : 'the result your outcome names'}, from the customer's own data and with the period named.`}
 
-> **"<A named customer> improved ${v ? lz.metrics[0] : '<the measure>'} from <before> to <after> over <time frame>"**  (the pattern: fill it only from a customer's own figures)
-${metricItems.length ? `\n**Results you supplied** (use one only if it is real and you can show it):\n${list(metricItems)}\n` : ''}
-**Proof Collection Questions** (ask your existing customers):
-1. "What measure improved most after implementing us?"
+**Proof collection questions** (ask your existing customers):
+1. "What measure improved most after working with ${named ? P : 'us'}?"
 2. "How much time does your team save, and on what?"
-3. "What would you have to spend to achieve this otherwise?"
+3. "What would you have had to spend to achieve this otherwise?"
 4. "What was the payback period?"
 ${v ? `\n**What a good proof point looks like in ${v.name}:** ${lz.proof}\n` : ''}
 ### Tier 2: Third-Party Validation
-- ${notes.proofTiers[0]}
+${tier(2).length ? `Recognition you supplied (supplied by you: use it only as worded and sourced):\n${list(tier(2).map((r) => r.text))}\n\n` : ''}${tier(2).length ? 'Also worth collecting' : 'To collect'}: ${lc1(notes.proofTiers[0])}.
 
 ### Tier 3: Technical or Operational Proof
-- ${notes.proofTiers[1]}
+- ${notes.proofTiers[1]}${capLeadList.length && !capLeadList.some((x) => /^(?:[“"])/.test(x)) ? `\n- For the technical evaluator, line up evidence for the first claims in your capability list: ${capLeadList.join(capLeadList.some((x) => /,/.test(x)) ? '; ' : ', ')}.` : ''}
 
 ### Tier 4: Social Proof
-- ${notes.proofTiers[2]}
+${tier(4).length ? `Scale and voices you supplied (supplied by you: keep the label you gave):\n${list(tier(4).map((r) => r.text))}\n\n` : ''}${tier(4).length ? 'Also worth collecting' : 'To collect'}: ${lc1(notes.proofTiers[2])}.
 
 ---
 
@@ -1793,30 +1855,30 @@ ${v ? `\n**What a good proof point looks like in ${v.name}:** ${lz.proof}\n` : '
 
 ### For Different Audiences
 
-**For Champions (${shortText(noNotes(args.target_customer))})**:
-> "${capFirst(P)} helps you ${inf(outcome)}. ${metricItems.length ? `A result to cite (yours, only if real): ${shortText(metricItems[0], 260)}.` : 'No customer result was supplied, so none is quoted: add customer_metrics.'}"
+**For the champion (${champion || sa}):**
+> "${capFirst(P)} helps you ${outLead}${lab}."
 
-**For Economic Buyers (${signer})**:
-> "${capFirst(P)} helps ${aud} ${inf(outcome)}. ${metricItems.length ? `A result to cite (yours, only if real): ${shortText(metricItems[0], 260)}. ` : ''}${notes.cost ? `[Only if true and provable: ${notes.cost} than the alternatives.]` : ''}"
+**For the economic buyer (${signer}):**
+> "${capFirst(P)} helps ${aud} ${outLead}${lab}.${cite ? ` A result to cite: ${clean(cite)}.` : ''}"
 
-**For Technical Evaluators**:
-> "${capFirst(diffSentence(P, capab))}."
+The ${signer === 'the budget owner' ? 'budget owner' : signer} will weigh ${notes.commercial}; have an answer ready for each.
 
-*Not filled, because your inputs do not give them: the current pain point, a payback period and how it fits the systems the buyer already runs. Ask your best customers for them (see the proof questions above).*
+**For the technical evaluator${evaluator ? ` (${evaluator}${evaluator === champion ? ', who also champion it' : ''})` : ''}:**${evaluatorChecks ? `\n${evaluatorChecks}` : ''}
+> "${capFirst(P)}: ${capText}."
 
 ### For Different Channels
 
-**Website Hero** (15 words max):
-> "${heroLine(outcome, sa, catPlain && args.category ? `${catPlain}` : P)}"
+**Website Hero** (one line):
+> "${hero}"${heroLabel}
 
 **LinkedIn Post** (Hook):
-> "${capFirst(sa)}: is this on your list this year: ${q(outcome)}? ${capFirst(diffSentence(P, capab))}."
+> "${capFirst(sa)}: what would it change if you could ${outFirst}${oc.label && /\d/.test(outFirst) ? ` ${oc.label}` : ''}? Here is how: ${capFirst(capSentence)}."
 
 **Cold Email** (Value prop):
-> "We help companies like yours ${inf(outcome)}. ${metricItems.length ? `A recent result (yours, only if real): ${shortText(metricItems[0], 260)}.` : 'No customer result was supplied, so none is quoted.'}"
+> "Hello, we help ${aud} ${outLead}${lab}.${cite ? ` For example: ${clean(cite)}.` : ''} Would ${cta} be useful?"
 
 **Sales Deck** (Slide title):
-> [Only if true and provable: "The only ${mid(category)} ${onlyWith(capab)}"]
+> [Only if true and provable: "The only ${mid(category)} ${onlyWith(capLead)}"]
 
 ---
 
@@ -1828,10 +1890,9 @@ Before finalizing, validate with prospects:
 2. **Relevance**: "How important is this result to you right now?"
 3. **Differentiation**: "Have you heard anything like this from other vendors?"
 4. **Believability**: "What would you need to see to believe this?"
-${v ? `\n${sectorBlock(v, lz.fn ? ['objections'] : ['vocabulary', 'committee', 'objections'], 'Sector view')}${lz.fn ? `\n- **Who usually buys:** ${lz.fn.buyer} signs; ${lz.fn.champion} champions; ${lz.fn.tech} check the fit.\n${teamBlock(lz.fn, v)}` : ''}\n` : ''}
+${sectorPart}
+${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
 **Next Step**: Use \`impact_anchor_market\` to select your beachhead market segment
-
-${SUGGESTED}
 `;
     }
   },
