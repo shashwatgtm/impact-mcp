@@ -495,5 +495,6 @@ export function quoteAround(texts: string[], concern: RegExp): string {
 /** A product name typed as "Brand lowerwords, ..." where the lower word starts a list ("eClerx digital, data and ..."): the brand alone. */
 export function brandOnly(named: string): string {
   const m = named.trim().match(/^(\S+)\s+([a-z]+),\s/);
-  return m && /^[A-Za-z][\w.-]*$/.test(m[1]) ? m[1] : '';
+  // only a word that is built like a name (an inner capital, a digit or a dot: eClerx, Fin2go, Voxa.ai) is taken as a brand; an ordinary capitalised word that opens a description ("Modern cloud, security ...") is not
+  return m && /^[A-Za-z][\w.-]*$/.test(m[1]) && (/[a-z][A-Z]/.test(m[1]) || /\d/.test(m[1]) || /[a-z]\.[a-z]/i.test(m[1])) ? m[1] : '';
 }

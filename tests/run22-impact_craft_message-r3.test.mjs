@@ -17,7 +17,7 @@ const DATADOCK = {
   differentiation: "genuine open source on open standards: every service runs the upstream version with standard drivers, not a proprietary fork; one control plane across any cloud",
 };
 const FINTRAIL = {
-  product_name: "Fintrail digital, data and compliance services and AI products (Auditdesk, Riskboard, Docscan)",
+  product_name: "FinTrail digital, data and compliance services and AI products (Auditdesk, Riskboard, Docscan)",
   target_customer: "large enterprises and financial institutions, brands and fast-growing clients, including Fortune 500 companies, with 400+ clients (page claim)",
   customer_need: "capital markets are under constant strain from rising volumes, tighter regulations and the cost of financial risk management; fragmented data slows decisions",
   product_category: "digital, data and compliance solutions (its own words: the engine behind some of the world's most admired businesses)",
@@ -61,8 +61,8 @@ test("r3 craft: no tagline ends in a colon or a joining word, and a name followe
     assert.deepEqual(repeatedSentences(t), []);
   }
   const f = await call(TOOL, FINTRAIL);
-  assert.match(f, /# Positioning and Messaging: Fintrail\n/);
-  assert.doesNotMatch(f, /Fintrail digital\b(?!,)/, "the name is not cut to 'Fintrail digital'");
+  assert.match(f, /# Positioning and Messaging: FinTrail\n/);
+  assert.doesNotMatch(f, /FinTrail digital\b(?!,)/, "the name is not cut to FinTrail digital");
 });
 
 test("r3 craft: the alternative objection and the price objection are present", async () => {
