@@ -74,7 +74,7 @@ test("cut-offs: a benefit keeps 'and agents'; a capability list is not left mid-
 test("craft: a customer count in the inputs is used in the social-proof line, and the line does not say none was supplied", async () => {
   const t = await call("impact_craft_message", { product_name: "Exposurewatch", target_customer: "security teams at global enterprises; more than 1,000 security teams use Exposurewatch products (page claim)", key_benefit: "predict and disrupt attack paths", differentiation: "an attack graph that ranks exposures", product_category: "attack surface monitoring" });
   assert.doesNotMatch(t, /No customer count or named result was supplied/);
-  assert.match(t, /Variation D[\s\S]*more than 1,000 security teams use Exposurewatch products/);
+  assert.match(t, /Variation D[\s\S]*more than 1,000 security teams use Exposurewatch products \(page claim\)/i);   // Run 22: the line starts with a capital and keeps the source label
 });
 
 // (4) acronym casing

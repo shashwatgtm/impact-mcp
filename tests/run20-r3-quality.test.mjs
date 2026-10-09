@@ -96,7 +96,7 @@ test("translate: an in-house alternative is not asked 'what went wrong with the 
 });
 test("translate: a hero never says only the company and the audience when the benefit is a list", async () => {
   const t = await call("impact_translate_execution", { positioning_statement: "For midsize to large businesses who need control of spend, Ledgerline is the spend platform. Unlike manual filing, it offers automatic capture.", target_customer: "midsize to large businesses", key_benefit: "fast, transparent, compliant and error free travel and expense management", product_name: "Ledgerline" });
-  const hero = t.split("**Headline (5-8 words)**:")[1].split("\n")[1];
+  const hero = t.split("**Headline**")[1].split("\n")[1];   // Run 22: the heading no longer carries a word count
   assert.doesNotMatch(hero, /^> "Ledgerline for /);
   assert.match(hero, /transparent|error free|expense management/);
 });
