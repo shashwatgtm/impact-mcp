@@ -134,6 +134,7 @@ for (const [tool, build] of Object.entries(BUILD)) {
 }
 
 // ---- Problem 3: every supplied input is used, or named as not used and why ---------------------------------------------------
+const REWRITTEN = new Set(["impact_craft_message", "impact_translate_execution"]);
 const pieces = (v) => (Array.isArray(v) ? v : [v]).flatMap((x) => String(x).split(/;|\n/)).map((x) => x.trim().replace(/[.!]+$/, "")).filter(Boolean);
 for (const [tool, build] of Object.entries(BUILD)) {
   if (tool === "impact_get_framework") continue;
@@ -144,7 +145,13 @@ for (const [tool, build] of Object.entries(BUILD)) {
       const low = r.text.toLowerCase().replace(/\s+/g, " ");
       for (const [k, v] of Object.entries(args)) {
         for (const p of pieces(v)) {
-          assert.ok(low.includes(p.toLowerCase().replace(/\s+/g, " ")) || /not used/i.test(r.text), `${tool}: input ${k} "${p}" is not in the answer`);
+          if (REWRITTEN.has(tool)) {
+            // Run 22: the rewritten tools use each input inside their sentences instead of printing it back, so the check is on its words: at least 70% of the words of 4 letters or more
+            // of every piece appear in the answer (a piece of 3 such words or fewer must appear in full).
+            const words = [...new Set(p.toLowerCase().match(/[a-z0-9][a-z0-9'-]{3,}/g) || [])];
+            const hit = words.filter((w) => low.includes(w)).length;
+            assert.ok(words.length === 0 || hit / words.length >= (words.length <= 3 ? 1 : 0.7) || /not used/i.test(r.text), `${tool}: input ${k} "${p}" is used for ${hit} of ${words.length} words`);
+          } else assert.ok(low.includes(p.toLowerCase().replace(/\s+/g, " ")) || /not used/i.test(r.text), `${tool}: input ${k} "${p}" is not in the answer`);
         }
       }
     });
@@ -237,7 +244,7 @@ test("problem 2: craft_message needs and differentiation of every kind fit their
   assert.match(third, /Cloudmoat ranks every misconfiguration by real exposure/);
   assert.doesNotMatch(third, /offers? ranks every/i);
   const other = (await call("impact_craft_message", { ...base, customer_need: "bleed margin on empty miles", differentiation: "the one view that only ever shows what is exposed" })).text;
-  assert.match(other, /face this problem \(bleed margin on empty miles\)/);
+  assert.match(other, /They bleed margin on empty miles\./);
   assert.match(other, /Cloudmoat offers the one view that only ever shows what is exposed/);
   assert.doesNotMatch(other, /"[^"\n]*"[^"\n]*"[^"\n]*"[^"\n]*"\?/); // no nested quotes in a question
 });
@@ -254,13 +261,15 @@ test("problem 2: pinpoint_value hero line and statements are whole sentences", a
 test("problem 2: translate_execution never pastes a benefit into a tagline or a cold email", async () => {
   const kinds = [["cut cost per delivery by 18% in 90 days", "cut cost per delivery by 18% in 90 days"], ["Fewer critical cloud exposures", "get fewer critical cloud exposures"],
     ["Resolve 45% of tickets without a human", "resolve 45% of tickets without a human"], ["reliable connectivity across all sites with one partner", "get reliable connectivity across all sites with one partner"],
-    ["Month-end close cut from 12 days to 7", "reach this result (Month-end close cut from 12 days to 7)"]];
+    ["Month-end close cut from 12 days to 7", null]];
   for (const [b, phrase] of kinds) {
     const r = (await call("impact_translate_execution", { positioning_statement: "For CIOs at companies with many branches, Branchwire is the managed SD-WAN that runs fallback links for every branch. Unlike Competitor A, it offers one partner for links and repair.",
       target_customer: "CIOs and IT heads at large enterprises with many branches", key_benefit: b, product_name: "Branchwire" })).text;
     assert.ok(r.toLowerCase().includes(b.toLowerCase()), `the benefit "${b}" is in the answer`);
-    const tag = r.split("\n").find((l) => /^> "Helping /.test(l)) || "";
-    assert.ok(tag.includes(`Helping CIOs and IT heads at large enterprises with many branches ${phrase}`), `LinkedIn tagline: ${tag}`);
+    const tag = r.split("\n").find((l) => /^> "(?:Helping|Branchwire:) /.test(l)) || "";
+    // Run 22: a benefit that is not a plain result ("Month-end close cut from 12 days to 7") is not forced into "Helping ... reach this result (...)"; the tagline names the product and uses the phrase as typed
+    if (phrase) assert.ok(tag.includes(`Helping CIOs and IT heads at large enterprises with many branches ${phrase}`), `LinkedIn tagline: ${tag}`);
+    else assert.ok(tag.includes(`Branchwire: ${b}`) && !/reach this result/.test(r), `LinkedIn tagline: ${tag}`);
     assert.doesNotMatch(r, /\b(get|gets) (cut|resolve|grow|lift|reduce|close|fix)\b/i, b);
     assert.doesNotMatch(r, /without for /i);
   }
@@ -433,8 +442,9 @@ test("B15-L5f: translate_execution has one channel order (no matrix that disagre
 });
 test("B15-L5g: craft_message labels the alternative it was not given", async () => {
   const r = (await call("impact_craft_message", { target_customer: "CISOs at mid-size fintech companies", key_benefit: "fix critical exposures first", differentiation: "exposure-based ranking across three clouds" })).text;
-  assert.doesNotMatch(r, /Primary Alternative\*\*: traditional alternatives/);
-  assert.match(r, /Primary Alternative\*\*: not supplied/);
+  assert.doesNotMatch(r, /traditional alternatives/);
+  // Run 22: the missing alternative is named once, at the end, with what it would change (no inputs list that says "not supplied")
+  assert.match(r, /To sharpen this, give:[^\n]*competitor \(it would change the Unlike sentence and the first objection\)/);
 });
 
 // ---- Problem 7: no invented promise anywhere --------------------------------------------------------------------------------------
@@ -490,7 +500,8 @@ test("B15-L1: a 3,000 character input appears once in full, not in every sentenc
   const once = async (tool, args, markers) => {
     const r = (await call(tool, args));
     assert.equal(r.isError, false, tool);
-    for (const m of markers) assert.equal(r.text.split(m).length - 1, 1, `${tool}: ${m} appears once`);
+    // Run 22: the two rewritten tools use a long input in a short form instead of printing it back, so for them the check is 'at most once'; the other tools still print it exactly once.
+    for (const m of markers) { const n = r.text.split(m).length - 1; if (REWRITTEN.has(tool)) assert.ok(n <= 1, `${tool}: ${m} appears at most once`); else assert.equal(n, 1, `${tool}: ${m} appears once`); }
     assert.ok(r.text.length < 40000, `${tool}: answer length ${r.text.length}`);
   };
   await once("impact_craft_message", { product_name: "Lanehop", target_customer: long("ZZTARGETZZ"), key_benefit: long("ZZBENEFITZZ"), differentiation: long("ZZDIFFZZ"), customer_need: long("ZZNEEDZZ") }, ["ZZTARGETZZ", "ZZBENEFITZZ", "ZZDIFFZZ", "ZZNEEDZZ"]);
@@ -499,5 +510,6 @@ test("B15-L1: a 3,000 character input appears once in full, not in every sentenc
   await once("impact_full_audit", { company_name: "Lanehop", product_description: long("ZZPRODZZ"), target_customer: long("ZZTARGETZZ"), problem_solved: long("ZZPROBZZ") }, ["ZZPRODZZ", "ZZTARGETZZ", "ZZPROBZZ"]);
   await once("impact_identify_champions", { product_description: long("ZZPRODZZ"), problem_solved: long("ZZPROBZZ") }, ["ZZPRODZZ", "ZZPROBZZ"]);
   const m = (await call("impact_craft_message", { target_customer: long("ZZT"), key_benefit: "fewer late deliveries", differentiation: "live re-routing" })).text;
-  assert.match(m, /Long inputs are shortened where they repeat/);
+  // Run 22: the craft answer no longer prints the inputs first, so it has no note about long inputs; the long target is used in a short form and appears at most once
+  assert.ok(m.split("ZZT").length - 1 <= 1 && m.length < 20000, "a long target is not pasted");
 });

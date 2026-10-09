@@ -38,7 +38,9 @@ test("audience: short target customers are kept whole, as before", async () => {
   const r = await call("impact_craft_message", { ...MSG, target_customer: "fleet operations directors" });
   assert.match(r.text, /Built for fleet operations directors"/);
   // Run 20 round 1: the social-proof line no longer carries a bracket placeholder; the audience is still kept whole.
-  assert.match(r.text, /<your count> fleet operations directors already get fewer late deliveries with Lanehop/);
+  // Run 22: no placeholder at all; the proof-led variation says honestly that no count or result was typed.
+  assert.doesNotMatch(r.text, /<your count>/);
+  assert.match(r.text, /No customer count, result or recognition was typed/);
 });
 
 test("anchor market: an empty segment list is treated like no list, with the example label", async () => {

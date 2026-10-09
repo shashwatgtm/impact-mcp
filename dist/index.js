@@ -26,6 +26,7 @@ const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
 const echo_safe_ts_1 = require("./echo-safe.js");
 const rw_impact_ts_1 = require("./rw-impact.js");
+const rw_impact2_ts_1 = require("./rw-impact2.js");
 const verticals_ts_1 = require("./verticals.js");
 // =============================================================================
 // IMPACT MCP v2.0.0 - Hypothesis-Driven B2B Positioning Engine
@@ -1017,6 +1018,7 @@ const sameName = (a, b) => {
 // =============================================================================
 // Run 22: the helpers of this file that the rewrite helpers in rw-impact.ts need.
 const RW_KIT = { kindOf, lowerFirst, toBaseVerb };
+const RW_KIT2 = { ...RW_KIT, capFirst, mid: (t) => (/^["“'‘]/.test(t.trim()) ? t : mid(t)), noNotes: (t) => noNotes(t), shortAud: (t) => shortAudience(shortText(noNotes(t))) };
 const tools = {
     // ---------------------------------------------------------------------------
     // Tool 1: Get Framework Overview
@@ -2412,166 +2414,295 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             required: ['target_customer', 'key_benefit', 'differentiation']
         },
         execute: (args) => {
-            const P = runningName((args.product_name || '').trim()) || 'your product';
-            const category = catNoun((args.product_category || '').trim() || 'solution');
-            const hasComp = !!(args.competitor && args.competitor.trim());
-            const alt = hasComp ? shortText(args.competitor, FRAME_AT) : 'the alternatives your buyers use today';
-            const altShort = hasComp ? labelOf(alt) : alt;
-            const need = shortText(args.customer_need || '', FRAME_AT);
-            const benefit = shortText(args.key_benefit, FRAME_AT);
-            const diff = shortText(args.differentiation, FRAME_AT);
-            const aud = mid(shortAudience(args.target_customer));
+            // Run 22 rewrite: a finished positioning and message draft built from the user's own words. Every input is used where it matters, in whole sentences; a result with a
+            // figure keeps its source label; nothing is invented; what is missing is named once, at the end. The helpers are in rw-impact2.ts.
+            const kit = RW_KIT2;
+            const fresh = (0, rw_impact2_ts_1.makeFresh)();
+            const named = (args.product_name || '').trim();
+            const P = (0, rw_impact_ts_1.plainName)(named, runningName(named.replace(/\s*\([^)]*\)/g, ''))) || 'the product';
+            const PC = capFirst(P);
             const ctx = readContext(args.business_model, { core: [args.product_category], later: [args.differentiation], names: [args.product_name], context: [args.key_benefit, args.customer_need], buyer: [args.target_customer] });
             const v = ctx.v;
             const lz = lensOf(v, args.product_category, args.customer_need, args.key_benefit, args.target_customer);
+            const proofSector = ctx.model && ctx.model !== 'saas' ? (0, rw_impact_ts_1.noSeatWords)(lz.proof) : lz.proof;
             const notes = MODEL_NOTES[ctx.model || 'unknown'];
-            const thatLine = (() => { const k = kindOf(benefit); return k === 'base' ? `helps them ${lowerFirst(clean(benefit))}` : k === 'noun' ? `delivers ${lowerFirst(clean(benefit))}` : `delivers this result (${clean(benefit)})`; })();
-            const needIf = need ? needClause(need) : '';
-            // Repeated mentions of a long, clause-like benefit use its leading phrase; the full wording appears once, in the statement.
-            const benefitR = kindOf(benefit) === 'other' && benefit.length > 70 ? leadPhrase(benefit) : benefit;
-            const diffG = gateClaim(args.differentiation, diffSentence(P, diff));
-            const weG = gateClaim(args.differentiation, weClause(diff));
-            // What the inputs already give as proof: a count, a result with a figure, and a recognition.
-            const resultItems = splitItems(args.key_benefit).slice(1).filter((x) => /\d+\s?%|\d+x\b|\$\s?\d/.test(x)).map((x) => clean(shortText(x, 200)));
-            const recognition = ((args.differentiation + ' ; ' + args.key_benefit).match(/[^,;]*\b(?:gartner|forrester|idc|magic quadrant|g2 leader)\b[^;]*/i) || [''])[0].trim();
-            // A count of customers in the inputs ("more than 1,000 teams use X", "used by 500,000 companies") is the social proof the user already gave.
-            const countRe = /((?:more than|over|about|around|used by|trusted by)\s+)?(?<!Fortune\s)(?<![\d,.])[$]?\d[\d,.]*\+?\s*(?:[kmb]\b|million|billion)?\+?\s*(?:[\w-]+\s+){0,3}(?:teams|companies|customers|businesses|brands|enterprises|users|developers|clients|merchants)\b(?:\s+(?:use|trust|rely on|run on|choose|including)\s+[\w ,%'-]{1,60})?/i;
-            const countClaim = ((`${args.target_customer} ; ${args.key_benefit} ; ${args.differentiation}`).replace(/\([^)]*\)/g, '').match(countRe) || [''])[0].trim().replace(/[,;\s]+$/, '');
-            const onlyWith = (d) => { const k = kindOf(d); const t = lowerFirst(clean(d)); if (isNamedClause(clean(d)))
-                return `where ${clean(d)}`; return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
-            const diffShort = shortClause(diff, 5) || shortClause(diff, 8);
-            const differentiatorTagline = diffShort ? `[Only if true and provable: "The only ${mid(category)} ${onlyWith(diffShort)}"]` : `[Only if true and provable: "${capFirst(leadPhrase(diff))}"]`;
-            const pillars = v
-                ? [`| **Your difference** | ${q(diff)} | ${lz.proof} |`, `| **Your outcome** | ${q(benefit)} | Measure it with: ${lz.metrics.slice(0, 3).join(', ')} |`, `| **The usual objection** | "${v.objections[0].objection}": ${v.objections[0].response} | A reference or pilot result that answers it |`]
-                : [`| **Your difference** | ${q(diff)} | [a result you can show] |`, `| **Your outcome** | ${q(benefit)} | [a customer figure, only if real] |`, '| **Why it is safe to buy** | [the risk the buyer worries about, and how you remove it] | [a reference or pilot result] |'];
-            const sectorObjections = v ? v.objections.map((o) => `| "${o.objection}" | ${o.response} |`).join('\n') : '';
-            return `# Positioning & Messaging Framework
-
-## Positioning Inputs
-- **Product**: ${args.product_name || 'not supplied'}
-- **Target Customer**: ${args.target_customer}
-- **Need/Opportunity**: ${args.customer_need || 'not supplied (the statement shows a gap for it)'}
-- **Category**: ${args.product_category || 'not supplied (the lines below say "solution")'}
-- **Key Benefit**: ${args.key_benefit}
-- **Primary Alternative**: ${hasComp ? args.competitor : 'not supplied (the lines below say "the alternatives your buyers use today")'}
-- **Differentiation**: ${args.differentiation}
-${ctx.line}${longNote(args.target_customer, args.customer_need, args.key_benefit, args.competitor, args.differentiation)}
-
----
-
-## Positioning Statement
+            const com = v ? committeeParts(v) : null;
+            const roleOk = (r) => (r && r.length <= 70 && !/[.:]/.test(r) ? r : '');
+            const champion = (lz.fn ? lz.fn.champion : com ? roleOk(com.champion) : '') || 'the person who owns the problem';
+            const signer = (lz.fn ? lz.fn.buyer : com ? roleOk(com.signer) : '') || 'the budget owner';
+            const rv0 = !lz.fn && com && com.reviewers.length ? com.reviewers[0] : null;
+            const evaluator = (lz.fn ? lz.fn.tech : rv0 ? roleOk(rv0.role) : '') || 'the technical evaluator';
+            // The audience, with the notes typed inside the target text.
+            const A = (0, rw_impact2_ts_1.parseAudience)(args.target_customer, kit);
+            const aud = (0, rw_impact2_ts_1.audienceShort)(A.aud, kit);
+            const audGlossed = A.gloss ? `${aud} (${A.gloss})` : aud;
+            // The category: the leading noun phrase; a text after a colon says what the product covers; a note "(its own words: ...)" is the user's own description.
+            const catTyped = (args.product_category || '').trim();
+            const catNoteM = catTyped.match(/\s*\(((?:in )?its own words|the page calls[^)]*?)[:,]?\s*([^)]*)\)\s*$/i);
+            const catBody = (catNoteM ? catTyped.slice(0, catNoteM.index) : catTyped).trim();
+            const catHeadSrc = catBody.split(/\s*:\s+/)[0] || catBody;
+            const catCovers = catBody.split(/\s*:\s+/).slice(1).join(': ');
+            // A phrase with a head noun before a participle ("Frontier AI company building voice AI ...") is a noun phrase, not a field of work.
+            const catCut = catHeadSrc.split(/\s(?:building|offering|providing|delivering|developing|creating|making|selling|running|powering|helping|that|which)\s/)[0];
+            const category = catHeadSrc ? (catCut !== catHeadSrc && !/^provider of/i.test((0, rw_impact_ts_1.categoryNoun)(catCut)) ? catHeadSrc : (0, rw_impact_ts_1.categoryNoun)(catHeadSrc)) : '';
+            const artOf = (c) => (/^provider of/i.test(c) ? `a ${c}` : /^["“'‘]/.test(c) ? `a ${c}` : `${aOrAn(c)} ${mid(c)}`);
+            const catArt = category ? artOf(category) : '';
+            const catPlain = category ? category.replace(/\s*\([^)]*\)\s*$/, '') : '';
+            // The alternative.
+            const hasAlt = !!(args.competitor && args.competitor.trim());
+            const alt = hasAlt ? (0, rw_impact2_ts_1.parseAlternative)(args.competitor, kit) : null;
+            // The benefit: a headline, results, and figures the page claims.
+            const cap4 = (t) => (t.length > 420 ? (0, rw_impact_ts_1.clip)(t, 380) : t);
+            const B = (0, rw_impact2_ts_1.parseBenefit)(args.key_benefit, kit);
+            B.headline = cap4(B.headline);
+            B.parts = B.parts.map((p) => ({ ...p, text: cap4(p.text) }));
+            B.claims = B.claims.map((p) => ({ ...p, text: cap4(p.text) }));
+            const lead = B.parts.length ? (0, rw_impact2_ts_1.firstParts)(B.parts, 230, 3) : [];
+            const headShape = B.headline ? (0, rw_impact2_ts_1.shapeOf)(B.headline, kit) : 'np';
+            const headVerb = !!B.headline && headShape === 'verb';
+            const bareHead = B.headline ? (0, rw_impact2_ts_1.baseForm)(B.headline, kit) : '';
+            const clauseAll = B.parts.length ? (0, rw_impact2_ts_1.resultClause)(B.parts, kit) : null;
+            const clauseLead = lead.length ? (0, rw_impact2_ts_1.resultClause)(lead, kit) : null;
+            const clauseOne = lead.length ? (0, rw_impact2_ts_1.resultClause)(lead.slice(0, 1), kit) : null;
+            const oneBare = clean((0, rw_impact2_ts_1.partsInline)(lead.slice(0, 1))[0] || '');
+            const leadOf = (t, n = 100) => (0, rw_impact2_ts_1.leadClause)(t, n) || (t.length > n ? (0, rw_impact_ts_1.clip)(t, n - 10) : t);
+            const clauseShort = lead.length ? (0, rw_impact2_ts_1.resultClause)([{ text: leadOf(lead[0].text, 100), label: lead[0].label }], kit) : null;
+            // What the product does, as a clause that follows "that" and as a sentence of its own.
+            const npLead = !B.headline && B.parts.length && ['np', 'noun'].includes((0, rw_impact2_ts_1.shapeOf)(B.parts[0].text, kit)) && !clauseLead ? (0, rw_impact2_ts_1.partsInline)(B.parts).map((x) => clean(x)).join(', ') : '';
+            const resultThat = headVerb ? `helps them ${bareHead}` : B.headline && headShape !== 'clause' ? `delivers ${kit.lowerFirst(clean(B.headline))}` : !B.headline && clauseLead ? `helps them ${clauseLead}` : npLead ? `delivers ${kit.lowerFirst(npLead)}` : '';
+            const resultOwn = (() => (headShape === 'clause' && B.headline ? (0, rw_impact2_ts_1.sentence)(B.headline, kit) : !resultThat ? `What ${P} delivers, in your words: ${clean(oneBare)}.` : ''))();
+            const detail = (() => {
+                if (!B.parts.length || !B.headline)
+                    return '';
+                if (headVerb && clauseAll)
+                    return `In practice, ${aud} can ${clauseAll}.`;
+                return `In practice: ${(0, rw_impact2_ts_1.partsInline)(B.parts).map((x) => clean(x)).join('; ')}.`;
+            })();
+            const oneSentence = headVerb ? `${PC} helps ${aud} ${bareHead}.` : B.headline && headShape !== 'clause' ? `${PC} delivers ${kit.lowerFirst(clean(B.headline))}.` : clauseShort ? `${PC} helps ${aud} ${clauseShort}.` : `${PC} is built for ${aud}: ${leadOf(clean(B.headline || oneBare), 90)}.`;
+            const youCan = headVerb ? bareHead : clauseShort || '';
+            // The difference: items at the semicolons; a recognition goes to the proof.
+            const D = (0, rw_impact2_ts_1.parseDifference)(args.differentiation);
+            const diffItems = (D.items.length ? D.items : [args.differentiation.trim()]).map(cap4);
+            const diffSents = diffItems.map((d) => gateClaim(d, (0, rw_impact2_ts_1.differenceSentence)(PC, d, kit, diffSentence)));
+            const plain = (s) => s.replace(/^\[Only if true and provable: /, '').replace(/\]$/, '');
+            const diffMain = diffSents[0];
+            const startsWithP = (s) => plain(s).startsWith(PC);
+            // Proof the user already gave: counts about customers, recognition, figures with their labels.
+            const counts = A.facts;
+            const recog = [...D.recognition, ...(0, rw_impact2_ts_1.parseDifference)(args.key_benefit).recognition.filter((r) => !D.recognition.some((x) => x.text === r.text))];
+            const resultFigs = [...B.parts.filter((p) => /\d/.test(p.text)), ...B.claims];
+            const haveProof = counts.length + recog.length + resultFigs.length > 0;
+            const m0 = lz.metrics[0] || '';
+            const m1 = lz.metrics[1] || '';
+            const objection0 = v ? v.objections[0] : null;
+            const needPcs = args.customer_need ? (0, rw_impact2_ts_1.needPieces)(args.customer_need) : [];
+            const needFirst = needPcs.length ? (0, rw_impact_ts_1.clip)(needPcs[0], 420) : '';
+            const needMore = (() => {
+                const rest = needPcs.slice(1);
+                const tail = needPcs.length && needPcs[0].length > needFirst.length ? needPcs[0].slice(needFirst.length).replace(/^[\s,;:]+/, '') : '';
+                return [...(tail ? [tail] : []), ...rest];
+            })();
+            const needShape = needFirst ? (0, rw_impact2_ts_1.shapeOf)(needFirst, kit) : 'np';
+            const needLc = needFirst ? kit.lowerFirst(clean(needFirst)) : '';
+            const needBare = needShape === 'verb' ? (0, rw_impact2_ts_1.baseForm)(needFirst, kit) : '';
+            const altBack = alt ? (alt.kind === 'activity' ? alt.label : alt.kind === 'name' ? `relying on ${alt.label}` : `living with ${alt.label}`) : '';
+            const altGap = (() => {
+                if (!alt || !alt.tail)
+                    return '';
+                const t = alt.tail.replace(/^[,;\s]+/, '');
+                const m = t.match(/^(that|which|who|where|whose)\s+(.*)$/i);
+                if (m)
+                    return `it ${clean(m[2])}`;
+                if (/^relying\b/i.test(t))
+                    return `it relies${clean(t).slice('relying'.length)}`;
+                if (/^relies\b/i.test(t))
+                    return `it ${clean(t)}`;
+                if (/^because\b/i.test(t))
+                    return `it falls short ${clean(t)}`;
+                if (/^with\b/i.test(t))
+                    return `it comes ${clean(t)}`;
+                return clean(t);
+            })();
+            const out = [];
+            out.push(`# Positioning and Messaging${named ? `: ${P}` : ''}`);
+            out.push(ctx.line);
+            out.push('---');
+            // ---- the statement
+            const firstSentence = (() => {
+                if (catArt && resultThat && catArt.length > 70)
+                    return `For ${audGlossed}, ${P} is ${catArt}. It ${resultThat}.`;
+                if (catArt)
+                    return `For ${audGlossed}, ${P} is ${catArt}${resultThat ? ` that ${resultThat}` : ''}.`;
+                return resultThat ? `For ${audGlossed}, ${P} ${resultThat.replace(/^helps them/, `helps ${aud}`)}.` : `${PC} is built for ${audGlossed}.`;
+            })();
+            const stmt = [firstSentence];
+            if (catCovers)
+                stmt.push(`It covers ${clean(catCovers)}.`);
+            if (needFirst)
+                stmt.push((0, rw_impact2_ts_1.needSentence)(needFirst, kit));
+            if (resultOwn)
+                stmt.push(resultOwn);
+            if (detail)
+                stmt.push(detail);
+            if (alt && startsWithP(diffMain))
+                stmt.push(`Unlike ${alt.label}, ${plain(diffMain)}`);
+            else {
+                if (alt)
+                    stmt.push(`The alternative buyers weigh today is ${alt.label}.`);
+                stmt.push(diffMain);
+            }
+            for (const s of stmt)
+                fresh(s);
+            const audFullShown = A.aud && (0, rw_impact2_ts_1.audienceShort)(A.aud, kit) !== kit.mid(A.aud.trim()) && A.aud.length < 500;
+            out.push(`## Positioning Statement
 
 ### Complete Positioning Statement
-
-> **For** ${aud}
-> **Who** ${need ? needIf : '[the need they have: add customer_need]'}
-> **${P}** **is ${aOrAn(category)}** ${mid(category)}
-> **That** ${thatLine}
-> **Unlike** ${alt}
-> **We** ${weG}
-
-### One-Paragraph Version
-> ${capFirst(P)} is ${category.startsWith('provider of') ? 'a' : 'the'} ${mid(category)} for ${aud}${need ? ` who ${needIf}` : ''}. Unlike ${alt}, ${diffG}. For ${aud} that means they can ${inf(benefitR)}.
+> ${stmt.join(' ')}
 
 ### One-Sentence Version
-> ${capFirst(P)} helps ${aud} ${inf(benefitR)}.
+> ${fresh(oneSentence)}${A.exclusion || audFullShown ? '\n' : ''}${A.exclusion ? `\n**Who this is not for:** ${capFirst(clean(A.exclusion))}, so these messages speak to ${aud} only.` : ''}${audFullShown ? `\n**The audience in full:** ${clean(A.aud)}.` : ''}${needMore.length ? `\n\n**More of the buyer's problem, in your words:**\n${needMore.map((p) => `- ${(0, rw_impact2_ts_1.sentence)((0, rw_impact_ts_1.clip)(p, 300), kit)}`).join('\n')}` : ''}
 
----
+---`);
+            // ---- message hierarchy
+            const outShort = (0, rw_impact2_ts_1.shortPhrase)(B, 9, kit, 2);
+            const diffShortSrc = (0, rw_impact_ts_1.takeLabel)(diffItems[0]).body;
+            const diffShort = (() => { const sc = shortClause(diffShortSrc, 6); return sc && !hasFiniteVerb(sc) && !(sc.length < diffShortSrc.length && /(?:ed|ing)$/i.test(sc.split(/\s+/).pop() || '')) ? sc : null; })();
+            const tagAud0 = shortAudience(shortText(noNotes(args.target_customer)));
+            const tagAud = /\.\.\.|\d$|^(?:the|a|an)\s+\S+\s+\S+$/i.test(tagAud0) || !tagAud0 ? aud : tagAud0;
+            const tags = [];
+            if (outShort)
+                tags.push(`| **Outcome** | "${capFirst(outShort)}" | Clarity |`);
+            if (diffShort && !SUPERLATIVE.test(diffItems[0]))
+                tags.push(`| **Differentiator** | "${capFirst(diffShort)}" | Uniqueness |`);
+            else if (diffShort)
+                tags.push(`| **Differentiator** | [Only if true and provable: "${capFirst(diffShort)}"] | Uniqueness |`);
+            if (tagAud.split(/\s+/).length <= 7)
+                tags.push(`| **Audience** | "Built for ${tagAud}" | Targeting |`);
+            if (needPcs.length && needShape === 'verb' && needLc.split(/\s+/).length <= 10)
+                tags.push(`| **Problem** | "Do you ${needBare}?" | Attention |`);
+            // The difference as a short clause, for the places where the statement already holds the whole sentence.
+            const diffLeadSrc = (0, rw_impact2_ts_1.leadClause)(diffShortSrc) || (diffShortSrc.length > 110 ? (0, rw_impact_ts_1.clip)(diffShortSrc, 90) : null);
+            const diffLead = diffLeadSrc ? gateClaim(diffItems[0], (0, rw_impact2_ts_1.differenceSentence)(PC, diffLeadSrc, kit, diffSentence)) : '';
+            const diffRest = (() => {
+                if (!diffLeadSrc || diffLeadSrc.length >= diffShortSrc.length)
+                    return '';
+                const m = diffShortSrc.slice(diffLeadSrc.length).trim().match(/^,?\s*(?:that|which)\s+(.{20,})$/i);
+                const np = diffLeadSrc.replace(/^(?:an?|the|one)\s+/i, '');
+                return m && (0, rw_impact2_ts_1.shapeOf)(diffLeadSrc, kit) !== 'clause' && (0, rw_impact2_ts_1.shapeOf)(diffLeadSrc, kit) !== 'verb' ? (0, rw_impact2_ts_1.sentence)(`The ${kit.lowerFirst(np)} ${m[1]}`, kit) : '';
+            })();
+            const optA = (() => {
+                if (!needPcs.length || !clauseLead || !(startsWithP(diffMain) || startsWithP(diffLead)) || /^\[/.test(diffMain))
+                    return null;
+                const needIf = needShape === 'verb' ? `you ${needBare}` : needShape === 'gerund' || needShape === 'noun' ? `you struggle with ${needLc}` : '';
+                if (!needIf || needLc.split(/\s+/).length > 22)
+                    return null;
+                const pred = plain(diffLead || diffMain).replace(/\.$/, '');
+                return fresh(`If ${needIf}, ${pred}, so you can ${clauseLead}.`);
+            })();
+            const optBTail = diffLead || (startsWithP(diffMain) ? diffMain : '');
+            const optB = `${capFirst(outShort || (0, rw_impact_ts_1.clip)(clean(B.headline || oneBare), 90))}. ${optBTail ? fresh(optBTail, `Under the hood: ${plain(optBTail)}`) : `Built for ${aud}.`}`.trim();
+            const optM = startsWithP(diffLead || diffMain) && youCan && !/^\[/.test(diffMain) ? fresh(`${plain(diffLead || diffMain).replace(/\.$/, '')}, so ${aud} can ${youCan}.`) : '';
+            out.push(`## Message Hierarchy
 
-## Message Hierarchy
-
-### Level 1: Tagline (3-7 words)
-Choose the style that fits your brand:
-
+### Level 1: Tagline
 | Style | Tagline | Best For |
 |-------|---------|----------|
-| **Outcome** | ${taglineOf(benefit)} | Clarity |
-| **Differentiator** | ${differentiatorTagline} | Uniqueness |
-| **Audience** | "Built for ${shortAudience(shortText(noNotes(args.target_customer)))}" | Targeting |
-${need && shortClause(need, 9) && !hasFiniteVerb(shortClause(need, 9)) ? `| **Problem** | "Do you ${needClause(shortClause(need, 9))}?" | Attention |\n` : ''}
-### Level 2: Value Proposition (1-2 sentences)
-**Option A: problem to solution**
-> "${need ? `If you ${needIf}, ${diffG}` : capFirst(diffG)}, so you can ${inf(benefitR)}."
+${tags.length ? tags.join('\n') : `| **Audience** | "Built for ${(0, rw_impact_ts_1.clip)(aud, 40)}" | Targeting |`}
 
-**Option B: outcome first**
-> "${P}: ${capFirst(clean(benefitR))}${hasComp ? ` [Only if true and provable: without the complexity of ${altShort}]` : ''}. ${capFirst(diffG)}."
+### Level 2: Value Proposition
+${optA ? `**Problem to solution**\n> ${optA}\n\n` : ''}**Outcome first**
+> ${optB}
+${optM ? `\n**Mechanism first**\n> ${optM}\n` : ''}
+### Level 3: Three Supporting Pillars
 
-**Option C: unique mechanism**
-> "[Only if true and provable: The only ${mid(category)} ${onlyWith(diff)}.] That is how ${aud} can ${inf(benefitR)}."
+**Pillar 1: the result.** ${B.headline ? `${capFirst(clean(B.headline))}.${B.parts.length ? ` What sits behind it: ${(0, rw_impact2_ts_1.partsInline)(B.parts).map((x) => clean(x)).join('; ')}.` : ''}` : B.parts.length === 1 ? `What buyers get: ${kit.lowerFirst(clean((0, rw_impact2_ts_1.partText)(B.parts[0]).length > 150 ? `${leadOf(B.parts[0].text, 110)}${B.parts[0].label ? ` ${B.parts[0].label}` : ''}` : (0, rw_impact2_ts_1.partText)(B.parts[0])))}.` : `What buyers get:\n${B.parts.map((p) => `  - ${capFirst(clean((0, rw_impact2_ts_1.partText)(p).length > 150 ? `${leadOf(p.text, 110)}${p.label ? ` ${p.label}` : ''}` : (0, rw_impact2_ts_1.partText)(p)))}`).join('\n')}`}
+- Proof you have: ${B.claims.length ? (0, rw_impact2_ts_1.partsInline)(B.claims).join('; ') + '.' : B.parts.some((p) => /\d/.test(p.text)) ? 'the figures in the results above, with the labels you gave.' : 'none given for the result yet.'}
+- Proof to collect: ${proofSector ? lc1(proofSector) : `one customer, one measure${m0 ? ` (${m0})` : ''}, before and after, from the customer's own data`}
 
-### Level 3: Supporting Pillars (3 proof points)
+**Pillar 2: the difference.** ${diffLead ? fresh(`At its core: ${plain(diffLead)}`, `What sets it apart: ${plain(diffLead)}`) : fresh(`What sets it apart: ${plain(diffMain)}`, `At its core: ${plain(diffMain)}`)}${diffSents.length > 1 ? ` ${diffSents.slice(1, 3).map((x) => fresh(x, `Also: ${x}`)).join(' ')}` : ''}
+- Proof you have: ${recog.length ? (0, rw_impact2_ts_1.partsInline)(recog).join('; ') + '.' : 'none given for the difference yet.'}
+- Proof to collect: a side by side with ${alt ? alt.label : 'the way your buyers do it today'} on the same customer data${m0 ? `, for ${m0}${m1 ? ` and ${m1}` : ''}` : ''}.
 
-Pillars built from your own words and this sector's proof shape (keep only a proof you can show):
+**Pillar 3: why it is safe to buy.** ${objection0 ? `Buyers in this sector often raise "${objection0.objection.replace(/[.?!]+$/, '')}"; the answer is under Objection Handling.` : `Tell the buyer what a first step costs and how it works: ${notes.commercial}.`}
+- Proof you have: ${counts.length ? (0, rw_impact2_ts_1.partsInline)(counts).join('; ') + '.' : 'no customer count or reference given yet.'}
+- Proof to collect: a reference or pilot result that answers that objection.
 
-| Pillar | Message (your words) | Proof Point |
-|--------|----------------------|-------------|
-${pillars.join('\n')}
+${v ? `Words this sector's buyers use, to check your wording against: ${lz.vocab.join(', ')}.\n` : ''}What buyers in a business like yours also weigh: ${notes.commercial}.
 
-What buyers in a business like yours also weigh: ${notes.commercial}.${v ? `\n\nWords this sector's buyers use, to check your wording against: ${lz.vocab.join(', ')}.` : ''}
+---`);
+            // ---- variations
+            const varA = (() => {
+                if (!needPcs.length)
+                    return fresh(`${plain(diffMain)}`, `In short: ${plain(diffMain)}`);
+                const needLead = (0, rw_impact2_ts_1.leadClause)(clean(needFirst), 100, true) || (needFirst.length > 100 ? (0, rw_impact_ts_1.clip)(clean(needFirst), 90) : clean(needFirst));
+                const ask = needShape === 'verb' ? `Do you ${needBare}?` : needShape === 'gerund' || needShape === 'noun' ? `Are you struggling with ${kit.lowerFirst(needLead)}?` : `Does this sound familiar: ${kit.lowerFirst(needLead)}?`;
+                const answer = headVerb ? fresh(`${capFirst(bareHead)} with ${P}.`, `${PC} can help you ${bareHead}.`) : B.headline && headShape !== 'clause' ? fresh(`${capFirst(kit.lowerFirst(clean(B.headline)))}, with ${P}.`, `With ${P}: ${kit.lowerFirst(clean(B.headline))}.`) : fresh(plain(diffLead || diffMain), `The difference in one line: ${plain(diffLead || diffMain)}`);
+                return `${ask} ${answer}`;
+            })();
+            const varB = `${PC}: ${capFirst(outShort || (0, rw_impact_ts_1.clip)(clean(B.headline || oneBare), 90))}. Built for ${aud}.`;
+            const stillQ = alt ? `Still ${altBack}?` : '';
+            const varC = alt && startsWithP(diffMain) ? fresh(`${stillQ} ${plain(diffLead || diffMain)}`, `${stillQ} The alternative is this: ${plain(diffLead || diffMain)}`) : '';
+            const proofLines = [...counts.slice(0, 2).map((f) => `${capFirst(clean((0, rw_impact2_ts_1.partText)(f)))}.`), ...recog.slice(0, 1).map((r) => `${capFirst((0, rw_impact2_ts_1.partText)(r))}.`), ...B.claims.slice(0, 3).map((r) => `${capFirst((0, rw_impact2_ts_1.partText)(r))}.`)];
+            out.push(`## Message Variations
 
----
+**Variation A: lead with the problem**
+> ${varA}
 
-## Message Variations
-
-### A/B Testing Options
-
-**Variation A: lead with pain**
-> "${need ? `Do you ${needIf}? ${capFirst(diffG)}` : capFirst(diffG)}."
-
-**Variation B: lead with outcome**
-> "${P}: ${capFirst(clean(benefitR))}. Built for ${aud}."
-
-**Variation C: lead with differentiation**
-> "${hasComp ? `Unlike ${alt}, ${diffG}.` : `${capFirst(diffG)}. [Only if true and provable: unlike the alternatives your buyers use today.]`}"
-
+**Variation B: lead with the outcome**
+> ${varB}
+${varC ? `\n**Variation C: lead with the difference**\n> ${varC}\n` : ''}
 **Variation D: lead with social proof**
-> ${(countClaim || resultItems.length || recognition) ? [countClaim ? `A count in your inputs: ${q(countClaim)}` : '', ...resultItems.slice(0, 2).map((x) => `A result in your inputs: ${q(x)}`), recognition ? `A recognition in your inputs: ${q(clean(recognition))}` : ''].filter(Boolean).join('.\n> ') + `.\n> These are claims from your own inputs; use each only if it is true and you can cite it. Lead with the strongest: "${countClaim ? `${capFirst(countClaim)}. ` : ''}${capFirst(P)} helps ${aud} ${inf(benefitR)}."` : `No customer count or named result was supplied, so there is no honest social-proof line to write yet. When you have a real count, write it as: "<your count> ${pluralAudience(args.target_customer)} already ${inf(benefitR)} with ${P}".`}
+${proofLines.length ? `> ${proofLines.join('\n> ')}\n> Use each only as worded and sourced, and close with the outcome.` : `> No customer count, result or recognition was typed, so there is no honest proof line to write yet. The first pillar says what to collect.`}
 
 ### Audience-Specific Messaging
 
-**For Champions (${aud})**:
-> "${capFirst(P)} gives you a way to ${inf(benefitR)}${hasComp ? `, instead of living with ${altShort}` : ''}."
+**For the champion (${champion}):**
+> ${youCan ? fresh(`${PC} gives you a way to ${youCan}${altBack ? `, instead of ${altBack}` : ''}.`, `${PC} gives you a way to ${youCan}.`) : fresh(`For you, the difference is this: ${plain(diffLead || diffMain)}`)}
 
-**For Economic Buyers (${v ? (lz.fn ? lz.fn.buyer : committeeParts(v).signer) : 'Executives'})**:
-> "${capFirst(P)} helps ${aud} ${inf(benefitR)}. ${v ? `Measure it in ${lz.metrics.slice(0, 2).join(' and ')}, the figures this sector already watches.` : 'Measure it in a figure your buyer already watches.'}${notes.cost ? ` [Only if true and provable: ${notes.cost} than ${altShort}.]` : ''}"
+**For the economic buyer (${signer}):**
+> ${youCan ? fresh(`${PC} lets your team ${youCan}.`, `With ${P}, your team can ${youCan}.`) : fresh(`${PC} is built for ${aud}.`)} ${m0 ? `Measure it in ${m0}${m1 ? ` and ${m1}` : ''}, the figures this sector already watches.` : 'Measure it in a figure your buyer already watches.'} They will also weigh ${notes.commercial}.
 
-**For Technical Evaluators**:
-> "${capFirst(diffG)}. ${capFirst(P)} is ${aOrAn(category)} ${mid(category)} designed for ${aud}."
+**For the technical evaluator (${evaluator}):**
+> ${[...(diffSents.length > 1 ? diffSents.slice(1, 3) : [diffRest || diffLead || diffMain]).map((x) => fresh(x, `For the technical review: ${plain(x)}`)), ...(catPlain ? [`${PC} is ${artOf(catPlain)}${catCovers ? ` that covers ${clean(catCovers)}` : ''}.`] : [])].join(' ')}
 
----
+---`);
+            // ---- objections
+            const rows = [];
+            void 0;
+            if (alt)
+                rows.push(`- **"${(0, rw_impact2_ts_1.altObjection)(alt).replace(/\.$/, '')}."** Acknowledge it${alt.note ? ` (${alt.note})` : ''}, then ${altGap ? `point to the gap: ${altGap}.` : `ask where it leaves ${aud} short.`} Then show the difference: ${plain(diffLead || diffMain)}`);
+            rows.push(`- **"The price is too high."** Tie the price to ${m0 || 'a figure the buyer already measures'}, measured in the buyer's own data, and agree how the cost will be compared (${notes.commercial}).`);
+            for (const o of (v ? v.objections : []).slice(0, 4))
+                rows.push(`- **"${o.objection.replace(/[.?!]+$/, '')}."** ${ctx.model && ctx.model !== 'saas' ? (0, rw_impact_ts_1.noSeatWords)(o.response) : o.response}`);
+            out.push(`## Objection Handling
 
-## Message Testing Checklist
-
-Before finalizing, test each message for:
-
-| Criterion | Question | Pass/Fail |
-|-----------|----------|-----------|
-| **Clarity** | Do people understand what you do? | [ ] |
-| **Relevance** | Do people care about this? | [ ] |
-| **Differentiation** | Does this sound unique? | [ ] |
-| **Believability** | Do people trust this claim? | [ ] |
-| **Memorability** | Can people repeat it back? | [ ] |
-
-### Testing Methods
-1. **5-Second Test**: Show homepage, ask what you do
-2. **Comparison Test**: Show yours vs competitor, ask preference
-3. **Repeat-Back Test**: Explain, wait 24 hours, ask them to describe you
-4. **Customer Validation**: Ask existing customers to confirm accuracy
+${rows.join('\n')}
 
 ---
 
-## Objection Handling Messages
+## Message Tests
 
-| Objection | Response Message |
-|-----------|------------------|
-${hasComp ? `| "We use ${altShort}" | "[Only if true and provable: customers switched from ${altShort}; what they report: ${q(diff)}]" |\n` : ''}| "Too expensive" | "Consider the cost of doing nothing about it. [Only if true and provable: the result your customers have seen, and how long it took.]" |
-| "We're not ready" | "[Only if true and provable: that's exactly when our best customers started.]" |
-| "Need to think about it" | "Absolutely. While you're evaluating, [Only if true and provable: here's a case study of how a similar company got a result like this.]" |
-${sectorObjections ? sectorObjections + '\n' : ''}
-**Next Step**: Use \`impact_translate_execution\` to adapt these messages for each channel
-
-${SUGGESTED}
-`;
+- Show the headline to someone outside the company for five seconds and ask what ${P} does.
+- Ask a customer to confirm in their own words the result ${P} gives them, and use their words.
+- ${v ? `Check every line against the words ${lz.fn ? 'this team' : "this sector's buyers"} use (${lz.vocab.slice(0, 5).join(', ')}).` : 'Check every line against the words your buyers use.'}`);
+            // ---- what is missing
+            const missing = [];
+            if (!named)
+                missing.push({ give: 'product_name', changes: 'every line, which now says "the product"' });
+            if (!(args.customer_need || '').trim())
+                missing.push({ give: 'customer_need', changes: 'the problem sentence, the pain-led message and the problem tagline' });
+            if (!catTyped)
+                missing.push({ give: 'product_category', changes: 'the sentence that says what the product is' });
+            if (!hasAlt)
+                missing.push({ give: 'competitor', changes: 'the Unlike sentence and the first objection' });
+            if (!haveProof)
+                missing.push({ give: 'a customer count or a result with its source typed into key_benefit or differentiation', changes: 'the proof lines of the three pillars and the proof-led variation' });
+            if (!args.business_model && !ctx.model)
+                missing.push({ give: 'business_model', changes: 'the cost, call to action and proof wording' });
+            const sh = (0, rw_impact2_ts_1.sharpenText)(missing);
+            out.push(`${sh ? `${sh}\n\n` : ''}**Next Step**: Use \`impact_translate_execution\` to adapt these messages for each channel
+`);
+            return out.join('\n\n').replace(/\n{3,}/g, '\n\n');
         }
     },
     // ---------------------------------------------------------------------------
@@ -2612,20 +2743,28 @@ ${SUGGESTED}
             required: ['positioning_statement', 'target_customer', 'key_benefit']
         },
         execute: (args) => {
-            const P = runningName((args.product_name || '').trim()) || 'your product';
-            const benefit = shortText(args.key_benefit, FRAME_AT);
+            // Run 22 rewrite: channel copy a client could use as a first draft. It is built from the positioning statement (its alternative, its differences, its category), the target and the
+            // benefit, in whole sentences. No long input is pasted or repeated, a figure keeps its source label, nothing is invented, and what is missing is named once at the end.
+            const kit = RW_KIT2;
+            const fresh = (0, rw_impact2_ts_1.makeFresh)();
+            const named = (args.product_name || '').trim();
+            const P = (0, rw_impact_ts_1.plainName)(named, runningName(named.replace(/\s*\([^)]*\)/g, ''))) || 'the product';
+            const PC = capFirst(P);
             const statement = args.positioning_statement;
-            const audFull = noNotes(args.target_customer);
-            const aud = mid(audFull.length <= 90 ? audFull : shortAudience(audFull));
-            const sa = shortAudience(shortText(audFull));
-            const ctx = readContext(args.business_model, { core: [(statement.match(/\b(?:is|are)\s+(?:an?|the)\s+(.{3,120}?)\s+(?:that|which|who)\b/i) || [])[1]], names: [args.product_name], context: [statement, args.key_benefit], buyer: [args.target_customer] });
+            const SP = (0, rw_impact2_ts_1.parseStatement)(statement, P === 'the product' ? '' : P);
+            const ctx = readContext(args.business_model, { core: [SP.category], names: [args.product_name], context: [statement, args.key_benefit], buyer: [args.target_customer] });
             const v = ctx.v;
             const notes = MODEL_NOTES[ctx.model || 'unknown'];
             const ctas = callsToAction(v, ctx.model);
             const lz = lensOf(v, args.key_benefit, args.target_customer, statement);
+            const proofSector = ctx.model && ctx.model !== 'saas' ? (0, rw_impact_ts_1.noSeatWords)(lz.proof) : lz.proof;
             const vocab = lz.vocab;
             const committee = lz.fn ? { signer: lz.fn.buyer, champion: lz.fn.champion, championInferred: false, users: null, reviewers: [] } : v ? committeeParts(v) : null;
-            // Channels (problem 3): the input selects the sections. Unknown names are listed as not covered.
+            const primary = ctas[0];
+            const secondary = ctas.find((c) => c !== primary && !/only if/i.test(c)) || 'See how it works';
+            const nextStep = `If useful, the next step is ${(0, rw_impact_ts_1.ctaNoun)(primary)}.`;
+            const demoWord = ctx.model === 'saas' || ctx.model === null ? 'demo' : 'walkthrough';
+            // Channels: the input selects the sections. Unknown names are listed as not covered.
             const CHANNEL_WORDS = [
                 ['website', /^(website|web|webpage|homepage|site|landing_?page)$/],
                 ['linkedin', /^(linkedin|social)$/],
@@ -2650,200 +2789,283 @@ ${SUGGESTED}
             const channelNote = asked.length === 0 ? '' : noneRecognised
                 ? `\n**Channels**: none of the channels you listed (${asked.join(', ')}) is one this tool covers, so all five are shown. It covers website, LinkedIn, cold email, sales deck and demo.`
                 : `\n**Channels requested**: ${asked.join(', ')}.${notCovered.length ? ` Channels not covered by this tool: ${notCovered.join(', ')} (it covers website, LinkedIn, cold email, sales deck and demo).` : ''}`;
-            // The "Unlike ..." and "offers ..." parts of the statement, used on the key slide and in the demo.
-            const unlike = shortText((statement.match(/\bunlike\s+([^,.;]+(?:\([^)]*\))?)/i) || statement.match(/\balternatives?(?: buyers)? (?:use|used|weigh) today:\s*([^.;]+)/i) || [])[1]?.trim() || '', FRAME_AT);
-            const offers = clean(shortText((statement.match(/\boffers?\s+([^.]+?)\.?\s*$/i) || statement.match(/\bwhat sets it apart:\s*(.+?)\.?\s*$/i) || [])[1]?.trim() || '', FRAME_AT));
-            const unlikeName = unlike ? nameOf(unlike) : '';
-            const sections = [];
-            // Run 20 round 1: every section is a draft built from the inputs and the sector data file, with no bracket left where the sector or the
-            // inputs can supply the words. Only mail-merge fields ([First name], [Company], [Signature]) stay. Figures and claims are never added.
-            const m0 = lz.metrics.length ? lz.metrics[0] : 'the main measure your buyer tracks';
-            const m1 = lz.metrics.length ? lz.metrics[1] || lz.metrics[0] : 'a second measure your buyer tracks';
-            const askLine = ctas[0].replace(/^./, (c) => c.toLowerCase());
-            // An in-house alternative has no "current provider": questions about one are left out.
-            const inHouse = /in[- ]house|internal|\bDIY\b|ourselves/i.test(unlike);
-            const qs = lz.questions.filter((x) => !(inHouse && /provider|incumbent|vendor/i.test(x)));
-            // The hook follows the user's benefit: a benefit that is an action becomes the question "how long does it take you to ...".
-            const lead0 = leadPhrase(benefit);
-            const benefitQ = kindOf(benefit) === 'base' ? `How long does it take you today to ${lowerFirst(clean(benefit))}?`
-                : lead0.split(/\s+/).length <= 10 && !/^[A-Za-z-]+(?:ing|ed)\b/i.test(lead0) ? `Do you have ${lowerFirst(lead0)} today?` : '';
-            const q0 = benefitQ || (qs.length ? qs[0] : '');
-            const q1 = qs.length ? (benefitQ ? qs[0] : qs[1] || qs[0]) : '';
-            const benefitR = kindOf(benefit) === 'other' && benefit.length > 70 ? leadPhrase(benefit) : benefit;
-            const subjectLead = capFirst(shortClause(benefit, 6) || firstWords(clean(benefit), 5));
+            // The audience, with its notes; the benefit; the alternative and the differences of the statement.
+            const A = (0, rw_impact2_ts_1.parseAudience)(args.target_customer, kit);
+            const aud = (0, rw_impact2_ts_1.audienceShort)(A.aud, kit);
+            const cap4 = (t) => (t.length > 420 ? (0, rw_impact_ts_1.clip)(t, 380) : t);
+            const B = (0, rw_impact2_ts_1.parseBenefit)(args.key_benefit, kit);
+            B.headline = cap4(B.headline);
+            B.parts = B.parts.map((p) => ({ ...p, text: cap4(p.text) }));
+            B.claims = B.claims.map((p) => ({ ...p, text: cap4(p.text) }));
+            const alt = SP.alt ? (0, rw_impact2_ts_1.parseAlternative)(SP.alt, kit) : null;
+            const diffItems = SP.diff.length ? SP.diff : [];
+            const D = (0, rw_impact2_ts_1.parseDifference)(diffItems.join('; '));
+            const dItems = D.items.map(cap4);
+            const dSents = dItems.map((d) => gateClaim(d, (0, rw_impact2_ts_1.differenceSentence)(PC, d, kit, diffSentence)));
+            const plain = (s) => s.replace(/^\[Only if true and provable: /, '').replace(/\]$/, '');
+            const leadOf = (t, n = 100) => (0, rw_impact2_ts_1.leadClause)(t, n) || (t.length > n + 40 ? (0, rw_impact_ts_1.clip)(t, n) : t);
+            const tightOf = (t, n = 80) => (0, rw_impact2_ts_1.leadClause)(t, n, false, true) || leadOf(t, n);
+            const dLeadSrc = dItems.length ? (0, rw_impact2_ts_1.leadClause)((0, rw_impact_ts_1.takeLabel)(dItems[0]).body) || ((0, rw_impact_ts_1.takeLabel)(dItems[0]).body.length > 110 ? (0, rw_impact_ts_1.clip)((0, rw_impact_ts_1.takeLabel)(dItems[0]).body, 90) : null) : null;
+            const dLead = dLeadSrc ? gateClaim(dItems[0], (0, rw_impact2_ts_1.differenceSentence)(PC, dLeadSrc, kit, diffSentence)) : '';
+            const dMain = dSents[0] || '';
+            const dShort = dLead || dMain;
+            const startsWithP = (s) => plain(s).startsWith(PC);
+            const lead = B.parts.length ? (0, rw_impact2_ts_1.firstParts)(B.parts, 230, 3) : [];
+            const headShape = B.headline ? (0, rw_impact2_ts_1.shapeOf)(B.headline, kit) : 'np';
+            const headVerb = !!B.headline && headShape === 'verb';
+            const bareHead = B.headline ? (0, rw_impact2_ts_1.baseForm)(B.headline, kit) : '';
+            const clauseShort = lead.length ? (0, rw_impact2_ts_1.resultClause)([{ text: leadOf(lead[0].text, 100), label: lead[0].label }], kit) : null;
+            const clauseLead = lead.length ? (0, rw_impact2_ts_1.resultClause)(lead, kit) : null;
+            const clauseAt = (n) => {
+                if (!lead.length)
+                    return null;
+                const cut = lead[0].text.length > 85 ? tightOf(lead[0].text, n) : lead[0].text;
+                return (0, rw_impact2_ts_1.resultClause)([{ text: cut, label: /\d/.test(cut) ? lead[0].label : '' }], kit);
+            };
+            const youCan = headVerb ? (bareHead.length > 85 ? tightOf(bareHead, 80) : bareHead) : clauseAt(80) || clauseShort || '';
+            const youShort = headVerb ? (bareHead.length > 85 ? tightOf(bareHead, 80) : bareHead) : clauseAt(80) || youCan;
+            const oneBare = clean((0, rw_impact2_ts_1.partsInline)(lead.slice(0, 1))[0] || '');
+            // The headline of a page: a whole phrase of the benefit, never cut.
+            const heroPhrase = (0, rw_impact2_ts_1.shortPhrase)(B, 9, kit);
+            const catPlainT = SP.category ? SP.category.split(/\s*[;,]\s*/)[0].replace(/\s*\([^)]*\)\s*/g, ' ').trim() : '';
+            const heroLine = heroPhrase ? capFirst(heroPhrase) : catPlainT ? `${capFirst(catPlainT)} for ${aud}` : `${PC} for ${aud}`;
+            const firstNp = !B.headline && B.parts.length && ['np', 'noun'].includes((0, rw_impact2_ts_1.shapeOf)(B.parts[0].text, kit)) ? `${leadOf(B.parts[0].text, 120)}${B.parts[0].label ? ` ${B.parts[0].label}` : ''}` : '';
+            const resultLine = headVerb ? `${PC} helps ${aud} ${bareHead}.`
+                : B.headline && headShape !== 'clause' ? `${PC} delivers ${kit.lowerFirst(clean(B.headline))}.`
+                    : clauseLead ? `${PC} helps ${aud} ${clauseLead}.`
+                        : clauseShort ? `${PC} helps ${aud} ${clauseShort}.`
+                            : firstNp ? `${PC} delivers ${kit.lowerFirst(clean(firstNp))}.`
+                                : B.headline ? (0, rw_impact2_ts_1.sentence)(B.headline, kit) : `${PC} is built for ${aud}.`;
+            // The same result in other sentence shapes, so no sentence is written twice.
+            const resForms = youCan
+                ? [resultLine, `With ${P}, ${aud} can ${youCan}.`, `${PC} gives your team a way to ${youCan}.`, `${PC} is for ${aud} who want to ${youCan}.`, `${capFirst(youCan)}: that is what ${P} is built for.`]
+                : [resultLine, `${PC} is built for ${aud}: ${kit.lowerFirst(clean(firstNp || B.headline || oneBare))}.`, `For ${aud}, the result is this: ${kit.lowerFirst(clean(firstNp || B.headline || oneBare))}.`];
+            const nextRes = () => fresh(...resForms);
+            const detail = (() => {
+                if (!B.parts.length)
+                    return '';
+                const cl = (0, rw_impact2_ts_1.resultClause)(B.parts, kit);
+                if (headVerb && cl)
+                    return `That means ${aud} can ${cl}.`;
+                return '';
+            })();
+            const bullets = (B.parts.length ? B.parts : B.headline ? [{ text: B.headline, label: '' }] : []).filter((p) => !heroPhrase || clean(p.text).toLowerCase() !== heroPhrase.toLowerCase()).map((p) => capFirst(clean((0, rw_impact2_ts_1.partText)(p).length > 150 ? `${leadOf(p.text, 110)}${p.label ? ` ${p.label}` : ''}` : (0, rw_impact2_ts_1.partText)(p))));
+            const counts = A.facts;
+            const recog = [...D.recognition, ...(0, rw_impact2_ts_1.parseDifference)(args.key_benefit).recognition];
+            const claims = B.claims;
+            const proofAll = [...counts, ...claims, ...recog];
+            const proofText = (f) => { const t = (0, rw_impact2_ts_1.partText)(f); return A.aud && t.toLowerCase().startsWith(A.aud.toLowerCase().slice(0, 18)) ? `Used by ${kit.lowerFirst(t)}` : capFirst(t); };
+            const m0 = lz.metrics.length ? lz.metrics[0] : '';
+            const m1 = lz.metrics.length ? lz.metrics[1] || lz.metrics[0] : '';
             const objection0 = v ? v.objections[0] : null;
-            const demoWord = ctx.model === 'saas' || ctx.model === null ? 'demo' : 'walkthrough';
-            const offerLine = offers ? gateClaim(offers, `${capFirst(P)} offers ${lowerFirst(clean(offers))}.`) : `${capFirst(P)}: what sets it apart is in your positioning statement above.`;
-            if (chosen.has('website'))
+            const inHouse = !!alt && /in[- ]house|internal|\bDIY\b|ourselves|yourself/i.test(SP.alt);
+            const qs = lz.questions.filter((x) => !(inHouse && /provider|incumbent|vendor/i.test(x)));
+            const needS = SP.need ? (0, rw_impact2_ts_1.shapeOf)(SP.need, kit) : 'np';
+            const needHook = SP.need && needS === 'verb' && SP.need.split(/\s+/).length <= 14 ? `Do you ${(0, rw_impact2_ts_1.baseForm)(SP.need, kit)}?` : '';
+            const hook = needHook || (qs.length ? qs[0] : '');
+            const hook2 = qs.length ? (needHook ? qs[0] : qs[1] || '') : '';
+            const altBack = alt ? (alt.kind === 'activity' ? alt.label : alt.kind === 'name' ? `relying on ${alt.label}` : `living with ${alt.label}`) : '';
+            const subject = heroPhrase ? capFirst(heroPhrase) : capFirst((0, rw_impact_ts_1.clip)(clean(B.headline || oneBare), 60));
+            const altGapOf = (a) => {
+                const t = a.tail.replace(/^[,;\s]+/, '');
+                if (!t)
+                    return '';
+                const m = t.match(/^(that|which|who|where|whose)\s+(.*)$/i);
+                if (m)
+                    return `it ${clean(m[2])}`;
+                if (/^relying\b/i.test(t))
+                    return `it relies${clean(t).slice('relying'.length)}`;
+                if (/^relies\b/i.test(t))
+                    return `it ${clean(t)}`;
+                if (/^because\b/i.test(t))
+                    return `it falls short ${clean(t)}`;
+                if (/^with\b/i.test(t))
+                    return `it comes ${clean(t)}`;
+                return clean(t);
+            };
+            const weRest = (sent) => { const t = plain(sent); return t.startsWith(`${PC} `) ? t.slice(PC.length + 1).replace(/^(?:offers|is|can)\s+/, '') : t; };
+            const diffForms = dMain ? [
+                alt && startsWithP(dMain) ? `Unlike ${alt.label}, ${plain(dMain)}` : `${alt ? `${capFirst(clean(alt.label))} is what ${aud} use today. ` : ''}${dMain}`,
+                ...(dLead ? [alt && startsWithP(dLead) ? `Unlike ${alt.label}, ${plain(dLead)}` : plain(dLead)] : []),
+                `What sets it apart: ${plain(dLead || dMain)}`, `The difference: ${plain(dMain)}`, `In one line, the difference: ${plain(dLead || dMain)}`, `Put simply: ${plain(dLead || dMain)}`,
+            ] : [];
+            const nextDiff = () => (diffForms.length ? fresh(...diffForms) : '');
+            const signOff = P.split(/\s+/).length > 3 ? 'The team' : `The ${P} team`;
+            const sections = [];
+            if (chosen.has('website')) {
+                const proofStrip = proofAll.length ? proofAll.map((f) => `- ${proofText(f)}`).join('\n') : '';
                 sections.push(`## Website Execution
 
 ### Homepage Hero
-**Headline (5-8 words)**:
-> "${heroLine(benefit, sa, P)}"
+**Headline**
+> "${heroLine}"
 
-**Subheadline (15-20 words)**:
-> "${capFirst(P)} helps ${aud} ${inf(benefitR)}."
+**Subheadline**
+> ${nextRes()}${detail ? ` ${fresh(detail)}` : ''}
 
-**Proof under the fold**: ${lz.proof ? `show ${lc1(lz.proof).replace(/\.$/, '')}. Use a real result of yours in that shape, or leave the slot empty.` : 'show one real customer result, with its source. Leave the slot empty if you have none.'}
-
-**CTA Options** (examples: keep only the ones you offer):
-- Primary: "${ctas[0]}"
-- Secondary: "${ctas[1] || 'See how it works'}" / "View case studies"
-
-### Above the Fold Checklist
-- [ ] The headline names the result for ${sa}
-- [ ] The words buyers in this sector use appear on the page${vocab.length ? ` (${vocab.slice(0, 4).join(', ')})` : ''}
-- [ ] A proof the buyer can check, with a source
-- [ ] One clear button: "${ctas[0]}"
-`);
-            if (chosen.has('linkedin'))
+${bullets.length > 1 && !detail ? `**Benefit points under the hero**\n${bullets.slice(clauseShort ? 1 : 0, 5).map((b) => `- ${b}`).join('\n')}\n\n` : ''}${proofStrip ? `**Proof strip**\n${proofStrip}\n\n` : ''}${dMain ? `**Why ${P}**\n> ${nextDiff()}\n\n` : ''}**Calls to action**
+- Primary: "${primary}"
+- Secondary: "${secondary}"
+${vocab.length ? `\nWords ${lz.fn ? 'buyers in this team' : "this sector's buyers"} use, to work into the page: ${vocab.slice(0, 5).join(', ')}.\n` : ''}${proofSector ? `\nUnder the fold, ${lc1(clean(proofSector))}: use a real result of yours in that shape and its source.\n` : ''}`);
+            }
+            if (chosen.has('linkedin')) {
+                const plainRes = (0, rw_impact2_ts_1.plainResult)(B, kit);
+                const tagline = headVerb ? `Helping ${aud} ${bareHead}` : plainRes ? `Helping ${aud} ${plainRes}` : `${PC}: ${subject}`;
+                const post1 = [hook, '', nextRes(), dMain ? nextDiff() : '', '', hook2 ? `A question to put to your own team this week: ${hook2}` : 'Ask your own team how they handle this today.'].filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i > 0)).join('\n');
+                const claimLine = [...claims, ...recog].slice(0, 2).map((f) => `Proof point: ${kit.lowerFirst((0, rw_impact2_ts_1.partText)(f))}.`).join(' ');
+                const post2 = [`${fresh(`How we would show it, not just say it: ${proofSector ? lc1(clean(proofSector)) : 'one customer, one measure, before and after'}.`)}`, lz.metrics.length ? `The figures that matter here: ${lz.metrics.slice(0, 3).join(', ')}.` : '', claimLine, '', objection0 ? `The question we hear most: "${objection0.objection.replace(/[.?!]+$/, '')}". Our answer: ${ctx.model && ctx.model !== 'saas' ? (0, rw_impact_ts_1.noSeatWords)(objection0.response) : objection0.response}` : 'The question we hear most is about switching. We answer it with a pilot.'].filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i > 0)).join('\n');
                 sections.push(`## LinkedIn Execution
 
-### Profile/Company Page Tagline
-> "Helping ${aud} ${inf(benefitR)}"
+### Company Page Tagline
+> "${tagline}"
 
 ### Post Drafts
 
 **Post 1: the question your buyers ask themselves**
 \`\`\`
-${q0 ? q0 : `Is this on your list this year: ${q(benefit)}?`}
-
-${capFirst(P)} helps ${aud} ${inf(benefitR)}.
-${offerLine}
-
-${q1 ? `A question you can put to your buyers this week: ${q1}` : 'Ask your own team how they handle this today.'}
+${post1}
 \`\`\`
 
 **Post 2: the claim and how you will prove it**
 \`\`\`
-${capFirst(P)} helps ${aud} ${inf(benefitR)}.
-
-${lz.proof ? `How we would show it: ${lz.proof}` : 'How we would show it: one customer, one measure, before and after.'}
-${lz.metrics.length ? `The figures that matter here: ${lz.metrics.slice(0, 3).join(', ')}.` : ''}
-
-${objection0 ? `The question we hear most: "${objection0.objection}". Our answer: ${objection0.response}` : 'The question we hear most is about switching. We answer it with a pilot.'}
+${post2}
 \`\`\`
 
 **Post 3: a customer story** (write it only from a real customer who agreed)
-\`\`\`
-Outline: the customer's situation, what they measured before, what changed, what they measure now${v ? ` (${m0} or ${m1} are typical in this sector)` : ''}, and the customer's own words.
-\`\`\`
+Outline: the customer's situation, what they measured before, what changed, what they measure now${m0 ? ` (${m0}${m1 && m1 !== m0 ? ` or ${m1}` : ''} are typical in this sector)` : ''}, and the customer's own words.
 `);
-            if (chosen.has('cold_email'))
+            }
+            if (chosen.has('cold_email')) {
+                const subj1 = `${subject}: a question for your team`;
                 sections.push(`## Cold Email Execution
 
 Open each email with a trigger you can see for the buyer (a renewal, an audit, a season, a target); that is the one line only you can write.
 
 ### Email 1: problem-focused
-**Subject**: ${subjectLead}: a question for [Company]
+**Subject**: ${subj1}
 
 \`\`\`
-Hi [First name],
+Hello,
 
-${q0 ? `A question I ask teams like yours: ${q0}` : `Teams like [Company] often weigh ${m0}.`}
+${hook ? `A question I ask teams like yours: ${hook}` : `Teams like yours often weigh ${m0 || 'the same few measures'}.`}
 
-${capFirst(P)} helps ${aud} ${inf(benefitR)}.
+${nextRes()}${dMain ? `\n${nextDiff()}` : ''}
 
-If useful, the next step is simple: ${askLine}.
+${nextStep}
 
-[Signature]
+Best regards,
+${signOff}
 \`\`\`
 
 ### Email 2: value-focused
-**Subject**: How we would prove it at [Company]
+**Subject**: How we would prove it for you
 
 \`\`\`
-Hi [First name],
+Hello,
 
-Following up with how we would show the result, not just claim it: ${lz.proof ? lc1(lz.proof) : 'one measure, before and after, on one team, agreed with you in advance.'}
-
-${offerLine}
+Following up with how we would show the result, not just claim it: ${proofSector ? lc1(clean(proofSector)) : 'one measure, before and after, on one team, agreed with you in advance'}.${proofAll.length ? `\n\n${proofAll.slice(0, 2).map((f) => `For context: ${kit.lowerFirst(proofText(f))}.`).join(' ')}` : ''}
 
 Worth a conversation?
 
-[Signature]
+Best regards,
+${signOff}
 \`\`\`
 
 ### Email 3: breakup
 **Subject**: Closing the loop
 
 \`\`\`
-Hi [First name],
+Hello,
 
-I have reached out a few times about helping [Company] ${inf(benefitR)}.
+I have reached out a few times about helping your team ${youShort || `see the result ${P} is built for`}.
 
 If the timing is not right, no worries at all. ${objection0 ? `If "${objection0.objection.replace(/[.?!]+$/, '')}" is the concern, I can answer it in one call.` : 'If switching is the concern, I can answer it in one call.'}
 
-[Signature]
+Best regards,
+${signOff}
 \`\`\`
 `);
-            if (chosen.has('sales_deck'))
+            }
+            if (chosen.has('sales_deck')) {
+                const problemSlide = SP.need ? (0, rw_impact2_ts_1.sentence)((0, rw_impact_ts_1.clip)(SP.need, 160), kit) : `Why ${aud} struggle today${vocab.length ? `, in the words of this sector: ${vocab.slice(0, 3).join(', ')}` : ''}`;
                 sections.push(`## Sales Deck Execution
 
-### Slide Structure (10 slides)
+### Slide Structure
 
 | Slide | Title | Content |
 |-------|-------|---------|
-| 1 | Title | ${P}: ${clean(benefit)} |
-| 2 | The Problem | Why ${aud} struggle today${vocab.length ? `, in the words of this sector: ${vocab.slice(0, 3).join(', ')}` : ''} |
-| 3 | Cost of Inaction | What happens to ${m0} and ${m1} if this does not get solved (use the buyer's own figures) |
-| 4 | The Solution | Introducing ${P} |
-| 5 | How It Works | ${offers ? offers : 'The three things your buyer must understand to say yes'} |
-| 6 | Differentiation | ${unlikeName ? `Why ${P} and not ${unlikeName}` : 'Why we are different (your positioning)'} |
-| 7 | Results | ${lz.proof || 'Customer outcomes and metrics, with sources'} |
+| 1 | Title | ${P}: ${heroLine} |
+| 2 | The Problem | ${problemSlide} |
+| 3 | Cost of Inaction | The cost of staying as things are, in the measures your buyer tracks: ${m0 ? [m0, m1].filter((x, i, a) => x && a.indexOf(x) === i).join('; ') : 'the main measures your buyer tracks'} (use the buyer's own figures) |
+| 4 | The Solution | ${nextRes()} |
+| 5 | How It Works | ${dItems.length ? dItems.slice(0, 3).map((d) => capFirst(clean((0, rw_impact_ts_1.takeLabel)(d).body.length > 150 ? leadOf((0, rw_impact_ts_1.takeLabel)(d).body, 120) : (0, rw_impact_ts_1.takeLabel)(d).body))).join('; ') : 'The three things your buyer must understand to say yes'} |
+| 6 | Differentiation | ${alt ? `Why ${P} and not ${alt.label}` : 'Why we are different (your positioning)'} |
+| 7 | Results | ${proofAll.length ? proofAll.slice(0, 3).map((f) => (0, rw_impact2_ts_1.partText)(f)).join('; ') : proofSector || 'Customer outcomes and metrics, with sources'} |
 | 8 | Case Study | One real customer story, with the customer's consent |
 | 9 | Commercials | ${capFirst(notes.commercial)} |
-| 10 | Next Steps | ${ctas[0]} |
+| 10 | Next Steps | ${primary} |
 
 ### Key Slide: Differentiation
 \`\`\`
-Unlike ${unlike || 'the alternative your buyers use today'}...
+${alt ? `Unlike ${alt.full}:` : 'Unlike the alternative your buyers use today:'}
 
-They do: ask three buyers how ${unlikeName || 'that alternative'} handles this today and use their words
-We do: ${offers ? offers : 'what your positioning statement says you offer'}
+${alt ? `They: ${alt.full}${altGapOf(alt) ? `; ${altGapOf(alt)}` : ''}` : 'They: ask three buyers how they handle this today and use their words'}
+${dItems.length ? `${P}: ${weRest(dLead || dMain)}` : `${P}: what your positioning statement says you offer`}
 
-Result: the figure your buyer already tracks${v ? ` (${m0})` : ''}, from a real customer
+Result: ${m0 ? `the figure your buyer already tracks (${m0}), from a real customer` : 'the figure your buyer already tracks, from a real customer'}
 \`\`\`
 `);
-            if (chosen.has('product_demo'))
+            }
+            if (chosen.has('product_demo')) {
                 sections.push(`## Product Demo Execution
 
-### ${demoWord === 'demo' ? 'Demo' : 'Walkthrough'} Script Structure (15 minutes, Example figure: replace with your own)
+### ${demoWord === 'demo' ? 'Demo' : 'Walkthrough'} Script Structure (15 minutes)
 
-**0-2 min: Context Setting** ${EXAMPLE}
-> "Based on our conversation, here is what I will show you: how ${P} helps ${aud} ${inf(benefitR)}."${q0 ? `\nA question to open with, in this sector's language: ${q(q0)}` : ''}
+**0-2 min: Context Setting**
+> "Based on our conversation, here is what I will show you: how ${P} helps ${aud} ${youCan || 'reach the result they came for'}."${hook ? `\nA question to open with, in this sector's language: ${q(hook)}` : ''}
 
-**2-8 min: Core Value Demonstration** ${EXAMPLE}
-${offers ? `Start with what you offer: ${offers}. ` : ''}Then show the two or three features that answer the buyer's stated needs, in the order of what this sector measures${lz.metrics.length ? `: ${lz.metrics.slice(0, 3).join(', ')}` : ''}.
+**2-8 min: Core Value Demonstration**
+${dItems.length ? `Start with what sets ${P} apart: ${dItems.slice(0, 3).map((d) => clean((0, rw_impact_ts_1.takeLabel)(d).body.length > 150 ? leadOf((0, rw_impact_ts_1.takeLabel)(d).body, 120) : (0, rw_impact_ts_1.takeLabel)(d).body)).join('; ')}. ` : ''}Then show the two or three features that answer the buyer's stated needs, in the order of what this sector measures${lz.metrics.length ? `: ${lz.metrics.slice(0, 3).join(', ')}` : ''}.
 
-**8-12 min: Differentiation Proof** ${EXAMPLE}
-> "You might be wondering how this compares to ${unlikeName || 'what you use today'}. Watch this..."
-Show one thing they cannot get from ${unlikeName || 'their current approach'}, using their own data or sites where you can.
+**8-12 min: Differentiation Proof**
+> "You might be wondering how this compares to ${alt ? alt.label : 'what you use today'}. Let me show you."
+Show one thing they cannot get from ${alt ? alt.label : 'their current approach'}, using their own data or sites where you can.
 
-**12-15 min: Close & Next Steps** ${EXAMPLE}
+**12-15 min: Close and Next Steps**
 > "What would success look like for you in the first 90 days?"
-> "The next step is: ${askLine}."
+> "The next step is ${(0, rw_impact_ts_1.ctaNoun)(primary)}."
 
-### ${demoWord === 'demo' ? 'Demo' : 'Walkthrough'} Best Practices
-- [ ] Customize to their specific use case
-- [ ] Use their industry terms${vocab.length ? ` (${vocab.slice(0, 4).join(', ')})` : ''}
-- [ ] Show outcomes, not features
-- [ ] Leave time for questions
-- [ ] Agree the next step before the end
+### Best Practices
+- Customise to their specific use case.
+- Use their industry terms${vocab.length ? ` (${vocab.slice(0, 4).join(', ')})` : ''}.
+- Show outcomes, not features.
+- Leave time for questions and agree the next step before the end.
 `);
-            // One list: the order is the table (backlog B15-L5f), and it follows how buyers in this sector usually buy.
+            }
+            // One list: the order follows how buyers in this sector usually buy.
             const selfServe = ctx.model === 'saas' && !(v && ['cybersecurity', 'fintech', 'logistics-tech', 'vertical-saas', 'ai-native'].includes(v.id));
             const order = (selfServe
                 ? [['website', 'Website + SEO', 'foundation: buyers research you here before they reply'], ['linkedin', 'LinkedIn Organic', 'awareness among your target roles'], ['cold_email', 'Cold Email', 'pipeline from named accounts'], ['sales_deck', 'Sales Deck', 'conversion once there is a conversation'], ['product_demo', 'Demo', 'proof of capability']]
                 : [['cold_email', 'Cold Email', `direct outreach to the roles that buy${committee ? `: ${committee.signer}; ${committee.champion}` : ''}`], ['linkedin', 'LinkedIn Organic', 'awareness among those same roles'], ['sales_deck', 'Sales Deck', 'the story you tell once there is a meeting'], ['website', 'Website', 'credibility: proof, references and the facts buyers check'], ['product_demo', ctx.model === 'saas' || ctx.model === null ? 'Demo' : 'Walkthrough or pilot review', 'proof of capability']]).filter(([k]) => chosen.has(k));
+            const missing = [];
+            if (!named)
+                missing.push({ give: 'product_name', changes: 'every line, which now says "the product"' });
+            if (!alt)
+                missing.push({ give: 'the alternative buyers use today, written in the statement as "Unlike X" or "Alternatives buyers use today: X"', changes: 'the comparison lines on the page, in the posts, the deck and the demo' });
+            if (!dItems.length)
+                missing.push({ give: 'what sets the product apart, written in the statement after "What sets it apart:"', changes: 'the why-us block, the key slide and the first part of the demo' });
+            if (!proofAll.length)
+                missing.push({ give: 'a customer count, a result or a recognition with its source (for example in target_customer or key_benefit)', changes: 'the proof strip, the emails and the results slide' });
+            if (!args.business_model && !ctx.model)
+                missing.push({ give: 'business_model', changes: 'the calls to action and the commercial terms' });
+            const sh = (0, rw_impact2_ts_1.sharpenText)(missing);
             return `# Channel Execution Playbook
 
-## Positioning Foundation
-**Statement**: ${statement}
-**Target**: ${args.target_customer}
-**Key Benefit**: ${args.key_benefit}
-**Product**: ${args.product_name || 'not supplied'}${channelNote}
-${ctx.line}${longNote(statement, args.target_customer, args.key_benefit)}
+## What the copy is built from
+- **The message**: ${heroLine}
+- **The audience**: ${aud}${A.gloss ? ` (${A.gloss})` : ''}.${A.exclusion ? ` ${capFirst(clean(A.exclusion))}, so the copy speaks to ${aud} only.` : ''}
+${dItems.length ? `- **Difference to carry**: ${plain(dShort)}\n` : ''}${alt ? `- **The alternative**: ${alt.label}.\n` : ''}${channelNote}
+${ctx.line}
 
 ---
 
@@ -2852,18 +3074,16 @@ ${sections.join('\n---\n\n')}
 ${v ? `
 ## Sector Language
 
-Use the words buyers in ${lz.fn ? fnName(lz.fn) : v.name} use, and keep claims to what you can show. ${vocab.length ? `Words ${lz.fn ? 'buyers in this team' : 'this sector\'s buyers'} use: ${vocab.join(', ')}. ` : ''}What ${lz.fn ? 'this team' : 'the sector'} measures: ${lz.metrics.join(', ')}. A proof point that lands: ${lz.proof}
+Use the words buyers in ${lz.fn ? fnName(lz.fn) : v.name} use, and keep claims to what you can show. ${vocab.length ? `Words ${lz.fn ? 'buyers in this team' : 'this sector\'s buyers'} use: ${vocab.join(', ')}. ` : ''}What ${lz.fn ? 'this team' : 'the sector'} measures: ${lz.metrics.join(', ')}. A proof point that lands: ${proofSector}
 
 ---
 ` : ''}
 ## Channel Priority
 
-Example priorities: replace with your own.${v ? ` The order follows how deals usually run in ${v.name}: ${v.salesMotion}` : ''}
-
-**Recommended Priority Order**:
+${v ? `The order follows how deals usually run in ${v.name}: ${ctx.model && ctx.model !== 'saas' ? (0, rw_impact_ts_1.noSeatWords)(v.salesMotion) : v.salesMotion}\n\n` : ''}**Recommended Priority Order**:
 ${numbered(order.map(([, name, why]) => `${name} (${why})`))}
 
-**Next Step**: Use \`impact_full_audit\` for an input completeness score (how complete and specific your inputs are, not whether your positioning is right), with a generated positioning draft and a 30-day plan
+${sh ? `${sh}\n\n` : ''}**Next Step**: Use \`impact_full_audit\` for an input completeness score (how complete and specific your inputs are, not whether your positioning is right), with a generated positioning draft and a 30-day plan
 
 ${SUGGESTED}
 `;
