@@ -1678,7 +1678,7 @@ ${q1 ? `- A neutral question to ask a buyer about them: "${q1.replace(/\?$/, '')
             };
             const weakBlock = untied.length ? `\n**Weaknesses you gave** (about the alternatives as a group, not tied to one of them; test each with buyers, they are your notes and not verified facts):\n${list(untied)}\n` : '';
             const defaults = statusQuoDefaults(v, rc.model);
-            const prodName = (0, rw_impact_ts_1.plainName)(args.your_product, runningName(args.your_product.trim())) || 'Your product';
+            const prodName = (0, rw_impact_ts_1.plainName)(args.your_product, runningName(args.your_product.replace(/\s*\([^)]*\)/g, '').trim())) || 'Your product';
             const answered = strengthItems.length ? sParts.filter((s) => weaknessItems.some((w) => answerFor(w) === s)) : [];
             const inShort = `${prodName} is mapped against ${vendors.length ? `${vendors.length} ${describedOnly ? 'alternative' : 'competitor'}${vendors.length > 1 ? 's' : ''} you ${describedOnly ? 'described' : 'named'}` : 'no named competitor (you gave none)'}${statusQuo.length ? ` and ${statusQuo.length} way${statusQuo.length > 1 ? 's' : ''} your buyers cope without a vendor` : ''}. ${weaknessItems.length ? `You reported ${weaknessItems.length} weakness${weaknessItems.length > 1 ? 'es' : ''}: ${weaknessItems.length - untied.length} tied to a single alternative${untied.length ? ` and ${untied.length} about the group` : ''}.` : 'You reported no weaknesses, so each card says so and asks the buyer instead.'} ${strengthItems.length ? `${answered.length ? `${answered.length === 1 ? 'One' : answered.length} of your strengths answers a reported weakness directly; the others need proof that a buyer can check.` : 'None of your strengths answers a reported weakness directly by its words, so each needs proof a buyer can check.'}` : 'You gave no strengths, so no angle is drafted.'}${competitorsGiven ? '' : ' Because you gave no competitors, the answer below maps the usual alternatives for a seller like you and names no rival.'}`;
             const missing = [];
@@ -2173,7 +2173,7 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             const c = v ? committeeParts(v) : null;
             // Run 22 rewrite: from here down the answer is a finished analysis. The scores, the presets and the sizing arithmetic are unchanged (D80, D94); what is new is a plain
             // verdict first, the user's own inputs used segment by segment, and one closing list of what is missing.
-            const prodName = (0, rw_impact_ts_1.plainName)(args.product_description, runningName(args.product_description.trim())) || 'Your product';
+            const prodName = (0, rw_impact_ts_1.plainName)(args.product_description, runningName(args.product_description.replace(/\s*\([^)]*\)/g, '').trim())) || 'Your product';
             const prodText = args.product_description.trim().length <= 400 ? args.product_description.trim() : (0, rw_impact_ts_1.clip)(args.product_description, 300);
             const ccText = (args.current_customers || '').trim();
             const ccStems = contentStems(ccText);
