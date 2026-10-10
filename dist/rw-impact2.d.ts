@@ -107,7 +107,7 @@ export declare function keepLabel(item: string, cut: string): string;
 /** A short quotation of the user's words around a concern word ("patching, scaling, security and uptime handled"), or '' when no text holds it. A window that is only a list of
  *  service lines ("network, cloud, security, interactions and IoT") names what is sold, not what is proved, so it is passed over. */
 export declare function quoteAround(texts: string[], concern: RegExp): string;
-/** A product name typed as "Brand lowerwords, ..." where the lower word starts a list ("eClerx digital, data and ..."): the brand alone. */
+/** A product name typed as "Brand lowerwords, ..." where the lower word starts a list ("Voxel digital, data and ..."): the brand alone. */
 export declare function brandOnly(named: string): string;
 /** The clause of a text that holds a percentage or a multiplier ("zero-downtime upgrades and a 99.99% uptime SLA on production plans" gives "a 99.99% uptime SLA on production plans"). '' when there is none. */
 export declare function figureClause(text: string): string;

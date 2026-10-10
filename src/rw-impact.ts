@@ -255,12 +255,12 @@ export function linkScore(a: string, b: string): number {
   for (const [l, r] of CONCEPTS) if ((l.test(a) && r.test(b)) || (l.test(b) && r.test(a))) { n += 2; break; }
   return n;
 }
-/** The fragments of a product description that can stand as a lead: the items after a colon or "with", a clause after "under" or "on" (Plaid style lists keep their brackets whole). */
+/** The fragments of a product description that can stand as a lead: the items after a colon or "with", a clause after "under" or "on" (Linkly style lists keep their brackets whole). */
 export function productParts(desc: string): string[] {
   const out: string[] = [];
   const t = desc.replace(/\s+/g, ' ').trim();
   const [first, ...rest] = t.split(/\s*[:;]\s+|\s+(?:including|made of|made up of|consisting of|comprising|with)\s+/i);
-  // the lead description stays whole, without the brand names in front of "a ..." ("Wisely from Tanla Platforms, Wisely, a single API led platform ..." gives "a single API led platform ...")
+  // the lead description stays whole, without the brand names in front of "a ..." ("Quikly from Quikpay Platforms, Quikly, a single API led platform ..." gives "a single API led platform ...")
   const lead = first.replace(/^(?:[^,]{1,60},\s+){1,2}(?=(?:an?|the)\s)/, '').replace(/\s+(?:that|which|who)(?:\s+\w+)?$/i, '').trim();   // no half-open tail ("... platform that connects")
   if (lead.split(/\s+/).length >= 2) out.push(lead);
   for (const seg of rest) for (const piece of topLevel(seg)) for (const f of piece.replace(/\([^)]*\)/g, (m) => m.replace(/ /g, '\u0001')).split(/\s+and\s+(?=[A-Z])|\s+under\s+/)) {   // a bracket is never split
@@ -273,11 +273,11 @@ export function productParts(desc: string): string[] {
 export function isCompanyFact(s: string): boolean {
   return /\b(?:founded in|raised|funding|series [a-f]\b|valuation|investors?|headquarter\w*|employees|since \d{4}|ipo|publicly listed)\b/i.test(s);
 }
-/** The brand at the start of a description ("Plaid, a financial data network ..." gives "Plaid"; "Wisely from Tanla Platforms, Wisely, ..." gives "Wisely from Tanla Platforms"), or the fallback. */
+/** The brand at the start of a description ("Linkly, a financial data network ..." gives "Linkly"; "Quikly from Quikpay Platforms, Quikly, ..." gives "Quikly from Quikpay Platforms"), or the fallback. */
 export function brandName(desc: string, fallback: string): string {
   const t = desc.replace(/\s*\([^)]*\)/g, '').trim();
   const m = t.match(/^([A-Z][^,:;]{1,60}?),\s+(\S+)/);
-  // a single capitalised word is a brand only when an article follows ("Plaid, a financial data network"); "Operations, data and customer services" is a list
+  // a single capitalised word is a brand only when an article follows ("Linkly, a financial data network"); "Operations, data and customer services" is a list
   if (m && (m[1].split(/\s+/).length >= 2 || /^(?:an?|the)$/i.test(m[2])) && m[1].split(/\s+/).length <= 8 && /^[A-Z]/.test(m[1]) && !/\b(?:is|are|that|which|who)\b/.test(m[1])) return m[1].trim();
   return fallback;
 }

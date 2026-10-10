@@ -1,6 +1,6 @@
 // Run 22 round 3 follow-up, impact_craft_message: written before the fix (test first). A product typed as a description that opens with an ordinary capitalised word
 // followed by a comma list ("Modern cloud, security and data services ...") must not be named by that first word; only a typed brand (a word with an inner capital, a digit
-// or a dot, such as eClerx or Gnani.ai) followed by its own list is named by the brand alone. The rows are invented; the real E11 check of the project (the "name cut to
+// or a dot, such as Voxel or Voxa.ai) followed by its own list is named by the brand alone. The rows are invented; the real E11 check of the project (the "name cut to
 // one word" block) is run over them in the styles plain and para when the private project folder exists. Run: node --no-warnings --test tests/run22-impact_craft_message-name.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
