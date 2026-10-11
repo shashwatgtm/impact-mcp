@@ -407,41 +407,45 @@ export function isNamedPart(x: string): boolean {
 export interface FactCtx { seg: string; deal: string; cycle: string; signer: string; motion: string; objections: { objection: string; response: string }[]; metrics: string[]; parts: string[]; fit: string[]; usedObjections: Set<string>; usedMeasures: Set<string>; usedKinds: Map<string, number>; }
 const firstClause = (t: string): string => t.replace(/\s+/g, ' ').split(/;\s|\.\s/)[0].replace(/[.]+$/, '').trim();
 function pilotPhrase(motion: string): string {
-  const m = motion.match(/\b(?:(?:a|an)\s+)?(?:paid\s+)?(?:pilot|trial|proof of value|back test|sandbox|demo|discovery stage|parallel pay run)[^;,.]*/i);
+  // Run 27B (trace: "whether a trials and self serve where buyers expect them is how ... buyers start"): only one named way to start fits the slot,
+  // so the noun must be singular and the phrase stops before a clause ("where ...")
+  const m = motion.match(/\b(?:(?:a|an)\s+)?(?:paid\s+)?(?:pilot|trial|proof of value|back test|sandbox|demo|discovery stage|parallel pay run)\b(?!s)[^;,.]*/i);
   if (!m) return '';
-  let t = m[0].trim().replace(/^./, (x) => x.toLowerCase());
+  let t = m[0].trim().replace(/^./, (x) => x.toLowerCase()).split(/\s+(?:where|which|that|when)\s+/i)[0].trim();
   while ((t.match(/\)/g) || []).length > (t.match(/\(/g) || []).length) t = t.replace(/\)\s*$/, '').trim();   // a bracket cut in the middle is not carried over
   return /^(?:a|an) /.test(t) ? t : `a ${t}`;
 }
 /** Two or three facts to find out about one segment, taken from the sector notes and the user's own inputs; `order` is the position among segments of the same kind, so two such segments differ. */
 export function segmentFacts(c: FactCtx, order: number): string[] {
   const type = segmentType(c.seg);
+  // Run 27B (trace: "who signs $4,800 in owners"): a segment that names a group of people is written "among owners", not as a place
+  const inSeg = (seg: string): string => (/\b(?:owners|architects|contractors|subcontractors|founders|developers|engineers|managers|agencies|consultants|freelancers|operators|partners|planners|brokers|dealers|resellers)$/i.test(seg.trim()) ? `among ${seg}` : `in ${seg}`);
   const deal = c.deal || 'your price', cycle = c.cycle || 'your sales cycle';
   const pool: Record<string, string | null> = {};
   const steps = c.motion.split(/;\s+|,\s+then\s+|\.\s+/).map((x) => x.replace(/[.]+$/, '').trim().replace(/^./, (y) => y.toLowerCase())).filter((x) => x.length > 12);
   pool.cycle = ({
-    education: `whether a purchase of ${deal} in ${c.seg} is an institution budget decision or needs a committee or a tender, and whether it waits for the start of a term or a budget year, against ${cycle}`,
-    public: `whether a purchase of ${deal} in ${c.seg} is a department decision or goes through a formal tender or procurement round, and how long that takes against ${cycle}`,
-    regulated: `how long the security, vendor risk and compliance review takes in ${c.seg} before a purchase of ${deal} can be signed, against ${cycle}`,
-    large: `whether procurement and a security review join a purchase of ${deal} in ${c.seg}, and what that does to ${cycle}`,
-    small: `whether one owner or department head in ${c.seg} can decide a purchase of ${deal} alone, and whether ${cycle} is longer than they need`,
-    mid: `which department head in ${c.seg} holds a budget of ${deal}, and whether they decide inside ${cycle}`,
-    industrial: `how long a purchase of ${deal} takes in ${c.seg} from first call to signature, and whether a site visit or plant approval adds to ${cycle}`,
-    retail: `whether a purchase of ${deal} in ${c.seg} is timed around a peak season or a budget year, and how that fits ${cycle}`,
-    tech: `whether a team in ${c.seg} can start on its own and how long a company decision on ${deal} takes after that, against ${cycle}`,
-    telecom: `how long a purchase of ${deal} takes in ${c.seg} from first test to contract, against ${cycle}`,
-    media: `who approves a purchase of ${deal} in ${c.seg} and how long it takes, against ${cycle}`,
-    other: `how long a purchase of ${deal} takes in ${c.seg} from first call to signature, against ${cycle}${steps.length ? ` (the sector notes describe the usual path in steps; one of them is: ${steps[order % steps.length]})` : ''}`,
+    education: `whether a purchase of ${deal} ${inSeg(c.seg)} is an institution budget decision or needs a committee or a tender, and whether it waits for the start of a term or a budget year, against ${cycle}`,
+    public: `whether a purchase of ${deal} ${inSeg(c.seg)} is a department decision or goes through a formal tender or procurement round, and how long that takes against ${cycle}`,
+    regulated: `how long the security, vendor risk and compliance review takes ${inSeg(c.seg)} before a purchase of ${deal} can be signed, against ${cycle}`,
+    large: `whether procurement and a security review join a purchase of ${deal} ${inSeg(c.seg)}, and what that does to ${cycle}`,
+    small: `whether one owner or department head ${inSeg(c.seg)} can decide a purchase of ${deal} alone, and whether ${cycle} is longer than they need`,
+    mid: `which department head ${inSeg(c.seg)} holds a budget of ${deal}, and whether they decide inside ${cycle}`,
+    industrial: `how long a purchase of ${deal} takes ${inSeg(c.seg)} from first call to signature, and whether a site visit or plant approval adds to ${cycle}`,
+    retail: `whether a purchase of ${deal} ${inSeg(c.seg)} is timed around a peak season or a budget year, and how that fits ${cycle}`,
+    tech: `whether a team ${inSeg(c.seg)} can start on its own and how long a company decision on ${deal} takes after that, against ${cycle}`,
+    telecom: `how long a purchase of ${deal} takes ${inSeg(c.seg)} from first test to contract, against ${cycle}`,
+    media: `who approves a purchase of ${deal} ${inSeg(c.seg)} and how long it takes, against ${cycle}`,
+    other: `how long a purchase of ${deal} takes ${inSeg(c.seg)} from first call to signature, against ${cycle}${steps.length ? ` (the sector notes describe the usual path in steps; one of them is: ${steps[order % steps.length]})` : ''}`,
   } as Record<SegType, string>)[type];
   pool.signer = c.signer
-    ? `who signs ${deal} in ${c.seg}: the sector notes say "${c.signer}", so ask whether that holds here${type === 'large' || type === 'public' || type === 'regulated' ? ' or whether a committee approves it' : ' and whether that person alone approves it'}`
-    : `who signs ${deal} in ${c.seg}, and whether that person alone approves it`;
+    ? `who signs ${deal} ${inSeg(c.seg)}: the sector notes say "${c.signer}", so ask whether that holds here${type === 'large' || type === 'public' || type === 'regulated' ? ' or whether a committee approves it' : ' and whether that person alone approves it'}`
+    : `who signs ${deal} ${inSeg(c.seg)}, and whether that person alone approves it`;
   const pilot = pilotPhrase(c.motion);
   pool.pilot = pilot ? `whether ${pilot} is how ${c.seg} buyers start, and whether it fits inside ${cycle}` : null;
   const ow = OBJ_WORDS[type];
   const rankedO = c.objections.map((o, i) => ({ o, n: (`${o.objection} ${o.response}`.match(new RegExp(ow.source, 'gi')) || []).length * 10 - i })).sort((x, y) => y.n - x.n).map((x) => x.o);
   const o = rankedO.find((x) => !c.usedObjections.has(x.objection)) || rankedO[0] || null;
-  pool.objection = o ? `the objection to expect in ${c.seg}: "${o.objection}", with this pattern of answer from the sector notes: ${firstClause(o.response).replace(/^./, (x) => x.toLowerCase())}` : null;
+  pool.objection = o ? `the objection to expect ${inSeg(c.seg)}: "${o.objection}", with this pattern of answer from the sector notes: ${firstClause(o.response).replace(/^./, (x) => x.toLowerCase())}` : null;
   const mw = METRIC_WORDS[type];
   const ms = c.metrics.filter((m) => mw.test(m));
   const m1 = ms.find((m) => !c.usedMeasures.has(m)) || '';
