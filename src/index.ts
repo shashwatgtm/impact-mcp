@@ -1922,6 +1922,11 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
           items: { type: 'string' },
           description: 'The market segments you are weighing (for example Mid-market fintech, Enterprise banks, Small retail chains)'
         },
+        product_parts: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'The parts or modules of your product, one per entry. Each entry is read whole; product_description still works without it'
+        },
         current_customers: {
           type: 'string',
           description: 'Description of your current/best customers. With customer_pain and average_deal_size it ranks the segments (the answer says which method it used); without them it is shown only and the keyword presets score the segments'
@@ -2117,7 +2122,9 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
           ? `The keyword presets cannot separate ${tied.length === nSeg ? `any of your ${nSeg} segments` : `the top ${tied.length} segments (${tied.map((t) => t.name).join(', ')})`}, so nothing here chooses a beachhead for ${prodName}; ${missingForOwn.join(' and ')} ${missingForOwn.length > 1 ? 'were' : 'was'} not given. Choose with the segment-by-segment facts below.${oneFact}`
           : `${capFirst(beachhead.name)} comes first only because its name contains the keyword "${beachhead.kw}": the presets do not use your deal size${acvGiven ? ` of ${acvGiven}` : ''}${cycleGiven ? `, your sales cycle of ${cycleGiven}` : ''} or anything known about your market (${missingForOwn.join(' and ')} ${missingForOwn.length > 1 ? 'were' : 'was'} not given). Treat ${beachhead.name} as the segment to test first for ${prodName}.${oneFact}`);
       const askQ = (i: number): string => nsw(v && v.discovery.length ? v.discovery[i % v.discovery.length] : 'Which problem do you raise first, and what have you tried before?');
-      const prodParts = productParts(args.product_description);
+      // Run 27B (b): product_parts, one part per entry, each read whole; the lead description still comes from product_description
+      const partsList = Array.isArray((args as Record<string, unknown>).product_parts) ? ((args as Record<string, unknown>).product_parts as unknown[]).filter((x): x is string => typeof x === 'string' && !!x.trim()).map((x) => x.replace(/\s+/g, ' ').trim()).slice(0, 20) : [];
+      const prodParts = partsList.length ? [productParts(args.product_description)[0] || args.product_description, ...partsList] : productParts(args.product_description);
       const named = prodParts.slice(1);   // the parts named after the lead description (platforms, modules, products)
       const comm = v ? committeeParts(v) : null;
       const typeSeen = new Map<string, number>();
