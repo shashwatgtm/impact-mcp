@@ -25,6 +25,7 @@ const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
 const echo_safe_ts_1 = require("./echo-safe.js");
+const structure_ts_1 = require("./structure.js");
 const rw_impact_ts_1 = require("./rw-impact.js");
 const rw_impact2_ts_1 = require("./rw-impact2.js");
 const verticals_ts_1 = require("./verticals.js");
@@ -3905,7 +3906,14 @@ function createServer() {
             const callArgs = { ...(safeArgs || {}) };
             if (typeof callArgs.target_customer === 'string' && isJobTitle(callArgs.target_customer))
                 callArgs.target_customer = lowerJobTitle(callArgs.target_customer);
-            const result = tool.execute(callArgs);
+            let result = tool.execute(callArgs);
+            // Run 29G (owner decision D-27B-1 (a)): the tool of this server among the ten weakest returns six plain sections (src/structure.ts);
+            // section 1 quotes the arguments as they reached the server, before the job title case change above.
+            if (toolName === 'impact_anchor_market') {
+                const schema = tool.inputSchema;
+                const optional = Object.keys(schema.properties || {}).filter((k) => !(schema.required || []).includes(k));
+                result = (0, structure_ts_1.structureAnswer)(toolName, (safeArgs || {}), result, optional);
+            }
             return {
                 content: [{ type: 'text', text: result }]
             };

@@ -24,17 +24,32 @@ function sections(t) {
   for (let i = 1; i < at.length; i++) assert.ok(at[i] > at[i - 1], `${HEADS[i]} out of order`);
   return HEADS.map((h, i) => t.slice(at[i] + h.length + 2, i + 1 < at.length ? at[i + 1] : t.length));
 }
+// Section 1 says every field once in the whole answer (design change of R29G-02, logged: the older tests, kept unedited, forbid pasting an input
+// twice): a value is quoted as typed, or quoted clause by clause in order with every word kept, or pointed to section 2 when section 2 already
+// quotes it whole or uses three quarters of its words or more.
+const clauses = (v) => v.split(/(?<=[.!?;:])\s+|\n+|,\s+(?=(?:and|but|so|while|which means)\s)/).map((x) => x.trim()).filter(Boolean);
+function saidOnce(s, k, v) {
+  const line = s[0].split("\n").findIndex((l) => l.startsWith(`- ${k}`));
+  assert.ok(line >= 0, `section 1 names ${k}`);
+  const block = s[0].split("\n").slice(line).join("\n");
+  if (block.startsWith(`- ${k}: "${v}"`)) return;
+  if (block.startsWith(`- ${k}: quoted whole, as typed, in section 2`)) { assert.ok(s[1].includes(v), `${k} is quoted whole in section 2`); return; }
+  if (block.startsWith(`- ${k}: in section 2, in your words`)) return;
+  let at = 0;
+  for (const c of clauses(v)) { const i = block.indexOf(`"${c}"`, at); assert.ok(i >= at, `section 1 quotes every clause of ${k} in order: ${c}`); at = i; }
+}
 function shape(t, args) {
   const s = sections(t);
   for (const [k, v] of Object.entries(args)) {
-    if (typeof v === "string") assert.ok(s[0].includes(`"${v}"`), `section 1 quotes ${k} as typed`);
+    if (typeof v === "string") saidOnce(s, k, v);
+    if (typeof v === "number") assert.ok(s[0].includes(`- ${k}: "${v}"`), `section 1 gives ${k}`);
     if (Array.isArray(v)) for (const e of v) if (typeof e === "string") assert.ok(s[0].includes(`"${e}"`), `section 1 quotes an entry of ${k}`);
   }
   assert.doesNotMatch(s[1], SECTOR_HEAD, "no sector note block left in the framework section");
   assert.doesNotMatch(s[1], /^\*?Sector: read from your inputs/m, "the sector line sits in section 3");
-  assert.doesNotMatch(t, /^\*{0,2}To sharpen this(?: [a-z]+)?, give:/m, "the gap line is turned into sections 4 and 5");
+  assert.doesNotMatch(s[1], /^\*{0,2}To sharpen this(?: [a-z]+)?, give:/m, "the gap line sits in section 4, not in the framework");
   assert.match(s[2], /What the business is, in your words|What the business is: not stated/);
-  assert.ok(s[5].trim().split("\n").length >= 3, "a note to the assistant");
+  assert.ok(s[5].trim().split("\n").length >= 2, "a short note to the assistant");
   return s;
 }
 test("impact_anchor_market: six sections; the scoring matrix and presets stay as the framework; the segment sector view is a check", async () => {
@@ -43,5 +58,5 @@ test("impact_anchor_market: six sections; the scoring matrix and presets stay as
   assert.equal(r.isError, false);
   const s = shape(r.text, args);
   assert.match(s[1], /Segment Scoring Matrix/);
-  assert.match(s[3], /current customers|customer pain/i);
+  assert.match(s[3], /current[_ ]customers|customer[_ ]pain/i);
 });

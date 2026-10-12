@@ -7,6 +7,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { neutraliseDeep, neutraliseText } from './echo-safe.ts';
+import { structureAnswer } from './structure.ts';
 import { partLabel, isNamedPart, segmentFacts, segmentType, segmentFit, segmentOverlap, roleOk, linkScore, productParts, isCompanyFact, brandName, plainName, tidyLabel, splitStrengths, leadAud, noSeatWords, categoryNoun, takeLabel, topLevel, joinAnd, clip, outcomeItems, outcomeClause, leadItems, classifyProof, MEASURE_LINKS, ctaNoun, sharpenLine, type Kit, type ProofKind } from './rw-impact.ts';
 import { type Kit2, type Piece, partText, sentence, shapeOf, parseBenefit, partsInline, resultClause, firstParts, shortPhrase, needSentence, needPieces, differenceSentence, parseAudience, audienceShort, parseAlternative, altObjection, parseDifference, sharpenText, makeFresh, baseForm, leadClause, parseStatement, plainResult, stemSet, shared, figureMeasures, keepLabel, quoteAround, brandOnly, figureClause, toYou, durationMeasures, priceBasis, subjectOf, NO_SOURCE, sourceOr, selfRef, ownNounsOf, type Alternative } from './rw-impact2.ts';
 import { detectVertical, detectModel, explainSector, profileFor, SAAS_ONLY, SUBTYPES, SECTOR_MODEL, MODEL_NAME, BUSINESS_MODELS, VERTICALS, type Vertical, type VerticalId, type BusinessModel, type ReaderInput } from './verticals.ts';
@@ -3729,7 +3730,14 @@ export function createServer(): Server {
       // ("head of marketing"); names and acronyms in it keep their capitals. Any other target customer stays as typed.
       const callArgs = { ...((safeArgs || {}) as Record<string, unknown>) };
       if (typeof callArgs.target_customer === 'string' && isJobTitle(callArgs.target_customer)) callArgs.target_customer = lowerJobTitle(callArgs.target_customer);
-      const result = tool.execute(callArgs as any);
+      let result = tool.execute(callArgs as any);
+      // Run 29G (owner decision D-27B-1 (a)): the tool of this server among the ten weakest returns six plain sections (src/structure.ts);
+      // section 1 quotes the arguments as they reached the server, before the job title case change above.
+      if (toolName === 'impact_anchor_market') {
+        const schema = tool.inputSchema as { properties?: Record<string, unknown>; required?: string[] };
+        const optional = Object.keys(schema.properties || {}).filter((k) => !(schema.required || []).includes(k));
+        result = structureAnswer(toolName, (safeArgs || {}) as Record<string, unknown>, result, optional);
+      }
       return {
         content: [{ type: 'text', text: result }]
       };
