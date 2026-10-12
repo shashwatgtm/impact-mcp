@@ -86,7 +86,10 @@ for (const f of fields) {
         assert.equal(r.isError, false, `${id}: refused: ${t.slice(0, 200)}`);
         // A field the tool reads as data without printing it for this input (a sector name found inside the text, a count line
         // with no readable number) leaves nothing to keep; then no part of the hostile text may be in the answer either.
-        if (!t.includes(words)) assert.ok(!t.includes(hostile.slice(0, 12)) && !t.includes("PWNED-7731"), `${id}: the user's words "${words}" are missing from the answer`);
+        // Run 30D: the production text rule (run 9) lowers the first letter of a phrase the tool puts mid-sentence, so the words
+        // count as kept with that one letter lowered too.
+        const kept = t.includes(words) || t.includes(words[0].toLowerCase() + words.slice(1));
+        if (!kept) assert.ok(!t.includes(hostile.slice(0, 12)) && !t.includes("PWNED-7731"), `${id}: the user's words "${words}" are missing from the answer`);
       }
     }
   });
