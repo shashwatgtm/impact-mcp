@@ -6,6 +6,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { neutraliseDeep } from './echo-safe.ts';
 
 // =============================================================================
 // IMPACT MCP v2.0.0 - Hypothesis-Driven B2B Positioning Engine
@@ -2394,7 +2395,11 @@ export function createServer(): Server {
   }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const problem = checkRequiredInputs(request.params.name, request.params.arguments as Record<string, unknown> | undefined);
+    // Run 20 round 1d (D086), the one choke point: every tools/call (stdio, hosted /mcp and /api/tools all come through here)
+    // has its text arguments made inert once, before any tool reads them. The words stay; markup, tracking images, script
+    // links, hidden characters and fake chat markers do not stay live (src/echo-safe.ts).
+    const safeArgs = neutraliseDeep(request.params.arguments) as Record<string, unknown> | undefined;
+    const problem = checkRequiredInputs(request.params.name, safeArgs);
     if (problem) {
       return { content: [{ type: 'text', text: problem }], isError: true };
     }
@@ -2414,7 +2419,7 @@ export function createServer(): Server {
     try {
       // Text only (run 11, R11-06): a target customer that is a job title reads in lower case in running text
       // ("head of marketing"); names and acronyms in it keep their capitals. Any other target customer stays as typed.
-      const callArgs = { ...((request.params.arguments || {}) as Record<string, unknown>) };
+      const callArgs = { ...((safeArgs || {}) as Record<string, unknown>) };
       if (typeof callArgs.target_customer === 'string' && isJobTitle(callArgs.target_customer)) callArgs.target_customer = lowerJobTitle(callArgs.target_customer);
       const result = tool.execute(callArgs as any);
       return {
