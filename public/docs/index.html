@@ -229,7 +229,7 @@
   <ul class="hx-prose">
     <li>Address: <code>https://impact.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
-    <li>Rate limit: 300 requests per minute per IP address. Server: <code>impact-mcp</code> version 2.2.20.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>impact-mcp</code> version 2.2.21.</li>
     <li>Limits: 262,144 bytes per call; text fields up to 4,000 characters; one call per request (no batches). A call over a limit is refused before the tool runs.</li>
     <li>Local use: <code>npx -y @shashwatgtmalpha/impact-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
   </ul>
@@ -276,13 +276,14 @@
 <tr><td>2.2.16</td><td>30 September 2026</td><td>GitHub, commit 1dc422e (@shashwatgtmalpha/impact-mcp)</td></tr>
 <tr><td>2.2.17</td><td>30 September 2026</td><td>GitHub, commit f58512f (@shashwatgtmalpha/impact-mcp)</td></tr>
 <tr><td>2.2.18</td><td>30 September 2026</td><td>GitHub, commit a2706f7 (@shashwatgtmalpha/impact-mcp)</td></tr>
-<tr><td>2.2.20 (this site)</td><td>12 October 2026</td><td>safety fix only: the instruction echo safeguard; tool list and answers otherwise unchanged</td></tr>
+<tr><td>2.2.20</td><td>12 October 2026</td><td>safety fix only: the instruction echo safeguard; tool list and answers otherwise unchanged</td></tr>
+<tr><td>2.2.21 (this site)</td><td>15 October 2026</td><td>safety fix only, safeguard run 2: names a caller makes up are made inert where repeated, markup formed by joined inputs is made inert, an instruction to state a made up fact or set a score is quoted; tool list and ordinary answers unchanged</td></tr>
   </tbody></table></div>
 </section>
 
 <section class="hx-section" aria-labelledby="ref-h">
   <h2 id="ref-h">Tool reference</h2>
-  <p class="hx-sub">Generated from the server's own input schemas, version 2.2.20.</p>
+  <p class="hx-sub">Generated from the server's own input schemas, version 2.2.21.</p>
 </section>
 <section class="hx-section" id="impact-get-framework" aria-labelledby="d-impact-get-framework">
   <h3 id="d-impact-get-framework">IMPACT Framework Guide</h3>
