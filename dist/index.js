@@ -1988,6 +1988,8 @@ ${SUGGESTED}
             const competitors = args.competitors || ['Status quo', 'DIY solutions'];
             const differentiation = args.key_differentiation || 'unique approach';
             // Text only (run 12): the words shown for the differentiation and the main alternative; a default is never quoted as the user's words.
+            // Run 40S3 fix round (IMPACT auditor F1): the tool's own placeholder is written as production writes it (firstWords
+            // escapes the piece it cuts, which is right for caller text only)
             const diffShown = args.key_differentiation ? mid(args.key_differentiation) : '[your differentiation]';
             const alternativeShown = args.competitors && args.competitors.length ? `[the alternative your buyers use most, for example ${args.competitors[0]}]` : '[the alternative your buyers use most]';
             // Run 40S2: the scores count the characters the caller typed, not the backslashes of the escape pass (each backslash
@@ -2166,7 +2168,7 @@ Based on your inputs, here's a generated positioning statement:
 
 ### Tagline Options
 1. [Only if true and provable: "No more ${lowerCommonWords(args.problem_solved.split(' ').slice(0, 4).join(' '))}"]
-2. "The ${firstWords(diffShown, 3)} solution"
+2. "The ${args.key_differentiation ? firstWords(diffShown, 3) : diffShown} solution"
 3. "Built for ${shortAudience(args.target_customer)}"
 
 ---
