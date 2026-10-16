@@ -6,7 +6,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { cleanDeep, escapeDeep, escapeText, dropLoneBackslash } from './escape-inputs.ts';
+import { cleanDeep, escapeDeep, escapeText, escapePiece } from './escape-inputs.ts';
 
 // =============================================================================
 // IMPACT MCP v2.0.0 - Hypothesis-Driven B2B Positioning Engine
@@ -175,20 +175,22 @@ function lowerCommonWords(phrase: string): string {
   let afterName = false;
   let first = true;
   const t = fixNames(phrase.trim());
-  if (isJobTitle(t)) return lowerJobTitle(t);
+  if (isJobTitle(t)) return escapePiece(lowerJobTitle(t));
   const parts = t.split(/(\s+)/);
-  return parts.map((w, i) => {
+  return escapePiece(parts.map((w, i) => {
     if (!w.trim()) return w;
     const lower = first ? !keepsFirstCapital(w, parts[i + 2] || '', parts[i + 4] || '') : !afterName && isCommonWord(w);
     first = false;
     afterName = !lower && /^[A-Z]/.test(w);
     return lower ? w.replace(/[A-Z]/, c => c.toLowerCase()) : w;
-  }).join('');
+  }).join(''));
 }
 // Text only (run 8, run 9): an input phrase placed mid-sentence starts in lower case ("That Fewer no-shows" becomes
 // "That delivers fewer no-shows") only when its first word is a common word; names and acronyms keep their capitals.
+// Run 40S2: every helper below that returns a cut, joined or case-changed piece of caller text returns it through
+// escapePiece (src/escape-inputs.ts), after every cut and case change, so the piece is inert in its new context.
 function mid(phrase: string): string {
-  return lowerFirstIfCommon(phrase);
+  return escapePiece(lowerFirstIfCommon(phrase));
 }
 // Text only: an input phrase that starts a sentence or a headline starts with a capital. A first word written with
 // a small letter and an inner capital (iPhone, eBay) is a name and is kept as typed.
@@ -201,8 +203,8 @@ function aOrAn(phrase: string): string {
 }
 function cap(phrase: string): string {
   const t = fixNames(phrase.trim());
-  if (/^[a-z]+[A-Z]/.test(t.split(/\s+/)[0] || '')) return t;
-  return t.charAt(0).toUpperCase() + t.slice(1);
+  if (/^[a-z]+[A-Z]/.test(t.split(/\s+/)[0] || '')) return escapePiece(t);
+  return escapePiece(t.charAt(0).toUpperCase() + t.slice(1));
 }
 // Text only: the first words of a phrase for a short tagline, without a dangling joining word at the end (run 9: also
 // no dangling pronoun or helper verb, so "Salesforce data you can trust" gives "Salesforce data", not "Salesforce data you can").
@@ -238,7 +240,10 @@ function leadAudience(words: string[]): string[] | null {
   return lead.length && lead.length <= 5 && !/\d/.test(lead.join(' ')) ? lead : null;
 }
 function shortAudience(phrase: string): string {
-  const w = mid(phrase).split(/\s+/);
+  return escapePiece(shortAudienceWords(phrase));
+}
+function shortAudienceWords(phrase: string): string {
+  const w = lowerFirstIfCommon(phrase).split(/\s+/);
   if (w.length <= 5) return w.join(' ');
   const lead = leadAudience(w);
   if (lead) return lead.join(' ');
@@ -253,9 +258,9 @@ function shortAudience(phrase: string): string {
 }
 // The same as a plural for "Join 100+ ...": a job title of the form "head of marketing" becomes "heads of marketing".
 function pluralAudience(phrase: string): string {
-  const a = shortAudience(phrase);
+  const a = shortAudienceWords(phrase);
   const m = a.match(/^([A-Za-z]+)( of .+)$/);
-  return m && !/s$/i.test(m[1]) ? `${m[1]}s${m[2]}` : a;
+  return escapePiece(m && !/s$/i.test(m[1]) ? `${m[1]}s${m[2]}` : a);
 }
 function firstWords(phrase: string, n: number): string {
   const all = phrase.trim().split(/\s+/);
@@ -270,7 +275,7 @@ function firstWords(phrase: string, n: number): string {
     }
   }
   while (w.length > 1 && JOINING_WORD.test(w[w.length - 1])) w.pop();
-  return w.join(' ').replace(/[,;:]$/, '');
+  return escapePiece(w.join(' ').replace(/[,;:]$/, ''));
 }
 
 
@@ -917,10 +922,10 @@ ${SUGGESTED}
       // Parse any provided weaknesses/strengths into insights
       let customInsights = '';
       if (weaknesses) {
-        customInsights += `\n**Customer-Reported Competitor Issues**:\n${weaknesses.split(/\n|,(?!\d{3}(?!\d))/).map(w => `- ${w.trim()}`).join('\n')}\n`;
+        customInsights += `\n**Customer-Reported Competitor Issues**:\n${weaknesses.split(/\n|,(?!\d{3}(?!\d))/).map(w => `- ${escapePiece(w.trim())}`).join('\n')}\n`;
       }
       if (strengths) {
-        customInsights += `\n**Your Key Differentiators**:\n${strengths.split(/\n|,(?!\d{3}(?!\d))/).map(s => `- ${s.trim()}`).join('\n')}\n`;
+        customInsights += `\n**Your Key Differentiators**:\n${strengths.split(/\n|,(?!\d{3}(?!\d))/).map(s => `- ${escapePiece(s.trim())}`).join('\n')}\n`;
       }
 
       return `# Competitive Landscape Analysis
@@ -928,7 +933,7 @@ ${SUGGESTED}
 ## Market Context
 **Your Product**: ${args.your_product}
 **Category**: ${args.category}
-**Analyzed Competitors**: ${competitors.join(', ')}${competitorsGiven ? '' : ' (examples: you supplied no competitors; replace them with your own)'}
+**Analyzed Competitors**: ${escapePiece(competitors.join(', '))}${competitorsGiven ? '' : ' (examples: you supplied no competitors; replace them with your own)'}
 
 ---
 
@@ -1117,8 +1122,8 @@ Ask prospects these questions to understand their competitive context:
       const userMultiplier = /(\d+)x/.test(metrics);
       const userTime = /(\d+)\s*(days?|weeks?|months?)/i.test(metrics);
       // Text only (run 12): the user's own words for a percent result ("40% faster"), for the website hero line.
-      const userPercentWords = dropLoneBackslash((metrics.split(/[,;]/).find(p => /\d+%/.test(p)) || '').trim().replace(/[.!]+$/, ''));
-      const metricsText = dropLoneBackslash(metrics.trim().replace(/[.!]+$/, ''));
+      const userPercentWords = escapePiece((metrics.split(/[,;]/).find(p => /\d+%/.test(p)) || '').trim().replace(/[.!]+$/, ''));
+      const metricsText = escapePiece(metrics.trim().replace(/[.!]+$/, ''));
 
       // Generate outcome-based value metrics
       const outcomeLower = args.key_outcome.toLowerCase();
@@ -1499,8 +1504,8 @@ ${segLine}
 Based on beachhead selection, your ICP likely includes:
 
 **Company Characteristics**:
-- Industry: ${beachhead.name.split('(')[0].trim()}
-- Size: ${beachhead.name.includes('(') ? beachhead.name.match(/\(([^)]+)\)/)?.[1] || '50-500 employees' : '50-500 employees'}${sizeIsUsers ? '' : ` ${EXAMPLE}`}
+- Industry: ${escapePiece(beachhead.name.split('(')[0].trim())}
+- Size: ${beachhead.name.includes('(') ? escapePiece(beachhead.name.match(/\(([^)]+)\)/)?.[1] || '') || '50-500 employees' : '50-500 employees'}${sizeIsUsers ? '' : ` ${EXAMPLE}`}
 - Tech stack: [fill in from your best customers, for example modern and willing to adopt new tools]
 - Growth stage: ${beachhead.keyword ? '[fill in, for example Series B+ or established]' : '[fill in]'}
 
@@ -1641,7 +1646,7 @@ Example pillars: replace with your own.
 ### A/B Testing Options
 
 **Variation A: lead with pain**
-> "Tired of ${competitor.trim().replace(/^traditional /, '')}? ${product} offers ${diff}."
+> "Tired of ${escapePiece(competitor.trim().replace(/^traditional /, ''))}? ${product} offers ${diff}."
 
 **Variation B: lead with outcome**
 > "${cap(args.key_benefit)}. That's what ${mid(args.target_customer)} get with ${product}."
@@ -2037,6 +2042,10 @@ ${SUGGESTED}
       const diffShown = args.key_differentiation ? mid(args.key_differentiation) : '[your differentiation]';
       const alternativeShown = args.competitors && args.competitors.length ? `[the alternative your buyers use most, for example ${args.competitors[0]}]` : '[the alternative your buyers use most]';
       
+      // Run 40S2: the scores count the characters the caller typed, not the backslashes of the escape pass (each backslash
+      // and the character after it are one typed character), so an escaped value scores exactly like its twin.
+      const typedLength = (s: string) => s.replace(/\\([\s\S])/g, '$1').replace(/\\$/, '').length;
+
       // Calculate scores based on input completeness and clarity
       const scores = {
         identify: 0,
@@ -2049,8 +2058,8 @@ ${SUGGESTED}
       
       // Scoring logic based on provided inputs
       // Identify Champions (based on target customer clarity)
-      if (args.target_customer.length > 20 && args.target_customer.includes(' ')) {
-        scores.identify = args.target_customer.length > 50 ? 85 : 70;
+      if (typedLength(args.target_customer) > 20 && args.target_customer.includes(' ')) {
+        scores.identify = typedLength(args.target_customer) > 50 ? 85 : 70;
       } else {
         scores.identify = 45;
       }
@@ -2065,7 +2074,7 @@ ${SUGGESTED}
       }
       
       // Pinpoint Value (based on differentiation)
-      if (differentiation.length > 30) {
+      if (typedLength(differentiation) > 30) {
         scores.pinpoint = differentiation.includes('only') || differentiation.includes('unique') ? 85 : 70;
       } else {
         scores.pinpoint = 50;
@@ -2081,7 +2090,7 @@ ${SUGGESTED}
       }
       
       // Craft Message (based on current positioning)
-      if (args.current_positioning && args.current_positioning.length > 50) {
+      if (args.current_positioning && typedLength(args.current_positioning) > 50) {
         scores.craft = args.current_positioning.includes('unlike') || args.current_positioning.includes('only') ? 85 : 70;
       } else if (args.current_positioning) {
         scores.craft = 55;
@@ -2090,7 +2099,7 @@ ${SUGGESTED}
       }
       
       // Translate Execution (based on customer feedback indicating market presence)
-      if (args.customer_feedback && args.customer_feedback.length > 50) {
+      if (args.customer_feedback && typedLength(args.customer_feedback) > 50) {
         scores.translate = 75;
       } else if (args.customer_feedback) {
         scores.translate = 55;
@@ -2202,7 +2211,7 @@ Based on your inputs, here's a generated positioning statement:
 > **For** ${mid(args.target_customer)}
 > **Who** struggle with ${lowerCommonWords(args.problem_solved)}
 > **${company}** **is a** solution
-> **That** ${args.product_description.toLowerCase().includes('helps') ? args.product_description.split('helps')[1]?.trim() || '[delivers the result you promise]' : '[delivers the result you promise]'}
+> **That** ${args.product_description.toLowerCase().includes('helps') ? escapePiece(args.product_description.split('helps')[1]?.trim() || '') || '[delivers the result you promise]' : '[delivers the result you promise]'}
 > **Unlike** ${alternativeShown}
 > **We** offer ${diffShown}
 
@@ -2420,7 +2429,7 @@ export function createServer(): Server {
       // Text only (run 11, R11-06): a target customer that is a job title reads in lower case in running text
       // ("head of marketing"); names and acronyms in it keep their capitals. Any other target customer stays as typed.
       const callArgs = { ...((safeArgs || {}) as Record<string, unknown>) };
-      if (typeof callArgs.target_customer === 'string' && isJobTitle(callArgs.target_customer)) callArgs.target_customer = lowerJobTitle(callArgs.target_customer);
+      if (typeof callArgs.target_customer === 'string' && isJobTitle(callArgs.target_customer)) callArgs.target_customer = escapePiece(lowerJobTitle(callArgs.target_customer));
       const result = tool.execute(callArgs as any);
       return {
         content: [{ type: 'text', text: result }]
