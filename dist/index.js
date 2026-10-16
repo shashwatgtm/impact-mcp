@@ -1106,8 +1106,8 @@ Ask prospects these questions to understand their competitive context:
             const userMultiplier = /(\d+)x/.test(metrics);
             const userTime = /(\d+)\s*(days?|weeks?|months?)/i.test(metrics);
             // Text only (run 12): the user's own words for a percent result ("40% faster"), for the website hero line.
-            const userPercentWords = (metrics.split(/[,;]/).find(p => /\d+%/.test(p)) || '').trim().replace(/[.!]+$/, '');
-            const metricsText = metrics.trim().replace(/[.!]+$/, '');
+            const userPercentWords = (0, escape_inputs_ts_1.dropLoneBackslash)((metrics.split(/[,;]/).find(p => /\d+%/.test(p)) || '').trim().replace(/[.!]+$/, ''));
+            const metricsText = (0, escape_inputs_ts_1.dropLoneBackslash)(metrics.trim().replace(/[.!]+$/, ''));
             // Generate outcome-based value metrics
             const outcomeLower = args.key_outcome.toLowerCase();
             let valueMetrics = {
@@ -2298,7 +2298,7 @@ const ONE_AMOUNT = { impact_anchor_market: ["average_deal_size"] };
 function checkRequiredInputs(name, args) {
     const tool = tools[name];
     if (!tool) {
-        return `Unknown tool: ${name}. Available tools: ${Object.keys(tools).join(', ')}.`;
+        return `Unknown tool: ${(0, escape_inputs_ts_1.escapeText)(String(name))}. Available tools: ${Object.keys(tools).join(', ')}.`;
     }
     const required = tool.inputSchema.required ?? [];
     // Run 16 R16-10 (rule B52): a required text (a string with no fixed list of choices) that is empty or only whitespace counts as missing.
@@ -2354,7 +2354,7 @@ function createServer() {
             return {
                 content: [{
                         type: 'text',
-                        text: `Unknown tool: ${toolName}. Available tools: ${Object.keys(tools).join(', ')}`
+                        text: `Unknown tool: ${(0, escape_inputs_ts_1.escapeText)(String(toolName))}. Available tools: ${Object.keys(tools).join(', ')}`
                     }],
                 isError: true
             };
@@ -2374,7 +2374,7 @@ function createServer() {
             return {
                 content: [{
                         type: 'text',
-                        text: `Error executing ${toolName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        text: `Error executing ${(0, escape_inputs_ts_1.escapeText)(String(toolName))}: ${error instanceof Error ? error.message : 'Unknown error'}`
                     }],
                 isError: true
             };

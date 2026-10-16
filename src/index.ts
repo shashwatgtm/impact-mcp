@@ -6,7 +6,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { cleanDeep, escapeDeep } from './escape-inputs.ts';
+import { cleanDeep, escapeDeep, escapeText, dropLoneBackslash } from './escape-inputs.ts';
 
 // =============================================================================
 // IMPACT MCP v2.0.0 - Hypothesis-Driven B2B Positioning Engine
@@ -1117,8 +1117,8 @@ Ask prospects these questions to understand their competitive context:
       const userMultiplier = /(\d+)x/.test(metrics);
       const userTime = /(\d+)\s*(days?|weeks?|months?)/i.test(metrics);
       // Text only (run 12): the user's own words for a percent result ("40% faster"), for the website hero line.
-      const userPercentWords = (metrics.split(/[,;]/).find(p => /\d+%/.test(p)) || '').trim().replace(/[.!]+$/, '');
-      const metricsText = metrics.trim().replace(/[.!]+$/, '');
+      const userPercentWords = dropLoneBackslash((metrics.split(/[,;]/).find(p => /\d+%/.test(p)) || '').trim().replace(/[.!]+$/, ''));
+      const metricsText = dropLoneBackslash(metrics.trim().replace(/[.!]+$/, ''));
 
       // Generate outcome-based value metrics
       const outcomeLower = args.key_outcome.toLowerCase();
@@ -2351,7 +2351,7 @@ const ONE_AMOUNT: Record<string, string[]> = { impact_anchor_market: ["average_d
 function checkRequiredInputs(name: string, args: Record<string, unknown> | undefined): string | null {
   const tool = (tools as Record<string, { inputSchema: { required?: string[] } }>)[name];
   if (!tool) {
-    return `Unknown tool: ${name}. Available tools: ${Object.keys(tools).join(', ')}.`;
+    return `Unknown tool: ${escapeText(String(name))}. Available tools: ${Object.keys(tools).join(', ')}.`;
   }
   const required = tool.inputSchema.required ?? [];
   // Run 16 R16-10 (rule B52): a required text (a string with no fixed list of choices) that is empty or only whitespace counts as missing.
@@ -2410,7 +2410,7 @@ export function createServer(): Server {
       return {
         content: [{
           type: 'text',
-          text: `Unknown tool: ${toolName}. Available tools: ${Object.keys(tools).join(', ')}`
+          text: `Unknown tool: ${escapeText(String(toolName))}. Available tools: ${Object.keys(tools).join(', ')}`
         }],
         isError: true
       };
@@ -2429,7 +2429,7 @@ export function createServer(): Server {
       return {
         content: [{
           type: 'text',
-          text: `Error executing ${toolName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+          text: `Error executing ${escapeText(String(toolName))}: ${error instanceof Error ? error.message : 'Unknown error'}`
         }],
         isError: true
       };
