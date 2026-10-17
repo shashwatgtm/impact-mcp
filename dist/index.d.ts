@@ -4,6 +4,7 @@ import { type Vertical } from './verticals.ts';
 export declare function noNotes(t: string): string;
 export declare function splitItems(...a: Parameters<typeof splitItemsRaw>): ReturnType<typeof splitItemsRaw>;
 declare function splitItemsRaw(s: unknown): string[];
+export declare const YOUR_SECTOR_VALUES: readonly ["logistics_tech", "fintech", "saas", "vertical_saas", "ai_native", "ites", "telecom", "software", "cybersecurity", "other"];
 export type Kind = 'base' | 'third' | 'noun' | 'other';
 export declare function kindOf(phrase: string): Kind;
 export declare function inf(...a: Parameters<typeof infRaw>): ReturnType<typeof infRaw>;

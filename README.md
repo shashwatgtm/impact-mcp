@@ -73,6 +73,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | Input | Required | Type | Description |
 |---|---|---|---|
 | `focus_phase` | No | one of: `identify`, `map`, `pinpoint`, `anchor`, `craft`, `translate`, `all` | Optional: specific phase to focus on (identify/map/pinpoint/anchor/craft/translate) |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 2. Identify Champions (`impact_identify_champions`)
 
@@ -83,6 +84,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | `company_name` | No | string | Your company name |
 | `target_company_type` | No | string | Type of companies you target (e.g., "Series B SaaS", "Enterprise manufacturing") |
 | `price_point` | No | string | Optional: ACV range (e.g., "$50K-100K") |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 3. Map Alternatives (`impact_map_alternatives`)
 
@@ -93,6 +95,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | `competitors` | No | array of string | List of competitor names |
 | `competitor_weaknesses` | No | string | Optional: Known competitor weaknesses or customer complaints |
 | `your_strengths` | No | string | Optional: What you do better than competitors |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 4. Pinpoint Value (`impact_pinpoint_value`)
 
@@ -104,6 +107,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | `product_name` | No | string | Your product/company name |
 | `category` | No | string | Product category |
 | `customer_metrics` | No | string | Optional: Any customer results data (e.g., "40% faster, 3x pipeline") |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 5. Anchor Market (`impact_anchor_market`)
 
@@ -114,6 +118,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | `current_customers` | No | string | Optional: Description of your current/best customers. Shown in the output; not used in the scoring |
 | `average_deal_size` | No | string | Optional: Your ACV as one amount (e.g., "$50,000", "$50K" or "$1.5M"); a range is refused |
 | `sales_cycle` | No | string | Optional: Typical sales cycle length. Shown in the output; not used in the scoring |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 6. Craft Message (`impact_craft_message`)
 
@@ -126,6 +131,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | `customer_need` | No | string | The need they have, written as an action (for example "lose revenue to missed appointments") |
 | `product_category` | No | string | Your product category, written as a noun phrase (for example "analytics platform") |
 | `competitor` | No | string | Primary alternative/competitor |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 7. Translate Execution (`impact_translate_execution`)
 
@@ -136,6 +142,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | `key_benefit` | Yes | string | Primary benefit, written as an action (for example "cut no-shows") |
 | `channels` | No | array of string | Accepted but not used yet: the output always covers website, LinkedIn, email, sales deck and demo |
 | `product_name` | No | string | Your product name |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 8. IMPACT Full Audit (`impact_full_audit`)
 
@@ -149,6 +156,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | `competitors` | No | array of string | Main competitors |
 | `current_positioning` | No | string | Optional: Your current positioning statement or tagline |
 | `customer_feedback` | No | string | Optional: What customers say about you |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 ## Who Is This For?
 

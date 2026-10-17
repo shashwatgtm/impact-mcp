@@ -231,7 +231,7 @@ const PLACE_WORD = /^(at|in|on|of|for|from|with|by|to|the|a|an|and|or)$/i;
 // companies with 200 to 2,000 employees"); its last words are often a size ("2,000 employees") or who the audience serves
 // ("hourly staff"). So the audience is the words before the first place or clause word (at, in, for, from, with, who, that,
 // which, across, serving, selling, using, or a comma); when that is still over 5 words and holds "of", the role before "of".
-const AUDIENCE_STOP = /^(at|in|for|from|with|who|that|which|across|serving|selling|using|between|within|based)$/i;
+const AUDIENCE_STOP = /^(at|in|for|from|with|who|whom|whose|that|which|where|when|across|serving|selling|using|between|within|based)$/i;
 function leadAudience(words: string[]): string[] | null {
   let end = words.length;
   let coord = false;
@@ -254,7 +254,7 @@ function leadAudience(words: string[]): string[] | null {
   if (coord && lead.length <= 10) return /^(?:the|a|an|of|leading|largest|top|best|global)$/i.test(lead[lead.length - 1]) ? null : lead;
   if (lead.length > 5) {
     const of = lead.findIndex((x, k) => k > 0 && /^of$/i.test(x));
-    lead = of > 0 ? lead.slice(0, of) : lead.length <= 8 && end < words.length && /[,;:(]$/.test(words[end - 1] || '') ? lead : lead.slice(0, 0);
+    lead = of > 0 ? lead.slice(0, of) : lead.length <= 8 && end < words.length && (/[,;:(]$/.test(words[end - 1] || '') || /^(?:who|whom|whose|that|which|where|when)$/i.test(words[end] || '')) ? lead : lead.slice(0, 0);
   }
   // an audience never ends on a determiner or a modifier ("the world's leading")
   if (lead.length && /^(?:the|a|an|of|leading|largest|top|best|global|new|biggest|most|more|other|many|all|our|their|its)$/i.test(lead[lead.length - 1])) return null;
@@ -270,6 +270,9 @@ function shortAudience(phrase: string): string {
   return escapePiece(shortAudienceWords(phrase));
 }
 function shortAudienceWords(phrase: string): string {
+  // "enterprises in insurance, banking and capital markets, retail and CPG ..." is a list of industries: it is shortened to its first two items and "other industries", never cut at the first comma.
+  const ind = noNotes(phrase).match(/^(.{3,40}?)\s+(in|across)\s+([^,;]{3,30}),\s+([^,;]{3,30}?)(?:\s+and\s+[^,;]{3,30})?,\s+/i);
+  if (ind && !/\b(?:and|or)$/i.test(ind[3]) && ind[1].split(/\s+/).length <= 4 && ![ind[3], ind[4]].some((x) => /^(?:plus|and|or|including|as well|with|such)\b|\d/i.test(x.trim()))) return `${lowerFirstIfCommon(ind[1])} ${ind[2]} ${ind[3].trim()}, ${ind[4].trim()} and other industries`;
   const w = lowerFirstIfCommon(noNotes(phrase)).split(/\s+/);
   if (w.length <= 5) return w.join(' ');
   const lead = leadAudience(w);
@@ -321,7 +324,7 @@ function splitItemsRaw(s: unknown): string[] {
   // "AI, machine learning and mobility based automation" stays one phrase instead of fragments.
   if (parts.length === 1 && /,/.test(parts[0])) {
     const c = parts[0].split(/,(?!\d{3}(?!\d))/).map((x) => x.trim()).filter(Boolean);
-    if (c.length >= 3 && c.every((x) => x.split(/\s+/).length <= 4) && !c.some((x) => /^(not|but|and|or|so|which|that)\b/i.test(x))) return c;
+    if (c.length >= 3 && c.every((x) => x.split(/\s+/).length <= 4) && !c.some((x) => /^(not|but|and|or|so|which|that)\b/i.test(x)) && !c.some((x) => /\s(?:and|or)\s/i.test(x))) return c;
   }
   return parts;
 }
@@ -339,6 +342,13 @@ const cleanRaw = (s: string): string => s.trim().replace(/(?:\\?[.!])+$/, '');
 // (capability, differentiation, positioning); `names` are brand names, which can mislead ("Brightfield Software" is not a software
 // subscription) and are read last. The sector is taken from `core` when it names one, then from core plus later plus names, then
 // from the deal text, job titles and the buyer. The business model is read from core plus later only.
+// Run 42B: the seller's own industry, one optional input on every tool. When given it decides the sector (no reading of the text overrides it); "other" means neutral wording.
+export const YOUR_SECTOR_VALUES = ['logistics_tech', 'fintech', 'saas', 'vertical_saas', 'ai_native', 'ites', 'telecom', 'software', 'cybersecurity', 'other'] as const;
+const YOUR_SECTOR_DESCRIPTION = "Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.";
+const YOUR_SECTOR_ID: Record<string, string> = { logistics_tech: 'logistics-tech', fintech: 'fintech', saas: 'saas', vertical_saas: 'vertical-saas', ai_native: 'ai-native', ites: 'ites', telecom: 'telecom', software: 'software', cybersecurity: 'cybersecurity' };
+let forcedSector: string | undefined;
+function setYourSector(value: unknown): void { forcedSector = typeof value === 'string' && (YOUR_SECTOR_VALUES as readonly string[]).includes(value) ? value : undefined; }
+function forcedVertical(): Vertical | null { return forcedSector && forcedSector !== 'other' ? VERTICALS.find((x) => x.id === YOUR_SECTOR_ID[forcedSector!]) ?? null : null; }
 interface Read { core?: unknown[]; later?: unknown[]; names?: unknown[]; context?: unknown[]; role?: unknown[]; buyer?: unknown[]; }
 function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; model: BusinessModel | null; line: string } {
   // A brand name is not a sector word ("Brightfield Software" is not a software product): it is taken out of the other texts before they are read.
@@ -346,6 +356,7 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
   const brand = /\b[A-Z][\w-]*\s+(?:Software|Technologies|Systems|Solutions|Labs|Infotech)\b/g; // "Brightfield Software" is a company name, not a product word
   const strip = (x: unknown): unknown => (typeof x === 'string' ? nameList.reduce((t, nm) => t.split(new RegExp(nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')).join(' '), x).replace(brand, ' ') : x);
   const coreT = (r.core || []).map(strip), laterT = (r.later || []).map(strip);
+  const later0 = laterT;
   const descr = [...coreT, ...laterT];
   const full: ReaderInput = { seller: [...descr, ...(r.names || [])], context: r.context, role: r.role, buyer: r.buyer };
   const coreOnly = coreT.length ? explainSector({ seller: coreT }) : null;
@@ -353,18 +364,20 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
   // (what the shared reader sees in context, role and buyer) only ever fill a gap, and a gap is not filled by a guess: the answer then uses neutral B2B wording.
   const sellerOnly = explainSector({ seller: [...descr, ...(r.names || [])] });
   let ex = coreOnly && coreOnly.vertical ? coreOnly : sellerOnly.vertical ? sellerOnly : { ...sellerOnly, vertical: null };
+  // A forced sector keeps the sub-type notes the seller's words earn inside it (the same sector); a different reading never overrides it.
+  if (forcedSector) { const fv = forcedVertical(); ex = { ...sellerOnly, vertical: fv && [coreOnly?.vertical, sellerOnly.vertical].find((x) => x && x.id === fv.id && !!x.subtype && SUBTYPES.some((t) => t.id === x.subtype)) || fv, source: 'seller' } as typeof ex; }
   // Services wording means a services business; a product noun (platform, software, app, cloud, tool) without services wording is a product, never a BPO or IT services firm.
   const servicesWords = /\b(?:outsourc\w*|bpo|managed|consult\w*|staffing|agency|(?:\w+ )?services (?:company|firm|provider|partner|business)|(?:it|business|professional|customer|technology|digital) services|operations (?:company|partner)|transformation company|system integrat\w*)\b/i;
   const productNoun = /\b(?:platform|software|saas|app|apps|cloud|tool|tools|engine|suite|database|api|infrastructure|network|stack|marketplace)\b/i;
   const coreText = coreT.filter((x): x is string => typeof x === 'string').join(' ');
   const sellerWholeText = [...descr].filter((x): x is string => typeof x === 'string').join(' ');
   // Services wording in the seller's own words and no other trade read: the deal text may then say which kind of services (IT services, customer experience), never anything else.
-  if (!ex.vertical && servicesWords.test(sellerWholeText)) { const w = explainSector(full); if (w.vertical && w.vertical.id === 'ites') ex = { ...w, source: 'seller' } as typeof ex; }
+  if (!forcedSector && !ex.vertical && servicesWords.test(sellerWholeText)) { const w = explainSector(full); if (w.vertical && w.vertical.id === 'ites') ex = { ...w, source: 'seller' } as typeof ex; }
   const notServices = (x: Vertical | null): boolean => !!x && x.id === 'ites' && productNoun.test(coreText || sellerWholeText) && !servicesWords.test(coreText || sellerWholeText);
   // The shared reader cuts a text at "for ..." (the buyer part), so "cloud platform for testing websites ... AI agents" can still read AI native from the label alone:
   // the seller's own texts are read once more as free text without the AI words, and a trade they name then wins (the shared guard covers the other cases).
   // "AI" is a feature of a product, not a sector: the category and the core of the description are read without it first, then the whole description.
-  if (ex.vertical && ex.vertical.id === 'ai-native' && detectModel(undefined, { seller: descr }).model !== 'investment') {
+  if (!forcedSector && ex.vertical && ex.vertical.id === 'ai-native' && detectModel(undefined, { seller: descr }).model !== 'investment') {
     const noAi = (x: unknown) => (typeof x === 'string' ? x.replace(/\b(?:AI|A\.I\.)[- ](?:native|powered|led|driven|enabled|first|agents?|analyst|copilot|assistant|layered)\b|\bgenerative AI\b|\bGenAI\b|\bLLMs?\b|\b(?:agent )?copilots?\b|\bchatbots?\b|\bAI\b/gi, ' ') : x);
     const tries: ReaderInput[] = [];
     if (coreT.length) tries.push({ seller: coreT.map(noAi) }, { context: coreT.map(noAi) });
@@ -374,7 +387,13 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
       if (again.vertical && again.vertical.id !== 'ai-native' && !notServices(again.vertical)) { ex = { ...again, source: 'seller' } as typeof ex; break; }
     }
   }
-  if (notServices(ex.vertical)) ex = { ...ex, vertical: null } as typeof ex;
+  if (!forcedSector && notServices(ex.vertical)) ex = { ...ex, vertical: null } as typeof ex;
+  // A payments or billing feature inside a product for another trade does not make the seller a finance company: when the product's own category noun names no money word, a finance reading is not used.
+  if (!forcedSector && ex.vertical && (ex.vertical.id === 'fintech' || /billing/i.test(ex.vertical.name))) {
+    const heads = [...coreT, ...later0].filter((x): x is string => typeof x === 'string').flatMap((x) => { const m1 = x.match(/^\s*(?:an?\s+|the\s+)?([^.;:,(]{3,60}?)\s+(?:software|platform|solution|system|app|suite)\b/i), m2 = x.match(/\b(?:is|are)\s+(?:an?|the)\s+([^.;:,(]{3,60}?)\s+(?:software|platform|solution|system|app|suite)\b/i); return [m1?.[1], m2?.[1]].filter(Boolean) as string[]; });
+    const money = /\b(?:pay\w*|bank\w*|lend\w*|loan\w*|credit|billing|invoic\w*|expense\w*|spend|insur\w*|financ\w*|fintech|wealth|invest\w*|treasury|accounting|account\w*|card\w*|fraud|tax|procure\w*|commerce|checkout)\b/i;
+    if (heads.length && heads.every((h) => !money.test(h) && h.trim().split(/\s+/).length >= 2)) ex = { ...ex, vertical: null } as typeof ex;
+  }
   const v0 = ex.vertical;
   // The model is read from what the product is (core) first; the capability and positioning text can mention "tools" or "cloud" in any business.
   const first = coreT.length ? detectModel(explicitModel, { seller: coreT }) : null;
@@ -383,15 +402,18 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
   // Run 22: a services firm that names "AI-powered tools" or a platform among its capabilities is still a services firm: when the whole text reads as ITeS and
   // only a tool word made it a subscription, the model is services (the shared reader does the same when it sees the whole text).
   const saasWords = /\b(?:saas|subscriptions?|per seat|per user|licen[cs]es?)\b/i;
-  const m1 = v0 && v0.id === 'ites' && m0.model === 'saas' && m0.how === 'read' && !saasWords.test(descr.filter((x): x is string => typeof x === 'string').join(' ')) ? { model: 'services' as BusinessModel, how: 'sector' as const } : m0;
+  const m1 = !forcedSector && v0 && v0.id === 'ites' && m0.model === 'saas' && m0.how === 'read' && !saasWords.test(descr.filter((x): x is string => typeof x === 'string').join(' ')) ? { model: 'services' as BusinessModel, how: 'sector' as const } : m0;
   // A seller whose own words say it is a marketplace, an exchange or a network that connects the two sides of a trade is a marketplace, unless it says subscription or licence.
   const sellerText = descr.filter((x): x is string => typeof x === 'string').join(' ');
   const twoSided = /\b(?:marketplace|exchange)\b|\b(?:network|platform|infrastructure)\b[^.;]{0,80}?\bconnecting\b/i;
-  const m = m1.how !== 'input' && m1.model === 'saas' && twoSided.test(sellerText) && !saasWords.test(sellerText) ? { model: 'marketplace' as BusinessModel, how: 'read' as const } : m1;
+  const m2 = m1.how !== 'input' && m1.model === 'saas' && twoSided.test(sellerText) && !saasWords.test(sellerText) ? { model: 'marketplace' as BusinessModel, how: 'read' as const } : m1;
+  // A managed service (managed detection and response, a managed SOC, outsourced operations) is sold as a service even when it runs on a platform, unless the words say subscription or licence.
+  const mgd = /\b(?:managed (?:detection|security|services?|service)|mdr\b|outsourc\w+|bpo\b)/i;
+  const m = m2.how !== 'input' && m2.model === 'saas' && mgd.test(sellerText) && !saasWords.test(sellerText) ? { model: 'services' as BusinessModel, how: 'read' as const } : m2;
   // A seller that manages money gets the investment roles and measures, not the sector's own (shared sector file, profileFor).
-  const v = profileFor(v0, m.model, full);
+  const v = forcedSector ? v0 : profileFor(v0, m.model, full);
   const from = ex.source === 'context' ? ' (from the deal text, because your own description names no sector)' : ex.source === 'role' ? ' (from the job titles, because your own description names no sector)' : ex.source === 'buyer' ? ' (from who you sell to, because your own description names no sector)' : '';
-  const sector = v ? `read from your inputs as ${v.name}${from}` : 'not clear from your inputs (name the industry in plain words for sector notes)';
+  const sector = forcedSector ? (v ? `set by your_sector as ${v.name}` : 'set by your_sector to other, so the wording stays neutral') : v ? `read from your inputs as ${v.name}${from}` : 'not clear from your inputs (name the industry in plain words for sector notes)';
   const model = m.model
     ? `${MODEL_NAME[m.model]} (${m.how === 'input' ? 'from business_model' : m.how === 'sector' ? 'the usual model in this sector, assumed; set business_model to change it' : 'read from your inputs; set business_model to change it'})`
     : 'not clear from your inputs; set business_model (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
@@ -411,7 +433,7 @@ function rankMeasures(measures: string[], problem: string, product: string): str
   const score = (m: string) => [...measureStems(m)].reduce((n, w) => n + (p.has(w) ? 2 : 0) + (d.has(w) ? 1 : 0), 0);
   return measures.map((m, i) => ({ m, i, s: score(m) })).sort((a, b) => b.s - a.s || a.i - b.i).map((x) => x.m);
 }
-const sectorLine = (v: Vertical | null): string => v
+const sectorLine = (v: Vertical | null): string => forcedSector ? (v ? `*Sector: set by your_sector as ${v.name}.*` : '*Sector: set by your_sector to other, so no sector notes are added and the wording stays neutral.*') : v
   ? `*Sector: read from your inputs as ${v.name}.*`
   : '*Sector: not clear from your inputs, so no sector notes are added. Name the industry in plain words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity).*';
 const SECTOR_NAMES = VERTICALS.map((v) => v.name).join(', ');
@@ -724,7 +746,7 @@ export function strengthParts(items: string[]): string[] {
     for (const ch of body) { if (ch === '(') depth++; if (ch === ')') depth--; if (ch === ',' && depth === 0 && !(/\d$/.test(cur) && /^\d{3}(?!\d)/.test(body.slice(idx + 1)))) { parts.push(cur); cur = ''; } else cur += ch; idx++; }
     parts.push(cur);
     const clean2 = parts.map((x) => x.trim().replace(/^and\s+/i, '')).filter((x) => x.split(/\s+/).length >= 2);
-    if (clean2.length >= 2) out.push(...clean2.map((x) => x + note)); else out.push(it);
+    if (clean2.length >= 2 && !clean2.some((x) => /\s(?:and|or)\s/i.test(x))) out.push(...clean2.map((x) => x + note)); else out.push(it);
   }
   return out;
 }
@@ -870,6 +892,8 @@ const INDUSTRIES: IndustryRoles[] = [
   { id: 'telecom and media', re: /\b(telecom\w*|telco|operators?|media|streaming|broadcast\w*)\b/i, champion: 'Head of customer operations or of network operations', buyer: 'COO or CTO', tech: 'Head of IT, with security' },
   { id: 'logistics', re: /\b(logistics|supply chain|freight|shipping|3pl|courier)\b/i, champion: 'Head of logistics or transport operations', buyer: 'COO', tech: 'Head of IT, with the owner of the TMS and WMS' },
 ];
+// Small businesses run by their owner (shops, restaurants, salons ...): the buyer is the owner or the manager, not a COO or a head of operations.
+const OWNER_RUN = /\b(?:independent|small|single[- ](?:bay|location|site|store|unit)|owner[- ](?:run|operated)|family[- ]owned|local|neighbou?rhood)\b[^.;]{0,40}\b(?:shops?|stores?|restaurants?|salons?|studios?|garages?|bars|cafes?|gyms?|businesses|practices|contractors?|dealers?)\b|\b(?:auto|tire|repair|barber|nail|hair)\s+(?:repair\s+)?(?:shops?|salons?|garages?)\b/i;
 export function industryOf(...texts: (string | undefined)[]): IndustryRoles | null {
   const t = texts.filter(Boolean).join(' ; ');
   return INDUSTRIES.find((i) => i.re.test(t)) || null;
@@ -978,14 +1002,14 @@ const tools = {
         },
         sector: {
           type: 'string',
-          description: 'Your sector in your own words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity). Adds how the six steps read in that sector'
+          description: 'Your sector in your own words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity). Adds how the six steps read in that sector. The same as your_sector; your_sector wins when both are given'
         }
       }
     },
     execute: (args: { focus_phase?: string; sector?: string }) => {
       const phase = args.focus_phase || 'all';
-      const sectorText = (args.sector || '').trim();
-      const v = sectorText ? findSector(sectorText) : null;
+      const sectorText = forcedSector ? '' : (args.sector || '').trim();
+      const v = forcedSector ? forcedVertical() : sectorText ? findSector(sectorText) : null;
       const cm = v ? committeeParts(v) : null;
       let sectorPart = '';
       if (sectorText && !v) {
@@ -1330,10 +1354,11 @@ ${SUGGESTED}
       // A generic committee (SaaS, or no sector) takes its roles from the team the problem text names.
       const money = !!v && /investment management/.test(v.name); // a seller that manages money: the investment profile of the shared sector file
       // The team the user named as the buyer (target_company_type) wins over the team a count of words in the problem text points to.
-      const givenFn = !money && targetType && (!v || v.id === 'saas' || v.id === 'ai-native' || v.id === 'vertical-saas') ? functionOf(targetType.replace(/\bfinanc\w*\s+(?:services?|institutions?|sector|industry|firms?|companies)\b/gi, ' ')) : null;
-      const fn = money ? null : givenFn ? givenFn : !v ? functionHits(1, problem, args.product_description) : v.id === 'ai-native' ? functionOf(problem) : overlayFn(v, 2, problem);
+      const ownerRun = !money && !!targetType && OWNER_RUN.test(targetType) && (!v || v.id === 'vertical-saas');
+      const givenFn = !money && !ownerRun && targetType && (!v || v.id === 'saas' || v.id === 'ai-native' || v.id === 'vertical-saas') ? functionOf(targetType.replace(/\bfinanc\w*\s+(?:services?|institutions?|sector|industry|firms?|companies|research|analy\w+|markets?|advis\w+|news|data|content)\b/gi, ' ')) : null;
+      const fn = money ? null : givenFn ? givenFn : ownerRun ? null : !v ? functionHits(1, problem, args.product_description) : v.id === 'ai-native' ? functionOf(problem) : overlayFn(v, 2, problem);
       // An AI native product, or no sector, with a buyer industry named: the roles of that industry's teams.
-      const ind = !fn && !money && (!v || v.id === 'ai-native') ? industryOf(targetType) : null;
+      const ind = !fn && !money && !ownerRun && (!v || v.id === 'ai-native') ? industryOf(targetType) : null;
 
       // The sector's measures, led by the ones the user's own problem and product words point to.
       const ranked = fn ? rankMeasures(fn.measures, problem, args.product_description) : v && !ind ? rankMeasures(metricsOf(v), problem, args.product_description) : [];
@@ -1384,6 +1409,13 @@ ${SUGGESTED}
         technicalInfluencer = { role: 'the senior specialist or manager who implements', criteria: 'technical fit, implementation effort, ongoing maintenance', blocker: 'competing priorities and change resistance' };
       }
 
+      if (ownerRun) {
+        // The buyers run their own business: the owner or the manager on site decides, not a COO or a head of operations.
+        primaryChampion = { ...primaryChampion, role: 'The owner or general manager (in a larger business, the manager who runs the day to day work)' };
+        economicBuyer = { ...economicBuyer, role: 'The owner (in a group of several locations, the owner or operator of the group)' };
+        technicalInfluencer = { ...technicalInfluencer, role: 'The manager who would run it day to day, with the bookkeeper or accountant' };
+        inferredNote = ' (the buyers you named are small businesses run by their owner)';
+      }
       return `# Champion Identification Analysis
 
 ## Company Context
@@ -2461,7 +2493,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       // A phrase with a head noun before a participle ("Frontier AI company building voice AI ...") is a noun phrase, not a field of work.
       const catCut = catHeadSrc.split(/\s(?:building|offering|providing|delivering|developing|creating|making|selling|running|powering|helping|that|which)\s/)[0];
       const category = catHeadSrc ? (catCut !== catHeadSrc && !/^provider of/i.test(categoryNoun(catCut)) ? catHeadSrc : categoryNoun(catHeadSrc)) : '';
-      const artOf = (c: string): string => (/^provider of/i.test(c) ? `a ${c}` : /^["“'‘]/.test(c) ? `a ${c}` : `${aOrAn(c)} ${mid(c)}`);
+      const artOf = (c: string): string => (/^(?:the|an?)\s+\S/i.test(c) ? mid(c) : /^provider of/i.test(c) ? `a ${c}` : /^["“'‘]/.test(c) ? `a ${c}` : `${aOrAn(c)} ${mid(c)}`);
       const catPlain = category ? category.replace(/\s*\([^)]*\)\s*$/, '') : '';
       // the first sentence says what the product is in the category's own noun phrase; a bracket after it (other names, a note) is a sentence of its own, never echoed inside the first one
       const catArt = catPlain ? artOf(catPlain) : category ? artOf(category) : '';
@@ -2501,7 +2533,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
         if (headVerb && clauseAll) return `In practice, ${aud} can ${clauseAll}.`;
         return `In practice: ${partsInline(B.parts).map((x) => clean(x)).join('; ')}.`;
       })();
-      const oneSentence = headVerb ? `${PC} helps ${aud} ${bareHead}.` : B.headline && headShape !== 'clause' ? `${PC} delivers ${kit.lowerFirst(clean(B.headline))}.` : clauseShort ? `${PC} helps ${aud} ${clauseShort}.` : `${PC} is built for ${aud}: ${leadOf(clean(B.headline || oneBare), 90)}.`;
+      const oneSentence = headVerb ? `${PC} helps ${aud} ${bareHead}.` : B.headline && headShape !== 'clause' ? `${PC} delivers ${kit.lowerFirst(clean(B.headline))}.` : clauseShort ? `${PC} helps ${aud} ${clauseShort}.` : (B.headline || oneBare ? `${PC} is built for ${aud}: ${leadOf(clean(B.headline || oneBare), 90)}.` : `${PC} is built for ${aud}.`);
       const youCan = headVerb ? bareHead : clauseShort || '';
       // The difference: items at the semicolons; a recognition goes to the proof.
       const D = parseDifference(args.differentiation);
@@ -2676,7 +2708,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
         return fresh(`If ${needIf}, ${pred}, so you can ${clauseLead}.`);
       })();
       const optBTail = diffLead || (startsWithP(diffMain) ? diffMain : '');
-      const optB = `${capFirst(outShort || clip(clean(B.headline || oneBare), 90))}. ${optBTail ? fresh(optBTail, `Under the hood: ${plain(optBTail)}`) : fresh(`Built for ${aud}.`, `Made for ${aud}.`)}`.trim();
+      const optB = `${outShort || B.headline || oneBare ? `${capFirst(outShort || clip(clean(B.headline || oneBare), 90))}.` : `${PC} is built for ${aud}.`} ${optBTail ? fresh(optBTail, `Under the hood: ${plain(optBTail)}`) : fresh(`Built for ${aud}.`, `Made for ${aud}.`)}`.trim();
       const optM = startsWithP(diffLead || diffMain) && youCan && !/^\[/.test(diffMain) ? fresh(`${plain(diffLead || diffMain).replace(/\.$/, '')}, so ${aud} can ${youCan}.`) : '';
       out.push(`## Message Hierarchy
 
@@ -2691,7 +2723,7 @@ ${optA ? `**Problem to solution**\n> ${optA}\n\n` : ''}**Outcome first**
 ${optM ? `\n**Mechanism first**\n> ${optM}\n` : ''}
 ### Level 3: Three Supporting Pillars
 
-**Pillar 1: the result.** ${B.headline ? `${capFirst(clean(B.headline))}.${B.parts.length ? ` What sits behind it: ${partsInline(B.parts).map((x) => clean(x)).join('; ')}.` : ''}` : B.parts.length === 1 ? `What buyers get: ${kit.lowerFirst(clean(partText(B.parts[0]).length > 150 ? `${leadOf(B.parts[0].text, 110)}${B.parts[0].label ? ` ${B.parts[0].label}` : ''}` : partText(B.parts[0])))}.` : `What buyers get: ${B.parts.map((p) => capFirst(clean(partText(p).length > 150 ? `${leadOf(p.text, 110)}${p.label ? ` ${p.label}` : ''}` : partText(p)))).join('; ')}.`}
+**Pillar 1: the result.** ${B.headline ? `${capFirst(clean(B.headline))}.${B.parts.length ? ` What sits behind it: ${partsInline(B.parts).map((x) => clean(x)).join('; ')}.` : ''}` : B.parts.length === 0 ? `Your key_benefit holds only results others got (they are the proof lines below), so no result line of the product itself is written yet: add what a buyer gets in one clause.` : B.parts.length === 1 ? `What buyers get: ${kit.lowerFirst(clean(partText(B.parts[0]).length > 150 ? `${leadOf(B.parts[0].text, 110)}${B.parts[0].label ? ` ${B.parts[0].label}` : ''}` : partText(B.parts[0])))}.` : `What buyers get: ${B.parts.map((p) => capFirst(clean(partText(p).length > 150 ? `${leadOf(p.text, 110)}${p.label ? ` ${p.label}` : ''}` : partText(p)))).join('; ')}.`}
 - Proof you have: ${B.claims.length ? partsInline(B.claims).join('; ') + '.' : B.parts.some((p) => /\d/.test(p.text)) ? 'the figures in the results above, with the labels you gave.' : 'none given for the result yet.'}
 - Proof to collect: ${proofSector ? lc1(proofSector) : `one customer, one measure${m0 ? ` (${m0})` : ''}, before and after, from the customer's own data`}
 
@@ -2717,7 +2749,7 @@ ${vocabShown.length >= 2 ? `Words this sector's buyers use, to check your wordin
         const answer = headVerb ? fresh(`${capFirst(bareHead)} with ${P}.`, `${PC} can help you ${bareHead}.`) : B.headline && headShape !== 'clause' ? fresh(`${capFirst(kit.lowerFirst(clean(B.headline)))}, with ${P}.`, `With ${P}: ${kit.lowerFirst(clean(B.headline))}.`) : fresh(plain(diffLead || diffMain), `The difference in one line: ${plain(diffLead || diffMain)}`);
         return `${ask} ${answer}`;
       })();
-      const varB = `${PC}: ${capFirst(outShort || clip(clean(B.headline || oneBare), 90))}. ${fresh(`Built for ${aud}.`, `Designed for ${aud}.`, `For ${aud}.`)}`;
+      const varB = outShort || B.headline || oneBare ? `${PC}: ${capFirst(outShort || clip(clean(B.headline || oneBare), 90))}. ${fresh(`Built for ${aud}.`, `Designed for ${aud}.`, `For ${aud}.`)}` : `${PC} is built for ${aud}.`;
       const stillQ = alt ? `Still ${altBack}?` : '';
       const varC = alt && startsWithP(diffMain) ? fresh(`${stillQ} ${plain(diffLead || diffMain)}`, `${stillQ} The alternative is this: ${plain(diffLead || diffMain)}`) : '';
       // a percentage or multiplier typed inside a result or a difference is a proof line too, with the label of its text
@@ -3041,7 +3073,7 @@ ${vocab.length ? `\nWords ${lz.fn ? 'buyers in this team' : "this sector's buyer
       if (chosen.has('linkedin')) {
         const plainRes = plainResult(B, kit);
         const taglineA = headVerb ? `Helping ${aud} ${bareHead}` : plainRes ? `Helping ${aud} ${plainRes}` : '';
-        const tagline = taglineA && taglineA.length <= 125 ? taglineA : `${PC}: ${subject}`;
+        const tagline = taglineA && taglineA.length <= 125 ? taglineA : subject.trim() ? `${PC}: ${subject}` : `${PC}: built for ${aud}`;
         const post1 = [nextHook(), '', nextRes(), dMain ? nextDiff() : '', '', hook2 ? `A question to put to your own team this week: ${hook2}` : 'Ask your own team how they handle this today.'].filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i > 0)).join('\n');
         const stand = [...claims, ...recog, ...scaleFacts, ...figProof].slice(0, 4).map((f) => kit.lowerFirst(partText(f)));
         const claimLine = stand.length ? `What stands behind it: ${stand.join('; ')}.` : '';
@@ -3096,7 +3128,7 @@ Outline: the customer's situation, what they measured before, what changed, what
         const subjCut = ((): string => { const c = kit.lowerFirst(subject).split(/\s+(?:that|which|with|for|who|using|across)\s+|[,;:]/)[0].trim(); return c.split(/\s+/).length >= 3 ? c : ''; })();
         const qFull = verbBen && youShort ? `How would you ${noBrackets(youShort)}?` : '';
         const qCut = verbBen && youShort && trimQ(youShort, 66) ? `How would you ${trimQ(youShort, 66)}?` : '';
-        const subjCands: [string, number][] = [[qFull, 80], [qCut, 80], [!subjVerb ? `A question about ${kit.lowerFirst(subject)}` : '', 70], [!subjVerb && subjCut ? `A question about ${subjCut}` : '', 70], [P !== 'the product' ? `A question about ${P}` : '', 70], [`A question for ${aud}`, 70]];
+        const subjCands: [string, number][] = [[qFull, 80], [qCut, 80], [!subjVerb && subject.trim() ? `A question about ${kit.lowerFirst(subject)}` : '', 70], [!subjVerb && subjCut ? `A question about ${subjCut}` : '', 70], [P !== 'the product' ? `A question about ${P}` : '', 70], [`A question for ${aud}`, 70]];
         const subj1 = (subjCands.find(([x, n]) => x && subjOk(x, n)) || ['A quick question', 0])[0];
         sections.push(`## Cold Email Execution
 
@@ -3743,6 +3775,12 @@ function runningName(text: string): string {
   return lead.join(' ');
 }
 
+// Run 42B: every tool takes the same optional your_sector.
+for (const t of Object.values(tools)) {
+  const props = ((t.inputSchema as { properties?: Record<string, unknown> }).properties ??= {});
+  props.your_sector = { type: 'string', enum: [...YOUR_SECTOR_VALUES], description: YOUR_SECTOR_DESCRIPTION };
+}
+
 export function createServer(): Server {
   const server = new Server(
     { name: SERVER_NAME, version: SERVER_VERSION },
@@ -3780,7 +3818,9 @@ export function createServer(): Server {
       // ("head of marketing"); names and acronyms in it keep their capitals. Any other target customer stays as typed.
       const callArgs = { ...((safeArgs || {}) as Record<string, unknown>) };
       if (typeof callArgs.target_customer === 'string' && isJobTitle(callArgs.target_customer)) callArgs.target_customer = escapePiece(lowerJobTitle(callArgs.target_customer));
-      const result = tool.execute(callArgs as any);
+      setYourSector(callArgs.your_sector);
+      let result: string;
+      try { result = tool.execute(callArgs as any); } finally { setYourSector(undefined); }
       return {
         content: [{ type: 'text', text: result }]
       };

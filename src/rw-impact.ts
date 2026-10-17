@@ -185,7 +185,7 @@ function categoryNounRaw(category: string): string {
 
 // The audience of a long target text: its words up to the first clause or activity word ("eCommerce merchants and small businesses shipping 10 to 10,000 parcels a month ..." gives
 // "eCommerce merchants and small businesses"). null when no clean lead of 2 to 9 words exists.
-const AUD_STOP = /^(?:at|in|for|from|with|who|that|which|across|serving|selling|using|between|within|based|shipping|running|building|handling|managing|operating|processing|sending|moving|buying|paying|working|needing|looking|wanting|spending|losing|growing|doing|\d.*)$/i;
+const AUD_STOP = /^(?:at|in|for|from|with|who|whom|whose|where|when|that|which|across|serving|selling|using|between|within|based|shipping|running|building|handling|managing|operating|processing|sending|moving|buying|paying|working|needing|looking|wanting|spending|losing|growing|doing|\d.*)$/i;
 export function leadAud(...a: Parameters<typeof leadAudRaw>): ReturnType<typeof leadAudRaw> { return pieceOf(leadAudRaw(...a)); }
 function leadAudRaw(text: string): string | null {
   const w = text.trim().split(/\s+/);

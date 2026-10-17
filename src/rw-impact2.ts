@@ -120,17 +120,21 @@ function partsOfRaw(seg: string, kit: Kit2): Piece[] {
 }
 const CUSTOMER_RESULT = new RegExp('^(?:customers?|clients?|users?|merchants?|teams?)\\s+(?:say|said|report|reported|see|saw)\\b.*\\b[a-z]{3,}ed\\b|^(?:(?:one|a|an|the|\\d+)\\s+(?:[a-z-]+\\s+){0,3}(?:customer|client|merchant|bank|retailer|company|team|brand|partner|user|firm|operator|carrier|shipper|seller)s?|[A-Z][\\w-]*(?:\\s+[A-Z][\\w-]*){0,3})\\s+(?:went|grew|rose|fell|dropped|moved|reached|achieved|saved|cut|reduced|increased|improved|boosted|lifted|raised|doubled|halved|launched|gained|won|got|saw|[a-z]{3,}ed)\\b');
 export function parseBenefit(...a: Parameters<typeof parseBenefitRaw>): ReturnType<typeof parseBenefitRaw> { return pieceOf(parseBenefitRaw(...a)); }
+// Run 42B: a sentence that tells what happened to somebody else ("Shops saw an average revenue increase of 40% in their first year", "a retailer doubled its volume") is proof somebody got, never the result the product promises.
+const PAST_RESULT = /^(?:an?\s+|the\s+)?(?:[A-Za-z&.'\u2019-]+\s+){1,9}?(?:saw|saved|cut|reduced|increased|doubled|tripled|halved|grew|raised|lifted|boosted|achieved|generated|recovered|improved|lowered|shortened|reached|gained|cited|reported)\b/;
 function parseBenefitRaw(text: string, kit: Kit2): Benefit {
   const out: Benefit = { headline: '', parts: [], claims: [] };
   const segs = splitSemi(WS(text));
+  const anyLabel = /\((?:page claims?|[^()]*\bclaims?\b[^()]*)\)/i.test(text);
   segs.forEach((seg, i) => {
     const lead = seg.match(CLAIM_LEAD);
     const study = i > 0 && STUDY_LEAD.test(seg);
-    if (lead || study || (i > 0 && hasFigure(seg) && /\(page claims?\)\s*$/i.test(seg) && kit.kindOf(seg) === 'other' && shapeOf(seg, kit) !== 'verb' && /^(?:an?|the|one|this|that)\b|^[A-Z]/.test(seg))) {
+    const past = !lead && PAST_RESULT.test(seg) && (hasFigure(seg) || /\b(?:doubled|tripled|halved)\b/i.test(seg)) && (anyLabel || segs.length > 1) && !['base', 'third'].includes(kit.kindOf(seg)) && shapeOf(seg, kit) !== 'verb' && /^(?:an?|the|one|this|that)\b|^[A-Z]/.test(seg) && (i > 0 || segs.length > 1 || anyLabel);
+    if (lead || study || past || (i > 0 && hasFigure(seg) && /\(page claims?\)\s*$/i.test(seg) && kit.kindOf(seg) === 'other' && shapeOf(seg, kit) !== 'verb' && /^(?:an?|the|one|this|that)\b|^[A-Z]/.test(seg))) {
       const body = lead ? seg.slice(lead[0].length) : seg;
       const { body: b, label } = takeLabel(body);
       const pieces = topLevel(b).flatMap((x) => (x.split(/\s+and\s+/).length > 1 && x.split(/\s+and\s+/).every(hasFigure) ? x.split(/\s+and\s+/) : [x]));
-      for (const p of pieces) if (p.trim()) out.claims.push({ text: p.trim().replace(/^(?:a|an)\s+(?=\d)/i, ''), label });
+      for (const p of pieces) if (p.trim()) out.claims.push({ text: p.trim().replace(/^(?:a|an)\s+(?=\d)/i, ''), label: label || (past && anyLabel ? '(page claim)' : '') });
       return;
     }
     let body = seg;
@@ -344,6 +348,9 @@ function audienceShortRaw(aud: string, kit: Kit2): string {
   if (a.length <= 90) return a;
   const lead = leadAud(aud);
   if (lead) return kit.mid(lead);
+  // a list of industries ("enterprises in insurance, banking and capital markets, retail ...") is shortened to its first two items, never cut at the first comma
+  const ind = aud.trim().match(/^(.{3,40}?)\s+(in|across)\s+([^,;]{3,30}),\s+([^,;]{3,30}?)(?:\s+and\s+[^,;]{3,30})?,\s+/i);
+  if (ind && !/\b(?:and|or)$/i.test(ind[3]) && ind[1].split(/\s+/).length <= 4 && ![ind[3], ind[4]].some((x) => /^(?:plus|and|or|including|as well|with|such)\b|\d/i.test(x.trim()))) return kit.mid(`${ind[1]} ${ind[2]} ${ind[3].trim()}, ${ind[4].trim()} and other industries`);
   const first = aud.split(/,|\sincluding\s/)[0].trim();
   if (first.split(/\s+/).length >= 2 && first.split(/\s+/).length <= 9) return kit.mid(first);
   return kit.mid(clip(aud, 70));

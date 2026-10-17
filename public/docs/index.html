@@ -292,6 +292,7 @@
   <p class="hx-prose">Get complete IMPACT framework methodology with phase-by-phase guidance. <a href="/tools/impact-get-framework/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>focus_phase</code></td><td>string</td><td>no</td><td>identify, map, pinpoint, anchor, craft, translate, all</td><td>Optional: specific phase to focus on (identify/map/pinpoint/anchor/craft/translate)</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-identify-champions" aria-labelledby="d-impact-identify-champions">
@@ -304,6 +305,7 @@
 <tr><td><code>problem_solved</code></td><td>string</td><td>yes</td><td></td><td>The core problem you solve</td></tr>
 <tr><td><code>target_company_type</code></td><td>string</td><td>no</td><td></td><td>Type of companies you target (e.g., &quot;Series B SaaS&quot;, &quot;Enterprise manufacturing&quot;)</td></tr>
 <tr><td><code>price_point</code></td><td>string</td><td>no</td><td></td><td>Optional: ACV range (e.g., &quot;$50K-100K&quot;)</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-map-alternatives" aria-labelledby="d-impact-map-alternatives">
@@ -316,6 +318,7 @@
 <tr><td><code>competitors</code></td><td>list of strings</td><td>no</td><td></td><td>List of competitor names</td></tr>
 <tr><td><code>competitor_weaknesses</code></td><td>string</td><td>no</td><td></td><td>Optional: Known competitor weaknesses or customer complaints</td></tr>
 <tr><td><code>your_strengths</code></td><td>string</td><td>no</td><td></td><td>Optional: What you do better than competitors</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-pinpoint-value" aria-labelledby="d-impact-pinpoint-value">
@@ -329,6 +332,7 @@
 <tr><td><code>key_outcome</code></td><td>string</td><td>yes</td><td></td><td>The main result customers achieve</td></tr>
 <tr><td><code>unique_capability</code></td><td>string</td><td>yes</td><td></td><td>What you do that others cannot/don&#x27;t</td></tr>
 <tr><td><code>customer_metrics</code></td><td>string</td><td>no</td><td></td><td>Optional: Any customer results data (e.g., &quot;40% faster, 3x pipeline&quot;)</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-anchor-market" aria-labelledby="d-impact-anchor-market">
@@ -341,6 +345,7 @@
 <tr><td><code>current_customers</code></td><td>string</td><td>no</td><td></td><td>Optional: Description of your current/best customers. Shown in the output; not used in the scoring</td></tr>
 <tr><td><code>average_deal_size</code></td><td>string</td><td>no</td><td></td><td>Optional: Your ACV as one amount (e.g., &quot;$50,000&quot;, &quot;$50K&quot; or &quot;$1.5M&quot;); a range is refused</td></tr>
 <tr><td><code>sales_cycle</code></td><td>string</td><td>no</td><td></td><td>Optional: Typical sales cycle length. Shown in the output; not used in the scoring</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-craft-message" aria-labelledby="d-impact-craft-message">
@@ -355,6 +360,7 @@
 <tr><td><code>key_benefit</code></td><td>string</td><td>yes</td><td></td><td>Primary benefit/reason to buy</td></tr>
 <tr><td><code>competitor</code></td><td>string</td><td>no</td><td></td><td>Primary alternative/competitor</td></tr>
 <tr><td><code>differentiation</code></td><td>string</td><td>yes</td><td></td><td>Your unique differentiation</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-translate-execution" aria-labelledby="d-impact-translate-execution">
@@ -367,6 +373,7 @@
 <tr><td><code>key_benefit</code></td><td>string</td><td>yes</td><td></td><td>Primary benefit, written as an action (for example &quot;cut no-shows&quot;)</td></tr>
 <tr><td><code>channels</code></td><td>list of strings</td><td>no</td><td></td><td>Accepted but not used yet: the output always covers website, LinkedIn, email, sales deck and demo</td></tr>
 <tr><td><code>product_name</code></td><td>string</td><td>no</td><td></td><td>Your product name</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="impact-full-audit" aria-labelledby="d-impact-full-audit">
@@ -382,6 +389,7 @@
 <tr><td><code>competitors</code></td><td>list of strings</td><td>no</td><td></td><td>Main competitors</td></tr>
 <tr><td><code>current_positioning</code></td><td>string</td><td>no</td><td></td><td>Optional: Your current positioning statement or tagline</td></tr>
 <tr><td><code>customer_feedback</code></td><td>string</td><td>no</td><td></td><td>Optional: What customers say about you</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 </div>
