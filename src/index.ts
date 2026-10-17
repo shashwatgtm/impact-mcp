@@ -365,7 +365,11 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
   // Run 22: a services firm that names "AI-powered tools" or a platform among its capabilities is still a services firm: when the whole text reads as ITeS and
   // only a tool word made it a subscription, the model is services (the shared reader does the same when it sees the whole text).
   const saasWords = /\b(?:saas|subscriptions?|per seat|per user|licen[cs]es?)\b/i;
-  const m = v0 && v0.id === 'ites' && m0.model === 'saas' && m0.how === 'read' && !saasWords.test(descr.filter((x): x is string => typeof x === 'string').join(' ')) ? { model: 'services' as BusinessModel, how: 'sector' as const } : m0;
+  const m1 = v0 && v0.id === 'ites' && m0.model === 'saas' && m0.how === 'read' && !saasWords.test(descr.filter((x): x is string => typeof x === 'string').join(' ')) ? { model: 'services' as BusinessModel, how: 'sector' as const } : m0;
+  // A seller whose own words say it is a marketplace, an exchange or a network that connects the two sides of a trade is a marketplace, unless it says subscription or licence.
+  const sellerText = descr.filter((x): x is string => typeof x === 'string').join(' ');
+  const twoSided = /\b(?:marketplace|exchange)\b|\b(?:network|platform|infrastructure)\b[^.;]{0,80}?\bconnecting\b/i;
+  const m = m1.how !== 'input' && m1.model === 'saas' && twoSided.test(sellerText) && !saasWords.test(sellerText) ? { model: 'marketplace' as BusinessModel, how: 'read' as const } : m1;
   // A seller that manages money gets the investment roles and measures, not the sector's own (shared sector file, profileFor).
   const v = profileFor(v0, m.model, full);
   const from = ex.source === 'context' ? ' (from the deal text, because your own description names no sector)' : ex.source === 'role' ? ' (from the job titles, because your own description names no sector)' : ex.source === 'buyer' ? ' (from who you sell to, because your own description names no sector)' : '';
@@ -803,6 +807,12 @@ function lensOf(v: Vertical | null, ...texts: (string | undefined)[]): Lens {
   const fn = overlayFn(v, 2, ...texts);
   if (fn) return { fn, metrics: fn.measures, questions: fn.questions, proof: fn.proof, vocab: v && v.id !== 'saas' ? [...fn.vocab, ...v.vocabulary] : fn.vocab };
   return { fn: null, metrics: v ? metricsOf(v) : [], questions: v ? v.discovery : [], proof: v ? v.proofShape : '', vocab: v ? v.vocabulary : [] };
+}
+// The team the user named as the buyer wins over the team a count of words in the product text points to ("marketing and product teams" is a marketing buyer even when the capability text says "workflows").
+function lensWithBuyer(v: Vertical | null, buyer: string | undefined, ...texts: (string | undefined)[]): Lens {
+  const own = buyer && (!v || v.id === 'saas') ? overlayFn(v, 1, buyer) : null;
+  if (!own) return lensOf(v, ...texts, buyer);
+  return { fn: own, metrics: own.measures, questions: own.questions, proof: own.proof, vocab: v && v.id !== 'saas' ? [...own.vocab, ...v.vocabulary] : own.vocab };
 }
 const fnName = (f: FunctionRoles): string => f.id.replace('customer', 'customer success or support').replace(/^it$/, 'IT infrastructure');
 // The view of a team (finance, sales, ...) when the sector's committee is general: its measures, a proof that lands and its own questions.
@@ -1742,7 +1752,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const ctx = readContext(args.business_model, { core: [args.category], later: [args.unique_capability], names: [args.product_name], context: [args.key_outcome], buyer: [args.target_customer] });
       const v = ctx.v;
       const notes = MODEL_NOTES[ctx.model || 'unknown'];
-      const lz = lensOf(v, args.category, args.key_outcome, args.unique_capability, args.target_customer);
+      const lz = lensWithBuyer(v, args.target_customer, args.category, args.key_outcome, args.unique_capability);
       const com = v ? committeeParts(v) : null;
       // A role read from the sector's committee sentence is used only when it reads as a role (a sentence with a colon or a full stop is not one).
       const signer = (lz.fn ? lz.fn.buyer : com ? roleOk(com.signer) : '') || 'the budget owner';
@@ -2383,7 +2393,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const PC = capFirst(P);
       const ctx = readContext(args.business_model, { core: [args.product_category], later: [args.differentiation], names: [args.product_name], context: [args.key_benefit, args.customer_need], buyer: [args.target_customer] });
       const v = ctx.v;
-      const lz = lensOf(v, args.product_category, args.customer_need, args.key_benefit, args.target_customer);
+      const lz = lensWithBuyer(v, args.target_customer, args.product_category, args.customer_need, args.key_benefit);
       // Relevance: a sector note is used as it is when the inputs share words with it; when they share none, the note belongs to another kind of work and the user's own figures and words are used instead.
       // what the product does (category, problem, result, alternative, difference), not who buys it: the audience's words would make every measure about developers fit a developer tool
       const inputStems = stemSet(args.customer_need || '', args.product_category || '', args.key_benefit, args.competitor || '', args.differentiation);
@@ -2814,7 +2824,7 @@ ${rows.join('\n')}
       const kindHits = ['network', 'cloud', 'secur', 'interaction|communicat|cpaas|voice|messaging', 'iot', 'collaborat', 'analytic', 'software|platform'].filter((k) => new RegExp(k, 'i').test(`${SP.category} ${named} ${args.key_benefit}`)).length;
       const ctas0 = callsToAction(v, ctx.model);
       const ctas = kindHits >= 3 && /site survey/i.test(ctas0[0]) ? MODEL_NOTES.services.cta.slice() : ctas0;
-      const lz = lensOf(v, args.key_benefit, args.target_customer, statement);
+      const lz = lensWithBuyer(v, args.target_customer, args.key_benefit, statement);
       const proofSector0 = ctx.model && ctx.model !== 'saas' ? noSeatWords(lz.proof) : lz.proof;
       // Relevance: a sector note is used when the statement, the problem and the benefit share words with it; otherwise the user's own words and figures are used.
       const inputStems = stemSet(SP.need, SP.category, SP.alt, SP.diff.join(' '), args.key_benefit);
@@ -3303,7 +3313,7 @@ ${SUGGESTED}
       const ctx = readContext(args.business_model, { core: [args.product_description], later: [args.key_differentiation, args.current_positioning], names: [args.company_name], context: [args.problem_solved, args.customer_feedback], buyer: [args.target_customer] });
       const v = ctx.v;
       const notes = MODEL_NOTES[ctx.model || 'unknown'];
-      const lz = lensOf(v, args.problem_solved, args.product_description, args.target_customer);
+      const lz = lensWithBuyer(v, args.target_customer, args.problem_solved, args.product_description);
       const vocab = lz.vocab;
       const committee = lz.fn ? { signer: lz.fn.buyer, champion: lz.fn.champion, championInferred: false, users: null, reviewers: [] } as Committee : v ? committeeParts(v) : null;
 
