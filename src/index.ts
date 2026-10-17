@@ -411,6 +411,8 @@ function findSector(text: string): Vertical | null {
   for (const [id, re] of SECTOR_WORDS) if (re.test(t)) return VERTICALS.find((v) => v.id === id) || null;
   return detectVertical(t);
 }
+// Typed items placed in one sentence: where an item lands (results, recognition, scale) never changes the list layout of the answer.
+const inl = (items: string[]): string => items.join('; ');
 const list = (items: string[], prefix = '- '): string => items.map((x) => `${prefix}${x}`).join('\n');
 const numbered = (items: string[]): string => items.map((x, i) => `${i + 1}. ${x}`).join('\n');
 
@@ -1520,26 +1522,27 @@ ${SUGGESTED}
       // A weakness is shown on the card of the alternative it names. One that shares at least two content words with an alternative's description belongs there too;
       // the rest are listed once under "Weaknesses you gave" and never hung on an alternative they do not describe.
       const matched = new Map<string, string[]>();
-      const used = new Set<string>();
+      // Taken by position, so a weakness typed twice stays two items (the layout never depends on the typed words).
+      const used = new Set<number>();
       for (const c of named) {
         const key = nameOf(c).toLowerCase();
-        const hits = key.length >= 3 ? weaknessItems.filter((w) => w.toLowerCase().includes(key)) : [];
-        if (hits.length) { matched.set(c, hits); hits.forEach((h) => used.add(h)); }
+        const hitIdx = key.length >= 3 ? weaknessItems.map((w, i) => (w.toLowerCase().includes(key) ? i : -1)).filter((i) => i >= 0) : [];
+        if (hitIdx.length) { matched.set(c, hitIdx.map((i) => weaknessItems[i])); hitIdx.forEach((i) => used.add(i)); }
       }
       // A weakness about doing the work by hand fits the one status-quo option you listed, when you listed exactly one.
       const sqOnly = named.filter((c) => STATUS_QUO.test(nameOf(c)) && nameOf(c).toLowerCase() !== 'do nothing');
-      if (sqOnly.length === 1) for (const w of weaknessItems) if (!used.has(w) && /\b(?:by hand|spreadsheets?|in-house|paper|excel)\b/i.test(w)) { matched.set(sqOnly[0], [...(matched.get(sqOnly[0]) || []), w]); used.add(w); }
+      if (sqOnly.length === 1) for (const [wi, w] of weaknessItems.entries()) if (!used.has(wi) && /\b(?:by hand|spreadsheets?|in-house|paper|excel)\b/i.test(w)) { matched.set(sqOnly[0], [...(matched.get(sqOnly[0]) || []), w]); used.add(wi); }
       // Run 22 round 2: a weakness belongs to an alternative only when it shares meaning with it (at least two specific words, or one meaning pair), and to one alternative alone;
       // with exactly one alternative given, every weakness is about it.
-      for (const w of weaknessItems) {
-        if (used.has(w)) continue;
-        if (named.length === 1) { matched.set(named[0], [...(matched.get(named[0]) || []), w]); used.add(w); continue; }
+      for (const [wi, w] of weaknessItems.entries()) {
+        if (used.has(wi)) continue;
+        if (named.length === 1) { matched.set(named[0], [...(matched.get(named[0]) || []), w]); used.add(wi); continue; }
         let best: string | null = null; let bestN = 1; let tie = false;
         for (const c of named) { const n = linkScore(w, c); if (n > bestN) { best = c; bestN = n; tie = false; } else if (n === bestN && n > 1) tie = true; }
         if (tie) best = null;
-        if (best) { matched.set(best, [...(matched.get(best) || []), w]); used.add(w); }
+        if (best) { matched.set(best, [...(matched.get(best) || []), w]); used.add(wi); }
       }
-      const untied = weaknessItems.filter((w) => !used.has(w));
+      const untied = weaknessItems.filter((_w, i) => !used.has(i));
       const nameLike = (c: string) => /^[A-Z0-9]/.test(nameOf(c)) && nameOf(c).split(/\s+/).length <= 4;
       const describedOnly = vendors.length > 0 && !vendors.some(nameLike);
       const sParts = splitStrengths(strengthItems);
@@ -1866,7 +1869,7 @@ ${matrixNote}
 ## Proof Point Framework
 
 ### Tier 1: Customer Results (Strongest)
-${results.length ? `Results you supplied (supplied by you: use one only if it is real and you can show it):\n${list(results.map((r) => r.text))}` : `You supplied no customer result, so none is quoted in this answer. The strongest proof for ${P} is one named customer with a before and after on ${measures[0] ? measures[0] : 'the result your outcome names'}, from the customer's own data and with the period named.`}
+${results.length ? `Results you supplied (supplied by you: use one only if it is real and you can show it): ${inl(results.map((r) => r.text))}` : `You supplied no customer result, so none is quoted in this answer. The strongest proof for ${P} is one named customer with a before and after on ${measures[0] ? measures[0] : 'the result your outcome names'}, from the customer's own data and with the period named.`}
 
 **Proof collection questions** (ask your existing customers):
 1. "What measure improved most after working with ${named ? P : 'us'}?"
@@ -1875,13 +1878,13 @@ ${results.length ? `Results you supplied (supplied by you: use one only if it is
 4. "What was the payback period?"
 ${v ? `\n**What a good proof point looks like in ${v.name}:** ${lz.proof}\n` : ''}
 ### Tier 2: Third-Party Validation
-${tier(2).length ? `Recognition you supplied (supplied by you: use it only as worded and sourced):\n${list(tier(2).map((r) => r.text))}\n\n` : ''}${tier(2).length ? 'Also worth collecting' : 'To collect'}: ${lc1(notes.proofTiers[0])}.
+${tier(2).length ? `Recognition you supplied (supplied by you: use it only as worded and sourced): ${inl(tier(2).map((r) => r.text))}\n\n` : ''}${tier(2).length ? 'Also worth collecting' : 'To collect'}: ${lc1(notes.proofTiers[0])}.
 
 ### Tier 3: Technical or Operational Proof
 - ${notes.proofTiers[1]}${capShown.length && !capShown.some((x) => /^(?:[“"])/.test(x)) ? `\n- For the technical evaluator, line up evidence for the first claims in your capability list: ${capShown.join(capShown.some((x) => /,/.test(x)) ? '; ' : ', ')}.` : ''}
 
 ### Tier 4: Social Proof
-${tier(4).length ? `Scale and voices you supplied (supplied by you: keep the label you gave):\n${list(tier(4).map((r) => r.text))}\n\n` : ''}${tier(4).length ? 'Also worth collecting' : 'To collect'}: ${lc1(notes.proofTiers[2])}.
+${tier(4).length ? `Scale and voices you supplied (supplied by you: keep the label you gave): ${inl(tier(4).map((r) => r.text))}\n\n` : ''}${tier(4).length ? 'Also worth collecting' : 'To collect'}: ${lc1(notes.proofTiers[2])}.
 
 ---
 
@@ -2125,7 +2128,7 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const matchedSegs = segmentScores.map((x) => ({ x, hit: overlap(x.name) })).filter((m) => m.hit.length).sort((a, b) => b.hit.length - a.hit.length);
       const secondView = ccText
         ? matchedSegs.length
-          ? `**Second view (from your current customers; it is separate from the keyword scores below and does not change them).** These segments share words with the customers you described, strongest first: ${matchedSegs.map((m) => `${m.x.name} (shares "${real(m.x.name, m.hit).join('", "')}")`).join('; ')}. The segment where your customers already are is the strongest candidate for a first beachhead.`
+          ? `**Second view (from your current customers; it is a reading of words and does not change the scores below).** These segments share words with the customers you described, strongest first: ${matchedSegs.map((m) => `${m.x.name} (shares "${real(m.x.name, m.hit).join('", "')}")`).join('; ')}. The segment where your customers already are is the strongest candidate for a first beachhead.`
           : `**Second view.** None of the segment names shares a word with the customers you described. Say which segment each of your customers belongs to, and the segment with the most customers is your strongest candidate.`
         : 'No current_customers were given, so no segment can be tied to where your customers already are, and the scores below are only a keyword match.';
       const dealWord = acvGiven ? acvGiven : 'your price';
@@ -2168,9 +2171,9 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
         ? `**Product fit.** The parts of your product text sit closest to ${joinAnd(fitTop.map((r) => `${r.x.name} (${joinAnd(r.fit.map((p) => q(partLabel(p))))})`))}; this is a reading of words, not a score. ${presetFirst ? (fitTop.some((r) => r.x.name === presetFirst) ? `That agrees with the presets, which put ${presetFirst} first.` : `This differs from the presets, which put ${presetFirst} first, so weigh the presets less.`) : 'The presets give no order here, so start the checks with these segments.'}`
         : `**Product fit.** No part of your product text sits close to a segment name by its words, so the facts below carry the decision.${named.filter(isNamedPart).length >= 2 ? ` Your description names ${joinAnd(named.filter(isNamedPart).slice(0, 5).map((x) => q(clip(x, 70))))}; ask each segment which of them it wants first.` : ''}`;
       const overlapNotes = segmentOverlap(segmentScores.map((x) => x.name));
-      const howToDecideKeyword = `## How to decide, from your own inputs
+      const howToDecideKeyword = `## ${ownMethod ? 'How the segments were ranked' : 'How to decide'}, from your own inputs
 
-What you gave: deal size ${acvGiven || 'not given'}, sales cycle ${cycleGiven || 'not given'}, current customers ${ccText ? `(${q(clip(ccText, 200))})` : 'not given'}. The keyword scores below do not use any of these, so use them first:
+What you gave: deal size ${acvGiven || 'not given'}, sales cycle ${cycleGiven || 'not given'}, current customers ${ccText ? `(${q(clip(ccText, 200))})` : 'not given'}${ownMethod ? ` and customer pain (${q(clip(painText, 200))}). The scores below are built from your customers, your pain and your deal size (see "Method used" above), not from keywords in the segment names; check them with these:` : '. The keyword scores below do not use any of these, so use them first:'}
 
 - ${secondView}
 - ${productFit}
@@ -2184,16 +2187,7 @@ ${perSegment}
 ---
 
 `;
-      const howToDecide = ownMethod ? `## How the segments were ranked, from your own inputs
-
-What you gave: deal size ${acvGiven}, sales cycle ${cycleGiven || 'not given'}, current customers (${q(clip(ccText, 200))}) and customer pain (${q(clip(painText, 200))}). The scores below are built from your customers, your pain and your deal size (see "Method used" above), not from keywords in the segment names.
-
-- **Check it with buyers.** The ranking shows where the words of your own customers and your pain point; ask three buyers in the segment at the top which problem they raise first before you commit.
-- **Deal size and cycle.** A deal of ${acvGiven}${cycleGiven ? ` with a cycle of ${cycleGiven}` : ''} needs, in each segment, a buyer who can approve that amount and a team that can run a process of that length. Check that for each segment before you rank it.
-
----
-
-` : howToDecideKeyword;
+      const howToDecide = howToDecideKeyword;
 
       const sharpenItems: { give: string; changes: string }[] = [];
       if (!segGiven) sharpenItems.push({ give: 'potential_segments', changes: 'the whole answer, which now scores three example segments' });
@@ -2242,10 +2236,10 @@ ${segmentScores.map((s, i) => `| ${i === 0 && !allTied ? '**' + s.name + '** (be
 ---
 
 ## ${allTied ? `No segment is chosen by the scores: ${tied.length} segments tie` : `Recommended Beachhead: ${beachhead.name}`}
-${tieLine}${!ownMethod && tied.length === 1 && beachhead.keyword ? `\n*Read this as the highest keyword match only: ${beachhead.name} scores highest because its name contains the keyword "${beachhead.kw}", not because of anything known about your market. Score each segment yourself with your own data before you commit.*\n` : ''}
+${tieLine}${!ownMethod && tied.length === 1 && beachhead.keyword ? `\nRead this as the highest keyword match only: ${beachhead.name} scores highest because its name contains the keyword "${beachhead.kw}", not because of anything known about your market. Score each segment yourself with your own data before you commit.\n` : ''}
 **What decided each score:** ${segmentScores.map((x) => ownMethod ? `${x.name}: ${x.ownRef.length ? `shares "${real(x.name, x.ownRef).join('", "')}" with your customers` : 'shares no word with your customers'}; ${x.ownPain.length ? `shares "${real(x.name, x.ownPain).join('", "')}" with your pain` : 'shares no word with your pain'}; ${x.ownTam !== null && maxTam ? `market value ${usdFull(x.ownTam)} from your counts and deal size` : 'budget at the middle score (no counts for two segments)'}` : `${x.name}: ${x.keyword ? `the word "${x.kw}"` : 'no keyword, so the middle score'}`).join('; ')}.
 
-${tied.length > 1 || (!ownMethod && beachhead.keyword) ? `### ${tied.length > 1 ? 'What would break the tie' : 'Before you trust this ranking'}
+${`### ${tied.length > 1 ? 'What would break the tie' : 'Before you trust this ranking'}
 
 ${ownMethod ? 'The ranking uses the words your segment names share with your customers and your pain, so name the segment in your own words where you can.' : 'The scores come from words in the segment names, so settle the ranking with these checks:'}
 1. **Which segment already holds your own customers?** The segment where your customers already are is the strongest candidate for a first beachhead.
@@ -2253,7 +2247,7 @@ ${ownMethod ? 'The ranking uses the words your segment names share with your cus
 3. **Which segment can pay ${acvGiven ? acvShown : 'your price'} and has a buyer you can reach?** The roles in the sector view below say who to look for.
 4. Drop the segments that fail and keep the one or two that are left for the sizing below.
 
-` : ''}### How This Segment Scored
+`}### How This Segment Scored
 
 ${EXAMPLES}
 **${tied.length > 1 ? 'Joint highest score' : 'Highest score'} (${beachhead.total}/25)**, ${ownMethod ? 'from your own inputs' : 'from the presets'}:
@@ -2666,7 +2660,7 @@ ${optA ? `**Problem to solution**\n> ${optA}\n\n` : ''}**Outcome first**
 ${optM ? `\n**Mechanism first**\n> ${optM}\n` : ''}
 ### Level 3: Three Supporting Pillars
 
-**Pillar 1: the result.** ${B.headline ? `${capFirst(clean(B.headline))}.${B.parts.length ? ` What sits behind it: ${partsInline(B.parts).map((x) => clean(x)).join('; ')}.` : ''}` : B.parts.length === 1 ? `What buyers get: ${kit.lowerFirst(clean(partText(B.parts[0]).length > 150 ? `${leadOf(B.parts[0].text, 110)}${B.parts[0].label ? ` ${B.parts[0].label}` : ''}` : partText(B.parts[0])))}.` : `What buyers get:\n${B.parts.map((p) => `  - ${capFirst(clean(partText(p).length > 150 ? `${leadOf(p.text, 110)}${p.label ? ` ${p.label}` : ''}` : partText(p)))}`).join('\n')}`}
+**Pillar 1: the result.** ${B.headline ? `${capFirst(clean(B.headline))}.${B.parts.length ? ` What sits behind it: ${partsInline(B.parts).map((x) => clean(x)).join('; ')}.` : ''}` : B.parts.length === 1 ? `What buyers get: ${kit.lowerFirst(clean(partText(B.parts[0]).length > 150 ? `${leadOf(B.parts[0].text, 110)}${B.parts[0].label ? ` ${B.parts[0].label}` : ''}` : partText(B.parts[0])))}.` : `What buyers get: ${B.parts.map((p) => capFirst(clean(partText(p).length > 150 ? `${leadOf(p.text, 110)}${p.label ? ` ${p.label}` : ''}` : partText(p)))).join('; ')}.`}
 - Proof you have: ${B.claims.length ? partsInline(B.claims).join('; ') + '.' : B.parts.some((p) => /\d/.test(p.text)) ? 'the figures in the results above, with the labels you gave.' : 'none given for the result yet.'}
 - Proof to collect: ${proofSector ? lc1(proofSector) : `one customer, one measure${m0 ? ` (${m0})` : ''}, before and after, from the customer's own data`}
 
@@ -2709,7 +2703,7 @@ ${vocabShown.length >= 2 ? `Words this sector's buyers use, to check your wordin
 > ${varB}
 ${varC ? `\n**Variation C: lead with the difference**\n> ${varC}\n` : ''}
 **Variation D: lead with social proof**
-${proofLines.length ? `> ${proofLines.join('\n> ')}\n> Use each only as worded and sourced, and close with the outcome.` : `> No customer count, result or recognition was typed, so there is no honest proof line to write yet. The first pillar says what to collect.`}
+${proofLines.length ? `> ${proofLines.join(' ')} Use each only as worded and sourced, and close with the outcome.` : `> No customer count, result or recognition was typed, so there is no honest proof line to write yet. The first pillar says what to collect.`}
 
 ### Audience-Specific Messaging
 
@@ -2996,7 +2990,8 @@ ${rows.join('\n')}
       const langNouns = ownNounsOf(SP.need ? needPieces(SP.need) : [], ownMeasures, dItems, kit);
 
       if (chosen.has('website')) {
-        const proofStrip = proofAll.length ? proofAll.map((f) => `- ${proofText(f)}`).join('\n') : '';
+        // One bold label and one line whatever was typed, so the layout never depends on how many figures were read.
+        const proofStrip = proofAll.length ? `${proofAll.map((f) => proofText(f)).join('; ')}.` : 'no customer count, result or recognition was typed, so none is shown.';
         sections.push(`## Website Execution
 
 ### Homepage Hero
@@ -3006,7 +3001,7 @@ ${rows.join('\n')}
 **Subheadline**
 > ${nextRes()}${detail ? ` ${fresh(detail)}` : ''}
 
-${bullets.length > 1 && !detail ? `**Benefit points under the hero**\n${bullets.slice(clauseShort ? 1 : 0, 5).map((b) => `- ${b}`).join('\n')}\n\n` : ''}${feats.length ? `**What it includes**\n${feats.map((x) => `- ${x}`).join('\n')}\n\n` : ''}${proofStrip ? `**Proof strip**\n${proofStrip}\n\n` : ''}${dMain ? `**Why ${P}**\n> ${nextDiff()}\n\n` : ''}${offers.length ? `**Offer**\n- ${capFirst(partText(offers[0]))}\n\n` : ''}**Calls to action**
+${bullets.length > 1 && !detail ? `Benefit points under the hero: ${bullets.slice(clauseShort ? 1 : 0, 5).join('; ')}.\n\n` : ''}${feats.length ? `**What it includes**\n${feats.map((x) => `- ${x}`).join('\n')}\n\n` : ''}${proofStrip ? `**Proof strip**: ${proofStrip}\n\n` : ''}${dMain ? `**Why ${P}**\n> ${nextDiff()}\n\n` : ''}${offers.length ? `**Offer**\n- ${capFirst(partText(offers[0]))}\n\n` : ''}**Calls to action**
 - Primary: "${primary}"
 - Secondary: "${secondary}"
 ${vocab.length ? `\nWords ${lz.fn ? 'buyers in this team' : "this sector's buyers"} use, to work into the page: ${vocab.slice(0, 5).join(', ')}.\n` : ''}${proofSector ? `\nUnder the fold, ${lc1(clean(proofSector))}: use a real result of yours in that shape and its source.\n` : ''}`);

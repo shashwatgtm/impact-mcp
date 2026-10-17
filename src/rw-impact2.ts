@@ -414,7 +414,8 @@ function proofFromRaw(texts: string[]): { counts: Piece[]; recognitions: Piece[]
 
 /** The closing list of what is missing. */
 export function sharpenText(missing: { give: string; changes: string }[]): string {
-  return missing.length ? `**To sharpen this, give:** ${missing.map((m) => `${m.give} (it would change ${m.changes})`).join('; ')}.` : '';
+  // Always one line, so the layout of the answer never depends on which figures the user typed.
+  return missing.length ? `**To sharpen this, give:** ${missing.map((m) => `${m.give} (it would change ${m.changes})`).join('; ')}.` : '**To sharpen this, give:** nothing more; every input this answer reads was given.';
 }
 
 // ---- the positioning statement a user hands to the channel tool ----------------------------------------------------------------------

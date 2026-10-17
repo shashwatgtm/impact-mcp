@@ -540,7 +540,8 @@ function proofFromRaw(texts) {
 }
 /** The closing list of what is missing. */
 function sharpenText(missing) {
-    return missing.length ? `**To sharpen this, give:** ${missing.map((m) => `${m.give} (it would change ${m.changes})`).join('; ')}.` : '';
+    // Always one line, so the layout of the answer never depends on which figures the user typed.
+    return missing.length ? `**To sharpen this, give:** ${missing.map((m) => `${m.give} (it would change ${m.changes})`).join('; ')}.` : '**To sharpen this, give:** nothing more; every input this answer reads was given.';
 }
 function parseStatement(...a) { return (0, piece_wrap_ts_1.pieceOf)(parseStatementRaw(...a)); }
 /** The pieces of a positioning statement that the channel copy needs: the alternative ("Unlike X," or "Alternatives buyers use today: X"), the differences ("What sets it apart: ..." or the rest of the
