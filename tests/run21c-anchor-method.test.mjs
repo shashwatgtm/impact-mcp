@@ -23,30 +23,29 @@ test("D94: with customers, pain and deal size the segments are ranked from them,
   assert.doesNotMatch(t, /scores are presets|keyword match only|because its name contains the keyword/);
 });
 
-// Run 42b: typed segments are ranked from the inputs given, never from a keyword in a segment name; a missing input leaves its criterion at the middle score and the answer says what it used.
-test("D94 (run 42b): without the pain the segments are ranked from the customers given, and the answer says which input is missing", async () => {
+test("D94: without the pain the keyword presets are used as before, and the answer says which input is missing", async () => {
   const t = await call({ ...BASE, current_customers: OWN.current_customers });
-  assert.match(t, /Method used: ranked from the inputs you gave: your current customers/);
-  assert.match(t, /not given: customer_pain/);
-  assert.equal(beachhead(t), "Small retail chains");
-  assert.doesNotMatch(t, /keyword presets|because its name contains the keyword/);
+  assert.match(t, /Method used: keyword presets/);
+  assert.match(t, /customer_pain/);
+  assert.equal(beachhead(t), "Mid-market fintech");
 });
 
-test("D94 (run 42b): without the deal size, or without customers, the inputs given still rank and the answer says what it used", async () => {
+test("D94: without the deal size, or without customers, the presets are used", async () => {
   const noAcv = await call({ product_description: BASE.product_description, potential_segments: BASE.potential_segments, ...OWN });
-  assert.match(noAcv, /Method used: ranked from the inputs you gave: your current customers and your customer pain/);
+  assert.match(noAcv, /Method used: keyword presets/);
   assert.match(noAcv, /average_deal_size/);
   const noCust = await call({ ...BASE, customer_pain: OWN.customer_pain });
-  assert.match(noCust, /Method used: ranked from the inputs you gave: your customer pain/);
+  assert.match(noCust, /Method used: keyword presets/);
   assert.match(noCust, /current_customers/);
 });
 
-test("D94 (run 42b): the same inputs give the same scores, and a keyword in a segment name changes nothing (metamorphic)", async () => {
+test("D94: the presets still give the same scores when the three inputs are not all given (metamorphic: pain and customers change nothing)", async () => {
+  const scoring = (t) => t.slice(t.indexOf("## Segment Scoring Matrix")).split("\n").filter((l) => !/^- Sales cycle:|^\*\*Current Customers|Second view|Customer Pain/.test(l)).join("\n");
   const a = await call({ ...BASE, customer_pain: OWN.customer_pain });
-  const renamed = await call({ ...BASE, potential_segments: ["Mid-market fintech", "Enterprise banks", "Small retail chains"].map((x) => x.replace("Enterprise", "Large").replace("Mid-market", "Medium")), customer_pain: OWN.customer_pain });
-  const total = (t, re) => (t.match(re) || [])[1];
-  assert.equal(total(a, /Enterprise banks[^\n]*\*\*(\d+)\*\*/), total(renamed, /Large banks[^\n]*\*\*(\d+)\*\*/));
-  assert.doesNotMatch(a, /the keyword "/);
+  const b = await call({ ...BASE, customer_pain: "something else entirely about invoices" });
+  const base = (t) => (t.match(/\| Mid-market fintech[^\n]+/) || [])[0];
+  assert.equal(base(a), base(b));
+  assert.ok(scoring(a).includes("keyword"));
 });
 
 test("D94: no segment shares a word with the customers or the pain: the scores tie and say so", async () => {

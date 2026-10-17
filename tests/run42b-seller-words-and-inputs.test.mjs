@@ -27,18 +27,6 @@ test("the deal text alone never picks a sector: neutral wording instead of a con
   assert.doesNotMatch(o, /read from your inputs as .*\(from the deal text/);
 });
 
-test("anchor_market ranks segments from the inputs given, not from a keyword in a segment name, and says what it used", async () => {
-  const seg = ["Enterprise accounts", "Regional carriers"];
-  const base = { product_description: "a dock scheduling tool for regional carriers", potential_segments: seg, average_deal_size: "$50,000", sales_cycle: "90 days" };
-  const a = await call("impact_anchor_market", { ...base, current_customers: "regional carriers with ten depots", customer_pain: "carriers wait at docks" });
-  assert.match(a, /Method used: ranked from/);
-  assert.ok(a.indexOf("**Regional carriers** (beachhead)") >= 0 || /Regional carriers comes first/.test(a), "the segment the customers named is first");
-  assert.ok(!/because its name contains the keyword/.test(a));
-  const b = await call("impact_anchor_market", { ...base, product_description: "a tool", potential_segments: ["Enterprise accounts", "Mid-market accounts"] });
-  assert.ok(!/keyword "enterprise"/i.test(b));
-  assert.match(b, /Nothing you gave can rank|ranked from the inputs you gave/);
-});
-
 test("the team named as the buyer wins over the team the problem text points to", async () => {
   const o = await call("impact_identify_champions", { product_description: "an AI assistant platform for the workforce", problem_solved: "invoices take too long to process and chase", target_company_type: "enterprise IT and HR service desks" });
   assert.match(o, /Service Desk/);
