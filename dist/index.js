@@ -20,6 +20,7 @@ exports.functionOf = functionOf;
 exports.industryOf = industryOf;
 exports.pctText = pctText;
 exports.parseCounts = parseCounts;
+exports.dropFraming = dropFraming;
 exports.createServer = createServer;
 const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
@@ -593,6 +594,9 @@ function lowerFirstRaw(t) {
     const w = parts[0] || '';
     if (/^[A-Z][a-z]+$/.test(parts[1] || '') && !isCommonWord(w) && !isCommonWord(parts[1]))
         return t; // a two-word name (Spec Hub, Platformation Suite)
+    // a name that starts a clause about a third party ("Stockmann cut supplier onboarding ...") keeps its capital
+    if (/^[A-Z][a-z'-]+$/.test(w) && !isCommonWord(w) && /^(?:cut|saved|grew|doubled|tripled|won|went|gained|raised|lowered|shortened|[a-z]{3,}ed)$/.test(parts[1] || '') && !isCommonWord(parts[1] || ''))
+        return t;
     return /^[A-Z][a-z'-]+$/.test(w) && !isKnownName(w) ? t.charAt(0).toLowerCase() + t.slice(1) : t;
 }
 function lc1(...a) { return (0, piece_wrap_ts_1.pieceOf)(lc1Raw(...a)); }
@@ -890,11 +894,16 @@ const STEM_STOP = new Set('the and for with that this from have has are was were
 function contentStems(t) {
     return new Set((t.toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => !STEM_STOP.has(w)).map((w) => w.slice(0, 5)));
 }
+// an alternative described as "built for people who ..." is one phrase: its cut head ("software built for people") would be a fragment
+const PARTICIPLE_FOR = /\b(?:built|designed|made|meant|aimed|priced|tuned|tailored|created|developed)\s+(?:for|by|around|to|with)\b/i;
 function labelOf(...a) { return (0, piece_wrap_ts_1.pieceOf)(labelOfRaw(...a)); }
 // A short label for an alternative typed as a long phrase: the words before the first comma, "which" or "that", at most 6 words.
 function labelOfRaw(c) {
     const full = nameOf(c).trim();
     if (full.split(/\s+/).length <= 6)
+        return full;
+    // a phrase of up to 14 words with no list in it is kept whole: cutting it at "who" or "built" leaves a fragment ("software built for people")
+    if (full.split(/\s+/).length <= 14 && full.length <= 100 && !/[,;:]/.test(full) && PARTICIPLE_FOR.test(full))
         return full;
     // a long description is shortened to its leading noun phrase: the words before "that", "which", "from", "for", "selling", "built", "only" or a comma
     const head = full.split(/,|\s(?:that|which|where|who|from|for|selling|built|only|with|run|runs|relies|relying)\s/)[0].trim();
@@ -959,7 +968,7 @@ function committeeParts(v) {
 }
 const FUNCTIONS = [
     { id: 'finance', re: /\b(financ\w*|billing|invoic\w*|reconcil\w*|revenue recognition|collections?|accounts? (?:payable|receivable)|month-end|ledger|treasury|expenses?|accounting|cash flow)\b/gi, champion: 'Finance Controller or Head of Billing Operations', buyer: 'CFO', tech: 'the finance systems owner (ERP and billing) and IT', measures: ['days to close the books', 'billing errors found after invoicing', 'manual reconciliation effort', 'audit findings'], blocker: 'a finance-systems change in the middle of a close, and the audit trail', questions: ['How many days does the close take today, and which step takes longest?', 'Where are invoices, payments and the ledger matched by hand today, and by whom?', 'Which billing errors were found only after an invoice went out?'], proof: 'Close time, billing errors or reconciliation effort before and after for one team, signed off by the finance lead.', vocab: ['month-end close', 'reconciliation', 'invoicing', 'revenue recognition', 'audit trail', 'ERP posting'] },
-    { id: 'sales', re: /\b(sales|pipeline|quota|win rates?|reps?|leads?|deals?|prospects?|selling|outbound)\b/gi, champion: 'Head of Sales Operations or Revenue Operations', buyer: 'Chief Revenue Officer', tech: 'the CRM administrator and sales operations', measures: ['pipeline coverage', 'win rate', 'sales cycle length', 'rep ramp time'], blocker: 'rep adoption and CRM data quality', questions: ['How is the pipeline reviewed today, and how late is the view?', 'Where do reps lose time between a lead and a first call?', 'Which number does the sales head answer for each quarter?'], proof: 'Win rate or sales cycle length for one team before and after, from the CRM, with the sales head signing it off.', vocab: ['pipeline', 'win rate', 'quota attainment', 'sales cycle', 'CRM hygiene', 'forecast call'] },
+    { id: 'sales', re: /\b(sales|pipeline|quota|win rates?|reps?|sellers?|revenue (?:teams?|leaders?|leadership|operations)|go-to-market|account executives?|leads?|deals?|prospects?|selling|outbound)\b/gi, champion: 'Head of Sales Operations or Revenue Operations', buyer: 'Chief Revenue Officer', tech: 'the CRM administrator and sales operations', measures: ['pipeline coverage', 'win rate', 'sales cycle length', 'rep ramp time'], blocker: 'rep adoption and CRM data quality', questions: ['How is the pipeline reviewed today, and how late is the view?', 'Where do reps lose time between a lead and a first call?', 'Which number does the sales head answer for each quarter?'], proof: 'Win rate or sales cycle length for one team before and after, from the CRM, with the sales head signing it off.', vocab: ['pipeline', 'win rate', 'quota attainment', 'sales cycle', 'CRM hygiene', 'forecast call'] },
     { id: 'marketing', re: /\b(marketing|campaigns?|brand|demand gen\w*|attribution|content|seo|webinars?)\b/gi, champion: 'Head of Marketing or Demand Generation', buyer: 'CMO', tech: 'marketing operations', measures: ['marketing-sourced pipeline', 'cost per qualified lead', 'attribution coverage'], blocker: 'overlap with the marketing tools already in place', questions: ['How is a campaign tied to pipeline today?', 'Which reports does marketing build by hand each month?', 'Which channel would you cut first if you could see the cost per qualified lead?'], proof: 'Cost per qualified lead or marketing-sourced pipeline for one campaign before and after.', vocab: ['pipeline contribution', 'attribution', 'cost per qualified lead', 'campaign', 'lead scoring'] },
     { id: 'customer', re: /\b(support|customer success|customer experience|tickets?|churn|retention|renewals?|csat|nps)\b/gi, champion: 'Head of Customer Success or Support', buyer: 'Chief Customer Officer or COO', tech: 'support operations and the owner of the help-desk tools', measures: ['first response time', 'time to resolution', 'renewal rate', 'customer satisfaction'], blocker: 'agent workload during the change and tool overlap', questions: ['How long does a first response take today, and who feels it first?', 'Which tickets or renewals slip because of the tools in use?', 'Which number does support or success answer for each month?'], proof: 'First response time or renewal rate for one team before and after, from the help desk or CRM.', vocab: ['first response time', 'time to resolution', 'renewal', 'customer satisfaction', 'escalation'] },
     { id: 'engineering', re: /\b(engineer\w*|developers?|code|release\w*|deploy\w*|devops|software delivery|apis?|testing|pipelines?)\b/gi, champion: 'Engineering or Platform Lead', buyer: 'VP Engineering or CTO', tech: 'a staff engineer or architect, with security for code and data access', measures: ['release frequency', 'lead time for changes', 'escaped defects'], blocker: 'developer adoption and security review', questions: ['How often do you release today, and what slows the release down?', 'Where do defects escape, and who finds them?', 'Which tools would this replace or connect to?'], proof: 'Release frequency or escaped defects on one team before and after, from the pipeline data of that team.', vocab: ['release frequency', 'lead time for changes', 'escaped defects', 'CI pipeline', 'technical debt'] },
@@ -1484,9 +1493,10 @@ ${SUGGESTED}
             // The team the user named as the buyer (target_company_type) wins over the team a count of words in the problem text points to.
             const ownerRun = !money && !!targetType && OWNER_RUN.test(targetType) && (!v || v.id === 'vertical-saas');
             const givenFn = !money && !ownerRun && targetType && (!v || v.id === 'saas' || v.id === 'ai-native' || v.id === 'vertical-saas') ? functionOf(targetType.replace(/\bfinanc\w*\s+(?:services?|institutions?|sector|industry|firms?|companies|research|analy\w+|markets?|advis\w+|news|data|content)\b/gi, ' ')) : null;
-            const fn = money ? null : givenFn ? givenFn : ownerRun ? null : !v ? functionHits(1, problem, args.product_description) : v.id === 'ai-native' ? functionOf(problem) : overlayFn(v, 2, problem);
+            const fn = money ? null : givenFn ? givenFn : ownerRun ? null : !v ? functionHits(1, problem, args.product_description) : v.id === 'ai-native' ? (functionOf(problem) ?? functionHits(2, args.product_description)) : overlayFn(v, 2, problem);
             // An AI native product, or no sector, with a buyer industry named: the roles of that industry's teams.
-            const ind = !fn && !money && !ownerRun && (!v || v.id === 'ai-native') ? industryOf(targetType) : null;
+            // Run 42B (set M): the buyer's industry gives the roles only when the input names exactly one such industry; a list of several leaves the sector's general committee, never one industry's roles.
+            const ind = !fn && !money && !ownerRun && (!v || v.id === 'ai-native') && INDUSTRIES.filter((i) => i.re.test(targetType)).length <= 1 ? industryOf(targetType) : null;
             // The sector's measures, led by the ones the user's own problem and product words point to.
             const ranked = fn ? rankMeasures(fn.measures, problem, args.product_description) : v && !ind ? rankMeasures(metricsOf(v), problem, args.product_description) : [];
             let primaryChampion = { role: '', pain: '', motivation: '' };
@@ -1779,7 +1789,7 @@ ${SUGGESTED}
                 const pre = nameOf(c).split(/:\s/)[0]; // "the old model: one firm writes the strategy ..." is headed "the old model"
                 if (pre !== nameOf(c) && pre.split(/\s+/).length >= 2 && pre.split(/\s+/).length <= 6)
                     return pre;
-                return nameOf(c).split(/\s+/).length <= 9 && nameOf(c).length <= 70 ? nameOf(c) : (0, rw_impact_ts_1.tidyLabel)(labelOf(c));
+                return (nameOf(c).split(/\s+/).length <= 9 && nameOf(c).length <= 70 || nameOf(c).split(/\s+/).length <= 14 && nameOf(c).length <= 100 && PARTICIPLE_FOR.test(nameOf(c)) && !/[,;:]/.test(nameOf(c))) ? nameOf(c) : (0, rw_impact_ts_1.tidyLabel)(labelOf(c));
             };
             // Run 22 round 2: the lead against an alternative is the part of your own product description (and, where one fits, the strength) that answers what you said about it;
             // an unrelated strength is never set against an alternative. A part or strength qualifies only when it shares meaning with the weakness or the description.
@@ -3976,6 +3986,18 @@ function runningName(text) {
         lead.pop();
     return lead.join(' ');
 }
+// Run 42B (set M): a typed result that opens with a framing phrase ("A featured case study states that ...", "The home page cites ...") keeps its claim and its label; the framing phrase is dropped so no later step can cut the text to that phrase.
+const FRAMING = /^\s*(?:(?:a|an|the|one|our|their)\s+)?(?:[\w'’-]+\s+){0,5}?(?:page|site|website|study|case study|story|report|review|headline|article|press release|testimonial|survey|analysis|analyst|customer|customers|brand|award|ranking)\s+(?:also\s+)?(?:states?|says?|cites?|reports?|notes?|shows?|claims?|highlights?|reads?|quotes?|lists?|features?|mentions?|describes?)\s+(?:that\s+)?(?=\S)/i;
+function dropFraming(text) {
+    const m = FRAMING.exec(text);
+    if (!m || m[0].split(/\s+/).length > 14)
+        return text;
+    let rest = text.slice(m[0].length).trim();
+    if (rest.split(/\s+/).length < 3)
+        return text;
+    return /\((?:[^()]*)\)\s*\.?$/.test(rest) ? rest : `${rest.replace(/[.\s]+$/, '')} (page claim)`;
+}
+const FRAMED_FIELDS = ['key_benefit', 'key_outcome'];
 // Run 42B: every tool takes the same optional your_sector.
 for (const t of Object.values(tools)) {
     const props = (t.inputSchema.properties ??= {});
@@ -4012,6 +4034,9 @@ function createServer() {
             const callArgs = { ...(safeArgs || {}) };
             if (typeof callArgs.target_customer === 'string' && isJobTitle(callArgs.target_customer))
                 callArgs.target_customer = (0, escape_inputs_ts_1.escapePiece)(lowerJobTitle(callArgs.target_customer));
+            for (const f of FRAMED_FIELDS)
+                if (typeof callArgs[f] === 'string')
+                    callArgs[f] = dropFraming(callArgs[f]);
             setYourSector(callArgs.your_sector);
             let result;
             try {

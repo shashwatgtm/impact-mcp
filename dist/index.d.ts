@@ -72,6 +72,7 @@ export declare function parseCounts(s: unknown): {
 }[];
 export declare const SERVER_NAME = "impact-mcp";
 export declare const SERVER_VERSION = "2.2.26";
+export declare function dropFraming(text: string): string;
 export declare function createServer(): Server;
 export {};
 //# sourceMappingURL=index.d.ts.map

@@ -371,8 +371,10 @@ function parseAlternativeRaw(text: string, kit: Kit2): Alternative {
   const m = colon && colon[1].split(/\s+/).length <= 6 ? [base, colon[1], colon[2]] as unknown as RegExpMatchArray : base.match(/^(.{3,}?)(?:,\s*|\s+)((?:that|which|who|where|whose|relying|relies|because|with)\b.*)$/i);
   let label = m && m[1].split(/\s+/).length >= 2 ? m[1].trim() : base;
   let tail = m && m[1].split(/\s+/).length >= 2 ? m[2].trim() : '';
+  // a phrase of up to 14 words is one label: cutting it at "who" or "that" leaves a fragment ("software built for people")
+  if (!colon && tail && base.split(/\s+/).length <= 14 && base.length <= 100 && !/[,;]/.test(base) && /\b(?:built|designed|made|meant|aimed|priced|tuned|tailored|created|developed)\s+(?:for|by|around|to|with)\b/i.test(base)) { label = base; tail = ''; }
   if (!tail && note) tail = note;
-  if (label.split(/\s+/).length > 9) { const c = clip(label, 60); tail = tail || label.slice(c.length).replace(/^[\s,;]+/, ''); label = c; }
+  if (label.split(/\s+/).length > 14 || label.length > 100) { const c = clip(label, 60); tail = tail || label.slice(c.length).replace(/^[\s,;]+/, ''); label = c; }
   label = label.replace(/\s+yourself$/i, '').trim() || label;
   // a label never ends on a dangling word ("... test and release, each")
   const lw = label.split(/\s+/);
