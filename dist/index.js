@@ -384,15 +384,41 @@ function readContext(explicitModel, r) {
     const descr = [...coreT, ...laterT];
     const full = { seller: [...descr, ...(r.names || [])], context: r.context, role: r.role, buyer: r.buyer };
     const coreOnly = coreT.length ? (0, verticals_ts_1.explainSector)({ seller: coreT }) : null;
-    let ex = coreOnly && coreOnly.vertical ? coreOnly : (0, verticals_ts_1.explainSector)(full);
+    // Run 42b: the seller's own words decide the sector. The seller's text (core, later, names) is read first; the deal text, the job titles and the customers' industries
+    // (what the shared reader sees in context, role and buyer) only ever fill a gap, and a gap is not filled by a guess: the answer then uses neutral B2B wording.
+    const sellerOnly = (0, verticals_ts_1.explainSector)({ seller: [...descr, ...(r.names || [])] });
+    let ex = coreOnly && coreOnly.vertical ? coreOnly : sellerOnly.vertical ? sellerOnly : { ...sellerOnly, vertical: null };
+    // Services wording means a services business; a product noun (platform, software, app, cloud, tool) without services wording is a product, never a BPO or IT services firm.
+    const servicesWords = /\b(?:outsourc\w*|bpo|managed|consult\w*|staffing|agency|(?:\w+ )?services (?:company|firm|provider|partner|business)|(?:it|business|professional|customer|technology|digital) services|operations (?:company|partner)|transformation company|system integrat\w*)\b/i;
+    const productNoun = /\b(?:platform|software|saas|app|apps|cloud|tool|tools|engine|suite|database|api|infrastructure|network|stack|marketplace)\b/i;
+    const coreText = coreT.filter((x) => typeof x === 'string').join(' ');
+    const sellerWholeText = [...descr].filter((x) => typeof x === 'string').join(' ');
+    // Services wording in the seller's own words and no other trade read: the deal text may then say which kind of services (IT services, customer experience), never anything else.
+    if (!ex.vertical && servicesWords.test(sellerWholeText)) {
+        const w = (0, verticals_ts_1.explainSector)(full);
+        if (w.vertical && w.vertical.id === 'ites')
+            ex = { ...w, source: 'seller' };
+    }
+    const notServices = (x) => !!x && x.id === 'ites' && productNoun.test(coreText || sellerWholeText) && !servicesWords.test(coreText || sellerWholeText);
     // The shared reader cuts a text at "for ..." (the buyer part), so "cloud platform for testing websites ... AI agents" can still read AI native from the label alone:
     // the seller's own texts are read once more as free text without the AI words, and a trade they name then wins (the shared guard covers the other cases).
+    // "AI" is a feature of a product, not a sector: the category and the core of the description are read without it first, then the whole description.
     if (ex.vertical && ex.vertical.id === 'ai-native' && (0, verticals_ts_1.detectModel)(undefined, { seller: descr }).model !== 'investment') {
         const noAi = (x) => (typeof x === 'string' ? x.replace(/\b(?:AI|A\.I\.)[- ](?:native|powered|led|driven|enabled|first|agents?|analyst|copilot|assistant|layered)\b|\bgenerative AI\b|\bGenAI\b|\bLLMs?\b|\b(?:agent )?copilots?\b|\bchatbots?\b|\bAI\b/gi, ' ') : x);
-        const again = (0, verticals_ts_1.explainSector)({ context: [...descr, ...(r.names || [])].map(noAi) });
-        if (again.vertical && again.vertical.id !== 'ai-native')
-            ex = again;
+        const tries = [];
+        if (coreT.length)
+            tries.push({ seller: coreT.map(noAi) }, { context: coreT.map(noAi) });
+        tries.push({ context: [...descr, ...(r.names || [])].map(noAi) });
+        for (const t of tries) {
+            const again = (0, verticals_ts_1.explainSector)(t);
+            if (again.vertical && again.vertical.id !== 'ai-native' && !notServices(again.vertical)) {
+                ex = { ...again, source: 'seller' };
+                break;
+            }
+        }
     }
+    if (notServices(ex.vertical))
+        ex = { ...ex, vertical: null };
     const v0 = ex.vertical;
     // The model is read from what the product is (core) first; the capability and positioning text can mention "tools" or "cloud" in any business.
     const first = coreT.length ? (0, verticals_ts_1.detectModel)(explicitModel, { seller: coreT }) : null;
@@ -909,6 +935,7 @@ const FUNCTIONS = [
     { id: 'modernization', re: /\b(moderni[sz]\w*|legacy|cloud|migrat\w*|replatform\w*|refactor\w*|cloud native|data cent(?:er|re)s?)\b/gi, champion: 'Head of Application Modernization or Cloud Transformation', buyer: 'CIO', tech: 'enterprise architects and security', measures: ['applications moved per wave', 'cost of running the legacy estate', 'incidents during cutover', 'time to a working pilot'], blocker: 'migration risk and keeping the business running during the move', questions: ['Which applications and data centres are in scope, and which move first?', "What does running the legacy estate cost today, in the buyer's own figures?", 'Who signs off a cutover, and what is rolled back if it fails?'], proof: 'A pilot application migrated, with its cutover record and its running cost before and after.', vocab: ['cloud migration', 'legacy applications', 'cutover', 'landing zone', 'run cost', 'transition plan'] },
     { id: 'it', re: /\b(infrastructure|network\w*|it operations|data cent(?:er|re)s?|servers?|hybrid)\b/gi, champion: 'Head of IT Infrastructure or Cloud Operations', buyer: 'CIO', tech: 'the infrastructure or network manager, with security', measures: ['service availability', 'incident volume', 'time to provision'], blocker: 'migration risk and the current contract', questions: ['Which systems or sites are in scope, and which suffer the most incidents?', 'Who runs them today, and when does each contract end?', 'What does a migration or outage cost a day?'], proof: 'Availability or incident volume for the pilot scope before and after, measured over a full cycle.', vocab: ['uptime', 'incident', 'migration', 'service level', 'change window'] },
     { id: 'operations', re: /\b(operations?|supply chain|logistics|warehouses?|delivery|fleet|process\w*|manual|workflows?|back office)\b/gi, champion: 'Head of Operations', buyer: 'COO', tech: 'the operations systems manager and IT', measures: ['cycle time', 'error rate', 'cost per transaction handled'], blocker: 'change management on the floor', questions: ['Which steps are done by hand today, and how long do they take?', 'Where do errors enter the process, and who finds them?', 'Which number does operations answer for each month?'], proof: 'Cycle time or error rate for one process before and after, over a full cycle of busy and quiet weeks.', vocab: ['cycle time', 'error rate', 'throughput', 'handover', 'service level'] },
+    { id: 'workplace', re: /\b(service desks?|help ?desks?|it (?:service|support|help)|employee (?:support|service|experience)|internal support|workplace)\b/gi, champion: 'Head of IT Service Desk or Employee Support', buyer: 'CIO or CHRO', tech: 'the service management tool owner and information security', measures: ['time to resolution for employee requests', 'tickets resolved without an agent', 'employee satisfaction with support'], blocker: 'security review of access to company systems and overlap with the service management tool', questions: ['Which employee requests take the longest to resolve today, and who handles them?', 'How many tickets repeat each month?', 'Which systems must it connect to?'], proof: 'Time to resolution and the share of requests resolved without an agent, for one team before and after.', vocab: ['service desk', 'ticket', 'time to resolution', 'employee request', 'knowledge base'] },
     { id: 'people', re: /\b(hiring|recruit\w*|employees?|hr|payroll|attrition|talent|onboarding)\b/gi, champion: 'Head of HR or People Operations', buyer: 'CHRO', tech: 'the HR systems owner', measures: ['time to hire', 'attrition', 'payroll errors'], blocker: 'employee data privacy', questions: ['How long does a hire or a payroll run take today, and which step is slowest?', 'Where do errors or delays reach employees?', 'Which HR systems must this connect to?'], proof: 'Time to hire or payroll errors for one team before and after.', vocab: ['time to hire', 'attrition', 'payroll run', 'onboarding', 'HRIS'] },
     { id: 'risk', re: /\b(audit\w*|risk|regulat\w*|policy|policies|controls?)\b/gi, champion: 'Head of Risk and Compliance', buyer: 'CFO or Chief Risk Officer', tech: 'internal audit and IT', measures: ['audit findings', 'policy breaches', 'time to prepare an audit'], blocker: 'evidence the auditors will accept', questions: ['Which controls are tested by hand today, and how often?', 'How long does an audit take to prepare?', 'Which findings came back last time?'], proof: 'Audit findings or time to prepare an audit before and after, accepted by internal audit.', vocab: ['audit finding', 'control test', 'policy breach', 'evidence', 'risk register'] },
 ];
@@ -925,7 +952,7 @@ function lensWithBuyer(v, buyer, ...texts) {
         return lensOf(v, ...texts, buyer);
     return { fn: own, metrics: own.measures, questions: own.questions, proof: own.proof, vocab: v && v.id !== 'saas' ? [...own.vocab, ...v.vocabulary] : own.vocab };
 }
-const fnName = (f) => f.id.replace('customer', 'customer success or support').replace(/^it$/, 'IT infrastructure');
+const fnName = (f) => f.id.replace('customer', 'customer success or support').replace('workplace', 'IT and employee service desk').replace(/^it$/, 'IT infrastructure');
 // The view of a team (finance, sales, ...) when the sector's committee is general: its measures, a proof that lands and its own questions.
 function teamBlock(f, v = null) {
     return [`### Team view: ${fnName(f)}`, ...(v ? [`- **Words buyers in this team use:** ${(v.id === 'saas' ? f.vocab : [...f.vocab, ...v.vocabulary]).join(', ')}.`] : []), `- **What this team measures:** ${f.measures.join(', ')}.`, `- **A proof point that lands:** ${f.proof}`,
@@ -1419,7 +1446,9 @@ ${SUGGESTED}
             const v = readContext(undefined, { core: [args.product_description], names: [company], context: [problem], buyer: [targetType] }).v;
             // A generic committee (SaaS, or no sector) takes its roles from the team the problem text names.
             const money = !!v && /investment management/.test(v.name); // a seller that manages money: the investment profile of the shared sector file
-            const fn = money ? null : !v ? functionHits(1, problem, args.product_description) : v.id === 'ai-native' ? functionOf(problem) : overlayFn(v, 2, problem);
+            // The team the user named as the buyer (target_company_type) wins over the team a count of words in the problem text points to.
+            const givenFn = !money && targetType && (!v || v.id === 'saas' || v.id === 'ai-native' || v.id === 'vertical-saas') ? functionOf(targetType.replace(/\bfinanc\w*\s+(?:services?|institutions?|sector|industry|firms?|companies)\b/gi, ' ')) : null;
+            const fn = money ? null : givenFn ? givenFn : !v ? functionHits(1, problem, args.product_description) : v.id === 'ai-native' ? functionOf(problem) : overlayFn(v, 2, problem);
             // An AI native product, or no sector, with a buyer industry named: the roles of that industry's teams.
             const ind = !fn && !money && (!v || v.id === 'ai-native') ? industryOf(targetType) : null;
             // The sector's measures, led by the ones the user's own problem and product words point to.
@@ -1435,7 +1464,7 @@ ${SUGGESTED}
                 primaryChampion = { role: fn.champion, pain: `the problem you described, in your words: ${pq}`, motivation: `a visible win on ${ranked.slice(0, 3).join(', ')}` };
                 economicBuyer = { role: fn.buyer, concern: `${ranked.slice(0, 2).join(' and ')}, and the cost of leaving the problem unsolved`, trigger: triggerAsk };
                 technicalInfluencer = { role: capFirst(fn.tech), criteria: `fit with the systems they run today and the effort to implement`, blocker: `${fn.blocker}` };
-                inferredNote = ` (read from the team your problem text names: ${fn.id.replace('customer', 'customer success or support').replace('it', 'IT infrastructure')})`;
+                inferredNote = ` (read from the team ${givenFn ? 'named in target_company_type' : 'your problem text names'}: ${fn.id.replace('customer', 'customer success or support').replace('workplace', 'IT and employee service desk').replace('it', 'IT infrastructure')})`;
             }
             else if (ind) {
                 primaryChampion = { role: ind.champion, pain: `the problem you described, in your words: ${pq}`, motivation: `a visible win on the measure that team is judged on (ask which)${v ? ', proved on an evaluation set built from their own history' : ''}` };
@@ -1481,7 +1510,7 @@ ${SUGGESTED}
 **Target Market**: ${targetType || 'not supplied'}
 **Price Point**: ${pricePoint || 'not supplied'}
 
-${sectorLine(v)}${longNote(args.product_description, problem, args.target_company_type)}${ind ? `\n*The roles follow the buyers you named (${ind.id}). If your buyers sit in another team, name it in problem_solved and run the tool again.*` : ''}${fn ? `\n*This sector's committee is general, so the roles come from the team your problem text names (${fn.id.replace('customer', 'customer success or support').replace('it', 'IT infrastructure')}). If the problem sits with another team, say so in problem_solved and run it again.*` : v ? '' : '\nThe roles below are generic, because no sector was clear and the problem text names no team. They are a starting point: name your industry or the team that feels the problem (for example finance, sales operations, security) and run the tool again for roles that exist there.'}
+${sectorLine(v)}${longNote(args.product_description, problem, args.target_company_type)}${ind ? `\n*The roles follow the buyers you named (${ind.id}). If your buyers sit in another team, name it in problem_solved and run the tool again.*` : ''}${fn ? `\n*${givenFn ? 'The roles come from the team you named as the buyer' : "This sector's committee is general, so the roles come from the team your problem text names"} (${fn.id.replace('customer', 'customer success or support').replace('workplace', 'IT and employee service desk').replace('it', 'IT infrastructure')}). If the problem sits with another team, say so in problem_solved and run it again.*` : v ? '' : '\nThe roles below are generic, because no sector was clear and the problem text names no team. They are a starting point: name your industry or the team that feels the problem (for example finance, sales operations, security) and run the tool again for roles that exist there.'}
 
 ---
 
@@ -2167,13 +2196,16 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             // the segments are ranked from those; otherwise the keyword presets below are used exactly as before. The answer names the method.
             const ccText0 = (args.current_customers || '').trim();
             const painText = (args.customer_pain || '').trim();
-            const ownMethod = segGiven && !!ccText0 && !!painText && !!acvNumber;
+            const fullOwn = segGiven && !!ccText0 && !!painText && !!acvNumber;
+            // Run 42b: segments the user typed are always ranked from the inputs given (never from a keyword in a segment name); a missing input leaves that criterion at the middle score and the answer says what it used.
+            const ownMethod = segGiven;
             const missingForOwn = [!segGiven ? 'potential_segments' : '', !ccText0 ? 'current_customers' : '', !painText ? 'customer_pain' : '', !acvNumber ? 'average_deal_size' : ''].filter(Boolean);
             const stemsOf = (t) => contentStems(t);
             const ccStems0 = stemsOf(ccText0), painStems = stemsOf(painText);
             const shared = (seg, stems) => [...stemsOf(seg.replace(/\([^)]*\)/g, ''))].filter((x) => stems.has(x));
             const byShared = (n) => (n <= 0 ? 1 : n === 1 ? 3 : n === 2 ? 4 : 5);
             // Market value per segment from the user's own counts and deal size, for the budget criterion (needs counts for at least two segments).
+            const prodStems0 = stemsOf(args.product_description || '');
             const countsAll = parseCounts(args.company_counts);
             const tamOf = (seg) => { const n = countsAll.find((c) => c.name && sameName(c.name, seg)); return n && acvNumber ? n.count * acvNumber : null; };
             const tamList = segments.map(tamOf).filter((x) => x !== null);
@@ -2182,9 +2214,10 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             const segmentScores = segments.map((segment) => {
                 if (ownMethod) {
                     const rc = shared(segment, ccStems0), pn = shared(segment, painStems), tm = tamOf(segment);
+                    const fitN = fullOwn ? 0 : shared(segment, prodStems0).length;
                     const scoresOwn = {
-                        pain: byShared(pn.length), budget: maxTam && tm !== null ? Math.max(1, Math.min(5, Math.round(1 + 4 * tm / maxTam))) : 3,
-                        access: 3, reference: byShared(rc.length), competition: 3
+                        pain: painText ? byShared(pn.length) : 3, budget: maxTam && tm !== null ? Math.max(1, Math.min(5, Math.round(1 + 4 * tm / maxTam))) : 3,
+                        access: fitN ? byShared(fitN) : 3, reference: ccText0 ? byShared(rc.length) : 3, competition: 3
                     };
                     return { name: segment, keyword: false, kw: '', ...scoresOwn, total: scoresOwn.pain + scoresOwn.budget + scoresOwn.access + scoresOwn.reference + scoresOwn.competition,
                         ownPain: pn, ownRef: rc, ownTam: tm };
@@ -2227,6 +2260,10 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             // Sort by total score (stable: the first-listed segment stays first on a tie)
             segmentScores.sort((a, b) => b.total - a.total);
             const beachhead = segmentScores[0];
+            // What the ranking used, said plainly (run 42b). The deal size, the cycle and the ICP share are the same for every segment, so they size the beachhead but cannot rank it.
+            const usedBits = [ccText0 && 'your current customers', painText && 'your customer pain', maxTam && 'your company counts times your deal size', !fullOwn && ownMethod && segmentScores.some((x) => x.access !== 3) && 'the words each segment shares with your product text'].filter(Boolean);
+            const usedPhrase = usedBits.length ? (0, rw_impact_ts_1.joinAnd)(usedBits) : '';
+            const notUsedBits = [!ccText0 && 'current_customers', !painText && 'customer_pain', !maxTam && 'company_counts for at least two segments'].filter(Boolean);
             // Market sizing uses only the user's own figures (problem 5 and 6 of the real-world test).
             const counts = parseCounts(args.company_counts);
             const countText = (args.company_counts || '').trim();
@@ -2283,7 +2320,7 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
                 ? matchedSegs.length
                     ? `**Second view (from your current customers; it is a reading of words and does not change the scores below).** These segments share words with the customers you described, strongest first: ${matchedSegs.map((m) => `${m.x.name} (shares "${real(m.x.name, m.hit).join('", "')}")`).join('; ')}. The segment where your customers already are is the strongest candidate for a first beachhead.`
                     : `**Second view.** None of the segment names shares a word with the customers you described. Say which segment each of your customers belongs to, and the segment with the most customers is your strongest candidate.`
-                : 'No current_customers were given, so no segment can be tied to where your customers already are, and the scores below are only a keyword match.';
+                : 'No current_customers were given, so no segment can be tied to where your customers already are.';
             const dealWord = acvGiven ? acvGiven : 'your price';
             const nSeg = segmentScores.length;
             const topShares = beachhead.ownRef.length || beachhead.ownPain.length
@@ -2293,8 +2330,8 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             const oneFact = ` Two or three facts per segment, from the sector notes and your own deal size and cycle, would break it for this product; the one that helps most is which of these segments already buys from you (current_customers)${painText ? '' : ', or where buyers raise your problem first (customer_pain)'}.`;
             const inShort = ownMethod
                 ? (allTied
-                    ? `None of your ${nSeg} segment names shares a word with your customers or your pain, so the scores built from them tie and choose nothing for ${prodName}. Use the checks below to choose.`
-                    : `${beachhead.name} comes first for ${prodName}${topShares}: your ${nSeg} segments were ranked from your own customers, pain and deal size.${tied.length > 1 ? ` ${tied.map((t) => t.name).join(' and ')} tie for the top score, and ${beachhead.name} is shown first only because you listed it first.` : ''} The match is by words, so ask three buyers in ${tied.length > 1 ? 'those segments' : beachhead.name} which problem they raise first before you commit.`)
+                    ? (usedPhrase ? `None of your ${nSeg} segment names shares a word with ${fullOwn ? 'your customers or your pain' : 'what you gave'}, or the other inputs do not separate them, so the scores built from ${fullOwn ? 'them' : usedPhrase} tie and choose nothing for ${prodName}. Use the checks below to choose.` : `Nothing you gave can rank your ${nSeg} segments for ${prodName}: no current_customers, customer_pain or company_counts were given and no segment name shares a word with your product text. The deal size, the sales cycle and the ICP share are the same for every segment, so they size a market but cannot rank one, and no keyword in a segment name is used. Use the checks below to choose.`)
+                    : `${beachhead.name} comes first for ${prodName}${topShares}: your ${nSeg} segments were ranked from ${fullOwn ? 'your own customers, pain and deal size' : usedPhrase}.${tied.length > 1 ? ` ${tied.map((t) => t.name).join(' and ')} tie for the top score, and ${beachhead.name} is shown first only because you listed it first.` : ''} The match is by words, so ask three buyers in ${tied.length > 1 ? 'those segments' : beachhead.name} which problem they raise first before you commit.`)
                 : (tied.length > 1
                     ? `The keyword presets cannot separate ${tied.length === nSeg ? `any of your ${nSeg} segments` : `the top ${tied.length} segments (${tied.map((t) => t.name).join(', ')})`}, so nothing here chooses a beachhead for ${prodName}; ${missingForOwn.join(' and ')} ${missingForOwn.length > 1 ? 'were' : 'was'} not given. Choose with the segment-by-segment facts below.${oneFact}`
                     : `${capFirst(beachhead.name)} comes first only because its name contains the keyword "${beachhead.kw}": the presets do not use your deal size${acvGiven ? ` of ${acvGiven}` : ''}${cycleGiven ? `, your sales cycle of ${cycleGiven}` : ''} or anything known about your market (${missingForOwn.join(' and ')} ${missingForOwn.length > 1 ? 'were' : 'was'} not given). Treat ${beachhead.name} as the segment to test first for ${prodName}.${oneFact}`);
@@ -2326,7 +2363,7 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             const overlapNotes = (0, rw_impact_ts_1.segmentOverlap)(segmentScores.map((x) => x.name));
             const howToDecideKeyword = `## ${ownMethod ? 'How the segments were ranked' : 'How to decide'}, from your own inputs
 
-What you gave: deal size ${acvGiven || 'not given'}, sales cycle ${cycleGiven || 'not given'}, current customers ${ccText ? `(${q((0, rw_impact_ts_1.clip)(ccText, 200))})` : 'not given'}${ownMethod ? ` and customer pain (${q((0, rw_impact_ts_1.clip)(painText, 200))}). The scores below are built from your customers, your pain and your deal size (see "Method used" above), not from keywords in the segment names; check them with these:` : '. The keyword scores below do not use any of these, so use them first:'}
+What you gave: deal size ${acvGiven || 'not given'}, sales cycle ${cycleGiven || 'not given'}, current customers ${ccText ? `(${q((0, rw_impact_ts_1.clip)(ccText, 200))})` : 'not given'}${ownMethod ? (fullOwn ? ` and customer pain (${q((0, rw_impact_ts_1.clip)(painText, 200))}). The scores below are built from your customers, your pain and your deal size (see "Method used" above), not from keywords in the segment names; check them with these:` : `${painText ? ` and customer pain (${q((0, rw_impact_ts_1.clip)(painText, 200))})` : ''}. ${usedPhrase ? `The scores below use only ${usedPhrase}` : 'Nothing you gave separates the segments, so the scores below tie'} (see "Method used" above), never a keyword in a segment name; check them with these:`) : '. The keyword scores below do not use any of these, so use them first:'}
 
 - ${secondView}
 - ${productFit}
@@ -2347,7 +2384,7 @@ ${perSegment}
             if (!ccText0)
                 sharpenItems.push({ give: 'current_customers', changes: 'the ranking, which would follow where your best customers already are' });
             if (!painText)
-                sharpenItems.push({ give: 'customer_pain', changes: 'the ranking, which would follow the problem your customers describe; with current_customers and average_deal_size it replaces the keyword presets' });
+                sharpenItems.push({ give: 'customer_pain', changes: 'the ranking, which would follow the problem your customers describe; together with the other inputs given' });
             if (!acvNumber)
                 sharpenItems.push({ give: 'average_deal_size', changes: 'the deal-fit checks and the sizing, which now say "your price"' });
             if (!cycleGiven)
@@ -2370,7 +2407,7 @@ ${inShort}${segGiven ? '' : ' You gave no segments, so the segments below are ex
 **Product**: ${prodText}
 **Average Deal Size**: ${acvGiven || 'not given'}
 **Sales Cycle**: ${cycleGiven || 'not given'}
-**Method used: ${ownMethod ? 'ranked from your own customers, pain and deal size' : `keyword presets (not given: ${missingForOwn.join(', ')}; with potential_segments, current_customers, customer_pain and average_deal_size the segments are ranked from your own inputs instead)`}.**
+**Method used: ${ownMethod ? (fullOwn ? 'ranked from your own customers, pain and deal size' : `ranked from the inputs you gave: ${usedPhrase || 'none that separates segments'}${notUsedBits.length ? ` (not given: ${notUsedBits.join(', ')}; a missing input leaves its criterion at the middle score 3)` : ''}; deal size, cycle and ICP share are the same for every segment, so they size the market but do not rank`) : `keyword presets (not given: ${missingForOwn.join(', ')}; with potential_segments, current_customers, customer_pain and average_deal_size the segments are ranked from your own inputs instead)`}.**
 ${dropped.length ? `**Segments listed twice**: ${dropped.map((d) => `"${d}"`).join(', ')} was listed more than once and is scored once (duplicate dropped).\n` : ''}${ctx.line}
 
 ---
@@ -2386,7 +2423,7 @@ ${howToDecide}## Segment Scoring Matrix
 
 ### Segment Scores
 
-${ownMethod ? `These scores are built from your own inputs, not from keywords: Pain Intensity from the words each segment name shares with your customer_pain (none 1, one word 3, two 4, three or more 5), Reference Value from the words it shares with your current_customers (same scale), and Budget Availability from your company_counts times your deal size when you gave counts for at least two segments (the largest market value 5, the others in proportion), otherwise the middle score 3. Accessibility and Competition are the middle score 3 for every segment, because your inputs say nothing about them. Your sales cycle is shown for context; it does not change the scores or the market sizes.` : `These scores are presets, not research on your market: each segment is scored from keywords in its name (enterprise, mid-market, SMB, small, SaaS, tech, finance), and a segment with none of these keywords gets the middle score on every criterion.${segGiven ? '' : ' You supplied no segments, so the segments are examples too.'} Your current customers and sales cycle are shown for context; they do not change the scores or the market sizes.`}
+${ownMethod ? `These scores are built from your own inputs, not from keywords: Pain Intensity from the words each segment name shares with your customer_pain (none 1, one word 3, two 4, three or more 5; the middle score 3 when you gave no customer_pain), Reference Value from the words it shares with your current_customers (same scale; 3 when none given), and Budget Availability from your company_counts times your deal size when you gave counts for at least two segments (the largest market value 5, the others in proportion), otherwise the middle score 3.${fullOwn ? '' : ' Accessibility is read from the words a segment name shares with your product text (same scale), and 3 when it shares none.'} Competition is the middle score 3 for every segment, because your inputs say nothing about it.${fullOwn ? ' Accessibility is also 3.' : ''} Your sales cycle is shown for context; it does not change the scores or the market sizes.` : `These scores are presets, not research on your market: each segment is scored from keywords in its name (enterprise, mid-market, SMB, small, SaaS, tech, finance), and a segment with none of these keywords gets the middle score on every criterion.${segGiven ? '' : ' You supplied no segments, so the segments are examples too.'} Your current customers and sales cycle are shown for context; they do not change the scores or the market sizes.`}
 ${EXAMPLES}
 | Segment | Pain | Budget | Access | Reference | Competition | **TOTAL** |
 |---------|------|--------|--------|-----------|-------------|-----------|
@@ -2396,7 +2433,7 @@ ${segmentScores.map((s, i) => `| ${i === 0 && !allTied ? '**' + s.name + '** (be
 
 ## ${allTied ? `No segment is chosen by the scores: ${tied.length} segments tie` : `Recommended Beachhead: ${beachhead.name}`}
 ${tieLine}${!ownMethod && tied.length === 1 && beachhead.keyword ? `\nRead this as the highest keyword match only: ${beachhead.name} scores highest because its name contains the keyword "${beachhead.kw}", not because of anything known about your market. Score each segment yourself with your own data before you commit.\n` : ''}
-**What decided each score:** ${segmentScores.map((x) => ownMethod ? `${x.name}: ${x.ownRef.length ? `shares "${real(x.name, x.ownRef).join('", "')}" with your customers` : 'shares no word with your customers'}; ${x.ownPain.length ? `shares "${real(x.name, x.ownPain).join('", "')}" with your pain` : 'shares no word with your pain'}; ${x.ownTam !== null && maxTam ? `market value ${usdFull(x.ownTam)} from your counts and deal size` : 'budget at the middle score (no counts for two segments)'}` : `${x.name}: ${x.keyword ? `the word "${x.kw}"` : 'no keyword, so the middle score'}`).join('; ')}.
+**What decided each score:** ${segmentScores.map((x) => ownMethod ? `${x.name}: ${x.ownRef.length ? `shares "${real(x.name, x.ownRef).join('", "')}" with your customers` : (ccText0 ? 'shares no word with your customers' : 'no current_customers given')}; ${x.ownPain.length ? `shares "${real(x.name, x.ownPain).join('", "')}" with your pain` : (painText ? 'shares no word with your pain' : 'no customer_pain given')}; ${x.ownTam !== null && maxTam ? `market value ${usdFull(x.ownTam)} from your counts and deal size` : 'budget at the middle score (no counts for two segments)'}` : `${x.name}: ${x.keyword ? `the word "${x.kw}"` : 'no keyword, so the middle score'}`).join('; ')}.
 
 ${`### ${tied.length > 1 ? 'What would break the tie' : 'Before you trust this ranking'}
 
@@ -2990,7 +3027,7 @@ ${rows.join('\n')}
             const statement = args.positioning_statement;
             const nameList = [P === 'the product' ? '' : P, named.replace(/\s*\([^)]*\)/g, '').trim(), named, (named.split(/[\s,]+/)[0] || '')].filter((x, i, a) => x && x.length >= 2 && a.indexOf(x) === i);
             const SP = (0, rw_impact2_ts_1.parseStatement)(statement, nameList);
-            const ctx = readContext(args.business_model, { core: [SP.category], names: [args.product_name], context: [statement, args.key_benefit], buyer: [args.target_customer] });
+            const ctx = readContext(args.business_model, { core: [SP.category || statement], later: [statement.match(/\b(?:is|are)\s+(?:an?|the)\s+/i) ? statement.replace(/^[^]*?\b(?:is|are)\s+(?:an?|the)\s+/i, '') : undefined], names: [args.product_name], context: [statement, args.key_benefit], buyer: [args.target_customer] });
             const v = ctx.v;
             const notes = MODEL_NOTES[ctx.model || 'unknown'];
             // a bundle of several service lines (network, cloud, security, voice, IoT) is sold like a service, not with a site survey, which suits plain connectivity

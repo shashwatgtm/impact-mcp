@@ -194,7 +194,7 @@ test("problem 8: identify_champions names the sector's own signer and champion f
     const signers = [v.committee, ...SUBTYPES.filter((t) => t.vertical === v.id).map((t) => t.notes.committee)].map((c) => c.split(";")[0].replace(/^(The|A|An) /i, "").replace(/ signs.*$/i, ""));
     const signer = signers.find((x) => r.includes(x)) || signers[0];
     // Run 20 round 1: the general SaaS committee ("the budget owner of the function") gives way to the team the problem text names.
-    if (s.id === "saas" || s.id === "ai-native") assert.ok(r.includes(signer) || /read from the team your problem text names|roles for the buyers you named/.test(r), `${s.id}: signer "${signer}" or a function or industry based role is in the answer`);
+    if (s.id === "saas" || s.id === "ai-native") assert.ok(r.includes(signer) || /read from the team your problem text names|roles for the buyers you named|come from the team you named as the buyer/.test(r), `${s.id}: signer "${signer}" or a function or industry based role is in the answer`);
     else assert.ok(r.includes(signer), `${s.id}: signer "${signer}" is in the answer`);
     assert.match(r, new RegExp(v.name.replace(/[-]/g, "[- ]"), "i"), `${s.id}: the answer says which sector it read`);
     assert.doesNotMatch(r, /Sales Operations Manager|VP\/Director of Sales/, `${s.id}: no sales-tech default roles`);
@@ -332,7 +332,7 @@ test("problem 6: anchor_market arithmetic uses the user's own counts, deal size 
   assert.doesNotMatch(r, /500,000/);
   // the count of another segment is used when that segment is the beachhead
   const r2 = (await call("impact_anchor_market", { product_description: "spend management software", potential_segments: ["Mid-size manufacturers", "Enterprise IT services firms"],
-    company_counts: "Mid-size manufacturers: 3,200; Enterprise IT services firms: 600", average_deal_size: "$24K", percent_matching_icp: 50, year_one_share_percent: 10 })).text;
+    company_counts: "Mid-size manufacturers: 300; Enterprise IT services firms: 600", average_deal_size: "$24K", percent_matching_icp: 50, year_one_share_percent: 10 })).text;
   assert.match(r2, /Recommended Beachhead: Enterprise IT services firms/);
   assert.match(r2, /600 companies/);
   assert.match(r2, /\$14\.4M/);
@@ -354,15 +354,12 @@ test("problem 6: anchor_market names the missing input instead of guessing, line
 test("B15-L2: a segment listed twice is scored once and the answer says so", async () => {
   const r = (await call("impact_anchor_market", { product_description: "spend management software", potential_segments: ["Mid-market fintech", "Mid-market fintech", "SMB retail"] })).text;
   assert.equal((r.match(/^\| \*\*Mid-market fintech\*\*|^\| Mid-market fintech/gm) || []).length, 1);
-  assert.doesNotMatch(r, /\bTie:/);
   assert.match(r, /listed twice|duplicate/i);
 });
-test("problem 5: anchor_market keeps its keyword score presets (only the 500,000 presets and defaults go)", async () => {
+test("problem 5 (run 42b): typed segments are never scored by a keyword in their names; with no input that separates them they tie at the middle score", async () => {
   const r = (await call("impact_anchor_market", { product_description: "x", potential_segments: ["Enterprise banks", "Mid-market fintech", "SMB retail", "Plain segment"] })).text;
-  assert.match(r, /\| Enterprise banks \| 4 \| 5 \| 2 \| 5 \| 2 \| \*\*18\*\* \|/);
-  assert.match(r, /\| \*\*Mid-market fintech\*\* \(beachhead\) \| 5 \| 4 \| 4 \| 4 \| 3 \| \*\*20\*\* \|/);
-  assert.match(r, /\| SMB retail \| 4 \| 2 \| 5 \| 2 \| 4 \| \*\*17\*\* \|/);
-  assert.match(r, /\| Plain segment \| 3 \| 3 \| 3 \| 3 \| 3 \| \*\*15\*\* \|/);
+  for (const n of ["Enterprise banks", "Mid-market fintech", "SMB retail", "Plain segment"]) assert.match(r, new RegExp(`${n}[^\\n]*\\| 3 \\| 3 \\| 3 \\| 3 \\| 3 \\| \\*\\*15\\*\\* \\|`));
+  assert.doesNotMatch(r, /because its name contains the keyword/);
 });
 test("problem 5: pinpoint_value prints no preset figure and labels the user's metric as supplied by the user", async () => {
   for (const s of [SC[0], SC[6], SC[8]]) {
