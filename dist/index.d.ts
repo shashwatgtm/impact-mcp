@@ -57,6 +57,7 @@ export interface Lens {
     proof: string;
     vocab: string[];
 }
+export declare function namedTeams(...texts: (string | undefined)[]): string[];
 export declare function functionOf(...texts: (string | undefined)[]): FunctionRoles | null;
 interface IndustryRoles {
     id: string;

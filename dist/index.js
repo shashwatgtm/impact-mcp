@@ -17,6 +17,7 @@ exports.splitWeaknesses = splitWeaknesses;
 exports.labelOf = labelOf;
 exports.leadPhrase = leadPhrase;
 exports.committeeParts = committeeParts;
+exports.namedTeams = namedTeams;
 exports.functionOf = functionOf;
 exports.industryOf = industryOf;
 exports.pctText = pctText;
@@ -1027,17 +1028,39 @@ function lensOf(v, ...texts) {
         return { fn, metrics: fn.measures, questions: fn.questions, proof: fn.proof, vocab: v && v.id !== 'saas' ? [...fn.vocab, ...v.vocabulary] : fn.vocab };
     return { fn: null, metrics: v ? metricsOf(v) : [], questions: v ? v.discovery : [], proof: v ? v.proofShape : '', vocab: v ? v.vocabulary : [] };
 }
-// The team the user named as the buyer wins over the team a count of words in the product text points to ("marketing and product teams" is a marketing buyer even when the capability text says "workflows").
+// Run 42B (set Q): one team is picked only when the input names exactly one; several teams, or a product for teams in general, give the cross team view.
+const CROSS_TEAM = { id: 'cross team', re: /(?!)/g, champion: 'Head of Operations, or the business owner of the workflow the product runs', buyer: 'COO or the business owner of the shared process', tech: 'IT and the systems owner, with security', measures: ['time to complete', 'adoption across teams', 'rework'], blocker: 'adoption across teams and change management', questions: ['Which shared process or workflow crosses the most teams today, and who owns it?', 'How long does that work take to complete, and how much of it is redone?', 'Which teams already use the product or an alternative, and which have not adopted it?'], proof: 'A before and after on the same shared workflow: time to complete, share of teams using it and rework, each figure labelled with its source or marked hypothetical.', vocab: ['workflow', 'adoption', 'handoff', 'visibility', 'time to complete'] };
+const GENERAL_TEAMS = /\b(?:work|project) management\b|collaboration (?:platform|tool|software)|teams? of (?:all|any|every) (?:kinds?|sizes?|types?)|\b(?:any|every|all|many|multiple|different|various) (?:kinds? of |types? of )?(?:teams|departments)\b|cross-?functional|teams across|teams in general/i;
+// The distinct teams a text names. "sales operations" is the sales team, so a team word before "operations" removes the generic operations hit.
+function namedTeams(...texts) {
+    const t = texts.filter(Boolean).join(' \n ').replace(/\b(?:sales|revenue|marketing|finance|financial|support|customer|hr|people|it|security|engineering|devops|billing|supply chain|warehouse)\s+operations?\b/gi, (m) => m.replace(/\s+operations?$/i, ''));
+    const ids = FUNCTIONS.filter((f) => new RegExp(f.re.source, 'i').test(t)).map((f) => f.id);
+    // an IT or HR service desk is one team (workplace), and the broad IT, API, modernization and engineering words are not separate teams beside a security or api read
+    return ids.includes('workplace') ? ids.filter((i) => i !== 'it' && i !== 'people') : ids;
+}
+const severalTeams = (t) => !!t && (namedTeams(t).length >= 2 || GENERAL_TEAMS.test(t));
+const CROSS_NOTE = 'The input names several teams, or a product for teams in general, so this is a cross team view, not one team.';
+function crossLens(v) {
+    return { fn: CROSS_TEAM, metrics: CROSS_TEAM.measures, questions: CROSS_TEAM.questions, proof: CROSS_TEAM.proof, vocab: v && v.id !== 'saas' ? [...CROSS_TEAM.vocab, ...v.vocabulary] : CROSS_TEAM.vocab };
+}
 function lensWithBuyer(v, buyer, ...texts) {
-    const own = buyer && (!v || v.id === 'saas') ? overlayFn(v, 1, buyer) : null;
-    if (!own)
+    const open = !v || v.id === 'saas';
+    if (open && buyer && severalTeams(buyer))
+        return crossLens(v);
+    const own = buyer && open ? overlayFn(v, 1, buyer) : null;
+    if (!own) {
+        // no single team named as the buyer: a product for teams in general is not handed to one team by a word in a feature list or a customer example
+        if (open && !(buyer && namedTeams(buyer).length === 1) && texts.some((x) => !!x && GENERAL_TEAMS.test(x)))
+            return crossLens(v);
         return lensOf(v, ...texts, buyer);
+    }
     return { fn: own, metrics: own.measures, questions: own.questions, proof: own.proof, vocab: v && v.id !== 'saas' ? [...own.vocab, ...v.vocabulary] : own.vocab };
 }
+const fnTeam = (f) => f.id === 'cross team' ? 'teams in general' : `a ${fnName(f)} team`;
 const fnName = (f) => f.id.replace('customer', 'customer success or support').replace('workplace', 'IT and employee service desk').replace(/^it$/, 'IT infrastructure');
 // The view of a team (finance, sales, ...) when the sector's committee is general: its measures, a proof that lands and its own questions.
 function teamBlock(f, v = null) {
-    return [`### Team view: ${fnName(f)}`, ...(v ? [`- **Words buyers in this team use:** ${(v.id === 'saas' ? f.vocab : [...f.vocab, ...v.vocabulary]).join(', ')}.`] : []), `- **What this team measures:** ${f.measures.join(', ')}.`, `- **A proof point that lands:** ${f.proof}`,
+    return [`### ${f.id === 'cross team' ? 'Cross team view' : `Team view: ${fnName(f)}`}`, ...(f.id === 'cross team' ? [`- ${CROSS_NOTE}`] : []), ...(v ? [`- **Words buyers in this team use:** ${(v.id === 'saas' ? f.vocab : [...f.vocab, ...v.vocabulary]).join(', ')}.`] : []), `- **What this team measures:** ${f.measures.join(', ')}.`, `- **A proof point that lands:** ${f.proof}`,
         `- **Discovery questions in this team's language:**\n${numbered(f.questions).split('\n').map((l) => `  ${l}`).join('\n')}`].join('\n');
 }
 // The function a text points to: the one with the most word hits; a tie goes to the earlier one in the table. null when no function word is found.
@@ -1532,7 +1555,7 @@ ${SUGGESTED}
             const money = !!v && /investment management/.test(v.name); // a seller that manages money: the investment profile of the shared sector file
             // The team the user named as the buyer (target_company_type) wins over the team a count of words in the problem text points to.
             const ownerRun = !money && !!targetType && OWNER_RUN.test(targetType) && (!v || v.id === 'vertical-saas');
-            const givenFn = !money && !ownerRun && targetType && (!v || v.id === 'saas' || v.id === 'ai-native' || v.id === 'vertical-saas') ? functionOf(targetType.replace(/\bfinanc\w*\s+(?:services?|institutions?|sector|industry|firms?|companies|research|analy\w+|markets?|advis\w+|news|data|content)\b/gi, ' ')) : null;
+            const givenFn = !money && !ownerRun && targetType && (!v || v.id === 'saas' || v.id === 'ai-native' || v.id === 'vertical-saas') ? (namedTeams(targetType).length >= 2 ? CROSS_TEAM : functionOf(targetType.replace(/\bfinanc\w*\s+(?:services?|institutions?|sector|industry|firms?|companies|research|analy\w+|markets?|advis\w+|news|data|content)\b/gi, ' '))) : null;
             const fn = money ? null : givenFn ? givenFn : ownerRun ? null : !v ? functionHits(1, problem, args.product_description) : v.id === 'ai-native' ? (functionOf(problem) ?? functionHits(2, args.product_description)) : overlayFn(v, 2, problem);
             // An AI native product, or no sector, with a buyer industry named: the roles of that industry's teams.
             // Run 42B (set M): the buyer's industry gives the roles only when the input names exactly one such industry; a list of several leaves the sector's general committee, never one industry's roles.
@@ -1929,7 +1952,7 @@ ${rc.line}
 ---
 
 ## Where you can lead
-${pairLines.length ? `${pairLines.join('\n')}\n` : '\nNo weaknesses or strengths were given, so nothing is set against anything yet.\n'}${v && lz.metrics.length ? `\nBuyers in ${lz.fn ? `a ${fnName(lz.fn)} team` : v.name} compare alternatives on these measures: ${lz.metrics.slice(0, 4).join(', ')}. Ask them how each alternative does on these, and lead only where you can show proof of the shape this sector trusts: ${lz.proof}\n` : ''}
+${pairLines.length ? `${pairLines.join('\n')}\n` : '\nNo weaknesses or strengths were given, so nothing is set against anything yet.\n'}${v && lz.metrics.length ? `\nBuyers in ${lz.fn ? `${fnTeam(lz.fn)}` : v.name} compare alternatives on these measures: ${lz.metrics.slice(0, 4).join(', ')}. Ask them how each alternative does on these, and lead only where you can show proof of the shape this sector trusts: ${lz.proof}\n` : ''}
 ---
 
 ## ${describedOnly ? 'Alternatives You Described (no company names were given)' : 'Direct Competitors (Same Solution, Same Problem)'}
@@ -2080,7 +2103,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
                     bare.push(m);
             }
             const matrix = [`| Your stated outcome | ${cell(clean(args.key_outcome))}${oc.label && !/\(/.test(args.key_outcome) ? ` ${oc.label}` : ''} | your key_outcome |`, ...rows.slice(0, 6)].join('\n');
-            const matrixNote = v && bare.length ? `\nOther measures that ${lz.fn ? `a ${fnName(lz.fn)} team watches` : `buyers in ${v.name} watch`}, where your inputs give no figure yet: ${bare.slice(0, 5).join(', ')}. Add the ones your best customers can show before and after.` : '';
+            const matrixNote = v && bare.length ? `\nOther measures that ${lz.fn ? `${fnTeam(lz.fn)} watches` : `buyers in ${v.name} watch`}, where your inputs give no figure yet: ${bare.slice(0, 5).join(', ')}. Add the ones your best customers can show before and after.` : '';
             const hero = (() => {
                 let text = '';
                 for (const it of oc.items) {
@@ -2136,7 +2159,7 @@ The "only" claim stays inside brackets until it is true and you can prove it.
 
 ## Value Quantification Matrix
 
-This tool adds no figure of its own. The first row is your outcome; the other rows are the measures ${v ? `${lz.fn ? `a ${fnName(lz.fn)} team already watches` : `buyers in ${v.name} already watch`}` : 'your inputs speak to'} that your inputs already answer. At each customer, measure the same thing before and after, from the customer's own data, and name the period.
+This tool adds no figure of its own. The first row is your outcome; the other rows are the measures ${v ? `${lz.fn ? `${fnTeam(lz.fn)} already watches` : `buyers in ${v.name} already watch`}` : 'your inputs speak to'} that your inputs already answer. At each customer, measure the same thing before and after, from the customer's own data, and name the period.
 
 | What to measure | What your inputs say | Where it comes from |
 |-----------------|----------------------|---------------------|
