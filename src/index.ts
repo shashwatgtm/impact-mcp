@@ -3713,7 +3713,7 @@ ${SUGGESTED}
 // =============================================================================
 
 export const SERVER_NAME = 'impact-mcp';
-export const SERVER_VERSION = '2.2.26';
+export const SERVER_VERSION = '2.2.27';
 
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES: Record<string, string> = {
