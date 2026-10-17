@@ -139,7 +139,11 @@ test("fix round (IMPACT auditor F1): impact_full_audit writes its own placeholde
   const tool = tools.find((x) => x.name === "impact_full_audit");
   if (!tool) return t.skip("no impact_full_audit here");
   const o = textOf(await call("tools/call", { name: tool.name, arguments: { product_description: "a route planner", target_customer: "fleet managers", problem_solved: "late deliveries" } }));
-  assert.ok(o.includes('2. "The [your differentiation] solution"'), JSON.stringify(o.slice(o.indexOf("Tagline"), o.indexOf("Tagline") + 200)));
+  // Run 42 (D10 correction, owner instruction 17 Oct 2026): the rewritten audit no longer writes a placeholder tagline at all.
+  // The intent stays: a tagline section is written, the tool's own words are never escaped, and no unfilled placeholder is shown.
+  const tag = o.slice(o.indexOf("Tagline"), o.indexOf("Tagline") + 400);
+  assert.ok(o.includes("Tagline"), "a tagline section is written");
+  assert.ok(!tag.includes("\\[") && !/\[your /i.test(tag), JSON.stringify(tag));
   const p = textOf(await call("tools/call", { name: tool.name, arguments: { product_description: "a route planner", target_customer: "fleet managers", problem_solved: "late deliveries", key_differentiation: "[live] data for every lane" } }));
   assert.ok(!/The \[live\]/.test(p), "a typed bracket stays escaped");
 });
