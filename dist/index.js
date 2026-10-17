@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SERVER_VERSION = exports.SERVER_NAME = exports.YOUR_SECTOR_VALUES = void 0;
 exports.noNotes = noNotes;
 exports.splitItems = splitItems;
+exports.subIndustryFor = subIndustryFor;
 exports.kindOf = kindOf;
 exports.inf = inf;
 exports.needClause = needClause;
@@ -393,6 +394,44 @@ const YOUR_SECTOR_ID = { logistics_tech: 'logistics-tech', fintech: 'fintech', s
 let forcedSector;
 function setYourSector(value) { forcedSector = typeof value === 'string' && exports.YOUR_SECTOR_VALUES.includes(value) ? value : undefined; }
 function forcedVertical() { return forcedSector && forcedSector !== 'other' ? verticals_ts_1.VERTICALS.find((x) => x.id === YOUR_SECTOR_ID[forcedSector]) ?? null : null; }
+// Run 42B: the ONE gate for sub industry notes. A sub industry (an entry of SUBTYPES: its vocabulary, buyer roles, measures, objections, proof shape, usual model)
+// is returned only when the seller's own category or product description contains that sub industry's own words: its name, or at least two different
+// keywords (distinctive words) or two different phrases from its match list. Otherwise null, and every caller uses only the sector's general notes (or neutral B2B wording where a line has no general form).
+// your_sector fixes the sector, never the sub industry. Every tool reads its sector through readContext, which calls this once for its result.
+const SUB_GENERIC = new Set(['of', 'in', 'on', 'to', 'at', 'by', 'an', 'as', 'or', 'is', 'software', 'platform', 'app', 'management', 'system', 'service', 'business', 'businesse', 'compan', 'company', 'tool', 'automation', 'tracking', 'planning', 'and', 'for', 'the', 'with', 'solution', 'suite', 'based', 'data', 'real', 'time']);
+function subIndustryFor(v, sellerText) {
+    if (!v || !v.subtype)
+        return null;
+    const st = verticals_ts_1.SUBTYPES.find((x) => x.id === v.subtype);
+    if (!st)
+        return null;
+    const text = sellerText.toLowerCase();
+    if (st.name.length >= 4 && text.includes(st.name.toLowerCase()))
+        return st;
+    // keywords: the distinctive words (not product nouns such as software, platform, app, management, system, service) of the phrases of this sub industry the seller wrote
+    const nameWords = new Set(st.name.toLowerCase().split(/[^a-z0-9]+/).map((w) => w.replace(/s$/, '')).filter((k) => k.length >= 3 && !SUB_GENERIC.has(k))); // a phrase that carries a distinctive word of the sub industry's own name counts
+    const seen = new Set(), phrases = new Set();
+    for (const m of sellerText.matchAll(new RegExp(st.match.source, st.match.flags.replace('g', '') + 'g'))) {
+        phrases.add(m[0].toLowerCase().replace(/s+/g, ' '));
+        for (const w of m[0].toLowerCase().split(/[^a-z0-9]+/)) {
+            const k = w.replace(/s$/, '');
+            if (k.length >= 2 && !SUB_GENERIC.has(k)) {
+                seen.add(k);
+                if (nameWords.has(k))
+                    return st;
+            }
+        }
+        if (seen.size >= 2 || phrases.size >= 2)
+            return st;
+    }
+    return null;
+}
+/** The sector entry with the sub industry kept only when subIndustryFor allows it; else the sector's own general entry. */
+function gateSubIndustry(v, sellerText) {
+    if (!v || !v.subtype || subIndustryFor(v, sellerText))
+        return v;
+    return verticals_ts_1.VERTICALS.find((x) => x.id === v.id) ?? v;
+}
 function readContext(explicitModel, r) {
     // A brand name is not a sector word ("Brightfield Software" is not a software product): it is taken out of the other texts before they are read.
     const nameList = (r.names || []).filter((x) => typeof x === 'string' && x.trim().length >= 3).map((x) => x.trim());
@@ -450,11 +489,12 @@ function readContext(explicitModel, r) {
         if (heads.length && heads.every((h) => !money.test(h) && h.trim().split(/\s+/).length >= 2))
             ex = { ...ex, vertical: null };
     }
-    const v0 = ex.vertical;
+    const ownWords = [...descr, ...(r.names || [])].filter((x) => typeof x === 'string').join(' | ');
+    const v0 = gateSubIndustry(ex.vertical, ownWords);
     // The model is read from what the product is (core) first; the capability and positioning text can mention "tools" or "cloud" in any business.
     const first = coreT.length ? (0, verticals_ts_1.detectModel)(explicitModel, { seller: coreT }) : null;
     const read = first && (first.how === 'input' || first.how === 'read') ? first : (0, verticals_ts_1.detectModel)(explicitModel, { seller: descr });
-    const m0 = read.how === 'input' || read.how === 'read' ? read : v0 ? { model: (v0.subtype ? verticals_ts_1.SUBTYPES.find((x) => x.id === v0.subtype)?.model : undefined) ?? verticals_ts_1.SECTOR_MODEL[v0.id], how: 'sector' } : read;
+    const m0 = read.how === 'input' ? read : forcedSector ? (v0 ? { model: verticals_ts_1.SECTOR_MODEL[v0.id], how: 'sector' } : { model: null, how: 'unknown' }) : read.how === 'read' ? read : v0 ? { model: (v0.subtype ? verticals_ts_1.SUBTYPES.find((x) => x.id === v0.subtype)?.model : undefined) ?? verticals_ts_1.SECTOR_MODEL[v0.id], how: 'sector' } : read;
     // Run 22: a services firm that names "AI-powered tools" or a platform among its capabilities is still a services firm: when the whole text reads as ITeS and
     // only a tool word made it a subscription, the model is services (the shared reader does the same when it sees the whole text).
     const saasWords = /\b(?:saas|subscriptions?|per seat|per user|licen[cs]es?)\b/i;
@@ -462,12 +502,12 @@ function readContext(explicitModel, r) {
     // A seller whose own words say it is a marketplace, an exchange or a network that connects the two sides of a trade is a marketplace, unless it says subscription or licence.
     const sellerText = descr.filter((x) => typeof x === 'string').join(' ');
     const twoSided = /\b(?:marketplace|exchange)\b|\b(?:network|platform|infrastructure)\b[^.;]{0,80}?\bconnecting\b/i;
-    const m2 = m1.how !== 'input' && m1.model === 'saas' && twoSided.test(sellerText) && !saasWords.test(sellerText) ? { model: 'marketplace', how: 'read' } : m1;
+    const m2 = !forcedSector && m1.how !== 'input' && m1.model === 'saas' && twoSided.test(sellerText) && !saasWords.test(sellerText) ? { model: 'marketplace', how: 'read' } : m1;
     // A managed service (managed detection and response, a managed SOC, outsourced operations) is sold as a service even when it runs on a platform, unless the words say subscription or licence.
     const mgd = /\b(?:managed (?:detection|security|services?|service)|mdr\b|outsourc\w+|bpo\b)/i;
-    const m = m2.how !== 'input' && m2.model === 'saas' && mgd.test(sellerText) && !saasWords.test(sellerText) ? { model: 'services', how: 'read' } : m2;
+    const m = !forcedSector && m2.how !== 'input' && m2.model === 'saas' && mgd.test(sellerText) && !saasWords.test(sellerText) ? { model: 'services', how: 'read' } : m2;
     // A seller that manages money gets the investment roles and measures, not the sector's own (shared sector file, profileFor).
-    const v = forcedSector ? v0 : (0, verticals_ts_1.profileFor)(v0, m.model, full);
+    const v = forcedSector ? v0 : gateSubIndustry((0, verticals_ts_1.profileFor)(v0, m.model, full), ownWords);
     const from = ex.source === 'context' ? ' (from the deal text, because your own description names no sector)' : ex.source === 'role' ? ' (from the job titles, because your own description names no sector)' : ex.source === 'buyer' ? ' (from who you sell to, because your own description names no sector)' : '';
     const sector = forcedSector ? (v ? `set by your_sector as ${v.name}` : 'set by your_sector to other, so the wording stays neutral') : v ? `read from your inputs as ${v.name}${from}` : 'not clear from your inputs (name the industry in plain words for sector notes)';
     const model = m.model
