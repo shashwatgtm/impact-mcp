@@ -53,18 +53,18 @@ Add to your `claude_desktop_config.json`:
 
 ## Tools and inputs
 
-Generated on 27 September 2026 from the server's own tool list and checked again on 17 October 2026 against `tools/list` of impact-mcp 2.2.27 (the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
+Generated on 27 September 2026 from the server's own tool list and checked again on 27 October 2026 against `tools/list` of impact-mcp 2.2.27 (tool descriptions rewritten that day) (the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
 
 | # | Tool | Title | What it does |
 |---|---|---|---|
-| 1 | `impact_get_framework` | IMPACT Framework Guide | Get complete IMPACT framework methodology with phase-by-phase guidance |
-| 2 | `impact_identify_champions` | Identify Champions | Generate champion hypotheses from your company and product context |
-| 3 | `impact_map_alternatives` | Map Alternatives | Analyze competitive landscape and find positioning whitespace |
-| 4 | `impact_pinpoint_value` | Pinpoint Value | Generate value proposition with quantification and proof points |
-| 5 | `impact_anchor_market` | Anchor Market | Select a beachhead market: keyword-based segment scores and a TAM/SAM/SOM framework whose preset figures are labelled for you to replace |
-| 6 | `impact_craft_message` | Craft Message | Build positioning statement and message hierarchy with variations |
-| 7 | `impact_translate_execution` | Translate Execution | Adapt positioning for specific channels and touchpoints |
-| 8 | `impact_full_audit` | IMPACT Full Audit | Positioning audit with an input completeness score and recommendations |
+| 1 | `impact_get_framework` | IMPACT Framework Guide | Returns the IMPACT positioning method step by step: identify champions, map alternatives, pinpoint value, anchor in a market, craft the message and translate it to execution, with a template or checklist for each step. An optional focus phase returns one step only, and your sector adds that sector's buyer roles, measures and proof points. |
+| 2 | `impact_identify_champions` | Identify Champions | Takes what your product does and the problem it solves, and returns hypotheses for who buys it: the champion, the economic buyer, the technical influencer, commercial and control reviewers and daily users, with warning signs of an anti-champion, a path to develop the champion and what to give them. Optional company name, target company type, price point and sector fit the roles to your market. These are roles to test, not named people. |
+| 3 | `impact_map_alternatives` | Map Alternatives | Takes your product and its category, and returns a map of the alternatives your buyers weigh: one card for each competitor you name, the status-quo options you list and doing nothing, where you can lead, and discovery questions to learn more. Optional competitor weaknesses and your strengths fill the cards, and your sector adds its questions and objections. It uses only what you give and says what would sharpen the map. |
+| 4 | `impact_pinpoint_value` | Pinpoint Value | Takes your target customer, the main outcome they get and what you do that others do not, and returns value proposition statements in three versions, a value matrix for your own figures, proof points ranked from customer results to social proof, versions for different audiences and channels, and questions to test the value. Optional product name, category, customer results and business model shape it. |
+| 5 | `impact_anchor_market` | Anchor Market | Takes what your product does and the segments you are weighing, and returns a beachhead market choice: your segments ranked from your own customers, pain and deal size when you give all three (the answer says which method it used), otherwise scored on keywords in their names; a TAM/SAM/SOM calculation that uses only the company counts, deal size and percentages you give; a three-year expansion path and an ICP hypothesis for the chosen segment. It never chooses a segment you did not name: without segments it recommends none and explains how to find yours from your own customers. |
+| 6 | `impact_craft_message` | Craft Message | Takes your target customer, the key benefit and what sets you apart, and returns a positioning statement (full and one sentence), a message hierarchy from tagline to three supporting pillars, versions for different audiences, objection handling and ways to test the message. Optional product name, customer need, category, main competitor and business model fit it to your market. It writes from your own words, in whole sentences. |
+| 7 | `impact_translate_execution` | Translate Execution | Takes a positioning statement, your target customer and the key benefit, and returns copy to edit for the channels you choose: a website hero, a LinkedIn tagline and post drafts, a three-email cold sequence, a sales deck outline and a 15-minute demo script, with calls to action that fit your business model and the order to work the channels in. Optional channels, product name and business model shape it. |
+| 8 | `impact_full_audit` | IMPACT Full Audit | Takes what your product does, your target customer and the problem you solve, and returns a positioning audit: an input completeness score for each IMPACT step, the proof you already have, your current positioning checked in words, a recommended positioning with tagline options, a 30-day action plan and the measures to track. Optional company name, differentiation, competitors, current positioning, customer feedback and business model make it fuller. The score measures how complete your inputs are, not how strong your positioning is. |
 
 ### Inputs of each tool
 
@@ -114,7 +114,7 @@ Generated on 27 September 2026 from the server's own tool list and checked again
 | Input | Required | Type | Description |
 |---|---|---|---|
 | `product_description` | Yes | string | What your product does |
-| `potential_segments` | No | array of string | List of potential market segments (e.g., ["Mid-market SaaS", "Enterprise Finance", "SMB Retail"]) |
+| `potential_segments` | No | array of string | The market segments you are weighing, in your own words (for example Mid-market fintech, Enterprise banks, Small retail chains). Needed for a recommendation: without segments no segment is chosen, and the answer explains how to find yours |
 | `current_customers` | No | string | Optional: Description of your current/best customers. Shown in the output; not used in the scoring |
 | `average_deal_size` | No | string | Optional: Your ACV as one amount (e.g., "$50,000", "$50K" or "$1.5M"); a range is refused |
 | `sales_cycle` | No | string | Optional: Typical sales cycle length. Shown in the output; not used in the scoring |

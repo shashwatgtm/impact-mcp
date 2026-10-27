@@ -43,10 +43,11 @@ test("audience: short target customers are kept whole, as before", async () => {
   assert.match(r.text, /No customer count, result or recognition was typed/);
 });
 
-test("anchor market: an empty segment list is treated like no list, with the example label", async () => {
+test("anchor market: an empty segment list is treated like no list, and no segment is invented (27 Oct 2026: the example segments are gone)", async () => {
   const r = await call("impact_anchor_market", { product_description: "Cloud security monitoring for fintech teams", potential_segments: [] });
   assert.equal(r.isError, false, r.text.slice(0, 200));
-  assert.match(r.text, /You supplied no segments, so the segments are examples too\./);
+  assert.match(r.text, /No segment is recommended: you named no market segments/);
+  assert.ok(!/Mid-market SaaS|Enterprise Tech|Recommended Beachhead/.test(r.text), r.text.slice(0, 300));
 });
 
 test("map alternatives: with no competitors given, none is invented (Run 22: the example names Competitor A and B are gone); an empty list is treated like no list", async () => {

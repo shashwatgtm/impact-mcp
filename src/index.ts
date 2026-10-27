@@ -1045,7 +1045,7 @@ const tools = {
   // Tool 1: Get Framework Overview
   // ---------------------------------------------------------------------------
   impact_get_framework: {
-    description: 'Get the IMPACT framework method phase by phase, optionally with your sector\'s buyer roles, measures and proof points',
+    description: 'Returns the IMPACT positioning method step by step: identify champions, map alternatives, pinpoint value, anchor in a market, craft the message and translate it to execution, with a template or checklist for each step. An optional focus phase returns one step only, and your sector adds that sector\'s buyer roles, measures and proof points.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1364,7 +1364,7 @@ ${SUGGESTED}
   // Tool 2: Identify Champions
   // ---------------------------------------------------------------------------
   impact_identify_champions: {
-    description: 'Generate champion, economic buyer and technical influencer hypotheses from your product context, using the buying roles of your sector',
+    description: 'Takes what your product does and the problem it solves, and returns hypotheses for who buys it: the champion, the economic buyer, the technical influencer, commercial and control reviewers and daily users, with warning signs of an anti-champion, a path to develop the champion and what to give them. Optional company name, target company type, price point and sector fit the roles to your market. These are roles to test, not named people.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1587,7 +1587,7 @@ ${SUGGESTED}
   // Tool 3: Map Alternatives
   // ---------------------------------------------------------------------------
   impact_map_alternatives: {
-    description: 'Map your alternatives: one card per named competitor, plus the status-quo options you list, using the weaknesses and strengths you give, with the questions and objections of your sector',
+    description: 'Takes your product and its category, and returns a map of the alternatives your buyers weigh: one card for each competitor you name, the status-quo options you list and doing nothing, where you can lead, and discovery questions to learn more. Optional competitor weaknesses and your strengths fill the cards, and your sector adds its questions and objections. It uses only what you give and says what would sharpen the map.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1799,7 +1799,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
   // Tool 4: Pinpoint Unique Value
   // ---------------------------------------------------------------------------
   impact_pinpoint_value: {
-    description: 'Generate value proposition statements, a value matrix for your own figures and proof points that fit your business model',
+    description: 'Takes your target customer, the main outcome they get and what you do that others do not, and returns value proposition statements in three versions, a value matrix for your own figures, proof points ranked from customer results to social proof, versions for different audiences and channels, and questions to test the value. Optional product name, category, customer results and business model shape it.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2056,7 +2056,7 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
   // Tool 5: Anchor in Right Market
   // ---------------------------------------------------------------------------
   impact_anchor_market: {
-    description: 'Select a beachhead market: segments ranked from your own customers, pain and deal size when you give all three (the answer says which method it used), otherwise keyword presets; and a TAM/SAM/SOM calculation that uses only the company counts, deal size and percentages you give',
+    description: 'Takes what your product does and the segments you are weighing, and returns a beachhead market choice: your segments ranked from your own customers, pain and deal size when you give all three (the answer says which method it used), otherwise scored on keywords in their names; a TAM/SAM/SOM calculation that uses only the company counts, deal size and percentages you give; a three-year expansion path and an ICP hypothesis for the chosen segment. It never chooses a segment you did not name: without segments it recommends none and explains how to find yours from your own customers.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2067,7 +2067,7 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
         potential_segments: {
           type: 'array',
           items: { type: 'string' },
-          description: 'The market segments you are weighing (for example Mid-market fintech, Enterprise banks, Small retail chains)'
+          description: 'The market segments you are weighing, in your own words (for example Mid-market fintech, Enterprise banks, Small retail chains). Needed for a recommendation: without segments no segment is chosen, and the answer explains how to find yours'
         },
         current_customers: {
           type: 'string',
@@ -2117,7 +2117,57 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
     }) => {
       // An empty list is treated like no list. A segment listed twice is scored once (backlog B15-L2).
       const segGiven = !!(args.potential_segments && args.potential_segments.filter((s) => s && s.trim()).length);
-      const rawSegments = segGiven ? (args.potential_segments as string[]).filter((s) => s && s.trim()) : ['Mid-market SaaS (50-500 employees)', 'Enterprise Tech (500+ employees)', 'SMB (10-50 employees)'];
+      // 27 Oct 2026 (owner): with no segments the tool used to score three example segments and recommend one, for example
+      // "Mid-market SaaS (50-500 employees)" for a logistics product. It never chooses a segment or vertical it was not given:
+      // without segments it recommends nothing and explains how to find candidate segments from the user's own inputs.
+      if (!segGiven) {
+        const prodText0 = args.product_description.trim().length <= 400 ? args.product_description.trim() : clip(args.product_description, 300);
+        const cc0 = (args.current_customers || '').trim();
+        const pain0 = (args.customer_pain || '').trim();
+        const acv0 = (args.average_deal_size || '').trim();
+        const cycle0 = (args.sales_cycle || '').trim();
+        const ctx0 = readContext(undefined, { core: [args.product_description], buyer: [] });
+        const sharpen0 = sharpenLine([
+          { give: 'potential_segments (two to four segments you are weighing, in your own words)', changes: 'the whole answer: your segments are scored and one is recommended' },
+          ...(cc0 ? [] : [{ give: 'current_customers', changes: 'step 1 below, and with customer_pain and average_deal_size the ranking of your segments' }]),
+          ...(pain0 ? [] : [{ give: 'customer_pain', changes: 'step 2 below, and the Pain Intensity score of your segments' }]),
+          ...(acv0 ? [] : [{ give: 'average_deal_size', changes: 'step 3 below, and the market sizing once segments are named' }]),
+        ]);
+        return `# Beachhead Market Selection
+
+## In short
+
+No segment is recommended: you named no market segments, and this tool does not choose a segment or a vertical for you. Name the two to four segments you are weighing in potential_segments and run it again; the steps below show how to find them from your own customers.
+
+## Market Context
+
+**Product**: ${prodText0}
+**Average Deal Size**: ${acv0 || 'not given'}
+**Sales Cycle**: ${cycle0 || 'not given'}
+**Segments**: not given, so nothing is scored or recommended.
+${ctx0.line}
+
+---
+
+## How to find your candidate segments
+
+1. **Start from your own customers.** ${cc0 ? `You describe them as ${q(clip(cc0, 200))}. Group them by industry, company size and the role that bought; each group that holds two or more of your customers is a candidate segment.` : 'List your best customers and group them by industry, company size and the role that bought; each group that holds two or more of them is a candidate segment.'}
+2. **Follow the pain.** ${pain0 ? `Your customers describe the problem as ${q(clip(pain0, 200))}. Note which kinds of company raise it first, without being prompted.` : 'Note which kinds of company raise the problem your product solves first, without being prompted.'}
+3. **Check who can pay.** A segment qualifies only if its buyers can approve ${acv0 ? acv0 : 'your price'}${cycle0 ? ` within a cycle of about ${cycle0}` : ''}.
+4. **Check who you can reach.** Keep the segments where you already have a channel, a partner or a referral.
+
+Write each candidate in your own words, naming its industry and company size, and list them in potential_segments.
+
+## How your segments will be scored
+
+Once you name them, each segment is scored 1 to 5 on Pain Intensity, Budget Availability, Accessibility, Reference Value and Competition, and the highest total is recommended. When you also give current_customers, customer_pain and average_deal_size, the scores come from your own inputs; otherwise from keywords in the segment names, and the answer says which method it used.
+
+## Market sizing
+
+TAM, SAM and SOM are calculated per segment, so none is calculated here. With segments named, company_counts (one line per segment), average_deal_size, percent_matching_icp and year_one_share_percent give the figures, using only the numbers you supply.
+${sharpen0 ? `\n---\n\n## To sharpen this\n\n${sharpen0}\n` : ''}`;
+      }
+      const rawSegments = (args.potential_segments as string[]).filter((s) => s && s.trim());
       const seen = new Set<string>();
       const segments: string[] = [];
       const dropped: string[] = [];
@@ -2441,7 +2491,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
   // Tool 6: Craft Core Message
   // ---------------------------------------------------------------------------
   impact_craft_message: {
-    description: 'Build a positioning statement and message hierarchy from your own words, in whole sentences, with proof and objections that fit your sector and business model',
+    description: 'Takes your target customer, the key benefit and what sets you apart, and returns a positioning statement (full and one sentence), a message hierarchy from tagline to three supporting pillars, versions for different audiences, objection handling and ways to test the message. Optional product name, customer need, category, main competitor and business model fit it to your market. It writes from your own words, in whole sentences.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2874,7 +2924,7 @@ ${rows.join('\n')}
   // Tool 7: Translate to Execution
   // ---------------------------------------------------------------------------
   impact_translate_execution: {
-    description: 'Adapt a positioning statement for the channels you choose (website, LinkedIn, cold email, sales deck, demo), with calls to action that fit your business model',
+    description: 'Takes a positioning statement, your target customer and the key benefit, and returns copy to edit for the channels you choose: a website hero, a LinkedIn tagline and post drafts, a three-email cold sequence, a sales deck outline and a 15-minute demo script, with calls to action that fit your business model and the order to work the channels in. Optional channels, product name and business model shape it.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -3353,7 +3403,7 @@ ${SUGGESTED}
   // Tool 8: Full Positioning Audit
   // ---------------------------------------------------------------------------
   impact_full_audit: {
-    description: 'Positioning audit with an input completeness score and recommendations',
+    description: 'Takes what your product does, your target customer and the problem you solve, and returns a positioning audit: an input completeness score for each IMPACT step, the proof you already have, your current positioning checked in words, a recommended positioning with tagline options, a 30-day action plan and the measures to track. Optional company name, differentiation, competitors, current positioning, customer feedback and business model make it fuller. The score measures how complete your inputs are, not how strong your positioning is.',
     inputSchema: {
       type: 'object',
       properties: {
