@@ -886,8 +886,13 @@ function lensOf(v: Vertical | null, ...texts: (string | undefined)[]): Lens {
 const CROSS_TEAM: FunctionRoles = { id: 'cross team', re: /(?!)/g, champion: 'Head of Operations, or the business owner of the workflow the product runs', buyer: 'COO or the business owner of the shared process', tech: 'IT and the systems owner, with security', measures: ['time to complete', 'adoption across teams', 'rework'], blocker: 'adoption across teams and change management', questions: ['Which shared process or workflow crosses the most teams today, and who owns it?', 'How long does that work take to complete, and how much of it is redone?', 'Which teams already use the product or an alternative, and which have not adopted it?'], proof: 'A before and after on the same shared workflow: time to complete, share of teams using it and rework, each figure labelled with its source or marked hypothetical.', vocab: ['workflow', 'adoption', 'handoff', 'visibility', 'time to complete'] };
 const GENERAL_TEAMS = /\b(?:work|project) management\b|collaboration (?:platform|tool|software)|teams? of (?:all|any|every) (?:kinds?|sizes?|types?)|\b(?:any|every|all|many|multiple|different|various) (?:kinds? of |types? of )?(?:teams|departments)\b|cross-?functional|teams across|teams in general/i;
 // The distinct teams a text names. "sales operations" is the sales team, so a team word before "operations" removes the generic operations hit.
+// Host review 28 Oct 2026: a company size ("200 to 1000 employees") names how big the company is, not the HR team.
+const SIZE_IN_EMPLOYEES = /\b(?:(?:over|under|more than|fewer than|less than|up to|about|around)\s+)?\d[\d,.]*\s*[kK+]?\s*(?:(?:to|-|–|and)\s*\d[\d,.]*\s*[kK+]?\s*)?(?:full[- ]time\s+)?employees\b/g;
+const withoutSize = (t: string): string => t.replace(SIZE_IN_EMPLOYEES, ' ');
+// Host review 28 Oct 2026: a line that says evidence is missing ("No verified outcome metrics supplied") is not proof of anything.
+const statesAbsence = (x: string): boolean => /^(?:no|none|not|nil|n\/a|without)\b/i.test(x.trim()) && /\b(?:supplied|given|provided|available|known|collected|verified|measured|yet)\b/i.test(x);
 export function namedTeams(...texts: (string | undefined)[]): string[] {
-  const t = texts.filter(Boolean).join(' \n ').replace(/\b(?:sales|revenue|marketing|finance|financial|support|customer|hr|people|it|security|engineering|devops|billing|supply chain|warehouse)\s+operations?\b/gi, (m) => m.replace(/\s+operations?$/i, ''));
+  const t = withoutSize(texts.filter(Boolean).join(' \n ')).replace(/\b(?:sales|revenue|marketing|finance|financial|support|customer|hr|people|it|security|engineering|devops|billing|supply chain|warehouse)\s+operations?\b/gi, (m) => m.replace(/\s+operations?$/i, ''));
   const ids = FUNCTIONS.filter((f) => new RegExp(f.re.source, 'i').test(t)).map((f) => f.id);
   // an IT or HR service desk is one team (workplace), and the broad IT, API, modernization and engineering words are not separate teams beside a security or api read
   return ids.includes('workplace') ? ids.filter((i) => i !== 'it' && i !== 'people') : ids;
@@ -928,7 +933,7 @@ function overlayFn(v: Vertical | null, min: number, ...texts: (string | undefine
   return OVERLAY[v.id] ? functionHitsIn(OVERLAY[v.id]!, min, ...texts) : null;
 }
 function functionHitsIn(only: string[] | null, min: number, ...texts: (string | undefined)[]): FunctionRoles | null {
-  const t = texts.filter(Boolean).join(' \n ');
+  const t = withoutSize(texts.filter(Boolean).join(' \n '));
   let best: FunctionRoles | null = null; let n = 0;
   for (const f of FUNCTIONS.filter((x) => !only || only.includes(x.id))) { const hits = (t.match(f.re) || []).length; if (hits > n) { best = f; n = hits; } }
   return n >= min ? best : null;
@@ -1901,7 +1906,8 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const onlyWith = (d: string) => { const k = kindOf(d); const t = lowerFirst(clean(d)); if (isNamedClause(clean(d))) return `where ${clean(d)}`; return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
 
       // The supplied results, placed by what each one is.
-      const given = splitItems(args.customer_metrics || '').map((text) => ({ text, ...classifyProof(text) }));
+      const metricItems = splitItems(args.customer_metrics || '').filter((text) => !statesAbsence(text));
+      const given = metricItems.map((text) => ({ text, ...classifyProof(text) }));
       if (extraFact && !given.some((g) => (extraFact.match(/\d[\d,.]*/g) || []).every((n) => g.text.includes(n)))) given.push({ text: extraFact.replace(/(?:\\?[.!])+$/, ''), ...classifyProof(extraFact) });
       const tier = (n: 1 | 2 | 4, kinds?: ProofKind[]) => given.filter((g) => g.tier === n && (!kinds || kinds.includes(g.kind)));
       const results = tier(1);
@@ -1940,7 +1946,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const tailMissing: { give: string; changes: string }[] = [];
       if (!named) tailMissing.push({ give: 'product_name', changes: 'every statement, which now says "our product"' });
       if (!catTyped) tailMissing.push({ give: 'category', changes: 'the "only" line and the sector read, which now rest on the other inputs' });
-      if (!(args.customer_metrics || '').trim()) tailMissing.push({ give: 'customer_metrics (one real customer result with its source)', changes: 'Tier 1 and the matrix, which quote no customer result today' });
+      if (!metricItems.length) tailMissing.push({ give: 'customer_metrics (one real customer result with its source)', changes: 'Tier 1 and the matrix, which quote no customer result today' });
       if (!args.business_model && (!ctx.model || /assumed/.test(ctx.line))) tailMissing.push({ give: 'business_model', changes: 'the proof types and calls to action, which follow the usual model of the sector today' });
       tailMissing.push({ give: "the buyer's current pain and a payback period from your best customers", changes: 'the economic buyer statement, which has no payback figure to cite' });
       const sharpen = sharpenLine(tailMissing);
@@ -3463,7 +3469,7 @@ ${SUGGESTED}
       const competitors = args.competitors || ['Status quo', 'DIY solutions'];
       const differentiation = args.key_differentiation || 'unique approach';
       const givenCompetitors = (args.competitors || []).filter((c) => c && c.trim());
-      const allFeedback = splitItems(args.customer_feedback);
+      const allFeedback = splitItems(args.customer_feedback).filter((x) => !statesAbsence(x));
       // A company-wide claim ("$8B+ deployed", "more than 1,000 teams use X") or a recognition is not a result a customer describes.
       const isCompanyClaim = (x: string): boolean => /^(?:more than|over|about|around)?\s*[$]?\d[\d,.]*\+?\s*(?:billion|million|bn|[bm])\b/i.test(x.trim()) || /\bdeployed\b|\bassets under management\b|\bAUM\b/i.test(x) || /^(?:more than|over|about|around)?\s*[$\d][\d,.]*\+?\s*(?:[kmb]\b|million|billion)?\+?\s*(?:\w+\s+){0,3}(?:teams|companies|businesses|customers|users|clients|developers|enterprises|brands|merchants)\b/i.test(x.trim()) || /^(?:named|featured|recognised|recognized|ranked|winner|a leader|leader in)\b|\b(?:awards?|excellence award|magic quadrant|frost radar|major contender|enterprise innovator|gartner|forrester|idc|everest|hfs|g2|capterra|recogni[sz]ed|recognition|best [\w&' -]{3,40}(?:platform|solution|tool|software)|cio choice)\b/i.test(x);
       const companyClaims = allFeedback.filter(isCompanyClaim);
