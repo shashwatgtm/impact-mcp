@@ -41,7 +41,7 @@ No. Each tool applies fixed rules in the IMPACT code to the inputs you give it. 
 
 ### What happens to what I type?
 
-It is sent to this site's server, used once to build the answer, and dropped when the answer is sent back. Nothing is stored and nothing you type is logged. The privacy page has the details.
+It is sent to this site's server, used once to build the answer, and dropped when the answer is sent back. What you type and the answer are not stored, and nothing you type is logged. Only an anonymous count of tool calls is kept. The privacy page has the details.
 
 ### How do I use IMPACT in Claude?
 
@@ -65,7 +65,7 @@ Yes, at https://github.com/shashwatgtm/impact-mcp under the MIT licence. The npm
 
 ### Who is IMPACT not ideal for?
 
-Teams that need buyer research done for them: IMPACT structures your positioning as hypotheses, and you test them with buyers. Anyone who needs live competitor data: the tools look nothing up; they work from what you type about your market and rivals, and anything they add themselves (such as common complaints in a category) is marked as something to check with buyers. Teams that need saved history: nothing is stored, so keep each draft where you keep your positioning work.
+Teams that need buyer research done for them: IMPACT structures your positioning as hypotheses, and you test them with buyers. Anyone who needs live competitor data: the tools look nothing up; they work from what you type about your market and rivals, and anything they add themselves (such as common complaints in a category) is marked as something to check with buyers. Teams that need saved history: answers are not stored, so keep each draft where you keep your positioning work.
 
 ### How do I report a problem?
 
