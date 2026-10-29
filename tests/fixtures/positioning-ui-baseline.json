@@ -1,0 +1,635 @@
+{
+  "fixtures": [
+    {
+      "company_name": "HubSpot",
+      "product_description": "CRM software in a synthetic review scenario",
+      "target_customer": "Revenue operations directors at B2B software firms",
+      "problem_solved": "Disconnected customer activity records",
+      "key_differentiation": "Synthetic assumption: shared lifecycle view",
+      "competitors": [
+        "Salesforce"
+      ],
+      "customer_feedback": "No verified interviews supplied",
+      "business_model": "saas",
+      "your_sector": "saas"
+    },
+    {
+      "product_description": "Synthetic payroll and onboarding software",
+      "target_customer": "HR teams at firms with 500 employees",
+      "problem_solved": "HR teams lose days to payroll errors and slow onboarding",
+      "customer_feedback": "",
+      "your_sector": "saas"
+    },
+    {
+      "product_description": "Synthetic CRM workflow software",
+      "target_customer": "Revenue operations at firms with 200 to 1000 employees",
+      "problem_solved": "Revenue operations teams reconcile inconsistent pipeline records",
+      "customer_feedback": "",
+      "your_sector": "saas"
+    },
+    {
+      "company_name": "HubSpot",
+      "product_description": "CRM software in a synthetic review scenario",
+      "target_customer": "Revenue operations directors at B2B software firms",
+      "problem_solved": "Disconnected customer activity records",
+      "key_differentiation": "Synthetic assumption: shared lifecycle view",
+      "competitors": [
+        "Salesforce"
+      ],
+      "customer_feedback": "",
+      "business_model": "saas",
+      "your_sector": "saas"
+    }
+  ],
+  "tools": {
+    "tools": [
+      {
+        "name": "impact_get_framework",
+        "description": "Returns the IMPACT positioning method step by step: identify champions, map alternatives, pinpoint value, anchor in a market, craft the message and translate it to execution, with a template or checklist for each step. An optional focus phase returns one step only, and your sector adds that sector's buyer roles, measures and proof points.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "focus_phase": {
+              "type": "string",
+              "description": "Specific phase to focus on (identify/map/pinpoint/anchor/craft/translate)",
+              "enum": [
+                "identify",
+                "map",
+                "pinpoint",
+                "anchor",
+                "craft",
+                "translate",
+                "all"
+              ]
+            },
+            "sector": {
+              "type": "string",
+              "description": "Your sector in your own words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity). Adds how the six steps read in that sector. The same as your_sector; your_sector wins when both are given"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          }
+        },
+        "title": "IMPACT Framework Guide",
+        "annotations": {
+          "title": "IMPACT Framework Guide",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "impact_identify_champions",
+        "description": "Takes what your product does and the problem it solves, and returns hypotheses for who buys it: the champion, the economic buyer, the technical influencer, commercial and control reviewers and daily users, with warning signs of an anti-champion, a path to develop the champion and what to give them. Optional company name, target company type, price point and sector fit the roles to your market. These are roles to test, not named people.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "company_name": {
+              "type": "string",
+              "description": "Your company name"
+            },
+            "product_description": {
+              "type": "string",
+              "description": "What your product does (1-2 sentences)"
+            },
+            "problem_solved": {
+              "type": "string",
+              "description": "The core problem you solve"
+            },
+            "target_company_type": {
+              "type": "string",
+              "description": "Type of companies you target (e.g., \"mid-size fintech companies\", \"enterprise manufacturers\")"
+            },
+            "price_point": {
+              "type": "string",
+              "description": "What you charge, with the period, in your own words (for example \"$50,000 a year\" or \"$3,750 per month\")"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "product_description",
+            "problem_solved"
+          ]
+        },
+        "title": "Identify Champions",
+        "annotations": {
+          "title": "Identify Champions",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "impact_map_alternatives",
+        "description": "Takes your product and its category, and returns a map of the alternatives your buyers weigh: one card for each competitor you name, the status-quo options you list and doing nothing, where you can lead, and discovery questions to learn more. Optional competitor weaknesses and your strengths fill the cards, and your sector adds its questions and objections. It uses only what you give and says what would sharpen the map.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "your_product": {
+              "type": "string",
+              "description": "What your product does"
+            },
+            "category": {
+              "type": "string",
+              "description": "Your product category (e.g., \"cloud security monitoring\", \"last-mile delivery software\")"
+            },
+            "competitors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of competitor names, and the status-quo options your buyers use (for example \"spreadsheets\"). A description in brackets after a name is kept"
+            },
+            "competitor_weaknesses": {
+              "type": "string",
+              "description": "Known competitor weaknesses or customer complaints, one per line or separated by semicolons. A weakness that names a competitor is shown on its card"
+            },
+            "your_strengths": {
+              "type": "string",
+              "description": "What you do better than competitors, one per line or separated by semicolons"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "your_product",
+            "category"
+          ]
+        },
+        "title": "Map Alternatives",
+        "annotations": {
+          "title": "Map Alternatives",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "impact_pinpoint_value",
+        "description": "Takes your target customer, the main outcome they get and what you do that others do not, and returns value proposition statements in three versions, a value matrix for your own figures, proof points ranked from customer results to social proof, versions for different audiences and channels, and questions to test the value. Optional product name, category, customer results and business model shape it.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "product_name": {
+              "type": "string",
+              "description": "Your product/company name"
+            },
+            "category": {
+              "type": "string",
+              "description": "Product category"
+            },
+            "target_customer": {
+              "type": "string",
+              "description": "Who you serve (e.g., \"cloud security leads at mid-size fintech companies\")"
+            },
+            "key_outcome": {
+              "type": "string",
+              "description": "The main result customers achieve"
+            },
+            "unique_capability": {
+              "type": "string",
+              "description": "What you do that others cannot/don't"
+            },
+            "customer_metrics": {
+              "type": "string",
+              "description": "Any customer results data (e.g., \"critical exposures down 70% in one quarter; audit preparation from 3 weeks to 4 days\")"
+            },
+            "business_model": {
+              "type": "string",
+              "enum": [
+                "saas",
+                "services",
+                "connectivity",
+                "transactions",
+                "marketplace",
+                "hardware_software",
+                "investment"
+              ],
+              "description": "How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose proof types; read from your inputs when not given"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "target_customer",
+            "key_outcome",
+            "unique_capability"
+          ]
+        },
+        "title": "Pinpoint Value",
+        "annotations": {
+          "title": "Pinpoint Value",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "impact_anchor_market",
+        "description": "Takes what your product does and the segments you are weighing, and returns a beachhead market choice: your segments ranked from your own customers, pain and deal size when you give all three (the answer says which method it used), otherwise scored on keywords in their names; a TAM/SAM/SOM calculation that uses only the company counts, deal size and percentages you give; a three-year expansion path and an ICP hypothesis for the chosen segment. It never chooses a segment you did not name: without segments it recommends none and explains how to find yours from your own customers.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "product_description": {
+              "type": "string",
+              "description": "What your product does"
+            },
+            "potential_segments": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The market segments you are weighing, in your own words (for example Mid-market fintech, Enterprise banks, Small retail chains). Needed for a recommendation: without segments no segment is chosen, and the answer explains how to find yours"
+            },
+            "current_customers": {
+              "type": "string",
+              "description": "Description of your current/best customers. With customer_pain and average_deal_size it ranks the segments (the answer says which method it used); without them it is shown only and the keyword presets score the segments"
+            },
+            "customer_pain": {
+              "type": "string",
+              "description": "The problem your best customers describe, in their words. With current_customers and average_deal_size it ranks the segments from your own inputs; without them the keyword presets are used"
+            },
+            "average_deal_size": {
+              "type": "string",
+              "description": "Your annual contract value (ACV) as one amount (e.g., \"$50,000\", \"$50K\" or \"$1.5M\"); a range is refused"
+            },
+            "sales_cycle": {
+              "type": "string",
+              "description": "Typical sales cycle length. Shown in the output; not used in the scoring"
+            },
+            "company_counts": {
+              "type": "string",
+              "description": "How many companies you could sell to in each segment, one per line or separated by semicolons (for example \"Mid-market fintech: 3,200; Enterprise banks: 600\"). A single number is read as the count for the recommended segment. Needed for market sizing"
+            },
+            "percent_matching_icp": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100,
+              "description": "The percent of those companies that match your ideal customer profile (for example 25). Needed for SAM"
+            },
+            "year_one_share_percent": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100,
+              "description": "The share of the matching companies you expect to win in year one, in percent (for example 1). Needed for SOM"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "product_description"
+          ]
+        },
+        "title": "Anchor Market",
+        "annotations": {
+          "title": "Anchor Market",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "impact_craft_message",
+        "description": "Takes your target customer, the key benefit and what sets you apart, and returns a positioning statement (full and one sentence), a message hierarchy from tagline to three supporting pillars, versions for different audiences, objection handling and ways to test the message. Optional product name, customer need, category, main competitor and business model fit it to your market. It writes from your own words, in whole sentences.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "product_name": {
+              "type": "string",
+              "description": "Your product name"
+            },
+            "target_customer": {
+              "type": "string",
+              "description": "Target customer description"
+            },
+            "customer_need": {
+              "type": "string",
+              "description": "The need they have, written as an action (for example \"lose days chasing low-risk cloud alerts\")"
+            },
+            "product_category": {
+              "type": "string",
+              "description": "Your product category, written as a noun phrase (for example \"cloud security monitoring platform\")"
+            },
+            "key_benefit": {
+              "type": "string",
+              "description": "Primary benefit/reason to buy"
+            },
+            "competitor": {
+              "type": "string",
+              "description": "Primary alternative/competitor"
+            },
+            "differentiation": {
+              "type": "string",
+              "description": "Your unique differentiation"
+            },
+            "business_model": {
+              "type": "string",
+              "enum": [
+                "saas",
+                "services",
+                "connectivity",
+                "transactions",
+                "marketplace",
+                "hardware_software",
+                "investment"
+              ],
+              "description": "How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose the cost and proof lines; read from your inputs when not given"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "target_customer",
+            "key_benefit",
+            "differentiation"
+          ]
+        },
+        "title": "Craft Message",
+        "annotations": {
+          "title": "Craft Message",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "impact_translate_execution",
+        "description": "Takes a positioning statement, your target customer and the key benefit, and returns copy to edit for the channels you choose: a website hero, a LinkedIn tagline and post drafts, a three-email cold sequence, a sales deck outline and a 15-minute demo script, with calls to action that fit your business model and the order to work the channels in. Optional channels, product name and business model shape it.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "positioning_statement": {
+              "type": "string",
+              "description": "Your core positioning statement"
+            },
+            "target_customer": {
+              "type": "string",
+              "description": "Target customer profile"
+            },
+            "key_benefit": {
+              "type": "string",
+              "description": "Primary benefit, written as an action (for example \"fix critical exposures first\")"
+            },
+            "channels": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Which channels to cover, from website, linkedin, cold_email, sales_deck and product_demo. Others are listed as not covered; with none, all five are covered"
+            },
+            "product_name": {
+              "type": "string",
+              "description": "Your product name"
+            },
+            "business_model": {
+              "type": "string",
+              "enum": [
+                "saas",
+                "services",
+                "connectivity",
+                "transactions",
+                "marketplace",
+                "hardware_software",
+                "investment"
+              ],
+              "description": "How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose calls to action and commercial terms; read from your inputs when not given"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "positioning_statement",
+            "target_customer",
+            "key_benefit"
+          ]
+        },
+        "title": "Translate Execution",
+        "annotations": {
+          "title": "Translate Execution",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "impact_full_audit",
+        "description": "Takes what your product does, your target customer and the problem you solve, and returns a positioning audit: an input completeness score for each IMPACT step, the proof you already have, your current positioning checked in words, a recommended positioning with tagline options, a 30-day action plan and the measures to track. Optional company name, differentiation, competitors, current positioning, customer feedback and business model make it fuller. The score measures how complete your inputs are, not how strong your positioning is.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "company_name": {
+              "type": "string",
+              "description": "Your company name"
+            },
+            "product_description": {
+              "type": "string",
+              "description": "What your product does"
+            },
+            "target_customer": {
+              "type": "string",
+              "description": "Who you serve"
+            },
+            "problem_solved": {
+              "type": "string",
+              "description": "The problem you solve"
+            },
+            "key_differentiation": {
+              "type": "string",
+              "description": "What makes you unique"
+            },
+            "competitors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Main competitors"
+            },
+            "current_positioning": {
+              "type": "string",
+              "description": "Your current positioning statement or tagline"
+            },
+            "customer_feedback": {
+              "type": "string",
+              "description": "What customers say about you"
+            },
+            "business_model": {
+              "type": "string",
+              "enum": [
+                "saas",
+                "services",
+                "connectivity",
+                "transactions",
+                "marketplace",
+                "hardware_software",
+                "investment"
+              ],
+              "description": "How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the score"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "product_description",
+            "target_customer",
+            "problem_solved"
+          ]
+        },
+        "title": "IMPACT Full Audit",
+        "annotations": {
+          "title": "IMPACT Full Audit",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      }
+    ]
+  },
+  "results": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "# IMPACT Positioning Audit\n\n## Company Overview\n**Company**: HubSpot\n**Product**: CRM software in a synthetic review scenario\n**Target**: Revenue operations directors at B2B software firms\n**Problem**: Disconnected customer activity records\n**Differentiation**: Synthetic assumption: shared lifecycle view\n**Competitors**: Salesforce\n\n**Customer Feedback**: No verified interviews supplied\n*Sector: set by your_sector as SaaS, CRM and marketing. Business model: software subscription (from business_model).*\n\n---\n\n## IMPACT Scorecard\n\n### Input completeness score: 59/100 (Grade: D)\n**Inputs**: Thin: many inputs are short or missing\n**What this score measures**: how complete and specific your inputs are, not whether your positioning is right. Longer inputs and certain words (such as only, unique, unlike, employees, revenue and Series) raise it.\n\n| Phase | Score | Input detail | Priority |\n|-------|-------|--------|----------|\n| **I**: Identify Champions | 70/100 | Detailed | Low |\n| **M**: Map Alternatives | 65/100 | Partial | Low |\n| **P**: Pinpoint Value | 70/100 | Detailed | Low |\n| **A**: Anchor Market | 65/100 | Partial | Low |\n| **C**: Craft Message | 30/100 | Thin | High |\n| **T**: Translate Execution | 55/100 | Partial | High |\n\n---\n\n## Most detailed inputs\n\n### Pinpoint (70/100)\nYour differentiation (\"Synthetic assumption: shared lifecycle view\") is long enough for a high score in this area.\n\n### Identify (70/100)\nYour target customer (\"Revenue operations directors at B2B software firms\") is long and specific enough for a high score in this area.\n\n\n---\n\n## Areas to work on next\n\n### Craft (30/100)\n\n**Input**: You supplied no current positioning statement. How do you articulate your unique value?\n\n**Action**: Run `impact_craft_message` to add this detail.\n\n**Possible input score change**: +17 points to this area when you add the detail above (Example figure: replace with your own)\n\n### Translate (55/100)\n\n**Input**: Your customer feedback is short. How does positioning show up in your channels?\n\n**Action**: Run `impact_translate_execution` to add this detail.\n\n**Possible input score change**: +15 points to this area when you add the detail above (Example figure: replace with your own)\n\n\n---\n\n## Proof You Already Have\n\nNo customer feedback was supplied, so there is no proof to list. Add customer_feedback (what customers say, or results they report).\n\n---\n\n## Your Current Positioning, Checked in Words\n\nThese checks read your words only. They are not part of the score above.\n\nNo current positioning was supplied, so there is nothing to check in words. Add current_positioning.\n\n---\n\n## Recommended Positioning\n\nBased on your inputs, here's a generated positioning statement:\n\n> **For** revenue operations directors at B2B software firms\n> **Who** face this problem (Disconnected customer activity records)\n> **What HubSpot is** \"CRM software in a synthetic review scenario\"\n> **That** delivers a result you still have to state: write it with impact_pinpoint_value\n> **Unlike** Salesforce\n> **We** stand behind this: Synthetic assumption: shared lifecycle view\n\n### Tagline Options\n1. [Only if true and provable: \"Disconnected customer activity records, solved.\"]\n2. \"Synthetic assumption: shared lifecycle view\"\n3. \"Built for revenue operations directors\"\n4. \"CRM software in a synthetic review scenario\"\n\n---\n\n## 30-Day Action Plan\n\n### Week 1: Foundation\n- [ ] Confirm who champions and who signs: Head of Sales Operations or Revenue Operations and Chief Revenue Officer (this sector's usual committee)\n- [ ] Document 5+ weaknesses of Salesforce from customer research\n- [ ] Turn the proof you already have into 3 quantified proof points\n\n### Week 2: Positioning\n- [ ] Finalize positioning statement (3 variations)\n- [ ] Test with 5 existing customers\n- [ ] Refine based on feedback\n\n### Week 3: Execution\n- [ ] Update your hero section, sales deck and LinkedIn page, in the words this sector's buyers use (pipeline, win rate, quota attainment, sales cycle, CRM hygiene, forecast call)\n- [ ] Prepare answers to this sector's usual objections: \"Our team lives in the current CRM\"; \"Reps will not keep records up to date\"; \"Contact data quality and migration\"; \"Too many tools in the sales and marketing stack\"\n- [ ] Be ready to discuss what buyers weigh in a business like yours: term length, users or usage, and how the price grows\n\n### Week 4: Validation\n- [ ] A/B test messaging in outreach\n- [ ] Track pipeline coverage, win rate, sales cycle length\n- [ ] Gather qualitative feedback from prospects\n\n---\n\n## Measures To Track\n\nFill the cells with your own numbers; this tool adds none.\n\n| Measure | Baseline (yours) | Target (yours) |\n|---------|------------------|----------------|\n| pipeline coverage | | |\n| win rate | | |\n| sales cycle length | | |\n| rep ramp time | | |\n\n**Investment**: decide how many hours your team can give to positioning work; this tool does not estimate it.\n\n---\n\n## Tools to Use Next\n\nBased on your scores, prioritize these tools:\n\n1. **`impact_craft_message`**: Address your lowest-scoring area first\n2. **`impact_translate_execution`**: Then the second-lowest-scoring area\n\n\nSuggested timings, lengths and counts: adjust them to your own.\n"
+        }
+      ]
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "# IMPACT Positioning Audit\n\n## Company Overview\n**Company**: not supplied\n**Product**: Synthetic payroll and onboarding software\n**Target**: HR teams at firms with 500 employees\n**Problem**: HR teams lose days to payroll errors and slow onboarding\n**Differentiation**: not supplied\n**Competitors**: not supplied (the score uses the default alternatives: status quo and DIY solutions)\n\n\n*Sector: set by your_sector as SaaS. Business model: software subscription (the usual model in this sector, assumed; set business_model to change it).*\n\n---\n\n## IMPACT Scorecard\n\n### Input completeness score: 51/100 (Grade: D)\n**Inputs**: Thin: many inputs are short or missing\n**What this score measures**: how complete and specific your inputs are, not whether your positioning is right. Longer inputs and certain words (such as only, unique, unlike, employees, revenue and Series) raise it.\n\n| Phase | Score | Input detail | Priority |\n|-------|-------|--------|----------|\n| **I**: Identify Champions | 70/100 | Detailed | Low |\n| **M**: Map Alternatives | 40/100 | Thin | High |\n| **P**: Pinpoint Value | 50/100 | Partial | High |\n| **A**: Anchor Market | 80/100 | Detailed | Low |\n| **C**: Craft Message | 30/100 | Thin | High |\n| **T**: Translate Execution | 35/100 | Thin | High |\n\n---\n\n## Most detailed inputs\n\n### Anchor (80/100)\nYour target customer mentions employees, revenue or a funding series.\n\n### Identify (70/100)\nYour target customer (\"HR teams at firms with 500 employees\") is long and specific enough for a high score in this area.\n\n\n---\n\n## Areas to work on next\n\n### Craft (30/100)\n\n**Input**: You supplied no current positioning statement. How do you articulate your unique value?\n\n**Action**: Run `impact_craft_message` to add this detail.\n\n**Possible input score change**: +17 points to this area when you add the detail above (Example figure: replace with your own)\n\n### Translate (35/100)\n\n**Input**: You supplied no customer feedback. How does positioning show up in your channels?\n\n**Action**: Run `impact_translate_execution` to add this detail.\n\n**Possible input score change**: +17 points to this area when you add the detail above (Example figure: replace with your own)\n\n\n---\n\n## Proof You Already Have\n\nNo customer feedback was supplied, so there is no proof to list. Add customer_feedback (what customers say, or results they report).\n\n---\n\n## Your Current Positioning, Checked in Words\n\nThese checks read your words only. They are not part of the score above.\n\nNo current positioning was supplied, so there is nothing to check in words. Add current_positioning.\n\n---\n\n## Recommended Positioning\n\nBased on your inputs, here's a generated positioning statement:\n\n> **For** HR teams at firms with 500 employees\n> **Who** face this problem (HR teams lose days to payroll errors and slow onboarding)\n> **What your product is** \"Synthetic payroll and onboarding software\"\n> **That** delivers a result you still have to state: write it with impact_pinpoint_value\n> **Unlike** the alternative your buyers use most (add competitors)\n> **We** offer what sets you apart (add key_differentiation)\n\n### Tagline Options\n1. \"Built for HR teams\"\n2. \"Synthetic payroll and onboarding software\"\n\n---\n\n## 30-Day Action Plan\n\n### Week 1: Foundation\n- [ ] Confirm who champions and who signs: Head of HR or People Operations and CHRO (this sector's usual committee)\n- [ ] Document 5+ weaknesses of your alternatives from customer research\n- [ ] Turn the proof you already have into 3 quantified proof points\n\n### Week 2: Positioning\n- [ ] Finalize positioning statement (3 variations)\n- [ ] Test with 5 existing customers\n- [ ] Refine based on feedback\n\n### Week 3: Execution\n- [ ] Update your hero section, sales deck and LinkedIn page, in the words this sector's buyers use (time to hire, attrition, payroll run, onboarding, HRIS)\n- [ ] Prepare answers to this sector's usual objections: \"We already have a tool for this\"; \"The price grows as we grow\"; \"Switching cost\"; \"Security and IT review\"\n- [ ] Be ready to discuss what buyers weigh in a business like yours: term length, users or usage, and how the price grows\n\n### Week 4: Validation\n- [ ] A/B test messaging in outreach\n- [ ] Track time to hire, attrition, payroll errors\n- [ ] Gather qualitative feedback from prospects\n\n---\n\n## Measures To Track\n\nFill the cells with your own numbers; this tool adds none.\n\n| Measure | Baseline (yours) | Target (yours) |\n|---------|------------------|----------------|\n| time to hire | | |\n| attrition | | |\n| payroll errors | | |\n\n**Investment**: decide how many hours your team can give to positioning work; this tool does not estimate it.\n\n---\n\n## Tools to Use Next\n\nBased on your scores, prioritize these tools:\n\n1. **`impact_craft_message`**: Address your lowest-scoring area first\n2. **`impact_translate_execution`**: Then the second-lowest-scoring area\n\n\nSuggested timings, lengths and counts: adjust them to your own.\n"
+        }
+      ]
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "# IMPACT Positioning Audit\n\n## Company Overview\n**Company**: not supplied\n**Product**: Synthetic CRM workflow software\n**Target**: Revenue operations at firms with 200 to 1000 employees\n**Problem**: Revenue operations teams reconcile inconsistent pipeline records\n**Differentiation**: not supplied\n**Competitors**: not supplied (the score uses the default alternatives: status quo and DIY solutions)\n\n\n*Sector: set by your_sector as SaaS. Business model: software subscription (the usual model in this sector, assumed; set business_model to change it).*\n\n---\n\n## IMPACT Scorecard\n\n### Input completeness score: 53/100 (Grade: D)\n**Inputs**: Thin: many inputs are short or missing\n**What this score measures**: how complete and specific your inputs are, not whether your positioning is right. Longer inputs and certain words (such as only, unique, unlike, employees, revenue and Series) raise it.\n\n| Phase | Score | Input detail | Priority |\n|-------|-------|--------|----------|\n| **I**: Identify Champions | 85/100 | Detailed | Low |\n| **M**: Map Alternatives | 40/100 | Thin | High |\n| **P**: Pinpoint Value | 50/100 | Partial | High |\n| **A**: Anchor Market | 80/100 | Detailed | Low |\n| **C**: Craft Message | 30/100 | Thin | High |\n| **T**: Translate Execution | 35/100 | Thin | High |\n\n---\n\n## Most detailed inputs\n\n### Identify (85/100)\nYour target customer (\"Revenue operations at firms with 200 to 1000 employees\") is long and specific enough for a high score in this area.\n\n### Anchor (80/100)\nYour target customer mentions employees, revenue or a funding series.\n\n\n---\n\n## Areas to work on next\n\n### Craft (30/100)\n\n**Input**: You supplied no current positioning statement. How do you articulate your unique value?\n\n**Action**: Run `impact_craft_message` to add this detail.\n\n**Possible input score change**: +17 points to this area when you add the detail above (Example figure: replace with your own)\n\n### Translate (35/100)\n\n**Input**: You supplied no customer feedback. How does positioning show up in your channels?\n\n**Action**: Run `impact_translate_execution` to add this detail.\n\n**Possible input score change**: +17 points to this area when you add the detail above (Example figure: replace with your own)\n\n\n---\n\n## Proof You Already Have\n\nNo customer feedback was supplied, so there is no proof to list. Add customer_feedback (what customers say, or results they report).\n\n---\n\n## Your Current Positioning, Checked in Words\n\nThese checks read your words only. They are not part of the score above.\n\nNo current positioning was supplied, so there is nothing to check in words. Add current_positioning.\n\n---\n\n## Recommended Positioning\n\nBased on your inputs, here's a generated positioning statement:\n\n> **For** revenue operations at firms with 200 to 1000 employees\n> **Who** face this problem (Revenue operations teams reconcile inconsistent pipeline records)\n> **What your product is** \"Synthetic CRM workflow software\"\n> **That** delivers a result you still have to state: write it with impact_pinpoint_value\n> **Unlike** the alternative your buyers use most (add competitors)\n> **We** offer what sets you apart (add key_differentiation)\n\n### Tagline Options\n1. \"Built for revenue operations\"\n2. \"Synthetic CRM workflow software\"\n\n---\n\n## 30-Day Action Plan\n\n### Week 1: Foundation\n- [ ] Confirm who champions and who signs: Head of Sales Operations or Revenue Operations and Chief Revenue Officer (this sector's usual committee)\n- [ ] Document 5+ weaknesses of your alternatives from customer research\n- [ ] Turn the proof you already have into 3 quantified proof points\n\n### Week 2: Positioning\n- [ ] Finalize positioning statement (3 variations)\n- [ ] Test with 5 existing customers\n- [ ] Refine based on feedback\n\n### Week 3: Execution\n- [ ] Update your hero section, sales deck and LinkedIn page, in the words this sector's buyers use (pipeline, win rate, quota attainment, sales cycle, CRM hygiene, forecast call)\n- [ ] Prepare answers to this sector's usual objections: \"We already have a tool for this\"; \"The price grows as we grow\"; \"Switching cost\"; \"Security and IT review\"\n- [ ] Be ready to discuss what buyers weigh in a business like yours: term length, users or usage, and how the price grows\n\n### Week 4: Validation\n- [ ] A/B test messaging in outreach\n- [ ] Track pipeline coverage, win rate, sales cycle length\n- [ ] Gather qualitative feedback from prospects\n\n---\n\n## Measures To Track\n\nFill the cells with your own numbers; this tool adds none.\n\n| Measure | Baseline (yours) | Target (yours) |\n|---------|------------------|----------------|\n| pipeline coverage | | |\n| win rate | | |\n| sales cycle length | | |\n| rep ramp time | | |\n\n**Investment**: decide how many hours your team can give to positioning work; this tool does not estimate it.\n\n---\n\n## Tools to Use Next\n\nBased on your scores, prioritize these tools:\n\n1. **`impact_craft_message`**: Address your lowest-scoring area first\n2. **`impact_translate_execution`**: Then the second-lowest-scoring area\n\n\nSuggested timings, lengths and counts: adjust them to your own.\n"
+        }
+      ]
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "# IMPACT Positioning Audit\n\n## Company Overview\n**Company**: HubSpot\n**Product**: CRM software in a synthetic review scenario\n**Target**: Revenue operations directors at B2B software firms\n**Problem**: Disconnected customer activity records\n**Differentiation**: Synthetic assumption: shared lifecycle view\n**Competitors**: Salesforce\n\n\n*Sector: set by your_sector as SaaS, CRM and marketing. Business model: software subscription (from business_model).*\n\n---\n\n## IMPACT Scorecard\n\n### Input completeness score: 56/100 (Grade: D)\n**Inputs**: Thin: many inputs are short or missing\n**What this score measures**: how complete and specific your inputs are, not whether your positioning is right. Longer inputs and certain words (such as only, unique, unlike, employees, revenue and Series) raise it.\n\n| Phase | Score | Input detail | Priority |\n|-------|-------|--------|----------|\n| **I**: Identify Champions | 70/100 | Detailed | Low |\n| **M**: Map Alternatives | 65/100 | Partial | Low |\n| **P**: Pinpoint Value | 70/100 | Detailed | Low |\n| **A**: Anchor Market | 65/100 | Partial | Low |\n| **C**: Craft Message | 30/100 | Thin | High |\n| **T**: Translate Execution | 35/100 | Thin | High |\n\n---\n\n## Most detailed inputs\n\n### Pinpoint (70/100)\nYour differentiation (\"Synthetic assumption: shared lifecycle view\") is long enough for a high score in this area.\n\n### Identify (70/100)\nYour target customer (\"Revenue operations directors at B2B software firms\") is long and specific enough for a high score in this area.\n\n\n---\n\n## Areas to work on next\n\n### Craft (30/100)\n\n**Input**: You supplied no current positioning statement. How do you articulate your unique value?\n\n**Action**: Run `impact_craft_message` to add this detail.\n\n**Possible input score change**: +17 points to this area when you add the detail above (Example figure: replace with your own)\n\n### Translate (35/100)\n\n**Input**: You supplied no customer feedback. How does positioning show up in your channels?\n\n**Action**: Run `impact_translate_execution` to add this detail.\n\n**Possible input score change**: +17 points to this area when you add the detail above (Example figure: replace with your own)\n\n\n---\n\n## Proof You Already Have\n\nNo customer feedback was supplied, so there is no proof to list. Add customer_feedback (what customers say, or results they report).\n\n---\n\n## Your Current Positioning, Checked in Words\n\nThese checks read your words only. They are not part of the score above.\n\nNo current positioning was supplied, so there is nothing to check in words. Add current_positioning.\n\n---\n\n## Recommended Positioning\n\nBased on your inputs, here's a generated positioning statement:\n\n> **For** revenue operations directors at B2B software firms\n> **Who** face this problem (Disconnected customer activity records)\n> **What HubSpot is** \"CRM software in a synthetic review scenario\"\n> **That** delivers a result you still have to state: write it with impact_pinpoint_value\n> **Unlike** Salesforce\n> **We** stand behind this: Synthetic assumption: shared lifecycle view\n\n### Tagline Options\n1. [Only if true and provable: \"Disconnected customer activity records, solved.\"]\n2. \"Synthetic assumption: shared lifecycle view\"\n3. \"Built for revenue operations directors\"\n4. \"CRM software in a synthetic review scenario\"\n\n---\n\n## 30-Day Action Plan\n\n### Week 1: Foundation\n- [ ] Confirm who champions and who signs: Head of Sales Operations or Revenue Operations and Chief Revenue Officer (this sector's usual committee)\n- [ ] Document 5+ weaknesses of Salesforce from customer research\n- [ ] Turn the proof you already have into 3 quantified proof points\n\n### Week 2: Positioning\n- [ ] Finalize positioning statement (3 variations)\n- [ ] Test with 5 existing customers\n- [ ] Refine based on feedback\n\n### Week 3: Execution\n- [ ] Update your hero section, sales deck and LinkedIn page, in the words this sector's buyers use (pipeline, win rate, quota attainment, sales cycle, CRM hygiene, forecast call)\n- [ ] Prepare answers to this sector's usual objections: \"Our team lives in the current CRM\"; \"Reps will not keep records up to date\"; \"Contact data quality and migration\"; \"Too many tools in the sales and marketing stack\"\n- [ ] Be ready to discuss what buyers weigh in a business like yours: term length, users or usage, and how the price grows\n\n### Week 4: Validation\n- [ ] A/B test messaging in outreach\n- [ ] Track pipeline coverage, win rate, sales cycle length\n- [ ] Gather qualitative feedback from prospects\n\n---\n\n## Measures To Track\n\nFill the cells with your own numbers; this tool adds none.\n\n| Measure | Baseline (yours) | Target (yours) |\n|---------|------------------|----------------|\n| pipeline coverage | | |\n| win rate | | |\n| sales cycle length | | |\n| rep ramp time | | |\n\n**Investment**: decide how many hours your team can give to positioning work; this tool does not estimate it.\n\n---\n\n## Tools to Use Next\n\nBased on your scores, prioritize these tools:\n\n1. **`impact_craft_message`**: Address your lowest-scoring area first\n2. **`impact_translate_execution`**: Then the second-lowest-scoring area\n\n\nSuggested timings, lengths and counts: adjust them to your own.\n"
+        }
+      ]
+    }
+  ],
+  "provenance": "Exact legacy results captured from base 765730ad684365b1da444d77768b9803c8d49491. Synthetic review fixtures only. HubSpot and Salesforce are real names permitted only as labelled review fixture inputs."
+}

@@ -1,0 +1,30 @@
+{
+  "tested_implementation_commit": "f52df6835f12fa68343427bf950240c911be0855",
+  "base_commit": "765730ad684365b1da444d77768b9803c8d49491",
+  "provenance": "Copied byte for byte from work/w4/export. No new test run. Cloud Chromium used a strict sandboxed test host. Actual ChatGPT host acceptance remains unverified.",
+  "files": {
+    "browser-receipt.json": "c5d6ba06f28288b95a067bebc53352bcdc73c1b53f60ad2b097772f8b6e5fe96",
+    "logs/all-tests-final.log": "39e081a1e65009f1b968e5d7a0187a396adc22e484a121c70d57b7843885bc50",
+    "logs/all-tests.log": "396abb384f3af3dd92642cd9054ee45335636a7a41853085b12cf96587eb1eae",
+    "logs/boundary-files.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "logs/browser.log": "46d804447203897f157b51fa3b7684bcae18235057db4aebafc2d669794151ff",
+    "logs/build.log": "fae43bf9fe7d4d0b3c90e568c2129d380074565d31c4ed94e2f609bd660a205f",
+    "logs/escape-fixed.log": "6cb20c10af6dc18e69c7ab016a842ef9eb2ac94312354e953a4da3d87f09d977",
+    "logs/escape-recheck.log": "b230bb75180be87024b3aeb193ed946b77e87ae6a8c9949398d29b62f0e7fb20",
+    "logs/focused-direct.log": "4224bee538b73fb5b155e4a92eeea0984723afc7116d6282b682e006a04e2e09",
+    "logs/focused-tests.log": "3cd9c1ee331a2c9d4ed47b1aff641334f1c7937b39908c7adbac13159fda013b",
+    "logs/generate.log": "1e65882354fcfab0c81f3bac188199e3e99750183df256304a20af233f42a812",
+    "logs/generated-check.log": "ce2c7edeac651c0d22e0707b78b2182cdb879e445280037459d9ac139c726568",
+    "logs/host-review.log": "65b184dec22e900a880746cb5f10cbe62c283864ff60ab7bbf8779ef9fa9f665",
+    "logs/patch-apply.log": "cedf03524e548d05e85a279275683de6cef5110d76a2763ff312805ee444c400",
+    "screenshots/mcp-decisions-desktop.png": "0e2c689ac0caa5f6e4f76305d1b81eefb75e49592b8aba465ed5d9aef49d2766",
+    "screenshots/mcp-fixture-desktop.png": "601d1213b986a51be9cbe4903e943831e84da3dd23d61971161292f48e1520ef",
+    "screenshots/mcp-mobile.png": "878e8f48364c9438a5650e03c2a2be27d6ef2f2c05be404908f0757e73609ca2",
+    "screenshots/mcp-validation-desktop.png": "9e59b3982b5aa72f9804026c72a79086659a7e821fd22b618f6d03901018cae6",
+    "screenshots/standalone-decisions-desktop.png": "1a102c7be0987ce828639101205a63ebfcb7c9840f66f19429958195d502f16f",
+    "screenshots/standalone-empty-desktop.png": "f9f27763697f6f02e700ddcaeb35824c5381de5cc582f372a238aa087231af94",
+    "screenshots/standalone-fixture-desktop.png": "273250e361cc9df8b8b81bb421a8f2e6e12405a4f5036527c835cd1fc561a0a6",
+    "screenshots/standalone-mobile.png": "f0eda121f524226f0df55b37d4c0c9f34469341bb5360fcafe24dd6bc115d051",
+    "screenshots/standalone-validation-desktop.png": "c7e3d3d2fda703404b8fb3f792531f52f1624c0f1b00c74da7939551e5d8676d"
+  }
+}
