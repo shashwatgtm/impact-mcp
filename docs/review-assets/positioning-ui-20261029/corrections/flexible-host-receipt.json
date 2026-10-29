@@ -1,0 +1,103 @@
+{
+  "growthReceipt": {
+    "collapsedHeight": 3314,
+    "expandedHeight": 6751,
+    "shrunkHeight": 3314
+  },
+  "mobile390": {
+    "frame": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 5654,
+      "top": 0,
+      "right": 390,
+      "bottom": 5654,
+      "left": 0
+    },
+    "size": {
+      "width": 390,
+      "height": 5654,
+      "at": 3254.100000000035
+    }
+  },
+  "mobile320": {
+    "frame": {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 6284,
+      "top": 0,
+      "right": 320,
+      "bottom": 6284,
+      "left": 0
+    },
+    "size": {
+      "width": 320,
+      "height": 6284,
+      "at": 3367.2000000000116
+    }
+  },
+  "sizes": [
+    {
+      "width": 1366,
+      "height": 2072,
+      "at": 192.80000000004657
+    },
+    {
+      "width": 1351,
+      "height": 3314,
+      "at": 365.1000000000349
+    },
+    {
+      "width": 1351,
+      "height": 2072,
+      "at": 897.8000000000466
+    },
+    {
+      "width": 1351,
+      "height": 3314,
+      "at": 1133.5
+    },
+    {
+      "width": 1351,
+      "height": 6751,
+      "at": 1498.2000000000116
+    },
+    {
+      "width": 1351,
+      "height": 3314,
+      "at": 1684.5
+    },
+    {
+      "width": 1351,
+      "height": 6751,
+      "at": 2521.100000000035
+    },
+    {
+      "width": 1351,
+      "height": 3314,
+      "at": 2614.4000000000233
+    },
+    {
+      "width": 390,
+      "height": 5654,
+      "at": 3254.100000000035
+    },
+    {
+      "width": 320,
+      "height": 6284,
+      "at": 3367.2000000000116
+    },
+    {
+      "width": 320,
+      "height": 6092,
+      "at": 3452.100000000035
+    }
+  ],
+  "appCapabilities": {
+    "availableDisplayModes": [
+      "inline"
+    ]
+  }
+}

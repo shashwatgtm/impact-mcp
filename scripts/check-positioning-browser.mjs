@@ -10,17 +10,18 @@ import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js';
 import {createServer} from '../src/index.ts';
 import {POSITIONING_HTML} from '../src/positioning-resource.ts';
 const root=path.resolve(new URL('..',import.meta.url).pathname);
-const out=path.join(root,'work/w4');fs.mkdirSync(out+'/screenshots',{recursive:true});
+const out=path.join(root,'work/w4-corrections');fs.mkdirSync(out+'/screenshots',{recursive:true});
 const baseline=JSON.parse(fs.readFileSync(root+'/tests/fixtures/positioning-ui-baseline.json'));
 const [a,b]=InMemoryTransport.createLinkedPair();const server=createServer(),client=new Client({name:'helix-test',version:'1'});await server.connect(b);await client.connect(a);
 const results=[];for(const input of baseline.fixtures)results.push(await client.callTool({name:'impact_full_audit',arguments:input}));
 const fixtures=JSON.stringify(baseline.fixtures).replace(/</g,'\\u003c'), resultJSON=JSON.stringify(results).replace(/</g,'\\u003c');
-const harness=`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0"><iframe title="Positioning MCP Apps" sandbox="allow-scripts" src="/resource" style="width:100%;height:2200px;border:0"></iframe><script>
-window.calls=[];window.bridge=[];window.fixtureIndex=0;window.fixtureResults=${resultJSON};window.fixtures=${fixtures};window.failNext=false;window.delayNext=false;
+const harness=`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0"><iframe title="Positioning MCP Apps" sandbox="allow-scripts" src="/resource" style="width:100%;height:300px;border:0;display:block"></iframe><script>
+window.calls=[];window.bridge=[];window.fixtureIndex=0;window.fixtureResults=${resultJSON};window.fixtures=${fixtures};window.failNext=false;window.delayNext=false;window.pendingReplies=[];window.sizes=[];window.initialization=null;window.replyNext=()=>pendingReplies.shift()?.();
 window.notify=(method,params)=>document.querySelector('iframe').contentWindow.postMessage({jsonrpc:'2.0',method,params},'*');
 window.addEventListener('message',e=>{if(e.source!==document.querySelector('iframe').contentWindow)return;const m=e.data;if(m?.jsonrpc!=='2.0')return;bridge.push(m.method||'response');const reply=result=>e.source.postMessage({jsonrpc:'2.0',id:m.id,result},'*');
-if(m.method==='ui/initialize')reply({protocolVersion:'2026-01-26',hostInfo:{name:'cloud-test-host',version:'1'},hostCapabilities:{serverTools:{}},hostContext:{displayMode:'inline'}});
-if(m.method==='tools/call'){calls.push(m.params);const run=()=>{if(failNext){failNext=false;e.source.postMessage({jsonrpc:'2.0',id:m.id,error:{code:-32603,message:'Synthetic host failure'}},'*');}else reply(fixtureResults[fixtureIndex]);};if(delayNext){delayNext=false;window.replyPending=run;}else run();}
+if(m.method==='ui/notifications/size-changed'){const size=m.params;if(Number.isFinite(size?.height)&&size.height>0&&size.height<=50000&&Number.isFinite(size.width)&&size.width>0){sizes.push({...size,at:performance.now()});document.querySelector('iframe').style.height=size.height+'px';}}
+if(m.method==='ui/initialize'){window.initialization=m.params;reply({protocolVersion:'2026-01-26',hostInfo:{name:'cloud-test-host',version:'1'},hostCapabilities:{serverTools:{}},hostContext:{displayMode:'inline',availableDisplayModes:['inline'],containerDimensions:{width:innerWidth,maxHeight:50000}}});}
+if(m.method==='tools/call'){calls.push(m.params);const fail=failNext,result=fixtureResults[fixtureIndex];failNext=false;const run=()=>{if(fail){e.source.postMessage({jsonrpc:'2.0',id:m.id,error:{code:-32603,message:'Synthetic host failure'}},'*');}else reply(result);};if(delayNext){delayNext=false;window.replyPending=run;pendingReplies.push(run);}else run();}
 });</script></body></html>`;
 const globalCSP=fs.readFileSync(root+'/public/_headers','utf8').match(/  Content-Security-Policy: (.*)/)[1];
 const web=http.createServer((req,res)=>{
@@ -93,6 +94,9 @@ try{
  assert.ok(ctx,'MCP iframe execution context');
  await waitFor('document.getElementById("status").textContent.startsWith("Connected")',ctx);
  check('MCP bridge initializes before initialized notification',await evaluate('bridge[0]==="ui/initialize" && bridge[1]==="ui/notifications/initialized"'));
+ check('MCP initialization declares only inline display support',await evaluate('JSON.stringify(initialization.appCapabilities.availableDisplayModes)===JSON.stringify(["inline"])'));
+ await waitFor('sizes.length>0');
+ check('flexible host applies initial natural content height',await evaluate('Math.abs(document.querySelector("iframe").getBoundingClientRect().height-sizes.at(-1).height)<=1 && sizes.at(-1).height>300'));
  check('MCP starts empty in a sandboxed opaque origin',await evaluate('document.getElementById("input-company_name").value===""',ctx));
  await evaluate('notify("ui/notifications/tool-input",{arguments:fixtures[0]})');
  await waitFor('document.getElementById("input-company_name").value === "HubSpot"',ctx);
@@ -100,19 +104,6 @@ try{
  await evaluate('notify("ui/notifications/tool-result",fixtureResults[0])');
  await waitFor('document.getElementById("status").textContent === "Host result loaded."',ctx);
  check('MCP tool-result uses structured inputs and preserves legacy text',await evaluate('document.getElementById("original-score").textContent.includes("59/100") && document.getElementById("legacy-text").textContent.length > 100',ctx));
- await screenshot('mcp-fixture-desktop');
- await evaluate('document.getElementById("score-title").scrollIntoView()',ctx);await screenshot('mcp-decisions-desktop');await evaluate('document.getElementById("decision-title").scrollIntoView()',ctx);await screenshot('mcp-validation-desktop');await evaluate('scrollTo(0,0)',ctx);await evaluate('scrollTo(0,0)');
- for(let i=1;i<baseline.fixtures.length;i++){await evaluate('fixtureIndex='+i);await evaluate('document.getElementById("reset").click()',ctx);await fill(baseline.fixtures[i],ctx);await submit(ctx);await waitFor('document.getElementById("status").textContent === "Host result loaded."',ctx);check('MCP synthetic fixture '+(i+1)+' calls existing tool',await evaluate('calls.at(-1).name==="impact_full_audit" && calls.at(-1).arguments.problem_solved===fixtures['+i+'].problem_solved'));}
- await evaluate('delayNext=true;fixtureIndex=0');await fill(baseline.fixtures[0],ctx);await submit(ctx);
- await waitFor('document.getElementById("status").textContent.includes("Loading")',ctx);
- check('MCP loading disables duplicate submission',await evaluate('document.getElementById("calculate").disabled && document.getElementById("audit-form").getAttribute("aria-busy")==="true"',ctx));
- await evaluate('replyPending()');await waitFor('!document.getElementById("calculate").disabled',ctx);
- await evaluate('failNext=true');await submit(ctx);await waitFor('document.getElementById("error").textContent.length>0',ctx);
- check('MCP errors are clear and preserve edits',await evaluate('document.getElementById("error").textContent.includes("Host request failed") && document.getElementById("input-company_name").value==="HubSpot"',ctx));
- await submit(ctx);await waitFor('document.getElementById("error").textContent === ""',ctx);check('MCP retry recovers',await evaluate('document.getElementById("status").textContent === "Host result loaded."',ctx));
- await cdp.send('Page.bringToFront');const callCount=await evaluate('calls.length');await evaluate('document.getElementById("calculate").focus()',ctx);
- await cdp.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',text:'\r',windowsVirtualKeyCode:13},ctx.sessionId);await cdp.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13},ctx.sessionId);
- await waitFor('calls.length > '+callCount);check('MCP recalculate supports native keyboard activation',true);
  // An event carrying valid-looking data but with a non-parent source must be ignored.
  await evaluate('window.dispatchEvent(new MessageEvent("message",{source:window,origin:'+JSON.stringify(origin)+',data:{jsonrpc:"2.0",method:"ui/notifications/tool-input",params:{arguments:{company_name:"spoofed"}}}}))',ctx);
  check('MCP rejects messages from a non-parent source',await evaluate('document.getElementById("input-company_name").value === "HubSpot"',ctx));
@@ -120,10 +111,99 @@ try{
  await waitFor('document.getElementById("error").textContent.length>0',ctx);
  check('MCP rejects malformed structured content',await evaluate('document.getElementById("error").textContent.includes("Invalid encoded host inputs")',ctx));
  await evaluate('notify("ui/notifications/tool-result",fixtureResults[0])');
+ await screenshot('mcp-fixture-desktop');
+ await evaluate('document.getElementById("score-title").scrollIntoView()',ctx);await screenshot('mcp-decisions-desktop');await evaluate('document.getElementById("decision-title").scrollIntoView()',ctx);await screenshot('mcp-validation-desktop');await evaluate('scrollTo(0,0)',ctx);await evaluate('scrollTo(0,0)');
+ for(let i=1;i<baseline.fixtures.length;i++){await evaluate('fixtureIndex='+i);await evaluate('document.getElementById("reset").click()',ctx);await fill(baseline.fixtures[i],ctx);await submit(ctx);await waitFor('document.getElementById("status").textContent === "Host result loaded."',ctx);check('MCP synthetic fixture '+(i+1)+' calls existing tool',await evaluate('calls.at(-1).name==="impact_full_audit" && calls.at(-1).arguments.problem_solved===fixtures['+i+'].problem_solved'));}
+ await evaluate('delayNext=true;fixtureIndex=0');await fill(baseline.fixtures[0],ctx);await submit(ctx);
+ await waitFor('document.getElementById("status").textContent.includes("Loading")',ctx);
+ check('MCP loading disables duplicate submission',await evaluate('document.getElementById("calculate").disabled && document.getElementById("audit-form").getAttribute("aria-busy")==="true"',ctx));
+ await evaluate('replyNext()');await waitFor('!document.getElementById("calculate").disabled',ctx);
+ await evaluate('failNext=true');await submit(ctx);await waitFor('document.getElementById("error").textContent.length>0',ctx);
+ check('MCP errors are clear and preserve edits',await evaluate('document.getElementById("error").textContent.includes("Host request failed") && document.getElementById("input-company_name").value==="HubSpot"',ctx));
+ await submit(ctx);await waitFor('document.getElementById("status").textContent === "Host result loaded."',ctx);check('MCP retry recovers',await evaluate('document.getElementById("status").textContent === "Host result loaded."',ctx));
+ await cdp.send('Page.bringToFront');const callCount=await evaluate('calls.length');await evaluate('document.getElementById("calculate").focus()',ctx);
+ await cdp.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',text:'\r',windowsVirtualKeyCode:13},ctx.sessionId);await cdp.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13},ctx.sessionId);
+ await waitFor('calls.length > '+callCount);check('MCP recalculate supports native keyboard activation',true);
+
+ // The host only sends uncorrelated notifications here. Local ownership must survive all of them.
+ const ownedResult=await evaluate('document.getElementById("evidence").textContent+document.getElementById("original-score").textContent+document.getElementById("legacy-text").textContent',ctx);
+ await evaluate('delayNext=true;fixtureIndex=0');await submit(ctx);
+ await waitFor('!!replyPending');
+ await fill({company_name:'Synthetic newer local edit'},ctx);
+ await evaluate('notify("ui/notifications/tool-input",{arguments:fixtures[1]});notify("ui/notifications/tool-result",fixtureResults[1]);notify("ui/notifications/tool-cancelled",{reason:"old synthetic run"})');
+ await waitFor('document.getElementById("stale-notice").textContent.includes("Stale host update ignored")',ctx);
+ check('stale input/result/cancel notifications preserve local inputs',await evaluate('document.getElementById("input-company_name").value==="Synthetic newer local edit"',ctx));
+ check('stale notifications preserve result and current loading ownership',ownedResult===await evaluate('document.getElementById("evidence").textContent+document.getElementById("original-score").textContent+document.getElementById("legacy-text").textContent',ctx) && await evaluate('document.getElementById("calculate").disabled',ctx));
+ await evaluate('replyNext()');await waitFor('!document.getElementById("calculate").disabled',ctx);
+ check('delayed success after an edit cannot restore obsolete inputs or results',await evaluate('document.getElementById("input-company_name").value==="Synthetic newer local edit" && document.getElementById("error").textContent===""',ctx) && ownedResult===await evaluate('document.getElementById("evidence").textContent+document.getElementById("original-score").textContent+document.getElementById("legacy-text").textContent',ctx));
+ await evaluate('delayNext=true;failNext=true');await submit(ctx);await fill({company_name:'Synthetic latest edit after error request'},ctx);
+ await evaluate('replyNext()');await waitFor('!document.getElementById("calculate").disabled',ctx);
+ check('delayed rejected RPC after an edit has no obsolete error',await evaluate('document.getElementById("error").textContent==="" && document.getElementById("input-company_name").value==="Synthetic latest edit after error request" && document.getElementById("stale-notice").textContent.includes("Stale")',ctx));
+ check('late error leaves the last accepted result intact',ownedResult===await evaluate('document.getElementById("evidence").textContent+document.getElementById("original-score").textContent+document.getElementById("legacy-text").textContent',ctx));
+ // Reset invalidates both input revision and request generation. Old replies cannot finish a newer run.
+ await evaluate('delayNext=true');await submit(ctx);
+ check('clear remains available while a request is pending',await evaluate('!document.getElementById("reset").disabled',ctx));
+ await evaluate('document.getElementById("reset").click()',ctx);
+ await evaluate('notify("ui/notifications/tool-input",{arguments:fixtures[0]});notify("ui/notifications/tool-result",fixtureResults[0])');
+ await waitFor('document.getElementById("stale-notice").textContent.length>0',ctx);
+ check('reset stays empty when old uncorrelated notifications arrive',await evaluate('document.getElementById("input-company_name").value==="" && document.getElementById("legacy-text").textContent==="" && document.getElementById("original-score").textContent==="No valid calculation yet."',ctx));
+ await fill(baseline.fixtures[0],ctx);await evaluate('delayNext=true');await submit(ctx);
+ await evaluate('replyNext()');await pause(100);
+ check('old success after reset cannot end the newer loading state',await evaluate('document.getElementById("calculate").disabled && document.getElementById("legacy-text").textContent===""',ctx));
+ await evaluate('replyNext()');await waitFor('document.getElementById("status").textContent==="Host result loaded."',ctx);
+ check('matching success after reset owns the new result',await evaluate('!document.getElementById("calculate").disabled && document.getElementById("legacy-text").textContent.length>100 && document.getElementById("stale-notice").textContent===""',ctx));
+ await evaluate('delayNext=true;failNext=true');await submit(ctx);await evaluate('document.getElementById("reset").click()',ctx);
+ await fill(baseline.fixtures[0],ctx);await evaluate('delayNext=true');await submit(ctx);await evaluate('replyNext()');await pause(100);
+ check('old rejected RPC cannot set an error or end a newer generation',await evaluate('document.getElementById("error").textContent==="" && document.getElementById("calculate").disabled',ctx));
+ await evaluate('replyNext()');await waitFor('document.getElementById("status").textContent==="Host result loaded."',ctx);
+ // Exercise literal text through a real local server result, not a canned HTML view.
+ const literal={...baseline.fixtures[0],company_name:'  Synthetic literal <img src=x> \\ 😀  ',customer_feedback:'Reported: "literal" <script>inert</script> 😀'};
+ const literalResult=await client.callTool({name:'impact_full_audit',arguments:literal});
+ await evaluate('fixtureResults.push('+JSON.stringify(literalResult)+');fixtureIndex=fixtureResults.length-1');
+ await fill(literal,ctx);await submit(ctx);await waitFor('document.getElementById("status").textContent==="Host result loaded."',ctx);
+ check('literal supported input text round-trips through tools/call',await evaluate('JSON.stringify(calls.at(-1).arguments)')===JSON.stringify(literal));
+ check('literal host result remains inert and preserves exact field values',await evaluate('document.getElementById("input-company_name").value',ctx)===literal.company_name && await evaluate('document.getElementById("input-customer_feedback").value',ctx)===literal.customer_feedback && await evaluate('document.querySelectorAll("#evidence img,#evidence script").length===0',ctx));
+ await evaluate('notify("ui/notifications/tool-result",fixtureResults[1])');await waitFor('document.getElementById("stale-notice").textContent.length>0',ctx);
+ check('uncorrelated notification after a local result cannot take ownership',await evaluate('document.getElementById("input-company_name").value',ctx)===literal.company_name);
+ // Restore the review fixture via an explicit correlated request before resize checks.
+ await evaluate('fixtureIndex=0');await fill(baseline.fixtures[0],ctx);await submit(ctx);await waitFor('document.getElementById("status").textContent==="Host result loaded."',ctx);
+ await pause(250);const collapsedHeight=await evaluate('document.querySelector("iframe").getBoundingClientRect().height');
+ await evaluate('document.getElementById("legacy").open=true',ctx);
+ await waitFor('document.querySelector("iframe").getBoundingClientRect().height > '+(collapsedHeight+1000));
+ const expandedHeight=await evaluate('document.querySelector("iframe").getBoundingClientRect().height');
+ check('flexible host iframe really grows when legacy details expand',expandedHeight>collapsedHeight+1000);
+ await screenshot('mcp-flexible-grown');await evaluate('document.getElementById("legacy").open=false',ctx);
+ await waitFor('document.querySelector("iframe").getBoundingClientRect().height < '+(expandedHeight-1000));
+ const shrunkHeight=await evaluate('document.querySelector("iframe").getBoundingClientRect().height');
+ check('flexible host iframe really shrinks when legacy details collapse',Math.abs(shrunkHeight-collapsedHeight)<=2);
+ await screenshot('mcp-flexible-shrunk');
+ await pause(250);const countBefore=await evaluate('sizes.length');
+ await evaluate('for(let i=0;i<20;i++)window.dispatchEvent(new Event("resize"))',ctx);await pause(250);
+ check('resize bursts with unchanged dimensions send no duplicate sizes',await evaluate('sizes.length')===countBefore);
+ const burstStart=await evaluate('sizes.length');
+ for(let i=0;i<6;i++){await evaluate('document.getElementById("legacy").open='+String(i%2===0),ctx);await pause(20);}
+ await evaluate('document.getElementById("legacy").open=true',ctx);
+ await waitFor('document.querySelector("iframe").getBoundingClientRect().height > '+(collapsedHeight+1000));
+ check('rapid content changes debounce to one final size notification',await evaluate('sizes.length')===burstStart+1);
+ await evaluate('document.getElementById("legacy").open=false',ctx);await waitFor('document.querySelector("iframe").getBoundingClientRect().height < '+(expandedHeight-1000));await pause(250);
+ const settledCount=await evaluate('sizes.length');await pause(250);
+ check('host height updates do not cause an observer feedback loop',await evaluate('sizes.length')===settledCount);
+ const growthReceipt={collapsedHeight,expandedHeight,shrunkHeight};
  await cdp.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
  await waitFor('innerWidth <= 390',ctx);
  check('MCP mobile uses a narrow viewport and one-column layout',await evaluate('innerWidth >= 360 && innerWidth <= 390 && getComputedStyle(document.querySelector(".layout")).gridTemplateColumns.split(" ").length===1',ctx));
  check('MCP mobile has no horizontal overflow',await evaluate('document.documentElement.scrollWidth <= innerWidth',ctx));await evaluate('scrollTo(0,0)',ctx);await evaluate('scrollTo(0,0)');await screenshot('mcp-mobile');
+
+ await waitFor('sizes.at(-1)?.width <= 390');
+ const mobile390=await evaluate('({frame:document.querySelector("iframe").getBoundingClientRect().toJSON(),size:sizes.at(-1)})');
+ check('flexible host height tracks the 390px mobile layout',Math.abs(mobile390.frame.height-mobile390.size.height)<=1 && mobile390.size.width<=390);
+ await cdp.send('Emulation.setDeviceMetricsOverride',{width:320,height:740,deviceScaleFactor:1,mobile:true});
+ await waitFor('innerWidth <= 320',ctx);await waitFor('sizes.at(-1)?.width <= 320');
+ check('320px mobile iframe has one column without horizontal overflow',await evaluate('innerWidth>=290 && document.documentElement.scrollWidth<=innerWidth && getComputedStyle(document.querySelector(".layout")).gridTemplateColumns.split(" ").length===1',ctx));
+ const mobile320=await evaluate('({frame:document.querySelector("iframe").getBoundingClientRect().toJSON(),size:sizes.at(-1)})');
+ check('flexible host applies height and width reports after mobile resize',Math.abs(mobile320.frame.height-mobile320.size.height)<=1 && mobile320.size.width<=320 && mobile320.size.height!==mobile390.size.height);
+ await screenshot('mcp-mobile-320');
+ fs.writeFileSync(out+'/flexible-host-receipt.json',JSON.stringify({growthReceipt,mobile390,mobile320,sizes:await evaluate('sizes'),appCapabilities:await evaluate('initialization.appCapabilities')},null,2));
  const resourceRequests=requests.slice(startRequests);check('MCP resource makes no asset or API requests',resourceRequests.every(u=>u===origin+'/harness'||u===origin+'/resource'||u===origin+'/favicon.ico'||u.startsWith('data:')));
  check('both modes have no uncaught browser exceptions',runtimeErrors.length===0);
  console.log(`Checks: ${pass}; pass: ${pass}; fail: 0; skip: 0`);

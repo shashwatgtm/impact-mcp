@@ -2,6 +2,29 @@
 
 29 October 2026. All implementation, builds and browser checks ran in the assigned cloud environment. The owner register confirms this MCP site uses manual CLI deployment. The owner explicitly authorized the codex branch and draft PR writes through the GitHub connector. No deployment or workflow dispatch is authorized.
 
+## Owner correction update
+
+The owner authorized four corrections while Positioning 2.2.27 is In review. This update starts from the exact source tree of PR head 8167757578601a5eb030c7059bed171e290750bc. No new version is prepared. PR #7 and W5a #5 remain draft.
+
+Local edits, local weight changes, explicit recalculation and reset now take ownership of the form and displayed result. Tool input, result and cancellation notifications have no matching request ID. Once local ownership starts, these notifications are ignored and a visible stale notice explains why. The last accepted calculation remains visible until an explicit matching recalculation succeeds. Reset remains available while loading and invalidates the previous request generation.
+
+Both successful and rejected RPC replies now check edit revision and request generation before changing the view or error state. An old reply cannot finish a newer run or restore a result cleared by reset. Literal input text and inert DOM rendering are unchanged.
+
+Initialization declares availableDisplayModes as inline only. A ResizeObserver measures natural body height. It debounces size notifications for 75 milliseconds and suppresses unchanged dimensions. Body height is used instead of scrollHeight so an iframe can shrink after content collapses. Font loading and viewport resizing also schedule a measurement.
+
+The agent directly read these official sources for this correction:
+
+- https://developers.openai.com/plugins/build/chatgpt-ui
+- https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx
+
+The MCP Apps specification defines inline capability declaration, flexible container dimensions and debounced size-change notifications. No bridge method, tool schema, endpoint, authentication or server/package version is changed.
+
+[Current logs, checksums and screenshots](review-assets/positioning-ui-20261029/corrections/README.md) record the correction checks. Build and generated-output checks passed. Focused tests passed 11. Preserved host-review tests passed 5. Full tests passed 57 file-level cases. Browser checks passed 57. Final failures and skips were zero. Counts overlap. The actual host iframe grew from 3314 to 6751 pixels and shrank to 3314. Mobile widths of 390 and 320 pixels were checked. A test-harness retry wait was corrected after one intermediate failure. Its actual log is retained.
+
+Latest main is 5267d1bd94316281e84941179be9a565e6a1a9aa. Its walkthrough video is preserved by reusing the exact existing blob e8317f6415a97d8858728e749470e30fbfc7e595 in the delivery tree. No video bytes are changed or uploaded. No main/master write, merge, force push, deployment, workflow dispatch, Netlify command, DNS change, header/challenge edit, submission, package upload, publication or declaration occurs. W5a text is not edited. Actual ChatGPT host acceptance remains unverified.
+
+The sections below preserve the initial implementation rationale and its earlier receipts.
+
 ## Change
 
 The existing impact_full_audit tool now links to ui://helix/positioning/v1.html. It returns structuredContent alongside its unchanged text. No render tool was added. No input schema changed. Other tools are unchanged.
@@ -47,14 +70,14 @@ Direct cloud curl could not reach the proxy. That did not block the successful w
 - Base: 765730ad684365b1da444d77768b9803c8d49491.
 - Branch: codex/positioning-ui-20261029.
 - Tested implementation commit: f52df6835f12fa68343427bf950240c911be0855.
-- Delivery adds only this note and docs/review-assets. Executable files remain byte for byte equal to that tested commit.
+- The initial delivery added only this note and docs/review-assets. The four later corrections and their receipts are described above.
 - Delivery uses the requested branch and a draft PR targeting main. The final remote head and draft state are verified through the GitHub connector and recorded in the PR handoff.
 
 The coordinator verified the base through GitHub at about 09:48 IST. The agent also independently resolved main through the GitHub connector to this SHA. No origin/main ref was required. The initial tree was clean. Applicable AGENTS.md searches found none.
 
 Automation inspection found no local .github directory. Remote .github on main returned 404. Main had zero check runs and zero commit statuses. netlify.toml contains the existing build and publish settings. The owner register subsequently confirmed that IMPACT uses manual CLI deployment. Only Alpha master is git linked. The owner explicitly authorized this new codex branch and draft PR. Delivery uses GitHub blob, tree, commit and branch tools. No deployment setting is changed, and no workflow is dispatched.
 
-## Exact verification commands and receipts
+## Initial verification commands and receipts
 
 Run from /workspace/impact-mcp with the installed cloud dependencies:
 
@@ -99,7 +122,7 @@ The agent visually inspected the desktop fixture, mobile MCP layout and score/al
 
 ## Export and boundary audit
 
-The tested patch includes new files and generated dist outputs. The prior cloud export was verified against a clean temporary index. Delivery now includes the actual screenshots and logs in docs/review-assets/positioning-ui-20261029. The evidence README links each file. checksums.json records their SHA-256 hashes and the tested implementation commit. No unchanged passing test is rerun for this delivery-only change.
+The tested patch includes new files and generated dist outputs. The prior cloud export was verified against a clean temporary index. Delivery now includes the actual screenshots and logs in docs/review-assets/positioning-ui-20261029. The evidence README links each file. checksums.json records their SHA-256 hashes and the tested implementation commit. No unchanged passing test was rerun for the initial delivery-only change. The later code corrections have new focused, full and browser receipts above.
 
 The previous local-only handoff was caused by an unwritable task output directory and uncertainty about deployment automation. The owner register and explicit authorization resolve the remote delivery hold. GitHub is the review destination. No unrelated workstream branch is touched.
 

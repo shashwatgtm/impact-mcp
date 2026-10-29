@@ -6,14 +6,14 @@
   const $ = id => document.getElementById(id);
   const embedded = window.parent !== window;
   let ready = !embedded, busy = false, original = null, hostOrigin = null, editRevision = 0;
-  let requestId = 0, generation = 0;
+  let requestId = 0, generation = 0, localOwnership = false;
   const pending = new Map();
   const weights = Object.fromEntries(['identify','map','pinpoint','anchor','craft','translate'].map(k => [k,1]));
   const labels = {company_name:'Company name',product_description:'Product description',target_customer:'Target customer',problem_solved:'Problem solved',key_differentiation:'Key differentiation',competitors:'Alternatives, one per line',current_positioning:'Current positioning',customer_feedback:'Customer feedback',business_model:'Business model',your_sector:'Your sector'};
   function node(tag, text, className) { const el = document.createElement(tag); if (text !== undefined) el.textContent = text; if (className) el.className = className; return el; }
   function status(text) { $('status').textContent = text; }
   function error(text) { $('error').textContent = text; }
-  function setBusy(value) { busy = value; $('calculate').disabled = value || !ready; $('reset').disabled = value; $('audit-form').setAttribute('aria-busy', String(value)); }
+  function setBusy(value) { busy = value; $('calculate').disabled = value || !ready; $('audit-form').setAttribute('aria-busy', String(value)); }
   function readInputs() {
     const input = {};
     for (const key of Object.keys(labels)) {
@@ -45,7 +45,7 @@
     const row = node('div',undefined,'weight-row');
     const label = node('label',key+' weight');label.htmlFor = 'weight-'+key;
     const input = node('input'); input.id=label.htmlFor; input.type='number';input.min='0';input.max='10';input.step='1';input.value='1';
-    input.addEventListener('input', () => {weights[key] = input.value === '' ? NaN : Number(input.value);renderWeights();});
+    input.addEventListener('input', () => {claimLocalOwnership();weights[key] = input.value === '' ? NaN : Number(input.value);renderWeights();});
     row.append(label,input);$('weights').append(row);
   }
   function renderWeights() {
@@ -95,6 +95,35 @@
     $('legacy-text').textContent=text;
   }
   function send(message) { window.parent.postMessage({jsonrpc:'2.0',...message},hostOrigin && hostOrigin !== 'null' ? hostOrigin : '*'); }
+  function staleNotice() {
+    $('stale-notice').textContent = 'Stale host update ignored. Your local inputs and last calculation were kept. Recalculate to update the result.';
+  }
+  function claimLocalOwnership() {
+    localOwnership = true;
+    editRevision++;
+    error('');
+  }
+  // Measure natural body height, not scrollHeight, which cannot shrink below a tall iframe.
+  let sizeTimer, sizeObserver, lastSize;
+  function scheduleSize() {
+    if (!embedded || !ready) return;
+    clearTimeout(sizeTimer);
+    sizeTimer = setTimeout(() => {
+      const size = { width: Math.ceil(window.innerWidth), height: Math.ceil(document.body.getBoundingClientRect().height) };
+      if (size.width > 0 && size.height > 0 && (!lastSize || size.width !== lastSize.width || size.height !== lastSize.height)) {
+        lastSize = size;
+        send({method:'ui/notifications/size-changed',params:size});
+      }
+    }, 75);
+  }
+  function observeSize() {
+    sizeObserver = new ResizeObserver(scheduleSize);
+    sizeObserver.observe(document.body);
+    window.addEventListener('resize', scheduleSize);
+    document.fonts.ready.then(scheduleSize);
+    scheduleSize();
+  }
+  window.addEventListener('pagehide', () => {clearTimeout(sizeTimer);sizeObserver?.disconnect();window.removeEventListener('resize',scheduleSize);});
   function request(method,params) {
     const id=++requestId;
     return new Promise((resolve,reject)=>{
@@ -114,6 +143,10 @@
       return;
     }
     if (!ready) return;
+    if (localOwnership && ['ui/notifications/tool-input','ui/notifications/tool-result','ui/notifications/tool-cancelled'].includes(message.method)) {
+      staleNotice();
+      return;
+    }
     try {
       if (message.method === 'ui/notifications/tool-input') {
         generation++;setBusy(false);const input=message.params?.arguments;
@@ -126,35 +159,43 @@
       }
     } catch (e) {error(e.message);}
   });
-  $('audit-form').addEventListener('input',()=>{editRevision++;status('Inputs edited. Calculate to update the result.');});
+  $('audit-form').addEventListener('input',()=>{claimLocalOwnership();status('Inputs edited. Showing the last calculation until you recalculate.');});
   async function recalculate(event){
     event.preventDefault();if(busy || !ready)return;
     const input=readInputs(), view=calculate(input,schema);error('');
     if(!view.valid){error(view.errors.join(' '));return;}
+    localOwnership = true;
+    $('stale-notice').textContent = '';
     const revision=editRevision, ownGeneration=++generation;
     try {
       setBusy(true);status(embedded?'Loading host calculation...':'Calculating locally...');
       if (embedded) {
         const result=await request('tools/call',{name:'impact_full_audit',arguments:input});
         if(ownGeneration !== generation)return;
-        if(revision !== editRevision){status('Inputs changed while loading. Calculate again to update the result.');return;}
-        acceptResult(result);status('Host result loaded.');
+        if(revision !== editRevision){staleNotice();return;}
+        acceptResult(result);$('stale-notice').textContent='';status('Host result loaded.');
       } else { apply(input,'Standalone calculation from your inputs. No external calls.');status('Calculated locally. Nothing saved.'); }
-    } catch(e){if(ownGeneration === generation)error(e.message);}
+    } catch(e){
+      if(ownGeneration !== generation)return;
+      if(revision !== editRevision){staleNotice();return;}
+      error(e.message);
+    }
     finally {if(ownGeneration === generation)setBusy(false);}
   }
   $('audit-form').addEventListener('submit',recalculate);
   $('calculate').addEventListener('click',recalculate);
-  $('reset').addEventListener('click',()=>{generation++;editRevision++;fillInputs({});original=null;render(calculate({},schema),'Empty state.');$('legacy-text').textContent='';error('');status('Cleared. Nothing saved.');});
-  $('reset-weights').addEventListener('click',()=>{for(const key of Object.keys(weights)){weights[key]=1;$('weight-'+key).value='1';}renderWeights();});
+  $('reset').addEventListener('click',()=>{generation++;claimLocalOwnership();setBusy(false);$('stale-notice').textContent='';fillInputs({});original=null;render(calculate({},schema),'Empty state.');$('legacy-text').textContent='';error('');status('Cleared. Nothing saved.');});
+  $('reset-weights').addEventListener('click',()=>{claimLocalOwnership();for(const key of Object.keys(weights)){weights[key]=1;$('weight-'+key).value='1';}renderWeights();});
   render(calculate({},schema),'Empty state.');
   $('mode').textContent=embedded?'MCP Apps mode / host calculation':'Standalone mode / no external calls';
   $('calculate').textContent=embedded?'Recalculate with host':'Calculate locally';setBusy(false);
   if(embedded){
     status('Connecting to host...');
-    request('ui/initialize',{appInfo:{name:'Helix positioning lab',version:'1.0.0'},appCapabilities:{},protocolVersion:'2026-01-26'}).then(result=>{
+    const initialRevision=editRevision, initialGeneration=generation;
+    request('ui/initialize',{appInfo:{name:'Helix positioning lab',version:'1.0.0'},appCapabilities:{availableDisplayModes:['inline']},protocolVersion:'2026-01-26'}).then(result=>{
       if(!result || typeof result !== 'object')throw new Error('Invalid initialization response.');
-      ready=true;send({method:'ui/notifications/initialized',params:{}});setBusy(false);status('Connected. Waiting for host inputs or your edits.');
-    }).catch(e=>error(e.message));
+      ready=true;send({method:'ui/notifications/initialized',params:{}});setBusy(false);observeSize();
+      if(initialRevision===editRevision && initialGeneration===generation)status('Connected. Waiting for host inputs or your edits.');
+    }).catch(e=>{if(initialRevision===editRevision && initialGeneration===generation)error(e.message);});
   } else status('Start empty. Add your product, customer and problem.');
 })();

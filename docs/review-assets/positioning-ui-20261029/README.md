@@ -1,5 +1,7 @@
 # W4 positioning review evidence
 
+[Current four-correction receipts](corrections/README.md). The initial receipts below remain preserved.
+
 These are actual cloud receipts from tested commit f52df6835f12fa68343427bf950240c911be0855. Delivery changed documentation and review assets only. No passing tests were rerun.
 
 Actual ChatGPT host acceptance remains unverified. The MCP browser checks used a strict sandboxed cloud test host. Real names appear only in explicitly authorized synthetic review fixture inputs.

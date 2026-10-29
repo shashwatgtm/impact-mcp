@@ -1,0 +1,46 @@
+{
+  "baseline_pr_head": "8167757578601a5eb030c7059bed171e290750bc",
+  "baseline_source_tree": "d5b6ec46c8d792f6199e8c902537b6428a60fc61",
+  "preserved_main": "5267d1bd94316281e84941179be9a565e6a1a9aa",
+  "preserved_video": {
+    "path": "public/walkthrough/helix-positioning-chatgpt-walkthrough-20261029.mp4",
+    "git_blob_sha": "e8317f6415a97d8858728e749470e30fbfc7e595",
+    "method": "Reuse the existing GitHub object without changing, downloading or uploading video bytes."
+  },
+  "code_sha256": {
+    "public/lab/positioning/app.js": "9197ee22d563272d6076ad034e340cb28ed597aa5cc04f822fc746b42ebe00d0",
+    "public/lab/positioning/index.html": "f1811dabf049fe8186c4504a0ac307ddfc384d8a98c1100473a63bf4d07ab5e4",
+    "ui/positioning.html": "c627eef4b8c19a4e89d1d5f5dea293ef3270ed08c6e74f8c686468a0735dbc40",
+    "src/positioning-resource.ts": "b5e052fc8fa074e54ae4d6ef4c62ccba3fbe31dea64019df141e5fb22d492e2d",
+    "dist/positioning-resource.d.ts.map": "620e631f8e708b1dab687eb4ec86a10fc2496361d72b4befea8c9186df01723a",
+    "dist/positioning-resource.js": "b59ae0af0f457c8ffdddac6210e23ceb8067dd0de95f8921204f01a88239a14c",
+    "dist/positioning-resource.js.map": "132d5af64b36c7af98dfa52370e8fffb9e561fd134019cc344627897c4015bc1",
+    "scripts/check-positioning-browser.mjs": "d82ed2ee8f048c50a6c3465a6ede1f477ee38ea024d96eb31fb60c11e1f22be1"
+  },
+  "evidence_sha256": {
+    "README.md": "bde5b78a19b06f8c31435d3f4b9325aa61b0a20bbc59313ab10ef89a6e744866",
+    "browser-receipt.json": "de8819de9a088e5a51625ee4e201b5bfbe960d78733afa9bc96f3d3baf9a3e87",
+    "flexible-host-receipt.json": "86fda86ca936ab6fd17ec2d188eb3544281817bb140bfb62da4189fdd05297ec",
+    "logs/browser-attempt-2.log": "5b51630fa9143277835ba678ced186e110c64054b17728ef52105ca82d0c9b08",
+    "logs/browser.log": "0bbd7697a2725856aae96ebb817fdca81e63eb1a6da13f848213fab54d53dd38",
+    "logs/build.log": "fae43bf9fe7d4d0b3c90e568c2129d380074565d31c4ed94e2f609bd660a205f",
+    "logs/focused.log": "05c2ec62796204b2dfb21ecc7fd344ca7bc69b48218f4d4ea9f77868df36c121",
+    "logs/full.log": "3418bc18cc9815b203917e4a3ef0d9798a71edc15c4a5a083627cffccdcacdea",
+    "logs/generate.log": "1e65882354fcfab0c81f3bac188199e3e99750183df256304a20af233f42a812",
+    "logs/generated-check.log": "ce2c7edeac651c0d22e0707b78b2182cdb879e445280037459d9ac139c726568",
+    "logs/host-review.log": "320eb2e2707fefd951be8caa7a7556ab4c37a6991d25d6f1bb648ac4e91d2d6f",
+    "screenshots/mcp-decisions-desktop.png": "7d93958495c16eb653abc361c8707a05974165038951c07b0aa5bc04fb0d1127",
+    "screenshots/mcp-fixture-desktop.png": "f06ae92052f26110718d91e8f35f5bf70e8249f0a93f59d2a358453805183473",
+    "screenshots/mcp-flexible-grown.png": "2928b8c6dc3432695821ca10237cf3bc3270843313e611b23a33e508fff3853f",
+    "screenshots/mcp-flexible-shrunk.png": "c32930b6e41d8016f374edf00f79dd3a83d32a79344063c51d578abd37c20187",
+    "screenshots/mcp-mobile-320.png": "0a2b08229ef1f1eb704370c7472ee2f8b234cb114c0554be2c7cb674992b085d",
+    "screenshots/mcp-mobile.png": "878e8f48364c9438a5650e03c2a2be27d6ef2f2c05be404908f0757e73609ca2",
+    "screenshots/mcp-validation-desktop.png": "a40aca0aecb8408ca15ffd42c60a83c49627d79020e0e3db4ba4b1161c115ddd",
+    "screenshots/standalone-decisions-desktop.png": "1a102c7be0987ce828639101205a63ebfcb7c9840f66f19429958195d502f16f",
+    "screenshots/standalone-empty-desktop.png": "f9f27763697f6f02e700ddcaeb35824c5381de5cc582f372a238aa087231af94",
+    "screenshots/standalone-fixture-desktop.png": "273250e361cc9df8b8b81bb421a8f2e6e12405a4f5036527c835cd1fc561a0a6",
+    "screenshots/standalone-mobile.png": "f0eda121f524226f0df55b37d4c0c9f34469341bb5360fcafe24dd6bc115d051",
+    "screenshots/standalone-validation-desktop.png": "c7e3d3d2fda703404b8fb3f792531f52f1624c0f1b00c74da7939551e5d8676d"
+  },
+  "actual_chatgpt_host_acceptance": "unverified"
+}
