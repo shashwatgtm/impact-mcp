@@ -3680,7 +3680,7 @@ ${score >= 70 ? 'This input is already detailed: sharpen it next.' : `**Input**:
 
 ## Proof You Already Have
 
-${companyClaims.length ? `Company claims you supplied (about the company as a whole, not a customer result; show them as company claims and cite their source):\n${list(companyClaims)}\n\n` : ''}${feedbackItems.length ? `Customer feedback you supplied, as proof points (use each only if it is real and you can show it):\n${list(feedbackItems)}\n${v ? `\nWhat a good proof point looks like in ${lz.fn ? fnName(lz.fn) : v.name}: ${lz.proof}\n` : ''}` : companyClaims.length ? 'No customer result was supplied beyond the company claims above. Add what a customer says or a result they report.' : 'No customer feedback was supplied, so there is no proof to list. Add customer_feedback (what customers say, or results they report).'}
+${companyClaims.length ? `Company claims you supplied (about the company as a whole, not a customer result; show them as company claims and cite their source):\n${list(companyClaims)}\n\n` : ''}${feedbackItems.length ? `Customer feedback you supplied, as proof points (use each only if it is real and you can show it):\n${list(feedbackItems)}\n` : companyClaims.length ? 'No customer result was supplied beyond the company claims above. Add what a customer says or a result they report.' : 'No customer feedback was supplied, so there is no proof to list. Add customer_feedback (what customers say, or results they report).'}${v ? `${feedbackItems.length ? '' : '\n'}\nWhat a good proof point looks like in ${lz.fn ? fnName(lz.fn) : v.name}: ${lz.proof}\n` : ''}
 
 ---
 
