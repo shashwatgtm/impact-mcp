@@ -1,0 +1,28 @@
+TAP version 13
+# Subtest: tests/host-review-20261028.test.mjs
+ok 1 - tests/host-review-20261028.test.mjs
+  ---
+  duration_ms: 471.491684
+  type: 'test'
+  ...
+# Subtest: tests/positioning-ui.test.mjs
+not ok 2 - tests/positioning-ui.test.mjs
+  ---
+  duration_ms: 488.731779
+  type: 'test'
+  location: '/workspace/impact-mcp/tests/positioning-ui.test.mjs:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 500.714601

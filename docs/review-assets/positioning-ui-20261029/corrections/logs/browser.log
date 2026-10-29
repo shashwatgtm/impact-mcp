@@ -1,0 +1,58 @@
+PASS standalone starts empty
+PASS keyboard skip link receives focus
+PASS empty required input prevents submission
+PASS standalone exact review fixture computes and marks missing feedback
+PASS assumption is distinct and no independent observation is claimed
+PASS decision includes claim limit and minimum validation
+PASS alternatives separate fit and confidence
+PASS local weights change scenario without changing original
+PASS invalid local weight is explained
+PASS local weights reset
+PASS standalone synthetic fixture 2
+PASS standalone synthetic fixture 3
+PASS standalone synthetic fixture 4
+PASS standalone hostile HTML remains inert and contradiction is visible
+PASS standalone mobile has no horizontal overflow
+PASS standalone uses no durable browser storage
+PASS standalone loads only local assets and no API
+PASS MCP bridge initializes before initialized notification
+PASS MCP initialization declares only inline display support
+PASS flexible host applies initial natural content height
+PASS MCP starts empty in a sandboxed opaque origin
+PASS MCP tool-input displays pending state
+PASS MCP tool-result uses structured inputs and preserves legacy text
+PASS MCP rejects messages from a non-parent source
+PASS MCP rejects malformed structured content
+PASS MCP synthetic fixture 2 calls existing tool
+PASS MCP synthetic fixture 3 calls existing tool
+PASS MCP synthetic fixture 4 calls existing tool
+PASS MCP loading disables duplicate submission
+PASS MCP errors are clear and preserve edits
+PASS MCP retry recovers
+PASS MCP recalculate supports native keyboard activation
+PASS stale input/result/cancel notifications preserve local inputs
+PASS stale notifications preserve result and current loading ownership
+PASS delayed success after an edit cannot restore obsolete inputs or results
+PASS delayed rejected RPC after an edit has no obsolete error
+PASS late error leaves the last accepted result intact
+PASS clear remains available while a request is pending
+PASS reset stays empty when old uncorrelated notifications arrive
+PASS old success after reset cannot end the newer loading state
+PASS matching success after reset owns the new result
+PASS old rejected RPC cannot set an error or end a newer generation
+PASS literal supported input text round-trips through tools/call
+PASS literal host result remains inert and preserves exact field values
+PASS uncorrelated notification after a local result cannot take ownership
+PASS flexible host iframe really grows when legacy details expand
+PASS flexible host iframe really shrinks when legacy details collapse
+PASS resize bursts with unchanged dimensions send no duplicate sizes
+PASS rapid content changes debounce to one final size notification
+PASS host height updates do not cause an observer feedback loop
+PASS MCP mobile uses a narrow viewport and one-column layout
+PASS MCP mobile has no horizontal overflow
+PASS flexible host height tracks the 390px mobile layout
+PASS 320px mobile iframe has one column without horizontal overflow
+PASS flexible host applies height and width reports after mobile resize
+PASS MCP resource makes no asset or API requests
+PASS both modes have no uncaught browser exceptions
+Checks: 57; pass: 57; fail: 0; skip: 0

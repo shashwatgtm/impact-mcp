@@ -1,0 +1,19 @@
+✔ all input schemas and tool metadata remain equal; only full audit gains a UI attachment (18.717416ms)
+✔ legacy text equality and shared completeness for synthetic fixture 1 (74.3535ms)
+✔ legacy text equality and shared completeness for synthetic fixture 2 (10.891559ms)
+✔ legacy text equality and shared completeness for synthetic fixture 3 (5.255109ms)
+✔ legacy text equality and shared completeness for synthetic fixture 4 (3.49764ms)
+✔ resource is real bundled HTML with empty network CSP, and unknown resources fail (3.533755ms)
+✔ hosted HTTP provides the same structured view and resource (53.472496ms)
+✔ empty, malformed and unsupported inputs cannot create a valid decision (0.41287ms)
+✔ reported observations stay reported; assumptions, contradictions and absence remain distinct (0.246811ms)
+✔ browser calculation bundle matches server module and preserves hostile text as data (2.414104ms)
+✔ full audit structured text remains inert under the existing escape contract (4.168497ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 184.100847

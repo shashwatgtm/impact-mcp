@@ -1,0 +1,42 @@
+PASS standalone starts empty
+PASS keyboard skip link receives focus
+PASS empty required input prevents submission
+PASS standalone exact review fixture computes and marks missing feedback
+PASS assumption is distinct and no independent observation is claimed
+PASS decision includes claim limit and minimum validation
+PASS alternatives separate fit and confidence
+PASS local weights change scenario without changing original
+PASS invalid local weight is explained
+PASS local weights reset
+PASS standalone synthetic fixture 2
+PASS standalone synthetic fixture 3
+PASS standalone synthetic fixture 4
+PASS standalone hostile HTML remains inert and contradiction is visible
+PASS standalone mobile has no horizontal overflow
+PASS standalone uses no durable browser storage
+PASS standalone loads only local assets and no API
+PASS MCP bridge initializes before initialized notification
+PASS MCP initialization declares only inline display support
+PASS flexible host applies initial natural content height
+PASS MCP starts empty in a sandboxed opaque origin
+PASS MCP tool-input displays pending state
+PASS MCP tool-result uses structured inputs and preserves legacy text
+PASS MCP rejects messages from a non-parent source
+PASS MCP rejects malformed structured content
+PASS MCP synthetic fixture 2 calls existing tool
+PASS MCP synthetic fixture 3 calls existing tool
+PASS MCP synthetic fixture 4 calls existing tool
+PASS MCP loading disables duplicate submission
+PASS MCP errors are clear and preserve edits
+FAIL AssertionError [ERR_ASSERTION]: MCP retry recovers
+    at check (file:///workspace/impact-mcp/scripts/check-positioning-browser.mjs:55:50)
+    at file:///workspace/impact-mcp/scripts/check-positioning-browser.mjs:123:93 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+STATE {"width":1366,"docWidth":1351,"active":"","invalid":[],"calls":[{"name":"impact_full_audit","arguments":{"product_description":"Synthetic payroll and onboarding software","target_customer":"HR teams at firms with 500 employees","problem_solved":"HR teams lose days to payroll errors and slow onboarding","your_sector":"saas"}},{"name":"impact_full_audit","arguments":{"product_description":"Synthetic CRM workflow software","target_customer":"Revenue operations at firms with 200 to 1000 employees","problem_solved":"Revenue operations teams reconcile inconsistent pipeline records","your_sector":"saas"}},{"name":"impact_full_audit","arguments":{"company_name":"HubSpot","product_description":"CRM software in a synthetic review scenario","target_customer":"Revenue operations directors at B2B software firms","problem_solved":"Disconnected customer activity records","key_differentiation":"Synthetic assumption: shared lifecycle view","competitors":["Salesforce"],"business_model":"saas","your_sector":"saas"}},{"name":"impact_full_audit","arguments":{"company_name":"HubSpot","product_description":"CRM software in a synthetic review scenario","target_customer":"Revenue operations directors at B2B software firms","problem_solved":"Disconnected customer activity records","key_differentiation":"Synthetic assumption: shared lifecycle view","competitors":["Salesforce"],"customer_feedback":"No verified interviews supplied","business_model":"saas","your_sector":"saas"}},{"name":"impact_full_audit","arguments":{"company_name":"HubSpot","product_description":"CRM software in a synthetic review scenario","target_customer":"Revenue operations directors at B2B software firms","problem_solved":"Disconnected customer activity records","key_differentiation":"Synthetic assumption: shared lifecycle view","competitors":["Salesforce"],"customer_feedback":"No verified interviews supplied","business_model":"saas","your_sector":"saas"}},{"name":"impact_full_audit","arguments":{"company_name":"HubSpot","product_description":"CRM software in a synthetic review scenario","target_customer":"Revenue operations directors at B2B software firms","problem_solved":"Disconnected customer activity records","key_differentiation":"Synthetic assumption: shared lifecycle view","competitors":["Salesforce"],"customer_feedback":"No verified interviews supplied","business_model":"saas","your_sector":"saas"}}],"bridge":["ui/initialize","ui/notifications/initialized","ui/notifications/size-changed","ui/notifications/size-changed","tools/call","tools/call","tools/call","tools/call","tools/call","tools/call"]}
+STATE {"status":"Host result loaded.","error":"","width":1351,"docWidth":1351,"grid":"444.719px 778.266px","active":"","button":false,"invalid":[]}

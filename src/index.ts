@@ -5,7 +5,11 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { calculatePositioning } from './positioning-model.ts';
+import { POSITIONING_HTML } from './positioning-resource.ts';
 import { cleanDeep, escapeDeep, escapeText, escapePiece } from './escape-inputs.ts';
 import { pieceOf } from './piece-wrap.ts';
 import { partLabel, isNamedPart, segmentFacts, segmentType, segmentFit, segmentOverlap, roleOk, linkScore, productParts, isCompanyFact, brandName, plainName, tidyLabel, splitStrengths, leadAud, noSeatWords, categoryNoun, takeLabel, topLevel, joinAnd, clip, outcomeItems, outcomeClause, leadItems, classifyProof, MEASURE_LINKS, ctaNoun, sharpenLine, type Kit, type ProofKind } from './rw-impact.ts';
@@ -3906,12 +3910,22 @@ for (const t of Object.values(tools)) {
 export function createServer(): Server {
   const server = new Server(
     { name: SERVER_NAME, version: SERVER_VERSION },
-    { capabilities: { tools: {} } }
+    { capabilities: { tools: {}, resources: {} } }
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: Object.entries(tools).map(([name, config]) => withMeta({ name, description: config.description, inputSchema: config.inputSchema })),
+    tools: Object.entries(tools).map(([name, config]) => ({ ...withMeta({ name, description: config.description, inputSchema: config.inputSchema }), ...(name === 'impact_full_audit' ? { _meta: { ui: { resourceUri: 'ui://helix/positioning/v1.html' } } } : {}) })),
   }));
+
+  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+    resources: [{ uri: 'ui://helix/positioning/v1.html', name: 'Helix positioning lab', mimeType: 'text/html;profile=mcp-app' }],
+  }));
+  server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+    if (request.params.uri !== 'ui://helix/positioning/v1.html') throw new Error('Unknown UI resource');
+    return { contents: [{ uri: request.params.uri, mimeType: 'text/html;profile=mcp-app', text: POSITIONING_HTML,
+      _meta: { ui: { csp: { connectDomains: [], resourceDomains: [], frameDomains: [] } } },
+    }] };
+  });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     // Run 20 round 1d (D086), the one choke point: every tools/call (stdio, hosted /mcp and /api/tools all come through here)
@@ -3944,8 +3958,11 @@ export function createServer(): Server {
       setYourSector(callArgs.your_sector);
       let result: string;
       try { result = tool.execute(callArgs as any); } finally { setYourSector(undefined); }
+      const positioning = toolName === 'impact_full_audit' ? calculatePositioning(typed || {}, tools.impact_full_audit.inputSchema) : null;
       return {
-        content: [{ type: 'text', text: result }]
+        content: [{ type: 'text', text: result }],
+        // Keep the existing inert-text contract for every string in the reply. The UI decodes only into textContent.
+        ...(positioning ? { structuredContent: { ...escapeDeep(positioning), inputsBase64: Buffer.from(JSON.stringify(positioning.inputs), 'utf8').toString('base64') } } : {}),
       };
     } catch (error) {
       return {

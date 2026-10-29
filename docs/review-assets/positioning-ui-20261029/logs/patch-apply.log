@@ -1,0 +1,3 @@
+PASS: patch applies to base through a clean temporary index.
+PASS: resulting tree equals final HEAD tree.
+PASS: protected deployment, endpoint, package, challenge and header paths unchanged.

@@ -1,0 +1,13 @@
+✔ impact_identify_champions: '200 to 1000 employees' in target_company_type does not make the buyer HR; the revenue operations problem leads (113.961389ms)
+✔ impact_identify_champions: a buyer that really is HR is still read as HR (7.347467ms)
+✔ impact_pinpoint_value: 'No verified outcome metrics supplied' is not listed as social proof, and a result is still asked for (10.453984ms)
+✔ impact_full_audit: 'No verified interviews supplied' is not a proof point or a result customers describe (11.374206ms)
+✔ impact_pinpoint_value: a real result is still placed as a customer result (5.497378ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 154.659204

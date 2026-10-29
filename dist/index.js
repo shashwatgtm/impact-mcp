@@ -27,6 +27,8 @@ exports.createServer = createServer;
 const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
+const positioning_model_ts_1 = require("./positioning-model.js");
+const positioning_resource_ts_1 = require("./positioning-resource.js");
 const escape_inputs_ts_1 = require("./escape-inputs.js");
 const piece_wrap_ts_1 = require("./piece-wrap.js");
 const rw_impact_ts_1 = require("./rw-impact.js");
@@ -4123,10 +4125,20 @@ for (const t of Object.values(tools)) {
     props.your_sector = { type: 'string', enum: [...exports.YOUR_SECTOR_VALUES], description: YOUR_SECTOR_DESCRIPTION };
 }
 function createServer() {
-    const server = new index_js_1.Server({ name: exports.SERVER_NAME, version: exports.SERVER_VERSION }, { capabilities: { tools: {} } });
+    const server = new index_js_1.Server({ name: exports.SERVER_NAME, version: exports.SERVER_VERSION }, { capabilities: { tools: {}, resources: {} } });
     server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => ({
-        tools: Object.entries(tools).map(([name, config]) => withMeta({ name, description: config.description, inputSchema: config.inputSchema })),
+        tools: Object.entries(tools).map(([name, config]) => ({ ...withMeta({ name, description: config.description, inputSchema: config.inputSchema }), ...(name === 'impact_full_audit' ? { _meta: { ui: { resourceUri: 'ui://helix/positioning/v1.html' } } } : {}) })),
     }));
+    server.setRequestHandler(types_js_1.ListResourcesRequestSchema, async () => ({
+        resources: [{ uri: 'ui://helix/positioning/v1.html', name: 'Helix positioning lab', mimeType: 'text/html;profile=mcp-app' }],
+    }));
+    server.setRequestHandler(types_js_1.ReadResourceRequestSchema, async (request) => {
+        if (request.params.uri !== 'ui://helix/positioning/v1.html')
+            throw new Error('Unknown UI resource');
+        return { contents: [{ uri: request.params.uri, mimeType: 'text/html;profile=mcp-app', text: positioning_resource_ts_1.POSITIONING_HTML,
+                    _meta: { ui: { csp: { connectDomains: [], resourceDomains: [], frameDomains: [] } } },
+                }] };
+    });
     server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
         // Run 20 round 1d (D086), the one choke point: every tools/call (stdio, hosted /mcp and /api/tools all come through here)
         // reaches a tool here. Run 40S (D6, safe by design): the input checks read the text as typed (hidden characters removed); then every text is escaped once, so nothing the caller typed can form markup in any answer. The words stay (src/escape-inputs.ts).
@@ -4164,8 +4176,11 @@ function createServer() {
             finally {
                 setYourSector(undefined);
             }
+            const positioning = toolName === 'impact_full_audit' ? (0, positioning_model_ts_1.calculatePositioning)(typed || {}, tools.impact_full_audit.inputSchema) : null;
             return {
-                content: [{ type: 'text', text: result }]
+                content: [{ type: 'text', text: result }],
+                // Keep the existing inert-text contract for every string in the reply. The UI decodes only into textContent.
+                ...(positioning ? { structuredContent: { ...(0, escape_inputs_ts_1.escapeDeep)(positioning), inputsBase64: Buffer.from(JSON.stringify(positioning.inputs), 'utf8').toString('base64') } } : {}),
             };
         }
         catch (error) {
