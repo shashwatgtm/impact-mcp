@@ -1,0 +1,9 @@
+{
+  "src/widget-model.ts": "85020544d6e539687a7e5b5b7951077ddaf17a7831cf2753642b3ac04209e3a2",
+  "src/widget-document.ts": "17197d73dbbfc61a0de73d72fe0e4389c59fd8013bd77b04490689a61f3842a1",
+  "src/widget-registry.ts": "d9c7015ddfc75a24bdeaa916bef578269107b5120e4093e4dcd18074243ed97a",
+  "src/widget-layer.ts": "21589dc698ddcf3591b4fd18f1a27d6945069e004745669b42b7f05476e90011",
+  "src/audit-summary.ts": "202b41a3f9743f2eaeec78b4c91e94ce86b382d34c04bfbda9ac28baf5142c05",
+  "tests/wave2-audit-widget.test.mjs": "85aec7fcd6ea1ab0f72cdb501cd43c05a56865c11726cdbd1f2f57efbf343345",
+  "wave2/ui/widget-runtime.js": "61f585951d48ba5c7e8f5fcfd50309bda08a7ce6d355120e6aeec3f02992d20a"
+}

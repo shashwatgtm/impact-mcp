@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.attachWidgets = attachWidgets;
+const audit_summary_ts_1 = require("./audit-summary.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
 const widget_model_ts_1 = require("./widget-model.js");
 const widget_document_ts_1 = require("./widget-document.js");
@@ -16,7 +17,7 @@ function attachWidgets(server) {
         if (request.method === 'tools/call' && !result.isError && Object.prototype.hasOwnProperty.call(widget_registry_ts_1.WIDGETS, request.params.name)) {
             const text = result.content?.filter((c) => c.type === 'text').map((c) => c.text).join('\n');
             if (typeof text === 'string')
-                return { ...result, structuredContent: (0, widget_model_ts_1.widgetPayload)(request.params.name, widget_registry_ts_1.WIDGETS[request.params.name], text) };
+                return { ...result, structuredContent: { ...(0, widget_model_ts_1.widgetPayload)(request.params.name, widget_registry_ts_1.WIDGETS[request.params.name], text), ...(request.params.name === 'impact_full_audit' ? { positioningAudit: (0, audit_summary_ts_1.auditSummary)(text) } : {}) } };
         }
         return result;
     }));

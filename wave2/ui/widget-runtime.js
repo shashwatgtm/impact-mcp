@@ -31,10 +31,18 @@ function markdown(parent,source){
  }
 }
 
+function renderAudit(data){
+ const root=$('sections'),summary=data.positioningAudit;if(summary.kind!=='positioning-audit'){root.append(make('p',summary.reason));return;}
+ const result=make('section',undefined,{class:'audit-result'});result.append(make('h2',summary.label));const draft=make('blockquote');for(const line of summary.draft){const p=make('p');inline(p,line);draft.append(p);}result.append(draft,make('p',summary.qualification));root.append(result);
+ const gaps=make('section');gaps.append(make('h2','What needs more detail'));for(const gap of summary.gaps){const article=make('div',undefined,{class:'audit-gap'});article.append(make('h3',gap.label));const p=make('p');inline(p,gap.detail);article.append(p);gaps.append(article);}root.append(gaps);
+ const action=make('section',undefined,{class:'audit-action'});action.append(make('h2','Your next action'));const p=make('p');inline(p,summary.nextAction);action.append(p);root.append(action);
+ const proof=make('section');proof.append(make('h2','Proof supplied'));markdown(proof,summary.proof);root.append(proof);
+}
+
 function render(data){
  if(!data||typeof data.plainText!=='string'||!Array.isArray(data.sections)){payload=null;$('status').textContent='Waiting for a tool result. Run the linked tool in the conversation.';$('sections').replaceChildren();$('full').textContent='';$('title').textContent='Helix GTM Consulting';return;}
  payload=data;$('title').textContent=String(data.title??'Tool result');$('full').replaceChildren();markdown($('full'),data.plainText);$('sections').replaceChildren();
- for(const section of data.sections){const article=make('section');const heading=make('h2');inline(heading,section.heading);article.append(heading);if(section.body?.trim())markdown(article,section.body);
+ if(data.positioningAudit)renderAudit(data);else for(const section of data.sections){const article=make('section');const heading=make('h2');inline(heading,section.heading);article.append(heading);if(section.body?.trim())markdown(article,section.body);
  for(const table of section.tables??[]){if(Array.isArray(table.headers)&&Array.isArray(table.rows))renderTable(article,table.headers,table.rows,section.heading+' table');}
  $('sections').append(article);}
  $('status').textContent='Tool result received. Review assumptions and missing evidence in the result.';filter();notifyHeight();

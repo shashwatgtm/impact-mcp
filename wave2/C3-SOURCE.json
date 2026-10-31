@@ -1,0 +1,7 @@
+{
+  "repository": "impact-mcp",
+  "starting_commit": "815d81db2350ff0432d1d70ba68b79090f48a3bc",
+  "source_path": "src/index.ts",
+  "source_sha256": "c1ba12aa4b5e93de9768c377878dcb05671b3056a71a57c71ca3ae01c55b2063",
+  "method": "impact_full_audit"
+}
