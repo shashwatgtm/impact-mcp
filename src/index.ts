@@ -1487,7 +1487,19 @@ ${SUGGESTED}
         technicalInfluencer = { ...technicalInfluencer, role: 'The manager who would run it day to day, with the bookkeeper or accountant' };
         inferredNote = ' (the buyers you named are small businesses run by their owner)';
       }
+      const evidenceNotes = [problem, targetType].join('\n');
+      const namedContact = evidenceNotes.match(/(?:Contact|Person|Named contact):\s*([^;\n.]+)/i)?.[1]?.trim();
+      const observedAdvocacy = hasSignal(evidenceNotes, /\b(?:introduced (?:us|the team) to|advocated (?:for|on behalf of)|presented (?:our|the) (?:case|proposal) to)\b/i);
+      const decisionAccess = hasSignal(evidenceNotes, /\b(?:met (?:the |with the )?(?:budget owner|decision maker)|access to (?:the )?(?:budget owner|decision maker) (?:is )?confirmed|speaks directly with (?:the )?(?:budget owner|decision maker))\b/i);
+      const confirmedChampion = !!namedContact && observedAdvocacy && decisionAccess;
       return `# Champion Identification Analysis
+
+## Confirm the person and evidence
+Status: ${confirmedChampion ? 'Confirmed champion from supplied contact, advocacy and decision access evidence' : 'Role hypothesis; champion unconfirmed'}.
+Named contact: ${namedContact || 'Unknown'}.
+Observed advocacy: ${observedAdvocacy ? 'Supplied in the notes; retain the source and date' : 'Unknown; record what this person did to advocate internally'}.
+Access to the decision maker: ${decisionAccess ? 'Supplied in the notes; retain the source and date' : 'Unknown; confirm who they can reach and the observed interaction'}.
+${confirmedChampion ? `Evidence supplied: ${evidenceNotes}` : 'Next decision: identify one person and verify their advocacy and decision access before treating the role as a champion.'}
 
 ## Company Context
 **Company**: ${company || 'not supplied'}
@@ -1502,14 +1514,14 @@ ${sectorLine(v)}${longNote(args.product_description, problem, args.target_compan
 
 ## Champion Hypothesis
 
-### Primary Champion (Your Internal Advocate)
+### ${confirmedChampion ? 'Confirmed champion' : 'Primary champion role hypothesis'}
 **Most Likely Role**: ${capFirst(primaryChampion.role)}${inferredNote}
 ${fn ? `Sentence read for the team: ${givenFn ? targetType : problem}.` : ''}
 
 **Why This Role**:
 - Owns the problem: ${primaryChampion.pain}
 - Personal motivation: ${primaryChampion.motivation}
-- Has organizational credibility to advocate for change
+- Credibility is unconfirmed until the named contact demonstrates advocacy and access to the decision maker
 
 **Champion Validation Questions**:
 1. ${v && !fn && !ind ? `"Who is responsible for ${ranked[0]} today, and who answers for it when it slips?"` : '"Who is responsible for this problem today?"'}
