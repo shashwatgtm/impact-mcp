@@ -516,7 +516,7 @@ function readContext(explicitModel, r) {
     const sector = forcedSector ? (v ? `from your choice: ${v.name}` : 'from your choice of other, so the wording stays neutral') : v ? `read from your inputs as ${v.name}${from}` : 'not clear from your inputs (name the industry in plain words for sector notes)';
     const model = m.model
         ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})`
-        : 'not clear from your inputs; set how you charge (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
+        : 'not clear from your inputs; describe how you charge for advice that fits it';
     return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };
 }
 // The measures of a sector. The AI native list in the data file is written for customer-service automation (resolution, handling time),
