@@ -1,3 +1,5 @@
+import { readerLabel } from './text-signals.ts';
+import { hasSignal, signal, readSignal, SIGNALS } from './text-signals.ts';
 // Run 22 rewrite of impact_pinpoint_value, impact_anchor_market and impact_map_alternatives: text helpers only.
 // Everything here is pure string work (no network, no file access, no environment, no logging). It holds cue words (words that tell what kind of
 // thing a typed phrase is: a customer result, a piece of recognition, a count of users, a quote) and the small tools that turn a typed list into a clean
@@ -134,12 +136,15 @@ const RECOGNITION = /\b(?:awards?|award[- ]winning|frost radar|gartner|forrester
 const RESULT = /\b(?:success stor(?:y|ies)|story title|secured|averted|protected|blocked|remediated|detected|uncovered|identified|resolved|eliminated|cut|cuts|reduc\w+|increas\w+|improv\w+|grew|grow\w*|raised|lifted|saved|saving|savings|lower\w*|faster|fewer|unlock\w*|achiev\w+|reach\w*|boost\w*|doubled|halved|shorten\w*|expanded|recovered|closed|won|generated|avoided|prevented|stopped|from \S+ to \S+|up from|down from)\b/i;
 const SCALE = /(?:\b(?:rely|relies|trust|trusts|choose|chooses|use|uses|used)\b|\b\d+(?:\.\d+)?%\s+of\s+the\s+(?:largest|top|world's|biggest)|\b\d[\d,.]*\+?\s*(?:[km]\b)?\s*(?:[a-z-]+\s+){0,2}(?:fintechs?|companies|teams|customers|users|brands|businesses|organi[sz]ations|developers|enterprises|merchants|sites|countries|clients|logos|employees|downloads|installs|adults|banks|retailers|shippers|carriers|partners|offices|locations|integrations|sources|customers)\b|\b\d+ in \d+\b|\bbuilt on\b|\btrusted by\b|\bused by\b|\bmore than [\d,]+|\bover [\d,]+|\b[\d,]+\+)/i;
 /** What kind of proof a supplied item is, and the tier it belongs to (1 customer result, 2 third party, 4 social). */
-export function classifyProof(item: string): { tier: 1 | 2 | 4; kind: ProofKind } {
+export function classifyProof(item: string): { tier: 1 | 2 | 4; kind: ProofKind; held?: boolean } {
   const t = item.trim();
+  const recognition = readSignal(t, RECOGNITION, SIGNALS.recognition);
+  if (signal(t,'adverse_result').state === 'affirmed' || ['negated','unclear'].includes(signal(t,'positive_result').state) || ['negated','unclear'].includes(recognition.state)) return {tier:4,kind:'scale',held:true};
+
   if (/\bquote from\b|\btestimonial\b/i.test(t) || /^["“]/.test(t) || /["“][^"”]{12,}["”]/.test(t)) return { tier: 4, kind: 'quote' };
-  if (RECOGNITION.test(t) && !/^[A-Z][\w-]+(?: [A-Z][\w-]+)? (?:cut|reduced|increased|improved|raised|saved)\b/.test(t)) return { tier: 2, kind: 'recognition' };
-  if (RESULT.test(t) && !/\b(?:rely|relies|trust|trusts)\b/i.test(t)) return { tier: 1, kind: 'result' };
-  if (SCALE.test(t)) return { tier: 4, kind: 'scale' };
+  if (recognition.state === 'affirmed' && !/^[A-Z][\w-]+(?: [A-Z][\w-]+)? (?:cut|reduced|increased|improved|raised|saved)\b/.test(t)) return { tier: 2, kind: 'recognition' };
+  if (hasSignal(t,RESULT,'positive_result') && !/\b(?:rely|relies|trust|trusts)\b/i.test(t)) return { tier: 1, kind: 'result' };
+  if (hasSignal(t,SCALE)) return { tier: 4, kind: 'scale' };
   return /\d/.test(t) ? { tier: 1, kind: 'result' } : { tier: 4, kind: 'scale' };
 }
 
@@ -164,7 +169,7 @@ export function ctaNoun(cta: string): string {
 /** The closing list of what is missing: "To sharpen this, give: X (it would change Y); ...". null when nothing is missing. */
 export function sharpenLine(missing: { give: string; changes: string }[]): string | null {
   if (!missing.length) return null;
-  return `**To sharpen this, give:** ${missing.map((m) => `${m.give} (it would change ${m.changes})`).join('; ')}.`;
+  return `**To sharpen this, give:** ${missing.map((m) => `${readerLabel(m.give)} (it would change ${m.changes})`).join('; ')}.`;
 }
 
 // A field of work named by a mass noun ("predictive cybersecurity") is not a product; it reads "a provider of predictive cybersecurity".

@@ -92,15 +92,15 @@ test("anchor_market: segments that all score the same choose nothing; the answer
   assert.match(t, /No segment is chosen by the scores: 3 segments tie/);
   assert.doesNotMatch(t, /Recommended Beachhead:/);
   assert.doesNotMatch(t, /\(beachhead\)/);
-  assert.match(t, /no keyword, so the middle score/);
+  assert.match(t, /no affirmative preset category, so the middle score/);
   assert.match(t, /TAM: cannot be calculated yet/);
   assert.doesNotMatch(t, /ARR|500,000|7,500|50-500 employees|Series B/);
   assert.equal(brackets(t).length, 0, brackets(t).join(" | "));
 });
-test("anchor_market: a winner by keyword says it is a keyword match, naming the word, and ICP size is not invented", async () => {
+test("FIX3R known reader fault: a preset winner names the category and source, and ICP size is not invented", async () => {
   const t = await call("impact_anchor_market", { product_description: "Northgate managed services for manufacturers", potential_segments: ["Enterprise manufacturers", "Retail chains"], average_deal_size: "$400,000" });
   assert.match(t, /highest keyword match only/);
-  assert.match(t, /the word "enterprise"/);
+  assert.match(t, /preset category "enterprise", read from "Enterprise manufacturers"/);
   assert.match(t, /Size: not given/);
   assert.doesNotMatch(t, /50-500|Series/);
   assert.equal(brackets(t).length, 0, brackets(t).join(" | "));

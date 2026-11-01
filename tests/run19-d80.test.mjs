@@ -294,7 +294,7 @@ test("problem 4: a managed service business is read as services, and the optiona
   const inv = { product_name: "Answerloop", target_customer: "asset allocators and investment managers", key_benefit: "see how every portfolio position contributes to risk", differentiation: "explainable strategies with risk reporting", product_category: "investment strategy platform", competitor: "traditional fund houses" };
   const a = (await call("impact_craft_message", inv)).text;
   const b = (await call("impact_craft_message", { ...inv, business_model: "investment" })).text;
-  assert.match(b, /from business_model/);
+  assert.match(b, /from your answer/);
   assert.doesNotMatch(b, /\bTCO\b|payback|free trial|seats?\b/i);
   assert.match(b, /mandate|fees|reporting/i);
   assert.ok(a.length > 500);
@@ -317,8 +317,8 @@ test("problem 4: the tools list the optional business_model (and sector, company
 test("problem 5: anchor_market no longer assumes 500,000 companies, a $30,000 deal or a 3 to 6 month cycle; it says what it needs", async () => {
   const r = (await call("impact_anchor_market", { product_description: "managed SD-WAN for banks", potential_segments: ["Banks and NBFCs", "Retail chains with many branches"] })).text;
   assert.doesNotMatch(r, /500,000|50,000 companies|100,000 companies|\$30,000|3-6 months/);
-  assert.match(r, /company_counts/);
-  assert.match(r, /average_deal_size/);
+  assert.match(r, /company counts/);
+  assert.match(r, /average deal size/);
   assert.match(r, /not supplied/i);
 });
 test("problem 6: anchor_market arithmetic uses the user's own counts, deal size and percentages", async () => {
@@ -333,21 +333,22 @@ test("problem 6: anchor_market arithmetic uses the user's own counts, deal size 
   // the count of another segment is used when that segment is the beachhead
   const r2 = (await call("impact_anchor_market", { product_description: "spend management software", potential_segments: ["Mid-size manufacturers", "Enterprise IT services firms"],
     company_counts: "Mid-size manufacturers: 3,200; Enterprise IT services firms: 600", average_deal_size: "$24K", percent_matching_icp: 50, year_one_share_percent: 10 })).text;
-  assert.match(r2, /Recommended Beachhead: Enterprise IT services firms/);
-  assert.match(r2, /600 companies/);
-  assert.match(r2, /\$14\.4M/);
-  assert.match(r2, /\$7\.2M/);
-  assert.match(r2, /\$0\.72M/);
-  assert.match(r2, /30 customers/);
+  // W4 R3: "mid-size" now reads as mid-market, so that preset wins. Arithmetic must follow it.
+  assert.match(r2, /Recommended Beachhead: Mid-size manufacturers/);
+  assert.match(r2, /3,200 companies/);
+  assert.match(r2, /\$76\.8M/);
+  assert.match(r2, /\$38\.4M/);
+  assert.match(r2, /\$3\.84M/);
+  assert.match(r2, /160 customers/);
 });
 test("problem 6: anchor_market names the missing input instead of guessing, line by line", async () => {
   const noPct = (await call("impact_anchor_market", { product_description: "spend management software", potential_segments: ["Mid-size manufacturers"], company_counts: "Mid-size manufacturers: 3,200", average_deal_size: "$24,000" })).text;
   assert.match(noPct, /\$76\.8M/);
-  assert.match(noPct, /percent_matching_icp/);
+  assert.match(noPct, /percent matching icp/);
   assert.doesNotMatch(noPct, /30%|5%/);
   const noAcv = (await call("impact_anchor_market", { product_description: "spend management software", potential_segments: ["Mid-size manufacturers"], company_counts: "Mid-size manufacturers: 3,200" })).text;
   assert.doesNotMatch(noAcv, /\$\d+(\.\d+)?M/);
-  assert.match(noAcv, /average_deal_size/);
+  assert.match(noAcv, /average deal size/);
   const bare = (await call("impact_anchor_market", { product_description: "spend management software", potential_segments: ["Mid-size manufacturers"], company_counts: "3,200", average_deal_size: "$24,000" })).text;
   assert.match(bare, /\$76\.8M/);
 });

@@ -112,7 +112,7 @@ test("pinpoint: missing inputs are named once at the end, each with what it woul
   assert.equal(sharpen(t), 1);
   assertSharpenAtEnd(t, "minimal");
   const tail = t.split("To sharpen this, give:")[1];
-  for (const k of ["product_name", "category", "customer_metrics"]) assert.match(tail, new RegExp(k));
+  for (const k of ["product_name", "category", "customer_metrics"]) assert.match(tail, new RegExp(k.replace(/_/g, " ")));
   assert.doesNotMatch(t.split("To sharpen this, give:")[0], PLACEHOLDER);
   assert.doesNotMatch(t, /not supplied|your product\b/i, "no 'not supplied' or 'your product' inside the text");
   const full = await call(TOOL, LEDGER);

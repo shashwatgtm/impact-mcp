@@ -22,6 +22,7 @@ const quoted = (value) => {
     return `"${shown}"`;
 };
 function auditReader(text, args) {
+    const craftAction = String(args.key_differentiation ?? '').trim() ? actions.craft : 'Describe a difference you can support, then write a current message using the buyer and problem.';
     const scores = [...text.matchAll(/^\| \*\*[IMPACT]\*\*:[^|]+\| (\d+)\/100/gm)].map(match => Number(match[1]));
     const total = /Input completeness score: (\d+)\/100/.exec(text)?.[1];
     const thin = scores.filter(score => score < 60).length;
@@ -36,10 +37,10 @@ function auditReader(text, args) {
         text = text.replace('Your target customer does not mention employees, revenue or a funding series. What makes a company ideal for you?', 'You supplied a staff size or range. Add the segment or buying situation that makes these companies a fit.');
     }
     for (const [name, action] of Object.entries(toolActions)) {
-        text = text.replaceAll(`Run \`${name}\` to add this detail.`, action);
+        text = text.replaceAll(`Run \`${name}\` to add this detail.`, name === 'impact_craft_message' ? craftAction : action);
     }
     const work = text.split('## Areas to work on next')[1]?.split('## Proof You Already Have')[0] ?? '';
-    const next = [...work.matchAll(/^### (\w+) /gm)].map(match => actions[match[1].toLowerCase()]).filter(Boolean);
+    const next = [...work.matchAll(/^### (\w+) /gm)].map(match => match[1].toLowerCase() === 'craft' ? craftAction : actions[match[1].toLowerCase()]).filter(Boolean);
     text = text.replace(/## Tools to Use Next[\s\S]*?(?=Suggested timings, lengths and counts:)/, `## Next actions\n\n${next.map((action, index) => `${index + 1}. ${action}`).join('\n')}\n`);
     // Catch the remaining generated tool references without rewriting supplied proof or quotations.
     text = text.replace(/Add current_positioning\./g, 'Add your current message.').replace(/Add customer_feedback \(what customers say, or results they report\)\./g, 'Add what customers say, or results they report.');

@@ -153,7 +153,7 @@ test("translate: missing inputs are named once at the end, each with what it wou
   assert.equal(sharpen(t), 1);
   assertSharpenAtEnd(t, "minimal");
   const tail = t.split("To sharpen this, give:")[1];
-  assert.match(tail, /product_name/);
+  assert.match(tail, /product name/);
   const head = t.split("To sharpen this, give:")[0];
   assert.doesNotMatch(head, PLACEHOLDER);
   assert.doesNotMatch(head, MERGE);

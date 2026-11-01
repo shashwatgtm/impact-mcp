@@ -96,7 +96,7 @@ test("map: with no competitors given, no competitor is invented; the sector's us
   assert.equal(sharpen(t), 1);
   assertSharpenAtEnd(t, "no competitors");
   const tail = t.split("To sharpen this, give:")[1];
-  for (const k of ["competitors", "competitor_weaknesses", "your_strengths"]) assert.match(tail, new RegExp(k));
+  for (const k of ["competitors", "competitor_weaknesses", "your_strengths"]) assert.match(tail, new RegExp(k.replace(/_/g, " ")));
   const full = await call(TOOL, LANE);
   assert.equal(sharpen(full), 0, "everything was given");
 });

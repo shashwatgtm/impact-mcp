@@ -2,23 +2,23 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { call as call0 } from "./run22-impact-common.mjs";
-const call = async (t, a) => { const o = await call0(t, a); if (!/your_sector must be one of/.test(o)) assert.ok(!/^(?:Missing required|Invalid input)/.test(o), o); return o; };
+const call = async (t, a) => { const o = await call0(t, a); if (!/your selected sector must be one of/.test(o)) assert.ok(!/^(?:Missing required|Invalid input)/.test(o), o); return o; };
 
 const base = { product_name: "Quillbase", category: "customer support software", target_customer: "support teams at banks", key_outcome: "Faster replies", unique_capability: "Drafts replies from your past tickets" };
 
 test("your_sector decides the sector over contrary text", async () => {
   const o = await call("impact_pinpoint_value", { ...base, your_sector: "telecom" });
-  assert.match(o, /Sector: set by your_sector as telecom/);
+  assert.match(o, /Sector: from your choice: telecom/);
 });
 
 test("your_sector other means neutral wording", async () => {
   const o = await call("impact_pinpoint_value", { ...base, your_sector: "other" });
-  assert.match(o, /set by your_sector to other, so the wording stays neutral/);
+  assert.match(o, /from your choice of other, so the wording stays neutral/);
 });
 
 test("an unknown value is refused with the allowed values and never echoed", async () => {
   const o = await call("impact_pinpoint_value", { ...base, your_sector: "<b>x</b>" });
-  assert.match(o, /your_sector must be one of: logistics_tech, fintech/);
+  assert.match(o, /your selected sector must be one of: logistics_tech, fintech/);
   assert.ok(!o.includes("<b>x</b>"));
 });
 

@@ -26,17 +26,17 @@ test("D94: with customers, pain and deal size the segments are ranked from them,
 test("D94: without the pain the keyword presets are used as before, and the answer says which input is missing", async () => {
   const t = await call({ ...BASE, current_customers: OWN.current_customers });
   assert.match(t, /Method used: keyword presets/);
-  assert.match(t, /customer_pain/);
+  assert.match(t, /customer pain/);
   assert.equal(beachhead(t), "Mid-market fintech");
 });
 
 test("D94: without the deal size, or without customers, the presets are used", async () => {
   const noAcv = await call({ product_description: BASE.product_description, potential_segments: BASE.potential_segments, ...OWN });
   assert.match(noAcv, /Method used: keyword presets/);
-  assert.match(noAcv, /average_deal_size/);
+  assert.match(noAcv, /average deal size/);
   const noCust = await call({ ...BASE, customer_pain: OWN.customer_pain });
   assert.match(noCust, /Method used: keyword presets/);
-  assert.match(noCust, /current_customers/);
+  assert.match(noCust, /current customers/);
 });
 
 test("D94: the presets still give the same scores when the three inputs are not all given (metamorphic: pain and customers change nothing)", async () => {
@@ -67,6 +67,6 @@ test("D94: the new input is optional and described, and the other input descript
   const tool = (await rpc("tools/list", {})).tools.find((x) => x.name === "impact_anchor_market");
   assert.ok(tool.inputSchema.properties.customer_pain);
   assert.ok(!tool.inputSchema.required.includes("customer_pain"));
-  assert.match(tool.inputSchema.properties.customer_pain.description, /current_customers/);
-  assert.match(tool.inputSchema.properties.current_customers.description, /customer_pain/);
+  assert.match(tool.inputSchema.properties.customer_pain.description, /current customers/);
+  assert.match(tool.inputSchema.properties.current_customers.description, /customer pain/);
 });
