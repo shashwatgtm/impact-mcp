@@ -2,5 +2,5 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BUILD_PROFILE = void 0;
 // Generated at build time. Committed builds must use current.
-exports.BUILD_PROFILE = { profile: "slice", payload: "meta", domainEnabled: true, buildHash: "f6670d48869c" };
+exports.BUILD_PROFILE = { profile: "slice", payload: "meta", domainEnabled: true, buildHash: "34cf493f5fdb" };
 //# sourceMappingURL=build-profile.js.map

@@ -1718,8 +1718,8 @@ ${SUGGESTED}
         const parts = best(pParts, target);
         const strong = best(factFree, target)[0];
         const what = w.length ? `the weakness you reported (${q(clip(w[0], 90))})` : `what you described (${q(clip(nameLike(c) ? descriptor(c) || nameOf(c) : c, 90))})`;
-        if (parts.length) return `your own product text names ${joinAnd(parts.map((x) => q(clip(x, 110))))}, which answers ${what}${strong ? `; your strength ${q(clip(strong, 110))} backs it` : ''}`;
-        if (strong) return `your strength ${q(clip(strong, 110))} (your words) answers ${what}`;
+        if (parts.length) return `your own product text names ${joinAnd(parts.map((x) => q(clip(x, 110))))}, which is a lexical match for ${what}; this is a hypothesis, not a supported comparison${strong ? `; your strength ${q(clip(strong, 110))} is another seller claim to test` : ''}`;
+        if (strong) return `your strength ${q(clip(strong, 110))} (your words) is a hypothesis to test against ${what}`;
         return '';
       };
       // One neutral question per card, built from the weakness (or the alternative) and from a sector measure that shares its meaning.
@@ -1749,7 +1749,7 @@ ${w.length ? `- Weaknesses you reported:\n${w.map((x) => `  - ${x}`).join('\n')}
       const prodName = brandName(args.your_product, plainName(args.your_product, runningName(args.your_product.replace(/\s*\([^)]*\)/g, '').trim()))) || 'Your product';
       const linkedStrengths = factFree.filter((x) => weaknessItems.some((w) => answerFor(w) === x));
       const partWeak = weaknessItems.filter((w) => best(pParts, w).length);
-      const inShort = `${prodName} is mapped against ${vendors.length ? `${vendors.length} ${describedOnly ? 'alternative' : 'competitor'}${vendors.length > 1 ? 's' : ''} you ${describedOnly ? 'described' : 'named'}` : 'no named competitor (you gave none)'}${statusQuo.length ? ` and ${statusQuo.length} way${statusQuo.length > 1 ? 's' : ''} your buyers cope without a vendor` : ''}. ${weaknessItems.length ? `You reported ${weaknessItems.length} weakness${weaknessItems.length > 1 ? 'es' : ''}: ${weaknessItems.length - untied.length} tied to a single alternative${untied.length ? ` and ${untied.length} about the group` : ''}; ${partWeak.length ? `your own product text answers ${partWeak.length === weaknessItems.length ? 'all of them' : `${partWeak.length} of them`}` : 'your product text answers none of them by its words'}${linkedStrengths.length ? ` and ${linkedStrengths.length} of your strengths ${linkedStrengths.length === 1 ? 'backs' : 'back'} an answer` : ''}.` : 'You reported no weaknesses, so each part asks the buyer instead.'}${strengthItems.length ? '' : ' You gave no strengths, so only your product text is used as a lead.'}${competitorsGiven ? '' : ' Because you gave no competitors, the answer below maps the usual alternatives for a seller like you and names no rival.'}`;
+      const inShort = `${prodName} is mapped against ${vendors.length ? `${vendors.length} ${describedOnly ? 'alternative' : 'competitor'}${vendors.length > 1 ? 's' : ''} you ${describedOnly ? 'described' : 'named'}` : 'no named competitor (you gave none)'}${statusQuo.length ? ` and ${statusQuo.length} way${statusQuo.length > 1 ? 's' : ''} your buyers cope without a vendor` : ''}. ${weaknessItems.length ? `You reported ${weaknessItems.length} weakness${weaknessItems.length > 1 ? 'es' : ''}: ${weaknessItems.length - untied.length} tied to a single alternative${untied.length ? ` and ${untied.length} about the group` : ''}; ${partWeak.length ? `your own product text has lexical matches for ${partWeak.length === weaknessItems.length ? 'all of them' : `${partWeak.length} of them`}` : 'your product text has no lexical match'}${linkedStrengths.length ? ` and ${linkedStrengths.length} of your strengths ${linkedStrengths.length === 1 ? 'is a claim' : 'are claims'} to test` : ''}.` : 'You reported no weaknesses, so each part asks the buyer instead.'}${strengthItems.length ? '' : ' You gave no strengths, so only your product text is used as a lead.'}${competitorsGiven ? '' : ' Because you gave no competitors, the answer below maps the usual alternatives for a seller like you and names no rival.'}`;
 
       const missing: { give: string; changes: string }[] = [];
       if (!competitorsGiven) missing.push({ give: 'competitors (the rivals and the status-quo options your buyers use)', changes: 'the whole answer, which would get one part per alternative' });
@@ -1772,16 +1772,32 @@ ${w.length ? `- Weaknesses you reported:\n${w.map((x) => `  - ${x}`).join('\n')}
         const parts = best(pParts, `${w} ${ownerOf(w)}`);
         const st = best(factFree, `${w} ${ownerOf(w)}`)[0] || null;
         const own = ownerOf(w);
-        return `- ${q(clip(w, 260))} (${own ? `about ${head(own)}` : 'about the alternatives as a group'}): ${parts.length ? `your product text names ${joinAnd(parts.map((x) => q(clip(x, 110))))}${st ? `; your strength ${q(clip(st, 260))} (your words) backs it` : ''}` : st ? `your strength ${q(clip(st, 260))} (your words) answers it` : 'nothing you gave answers this by its meaning yet, so find the proof that would'}`;
+        return `- ${q(clip(w, 260))} (${own ? `about ${head(own)}` : 'about the alternatives as a group'}): ${parts.length ? `your product text names ${joinAnd(parts.map((x) => q(clip(x, 110))))}${st ? `; your strength ${q(clip(st, 260))} (your words) is another seller claim to test` : ''}` : st ? `your strength ${q(clip(st, 260))} (your words) is a lexical match to test` : 'no matched claim was supplied; collect comparable evidence'}`;
       });
       const pairLines = [
-        ...(weakLines.length ? ['\n**Weaknesses you gave, and what in your own words answers them** (your notes, to test with buyers; not verified facts):', ...weakLines] : []),
-        ...(unlinked.length ? ['\n**Other strengths: no weakness answered yet** (each needs a question that tests it):', ...unlinked.map((x) => `- ${x}: to test it, ask buyers: ${testQ(x)}`)] : []),
+        ...(weakLines.length ? ['\n**Reported weaknesses and lexical matches to test** (your notes, to test with buyers; not verified facts):', ...weakLines] : []),
+        ...(unlinked.length ? ['\n**Other strengths: comparison unconfirmed** (each needs a question that tests it):', ...unlinked.map((x) => `- ${x}: to test it, ask buyers: ${testQ(x)}`)] : []),
         ...(facts.length ? ['\n**Company facts, not reasons to choose you** (keep them for credibility):', ...facts.map((x) => `- ${x}`)] : []),
       ];
       const sectorPart = v ? `\n${nsw(sectorBlock(v, lz.fn ? ['committee', 'objections'] : ['vocabulary', 'committee', 'objections', 'discovery'], 'Sector view'))}${lz.fn ? `\n${teamBlock(lz.fn, v)}` : ''}\n` : '';
 
+      const comparisonRows = named.map(c=>{
+        const their = (args.competitor_weaknesses || '').split('\n').filter(line=>line.toLowerCase().includes(nameOf(c).toLowerCase())).join('; ') || (matched.get(c)||[]).join('; ');
+        const ours = args.your_strengths || '';
+        const criterion = (text:string) => text.match(/(?:Criterion|Comparison measure):\s*([^;\n.]+)/i)?.[1]?.trim() || '';
+        const source = (text:string) => text.match(/https?\\*:\/\/[^\s;)]+/i)?.[0] || '';
+        const oc = criterion(ours), tc = criterion(their);
+        const ready = !!oc && oc.toLowerCase()===tc.toLowerCase() && !!source(ours) && !!source(their);
+        return `| ${head(c)} | ${oc || tc || 'Unknown; agree a buyer criterion'} | ${source(ours) || 'Unknown'} | ${source(their) || 'Unknown'} | ${ready ? 'Comparable sources supplied; verify their content before concluding' : 'Hypothesis only; comparison not established'} | On ${oc || tc || 'the buyer criterion'}, what does each option do on the same task, and which source supports each answer? |`;
+      }).join('\n');
       return `# Competitive Landscape Analysis
+
+## Comparison evidence before conclusions
+Lexical matches identify questions to test. They do not prove that a weakness is answered. Each option needs the same criterion and a linked source; supplied links still require content verification.
+
+| Alternative | Criterion | Your source | Alternative source | Status | Buyer comparison question |
+| --- | --- | --- | --- | --- | --- |
+${comparisonRows}
 
 ${heldStrengths.length ? `**Statements held, not a strength of your product:**\n${list(heldStrengths)}\nConfirm whose capability each statement describes and supply evidence before using it as your advantage.\n` : ''}
 ## In short
