@@ -2866,17 +2866,19 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             const clauseShort = lead.length ? (0, rw_impact2_ts_1.resultClause)([{ text: leadOf(lead[0].text, 100), label: lead[0].label }], kit) : null;
             // What the product does, as a clause that follows "that" and as a sentence of its own.
             const npLead = !B.headline && B.parts.length && ['np', 'noun'].includes((0, rw_impact2_ts_1.shapeOf)(B.parts[0].text, kit)) && !clauseLead ? (0, rw_impact2_ts_1.partsInline)(B.parts).map((x) => clean(x)).join(', ') : '';
-            const resultThat = headVerb ? `helps them ${bareHead}` : B.headline && headShape !== 'clause' ? `delivers ${kit.lowerFirst(clean(B.headline))}` : !B.headline && clauseLead ? `helps them ${clauseLead.includes(';') ? clauseOne || clauseLead : clauseLead}` : npLead ? `delivers ${kit.lowerFirst(npLead)}` : '';
-            const resultOwn = (() => (headShape === 'clause' && B.headline ? (0, rw_impact2_ts_1.sentence)(B.headline, kit) : !resultThat ? `The result ${P} is built for: ${clean(oneBare)}.` : ''))();
+            const outcomeProof = /https?\\*:\/\//i.test(args.key_benefit) && (0, text_signals_ts_3.hasSignal)(args.key_benefit, /\b(?:measured|observed|customer result)\b/i);
+            const hypothesis = `Unproved value hypothesis: ${q(args.key_benefit.trim())}.`;
+            const resultThat = !outcomeProof ? `helps the buyer investigate the desired outcome ${q(args.key_benefit.trim())}` : headVerb ? `helps them ${bareHead}` : B.headline && headShape !== 'clause' ? `delivers ${kit.lowerFirst(clean(B.headline))}` : !B.headline && clauseLead ? `helps them ${clauseLead.includes(';') ? clauseOne || clauseLead : clauseLead}` : npLead ? `delivers ${kit.lowerFirst(npLead)}` : '';
+            const resultOwn = (() => (!outcomeProof ? '' : headShape === 'clause' && B.headline ? (0, rw_impact2_ts_1.sentence)(B.headline, kit) : !resultThat ? `The result ${P} is built for: ${clean(oneBare)}.` : ''))();
             const detail = (() => {
-                if (!B.parts.length || !B.headline)
+                if (!outcomeProof || !B.parts.length || !B.headline)
                     return '';
                 if (headVerb && clauseAll)
                     return `In practice, ${aud} can ${clauseAll}.`;
                 return `In practice: ${(0, rw_impact2_ts_1.partsInline)(B.parts).map((x) => clean(x)).join('; ')}.`;
             })();
-            const oneSentence = headVerb ? `${PC} helps ${aud} ${bareHead}.` : B.headline && headShape !== 'clause' ? `${PC} delivers ${kit.lowerFirst(clean(B.headline))}.` : clauseShort ? `${PC} helps ${aud} ${clauseShort}.` : (B.headline || oneBare ? `${PC} is built for ${aud}: ${leadOf(clean(B.headline || oneBare), 90)}.` : `${PC} is built for ${aud}.`);
-            const youCan = headVerb ? bareHead : clauseShort || '';
+            const oneSentence = !outcomeProof ? `${PC} helps ${aud} investigate the desired outcome ${q(args.key_benefit.trim())}.` : headVerb ? `${PC} helps ${aud} ${bareHead}.` : B.headline && headShape !== 'clause' ? `${PC} delivers ${kit.lowerFirst(clean(B.headline))}.` : clauseShort ? `${PC} helps ${aud} ${clauseShort}.` : (B.headline || oneBare ? `${PC} is built for ${aud}: ${leadOf(clean(B.headline || oneBare), 90)}.` : `${PC} is built for ${aud}.`);
+            const youCan = outcomeProof ? (headVerb ? bareHead : clauseShort || '') : '';
             // The difference: items at the semicolons; a recognition goes to the proof.
             const D = (0, rw_impact2_ts_1.parseDifference)(args.differentiation);
             const diffItems = (D.items.length ? D.items : [args.differentiation.trim()]).map(cap4);
@@ -2960,6 +2962,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             const out = [];
             out.push(`# Positioning and Messaging${named ? `: ${P}` : ''}`);
             out.push(ctx.line);
+            out.push(`## Confirm one claim and its proof\n${outcomeProof ? 'Outcome source supplied; confirm the measured scope, period and permission before using the claim.' : hypothesis + ' No outcome proof was supplied. Confirm one claim, its measured result, period and source before publishing the hierarchy below. The draft wording remains a hypothesis.'}`);
             out.push('---');
             // ---- the statement
             const firstSentence = (() => {
@@ -2972,7 +2975,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             const stmt = [firstSentence];
             // when the first sentence carries only the first result (the others would read as a semicolon list), the others follow as a sentence of their own
             const clauseRest = !B.headline && clauseLead && clauseLead.includes(';') && lead.length > 1 ? (0, rw_impact2_ts_1.resultClause)(lead.slice(1), kit) : null;
-            if (clauseRest && !clauseRest.includes(';') && !(clauseOne && clauseOne.includes(';')))
+            if (outcomeProof && clauseRest && !clauseRest.includes(';') && !(clauseOne && clauseOne.includes(';')))
                 stmt.push(`It also helps them ${clauseRest}.`);
             if (catBracket)
                 stmt.push(catBracket);
@@ -3070,7 +3073,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             const evalPicked = evalOwn.length ? evalOwn : evalGroup === EVAL_FINANCE && evalConcern && !/\b(?:IT|technical|systems?|ERP|engineer\w*|architect\w*|data|integration\w*)\b/.test(evaluator) ? [] : evalPool;
             const evalWord = evalGroup === EVAL_FINANCE && evalOwn.length ? 'finance' : 'technical';
             const optA = (() => {
-                if (!needPcs.length || !clauseLead || !(startsWithP(diffMain) || startsWithP(diffLead)) || /^\[/.test(diffMain))
+                if (!outcomeProof || !needPcs.length || !clauseLead || !(startsWithP(diffMain) || startsWithP(diffLead)) || /^\[/.test(diffMain))
                     return null;
                 const needIf = needShape === 'verb' ? `you ${needBare}` : needShape === 'gerund' || needShape === 'noun' ? `you struggle with ${needLc}` : '';
                 if (!needIf || needLc.split(/\s+/).length > 22)
@@ -3079,14 +3082,14 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
                 return fresh(`If ${needIf}, ${pred}, so you can ${clauseLead}.`);
             })();
             const optBTail = diffLead || (startsWithP(diffMain) ? diffMain : '');
-            const optB = `${outShort || B.headline || oneBare ? `${capFirst(outShort || (0, rw_impact_ts_1.clip)(clean(B.headline || oneBare), 90))}.` : `${PC} is built for ${aud}.`} ${optBTail ? fresh(optBTail, `Under the hood: ${plain(optBTail)}`) : fresh(`Built for ${aud}.`, `Made for ${aud}.`)}`.trim();
+            const optB = !outcomeProof ? `${hypothesis} Supplied difference to verify: ${q(args.differentiation)}.` : `${outShort || B.headline || oneBare ? `${capFirst(outShort || (0, rw_impact_ts_1.clip)(clean(B.headline || oneBare), 90))}.` : `${PC} is built for ${aud}.`} ${optBTail ? fresh(optBTail, `Under the hood: ${plain(optBTail)}`) : fresh(`Built for ${aud}.`, `Made for ${aud}.`)}`.trim();
             const optM = startsWithP(diffLead || diffMain) && youCan && !/^\[/.test(diffMain) ? fresh(`${plain(diffLead || diffMain).replace(/\.$/, '')}, so ${aud} can ${youCan}.`) : '';
             out.push(`## Message Hierarchy
 
 ### Level 1: Tagline
 | Style | Tagline | Best For |
 |-------|---------|----------|
-${tags.length ? tags.join('\n') : `| **Audience** | "Built for ${(0, rw_impact_ts_1.clip)(aud, 40)}" | Targeting |`}
+${!outcomeProof ? `| **Hypothesis to test** | ${q(args.key_benefit)} | Validate the desired outcome |` : tags.length ? tags.join('\n') : `| **Audience** | "Built for ${(0, rw_impact_ts_1.clip)(aud, 40)}" | Targeting |`}
 
 ### Level 2: Value Proposition
 ${optA ? `**Problem to solution**\n> ${optA}\n\n` : ''}**Outcome first**
@@ -3094,7 +3097,7 @@ ${optA ? `**Problem to solution**\n> ${optA}\n\n` : ''}**Outcome first**
 ${optM ? `\n**Mechanism first**\n> ${optM}\n` : ''}
 ### Level 3: Three Supporting Pillars
 
-**Pillar 1: the result.** ${B.headline ? `${capFirst(clean(B.headline))}.${B.parts.length ? ` What sits behind it: ${(0, rw_impact2_ts_1.partsInline)(B.parts).map((x) => clean(x)).join('; ')}.` : ''}` : B.parts.length === 0 ? `Your key benefit holds only results others got (they are the proof lines below), so no result line of the product itself is written yet: add what a buyer gets in one clause.` : B.parts.length === 1 ? `What buyers get: ${kit.lowerFirst(clean((0, rw_impact2_ts_1.partText)(B.parts[0]).length > 150 ? `${leadOf(B.parts[0].text, 110)}${B.parts[0].label ? ` ${B.parts[0].label}` : ''}` : (0, rw_impact2_ts_1.partText)(B.parts[0])))}.` : `What buyers get: ${B.parts.map((p) => capFirst(clean((0, rw_impact2_ts_1.partText)(p).length > 150 ? `${leadOf(p.text, 110)}${p.label ? ` ${p.label}` : ''}` : (0, rw_impact2_ts_1.partText)(p)))).join('; ')}.`}
+**Pillar 1: the result.** ${!outcomeProof ? hypothesis : B.headline ? `${capFirst(clean(B.headline))}.${B.parts.length ? ` What sits behind it: ${(0, rw_impact2_ts_1.partsInline)(B.parts).map((x) => clean(x)).join('; ')}.` : ''}` : B.parts.length === 0 ? `Your key benefit holds only results others got (they are the proof lines below), so no result line of the product itself is written yet: add what a buyer gets in one clause.` : B.parts.length === 1 ? `What buyers get: ${kit.lowerFirst(clean((0, rw_impact2_ts_1.partText)(B.parts[0]).length > 150 ? `${leadOf(B.parts[0].text, 110)}${B.parts[0].label ? ` ${B.parts[0].label}` : ''}` : (0, rw_impact2_ts_1.partText)(B.parts[0])))}.` : `What buyers get: ${B.parts.map((p) => capFirst(clean((0, rw_impact2_ts_1.partText)(p).length > 150 ? `${leadOf(p.text, 110)}${p.label ? ` ${p.label}` : ''}` : (0, rw_impact2_ts_1.partText)(p)))).join('; ')}.`}
 - Proof you have: ${B.claims.length ? (0, rw_impact2_ts_1.partsInline)(B.claims).join('; ') + '.' : B.parts.some((p) => /\d/.test(p.text)) ? 'the figures in the results above, with the labels you gave.' : 'none given for the result yet.'}
 - Proof to collect: ${proofSector ? lc1(proofSector) : `one customer, one measure${m0 ? ` (${m0})` : ''}, before and after, from the customer's own data`}
 
@@ -3111,6 +3114,8 @@ ${vocabShown.length >= 2 ? `Words this sector's buyers use, to check your wordin
 ---`);
             // ---- variations
             const varA = (() => {
+                if (!outcomeProof)
+                    return `Does this desired outcome fit your situation? ${hypothesis}`;
                 if (!needPcs.length)
                     return fresh(`${plain(diffMain)}`, `In short: ${plain(diffMain)}`);
                 // the question ends on a whole clause of the problem: the first clause boundary in reach, else the whole text when it is not long, else the next boundary
@@ -3120,7 +3125,7 @@ ${vocabShown.length >= 2 ? `Words this sector's buyers use, to check your wordin
                 const answer = headVerb ? fresh(`${capFirst(bareHead)} with ${P}.`, `${PC} can help you ${bareHead}.`) : B.headline && headShape !== 'clause' ? fresh(`${capFirst(kit.lowerFirst(clean(B.headline)))}, with ${P}.`, `With ${P}: ${kit.lowerFirst(clean(B.headline))}.`) : fresh(plain(diffLead || diffMain), `The difference in one line: ${plain(diffLead || diffMain)}`);
                 return `${ask} ${answer}`;
             })();
-            const varB = outShort || B.headline || oneBare ? `${PC}: ${capFirst(outShort || (0, rw_impact_ts_1.clip)(clean(B.headline || oneBare), 90))}. ${fresh(`Built for ${aud}.`, `Designed for ${aud}.`, `For ${aud}.`)}` : `${PC} is built for ${aud}.`;
+            const varB = !outcomeProof ? hypothesis : outShort || B.headline || oneBare ? `${PC}: ${capFirst(outShort || (0, rw_impact_ts_1.clip)(clean(B.headline || oneBare), 90))}. ${fresh(`Built for ${aud}.`, `Designed for ${aud}.`, `For ${aud}.`)}` : `${PC} is built for ${aud}.`;
             const stillQ = alt ? `Still ${altBack}?` : '';
             const varC = alt && startsWithP(diffMain) ? fresh(`${stillQ} ${plain(diffLead || diffMain)}`, `${stillQ} The alternative is this: ${plain(diffLead || diffMain)}`) : '';
             // a percentage or multiplier typed inside a result or a difference is a proof line too, with the label of its text
@@ -3145,7 +3150,7 @@ ${proofLines.length ? `> ${proofLines.join(' ')} Use each only as worded and sou
 > ${youCan ? fresh(`${PC} gives you a way to ${youCan}${altBack ? `, instead of ${altBack}` : ''}.`, `${PC} gives you a way to ${youCan}.`) : fresh(`For you, the difference is this: ${plain(diffLead || diffMain)}`)}
 
 **For the economic buyer (${signer}):**
-> ${youCan ? fresh(`${PC} lets your team ${youCan}.`, `With ${P}, your team can ${youCan}.`) : B.headline && headShape !== 'clause' ? fresh(`With ${P}, your team gets ${kit.lowerFirst(clean(B.headline))}.`, `Your team gets ${kit.lowerFirst(clean(B.headline))} with ${P}.`) : fresh(`${PC} is built for ${aud}.`)} ${m0 ? `Measure it in ${m0}${m1 ? ` and ${m1}` : ''}, ${measuresAreSector ? 'the figures this sector already watches' : m1 ? 'the figures in your own results' : 'the figure in your own results'}.` : 'Measure it in a figure your buyer already watches.'} They will also weigh ${commercial}.
+> ${youCan ? fresh(`${PC} lets your team ${youCan}.`, `With ${P}, your team can ${youCan}.`) : outcomeProof && B.headline && headShape !== 'clause' ? fresh(`With ${P}, your team gets ${kit.lowerFirst(clean(B.headline))}.`, `Your team gets ${kit.lowerFirst(clean(B.headline))} with ${P}.`) : fresh(`${PC} is built for ${aud}.`)} ${m0 ? `Measure it in ${m0}${m1 ? ` and ${m1}` : ''}, ${measuresAreSector ? 'the figures this sector already watches' : m1 ? 'the figures in your own results' : 'the figure in your own results'}.` : 'Measure it in a figure your buyer already watches.'} They will also weigh ${commercial}.
 
 **For the technical evaluator${evaluator === 'the technical evaluator' ? '' : ` (${evaluator})`}:**
 > ${[evalConcern, ...evalPicked.map((x, i) => fresh(x, i === 0 ? `For the ${evalWord} review: ${plain(x)}` : `Also: ${plain(x)}`, `And: ${plain(x)}`)), ...(catPlain ? [`${PC} is ${artOf(catPlain)}${catCovers ? ` that covers ${clean(catCovers)}` : ''}.`] : []), ...(prodList ? [`A reviewer can look at ${prodList}.`] : [])].filter(Boolean).join(' ')}
