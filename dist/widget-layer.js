@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.attachWidgets = attachWidgets;
+const widget_output_schema_ts_1 = require("./widget-output-schema.js");
 const build_profile_ts_1 = require("./build-profile.js");
 const audit_summary_ts_1 = require("./audit-summary.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
@@ -22,6 +23,7 @@ function attachWidgets(server) {
                 tools: result.tools.map((t) => Object.prototype.hasOwnProperty.call(selected, t.name)
                     ? {
                         ...t,
+                        ...(t.name === "impact_full_audit" ? { outputSchema: (0, widget_output_schema_ts_1.widgetOutputSchema)(build_profile_ts_1.BUILD_PROFILE.payload) } : {}),
                         _meta: {
                             ...t._meta,
                             ui: {
