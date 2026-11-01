@@ -25,6 +25,7 @@ exports.parseCounts = parseCounts;
 exports.dropFraming = dropFraming;
 exports.createServer = createServer;
 const text_signals_ts_1 = require("./text-signals.js");
+const text_signals_ts_2 = require("./text-signals.js");
 const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
@@ -468,7 +469,7 @@ function readContext(explicitModel, r) {
     // The shared reader cuts a text at "for ..." (the buyer part), so "cloud platform for testing websites ... AI agents" can still read AI native from the label alone:
     // the seller's own texts are read once more as free text without the AI words, and a trade they name then wins (the shared guard covers the other cases).
     // "AI" is a feature of a product, not a sector: the category and the core of the description are read without it first, then the whole description.
-    if (!forcedSector && ex.vertical && ex.vertical.id === 'ai-native' && (0, verticals_ts_1.detectModel)(undefined, { seller: descr }).model !== 'investment') {
+    if (!forcedSector && !(0, text_signals_ts_1.sellerSectorLabel)(coreText || sellerWholeText).id && ex.vertical && ex.vertical.id === 'ai-native' && (0, verticals_ts_1.detectModel)(undefined, { seller: descr }).model !== 'investment') {
         const noAi = (x) => (typeof x === 'string' ? x.replace(/\b(?:AI|A\.I\.)[- ](?:native|powered|led|driven|enabled|first|agents?|analyst|copilot|assistant|layered)\b|\bgenerative AI\b|\bGenAI\b|\bLLMs?\b|\b(?:agent )?copilots?\b|\bchatbots?\b|\bAI\b/gi, ' ') : x);
         const tries = [];
         if (coreT.length)
@@ -1044,7 +1045,7 @@ const withoutSize = (t) => t.replace(SIZE_IN_EMPLOYEES, ' ');
 const statesAbsence = (x) => /^(?:no|none|not|nil|n\/a|without)\b/i.test(x.trim()) && /\b(?:supplied|given|provided|available|known|collected|verified|measured|yet)\b/i.test(x);
 function namedTeams(...texts) {
     const t = withoutSize(texts.filter(Boolean).join(' \n ')).replace(/\b(?:sales|revenue|marketing|finance|financial|support|customer|hr|people|it|security|engineering|devops|billing|supply chain|warehouse)\s+operations?\b/gi, (m) => m.replace(/\s+operations?$/i, ''));
-    const ids = FUNCTIONS.filter((f) => (0, text_signals_ts_1.hasSignal)(t, f.re, 'team_' + f.id)).map((f) => f.id);
+    const ids = FUNCTIONS.filter((f) => (0, text_signals_ts_2.hasSignal)(t, f.re, 'team_' + f.id)).map((f) => f.id);
     // an IT or HR service desk is one team (workplace), and the broad IT, API, modernization and engineering words are not separate teams beside a security or api read
     return ids.includes('workplace') ? ids.filter((i) => i !== 'it' && i !== 'people') : ids;
 }
@@ -1093,8 +1094,8 @@ function functionHitsIn(only, min, ...texts) {
     let best = null;
     let n = 0;
     for (const f of FUNCTIONS.filter((x) => !only || only.includes(x.id))) {
-        const r = (0, text_signals_ts_1.readSignal)(t, f.re, text_signals_ts_1.SIGNALS['team_' + f.id]);
-        const hits = r.state === 'affirmed' ? Math.max(r.evidence.reduce((n, c) => n + (c.match(f.re) || []).length, 0), text_signals_ts_1.SIGNALS['team_' + f.id] && (0, text_signals_ts_1.hasSignal)(t, text_signals_ts_1.SIGNALS['team_' + f.id]) ? min : 0) : 0;
+        const r = (0, text_signals_ts_2.readSignal)(t, f.re, text_signals_ts_2.SIGNALS['team_' + f.id]);
+        const hits = r.state === 'affirmed' ? Math.max(r.evidence.reduce((n, c) => n + (c.match(f.re) || []).length, 0), text_signals_ts_2.SIGNALS['team_' + f.id] && (0, text_signals_ts_2.hasSignal)(t, text_signals_ts_2.SIGNALS['team_' + f.id]) ? min : 0) : 0;
         if (hits > n) {
             best = f;
             n = hits;
@@ -2391,7 +2392,7 @@ ${sharpen0 ? `\n---\n\n## To sharpen this\n\n${sharpen0}\n` : ''}`;
             // Segment scores: keyword presets, unchanged (a segment with none of the keywords gets the middle score).
             const segmentScores = segments.map((segment) => {
                 if (ownMethod) {
-                    const rc = shared(segment, ccStems0).filter(w => (0, text_signals_ts_1.hasSignal)(ccText0, new RegExp('\\b' + w + '\\w*', 'i'))), pn = shared(segment, painStems).filter(w => (0, text_signals_ts_1.hasSignal)(painText, new RegExp('\\b' + w + '\\w*', 'i'))), tm = tamOf(segment);
+                    const rc = shared(segment, ccStems0).filter(w => (0, text_signals_ts_2.hasSignal)(ccText0, new RegExp('\\b' + w + '\\w*', 'i'))), pn = shared(segment, painStems).filter(w => (0, text_signals_ts_2.hasSignal)(painText, new RegExp('\\b' + w + '\\w*', 'i'))), tm = tamOf(segment);
                     const scoresOwn = {
                         pain: byShared(pn.length), budget: maxTam && tm !== null ? Math.max(1, Math.min(5, Math.round(1 + 4 * tm / maxTam))) : 3,
                         access: 3, reference: byShared(rc.length), competition: 3
@@ -2407,24 +2408,24 @@ ${sharpen0 ? `\n---\n\n## To sharpen this\n\n${sharpen0}\n` : ''}`;
                     reference: 3,
                     competition: 3
                 };
-                if ((0, text_signals_ts_1.signal)(segment, 'enterprise').state === 'affirmed') {
+                if ((0, text_signals_ts_2.signal)(segment, 'enterprise').state === 'affirmed') {
                     scores = { pain: 4, budget: 5, access: 2, reference: 5, competition: 2 };
                 }
-                else if ((0, text_signals_ts_1.signal)(segment, 'midmarket').state === 'affirmed') {
+                else if ((0, text_signals_ts_2.signal)(segment, 'midmarket').state === 'affirmed') {
                     scores = { pain: 5, budget: 4, access: 4, reference: 4, competition: 3 };
                 }
-                else if ((0, text_signals_ts_1.signal)(segment, 'small').state === 'affirmed') {
+                else if ((0, text_signals_ts_2.signal)(segment, 'small').state === 'affirmed') {
                     scores = { pain: 4, budget: 2, access: 5, reference: 2, competition: 4 };
                 }
-                else if ((0, text_signals_ts_1.hasSignal)(segment, /\b(?:saas|tech|technology|software vendors)\b/i)) {
+                else if ((0, text_signals_ts_2.hasSignal)(segment, /\b(?:saas|tech|technology|software vendors)\b/i)) {
                     scores = { pain: 5, budget: 4, access: 4, reference: 5, competition: 3 };
                 }
-                else if ((0, text_signals_ts_1.signal)(segment, 'finance').state === 'affirmed') {
+                else if ((0, text_signals_ts_2.signal)(segment, 'finance').state === 'affirmed') {
                     scores = { pain: 4, budget: 5, access: 3, reference: 4, competition: 2 };
                 }
                 // Whether a keyword set the scores (a segment with none gets the middle score on every criterion).
-                const preset = ['enterprise', 'midmarket', 'small'].find(k => (0, text_signals_ts_1.signal)(segment, k).state === 'affirmed');
-                const kwMatch = preset ? [preset] : (0, text_signals_ts_1.hasSignal)(segment, /\b(?:saas|tech|technology|software vendors)\b/i) ? ['tech'] : (0, text_signals_ts_1.signal)(segment, 'finance').state === 'affirmed' ? ['finance'] : null;
+                const preset = ['enterprise', 'midmarket', 'small'].find(k => (0, text_signals_ts_2.signal)(segment, k).state === 'affirmed');
+                const kwMatch = preset ? [preset] : (0, text_signals_ts_2.hasSignal)(segment, /\b(?:saas|tech|technology|software vendors)\b/i) ? ['tech'] : (0, text_signals_ts_2.signal)(segment, 'finance').state === 'affirmed' ? ['finance'] : null;
                 const keyword = !!kwMatch;
                 return {
                     name: segment,
@@ -3734,13 +3735,13 @@ ${SUGGESTED}
             }
             // Pinpoint Value (based on differentiation)
             if (typedLength(differentiation) > 30) {
-                scores.pinpoint = (0, text_signals_ts_1.hasSignal)(differentiation, /only|unique/i, 'unique') ? 85 : 70;
+                scores.pinpoint = (0, text_signals_ts_2.hasSignal)(differentiation, /only|unique/i, 'unique') ? 85 : 70;
             }
             else {
                 scores.pinpoint = 50;
             }
             // Anchor Market (based on target specificity)
-            if ((0, text_signals_ts_1.hasSignal)(args.target_customer, /employees|revenue|Series/, 'specificity')) {
+            if ((0, text_signals_ts_2.hasSignal)(args.target_customer, /employees|revenue|Series/, 'specificity')) {
                 scores.anchor = 80;
             }
             else if (args.target_customer.split(' ').length > 3) {
@@ -3751,7 +3752,7 @@ ${SUGGESTED}
             }
             // Craft Message (based on current positioning)
             if (args.current_positioning && typedLength(args.current_positioning) > 50) {
-                scores.craft = (0, text_signals_ts_1.hasSignal)(args.current_positioning, /unlike|only/, 'unique') ? 85 : 70;
+                scores.craft = (0, text_signals_ts_2.hasSignal)(args.current_positioning, /unlike|only/, 'unique') ? 85 : 70;
             }
             else if (args.current_positioning) {
                 scores.craft = 55;
@@ -3887,9 +3888,9 @@ ${phase === 'translate' ? `You supplied customer feedback; this area scores its 
 ---
 
 ## Sentences read by score rules
-- Differentiation: ${(0, text_signals_ts_1.readSignal)(differentiation, /only|unique/i, /no other vendor|one.of.a.kind/i).evidence.join('; ') || 'No affirmative differentiator was clear.'}
-- Target specificity: ${(0, text_signals_ts_1.readSignal)(args.target_customer, /employees|revenue|Series/, /staff|annual sales|funding round/i).evidence.join('; ') || 'No employee, sales or funding fact was clear.'}
-- Positioning: ${(0, text_signals_ts_1.readSignal)(args.current_positioning || '', /unlike|only/, /no other vendor|one.of.a.kind/i).evidence.join('; ') || 'No affirmative contrast was clear.'}
+- Differentiation: ${(0, text_signals_ts_2.readSignal)(differentiation, /only|unique/i, /no other vendor|one.of.a.kind/i).evidence.join('; ') || 'No affirmative differentiator was clear.'}
+- Target specificity: ${(0, text_signals_ts_2.readSignal)(args.target_customer, /employees|revenue|Series/, /staff|annual sales|funding round/i).evidence.join('; ') || 'No employee, sales or funding fact was clear.'}
+- Positioning: ${(0, text_signals_ts_2.readSignal)(args.current_positioning || '', /unlike|only/, /no other vendor|one.of.a.kind/i).evidence.join('; ') || 'No affirmative contrast was clear.'}
 
 ## Areas to work on next
 ${weakest.map(([phase, score]) => `
@@ -4180,7 +4181,7 @@ function createServer() {
                 setYourSector(undefined);
             }
             return {
-                content: [{ type: 'text', text: result }]
+                content: [{ type: 'text', text: (0, text_signals_ts_1.sectorChoiceNotice)(toolName, callArgs, text => { const r = (0, verticals_ts_1.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + result }]
             };
         }
         catch (error) {

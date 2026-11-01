@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { sellerSectorLabel, sectorChoiceNotice } from './text-signals.ts';
 import { signal, hasSignal, readSignal, SIGNALS } from './text-signals.ts';
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -404,7 +405,7 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
   // The shared reader cuts a text at "for ..." (the buyer part), so "cloud platform for testing websites ... AI agents" can still read AI native from the label alone:
   // the seller's own texts are read once more as free text without the AI words, and a trade they name then wins (the shared guard covers the other cases).
   // "AI" is a feature of a product, not a sector: the category and the core of the description are read without it first, then the whole description.
-  if (!forcedSector && ex.vertical && ex.vertical.id === 'ai-native' && detectModel(undefined, { seller: descr }).model !== 'investment') {
+  if (!forcedSector && !sellerSectorLabel(coreText || sellerWholeText).id && ex.vertical && ex.vertical.id === 'ai-native' && detectModel(undefined, { seller: descr }).model !== 'investment') {
     const noAi = (x: unknown) => (typeof x === 'string' ? x.replace(/\b(?:AI|A\.I\.)[- ](?:native|powered|led|driven|enabled|first|agents?|analyst|copilot|assistant|layered)\b|\bgenerative AI\b|\bGenAI\b|\bLLMs?\b|\b(?:agent )?copilots?\b|\bchatbots?\b|\bAI\b/gi, ' ') : x);
     const tries: ReaderInput[] = [];
     if (coreT.length) tries.push({ seller: coreT.map(noAi) }, { context: coreT.map(noAi) });
@@ -3958,7 +3959,7 @@ export function createServer(): Server {
       let result: string;
       try { result = tool.execute(callArgs as any); } finally { setYourSector(undefined); }
       return {
-        content: [{ type: 'text', text: result }]
+        content: [{ type: 'text', text: sectorChoiceNotice(toolName, callArgs, text=>{const r=explainSector({seller:[text]});return {id:r.vertical?.id,name:r.vertical?.name,source:r.source}}) + result }]
       };
     } catch (error) {
       return {
