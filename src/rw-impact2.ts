@@ -227,7 +227,9 @@ export function shortPhrase(...a: Parameters<typeof shortPhraseRaw>): ReturnType
 /** A short phrase (3 to max words) that can stand alone as a headline or tagline: the headline, a part, the start of a part cut at a comma, or its first clause. A phrase with a figure is a last
  *  resort (a headline carries no claim without its label). Never cut mid phrase; null when none exists. */
 function shortPhraseRaw(b: Benefit, max: number, kit: Kit2, min = 3): string | null {
-  const cands = [b.headline, ...b.parts.flatMap((p) => (p.lead ? [p.lead, p.text] : [p.text]))].filter(Boolean);
+  // what a customer reports or says is a quote, not a headline of the product
+  const reported = /^(?:an?\s+|one\s+|the\s+)?(?:\w+\s+)?customers?\s+(?:report|reports|say|says|state|states|call|calls|describe|describes)\b/i;
+  const cands = [b.headline, ...b.parts.flatMap((p) => (p.lead ? [p.lead, p.text] : [p.text]))].filter((x) => !!x && !reported.test(x.trim()));
   const bad = /\b(?:for|with|to|of|and|a|the|by|in|that|from|at|or)$/i;
   const ok = (t: string): boolean => { const n = t.split(/\s+/).length; return n >= min && n <= max && !bad.test(t) && !/^(?:from|with|by|so|to)\b/i.test(t) && !/[:;,]$/.test(t); };
   // a cut at a comma must not leave a relative clause open ("One fabric that connects network" from "... connects network, cloud, security and IoT")
@@ -294,7 +296,7 @@ export function needPieces(...a: Parameters<typeof needPiecesRaw>): ReturnType<t
 function needPiecesRaw(need: string): string[] { return splitSemi(WS(need)); }
 
 // ---- a difference -----------------------------------------------------------------------------------------------------------------
-const PARTICIPLE = /^(?:built|designed|made|powered|trained|grounded|based|backed|engineered|delivered|run|owned|governed|certified|licensed|hosted|managed|developed|created|focused|tuned|tailored|aimed|set|priced|billed|rooted|wired|sold|supported|integrated)\b/i;
+const PARTICIPLE = /^(?:built|designed|made|powered|trained|grounded|based|backed|engineered|delivered|run|owned|governed|certified|licensed|hosted|managed|developed|created|focused|tuned|tailored|aimed|set|priced|billed|rooted|wired|sold|supported|integrated|specialized|specialised|optimized|optimised|dedicated|certified|accredited|trusted|proven|positioned|located|founded|headquartered)\b/i;
 export function differenceSentence(...a: Parameters<typeof differenceSentenceRaw>): ReturnType<typeof differenceSentenceRaw> { return pieceOf(differenceSentenceRaw(...a)); }
 /** A difference as a sentence about the product. A named clause, a result verb, a third person verb, a noun phrase, a participle ("built from the ground up ...") and a head with a colon each get their own wording. */
 function differenceSentenceRaw(P: string, item: string, kit: Kit2, fallback: (p: string, d: string) => string): string {

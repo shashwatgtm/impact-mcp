@@ -588,7 +588,8 @@ const BASE_VERBS = new Set(('combine merge join link blend orchestrate pair appl
     'predict notify escalate comply meet hit beat exceed settle provision deploy migrate integrate import enrich personalise personalize engage ' +
     'activate adopt compare choose select decide show prove lend underwrite insure invest rebalance hedge learn tell ask spot flag rank tighten ' +
     'streamline unify replace remove stay pass clear pay collect bring give let put take use ensure enable help bill refund reclaim recoup ' +
-    'surface highlight verify validate monitor track stay hold open bridge replace align shrink slim speed-up').split(/\s+/).filter(Boolean));
+    'surface highlight verify validate monitor track stay hold open bridge replace align shrink slim speed-up ' +
+    'accelerate transform modernize modernise optimize optimise empower enhance strengthen consolidate standardize standardise centralize centralise minimize minimise maximize maximise extend free equip unlock gain achieve discover supercharge reimagine rethink').split(/\s+/).filter(Boolean));
 // verbs that can also stand at the start of a noun phrase ("route planning time", "audit preparation") are left out of BASE_VERBS;
 // these bases are safe to read in the third person ("plans every route" is a verb only after re-)
 const RE_BASES = new Set('plan route assign allocate book open start balance calculate train check rank score test order schedule price'.split(' '));
@@ -597,7 +598,8 @@ const THIRD_BASES = new Set(('combine merge join link blend orchestrate pair app
     'cut reduce lift close fix flag map send pull push build learn adapt handle cover protect secure stop block run capture suggest generate surface ' +
     'validate approve notify escalate predict scale ship deliver simplify unify remove replace enrich integrate migrate provision onboard serve assign ' +
     'allocate create make take bring drive raise grow boost improve eliminate avoid prevent recover respond understand know see read write learn ' +
-    'compare choose select decide prove verify lend underwrite insure invest rebalance hedge spot tighten streamline pay collect hold open bridge align shrink').split(/\s+/).filter(Boolean));
+    'compare choose select decide prove verify lend underwrite insure invest rebalance hedge spot tighten streamline pay collect hold open bridge align shrink ' +
+    'move enable accelerate transform modernize modernise optimize optimise empower enhance strengthen consolidate standardize standardise centralize centralise minimize minimise maximize maximise extend free equip expand convert engage activate personalize personalise orchestrate reach unlock gain achieve discover supercharge reimagine rethink').split(/\s+/).filter(Boolean));
 const NOUNISH = new Set(('fewer more less faster slower lower higher better shorter longer bigger smaller no zero one single a an the our your their every each all any some same ' +
     'real-time realtime live instant automatic automated manual reliable predictable consistent clear accurate full complete end-to-end unified continuous daily ' +
     'weekly monthly cheaper simpler easier safer smarter early late quick rapid critical steady lasting measurable repeatable visible transparent too many much ' +
@@ -634,6 +636,8 @@ function lowerFirst(...a) { return (0, piece_wrap_ts_1.pieceOf)(lowerFirstRaw(..
 function lowerFirstRaw(t) {
     const parts = t.split(/\s+/);
     const w = parts[0] || '';
+    if (/^(?:A|An|The)$/.test(w) && parts.length > 1)
+        return t.charAt(0).toLowerCase() + t.slice(1); // an article never starts a name
     if (/^[A-Z][a-z]+$/.test(parts[1] || '') && !isCommonWord(w) && !isCommonWord(parts[1]))
         return t; // a two-word name (Spec Hub, Platformation Suite)
     // a name that starts a clause about a third party ("Stockmann cut supplier onboarding ...") keeps its capital
