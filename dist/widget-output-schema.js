@@ -20,9 +20,9 @@ function widgetOutputSchema(payload) {
         }, additionalProperties: false,
     };
     return {
-        type: "object", required: ["positioningAudit"],
-        properties: { positioningAudit: { oneOf: [summary, unavailable] },
-            ...(payload === "full" ? { tool: text, title: text, plainText: text, sections: { type: "array", items: { type: "object" } }, presentation: text } : {}),
+        type: "object", required: ["positioningAudit", "plainText"],
+        properties: { plainText: text, positioningAudit: { oneOf: [summary, unavailable] },
+            ...(payload === "full" ? { tool: text, title: text, sections: { type: "array", items: { type: "object" } }, presentation: text } : {}),
         }, additionalProperties: false,
     };
 }

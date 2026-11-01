@@ -18,9 +18,9 @@ export function widgetOutputSchema(payload: "meta" | "full") {
     }, additionalProperties: false,
   };
   return {
-    type: "object" as const, required: ["positioningAudit"],
-    properties: { positioningAudit: { oneOf: [summary, unavailable] },
-      ...(payload === "full" ? {tool:text,title:text,plainText:text,sections:{type:"array",items:{type:"object"}},presentation:text} : {}),
+    type: "object" as const, required: ["positioningAudit", "plainText"],
+    properties: { plainText: text, positioningAudit: { oneOf: [summary, unavailable] },
+      ...(payload === "full" ? {tool:text,title:text,sections:{type:"array",items:{type:"object"}},presentation:text} : {}),
     }, additionalProperties: false,
   };
 }
