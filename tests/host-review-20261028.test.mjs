@@ -37,7 +37,7 @@ test("impact_pinpoint_value: 'No verified outcome metrics supplied' is not liste
     unique_capability: "a shared account activity view", customer_metrics: "No verified outcome metrics supplied", business_model: "saas", your_sector: "saas",
   });
   assert.doesNotMatch(t, /Scale and voices you supplied[^\n]*No verified outcome metrics supplied/);
-  assert.match(t, /customer_metrics \(one real customer result with its source\)/);
+  assert.match(t, /customer metrics \(one real customer result with its source\)/);
 });
 
 test("impact_full_audit: 'No verified interviews supplied' is not a proof point or a result customers describe", async () => {

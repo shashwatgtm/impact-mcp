@@ -73,7 +73,7 @@ test("anchor: missing inputs are named once at the end, each with what it would 
   assert.equal(sharpen(t), 1);
   assertSharpenAtEnd(t, "presets");
   const tail = t.split("To sharpen this, give:")[1];
-  for (const k of ["current_customers", "customer_pain", "company_counts", "percent_matching_icp", "year_one_share_percent"]) assert.match(tail, new RegExp(k));
+  for (const k of ["current_customers", "customer_pain", "company_counts", "percent_matching_icp", "year_one_share_percent"]) assert.match(tail, new RegExp(k.replace(/_/g, " ")));
   assert.doesNotMatch(t.split("To sharpen this, give:")[0], /To finish the sizing, add/);
   const full = await call(TOOL, { ...LANE, company_counts: "Mid-market fintech: 100; Small retail chains: 5000; Enterprise banks: 50", percent_matching_icp: 25, year_one_share_percent: 1 });
   assert.ok(sharpen(full) === 0, "nothing is missing, so nothing is asked");

@@ -31,6 +31,7 @@ exports.isNamedPart = isNamedPart;
 exports.segmentFacts = segmentFacts;
 exports.partLabel = partLabel;
 const text_signals_ts_1 = require("./text-signals.js");
+const text_signals_ts_2 = require("./text-signals.js");
 // Run 22 rewrite of impact_pinpoint_value, impact_anchor_market and impact_map_alternatives: text helpers only.
 // Everything here is pure string work (no network, no file access, no environment, no logging). It holds cue words (words that tell what kind of
 // thing a typed phrase is: a customer result, a piece of recognition, a count of users, a quote) and the small tools that turn a typed list into a clean
@@ -177,16 +178,16 @@ const SCALE = /(?:\b(?:rely|relies|trust|trusts|choose|chooses|use|uses|used)\b|
 /** What kind of proof a supplied item is, and the tier it belongs to (1 customer result, 2 third party, 4 social). */
 function classifyProof(item) {
     const t = item.trim();
-    const recognition = (0, text_signals_ts_1.readSignal)(t, RECOGNITION, text_signals_ts_1.SIGNALS.recognition);
-    if ((0, text_signals_ts_1.signal)(t, 'adverse_result').state === 'affirmed' || ['negated', 'unclear'].includes((0, text_signals_ts_1.signal)(t, 'positive_result').state) || ['negated', 'unclear'].includes(recognition.state))
+    const recognition = (0, text_signals_ts_2.readSignal)(t, RECOGNITION, text_signals_ts_2.SIGNALS.recognition);
+    if ((0, text_signals_ts_2.signal)(t, 'adverse_result').state === 'affirmed' || ['negated', 'unclear'].includes((0, text_signals_ts_2.signal)(t, 'positive_result').state) || ['negated', 'unclear'].includes(recognition.state))
         return { tier: 4, kind: 'scale', held: true };
     if (/\bquote from\b|\btestimonial\b/i.test(t) || /^["“]/.test(t) || /["“][^"”]{12,}["”]/.test(t))
         return { tier: 4, kind: 'quote' };
     if (recognition.state === 'affirmed' && !/^[A-Z][\w-]+(?: [A-Z][\w-]+)? (?:cut|reduced|increased|improved|raised|saved)\b/.test(t))
         return { tier: 2, kind: 'recognition' };
-    if ((0, text_signals_ts_1.hasSignal)(t, RESULT, 'positive_result') && !/\b(?:rely|relies|trust|trusts)\b/i.test(t))
+    if ((0, text_signals_ts_2.hasSignal)(t, RESULT, 'positive_result') && !/\b(?:rely|relies|trust|trusts)\b/i.test(t))
         return { tier: 1, kind: 'result' };
-    if ((0, text_signals_ts_1.hasSignal)(t, SCALE))
+    if ((0, text_signals_ts_2.hasSignal)(t, SCALE))
         return { tier: 4, kind: 'scale' };
     return /\d/.test(t) ? { tier: 1, kind: 'result' } : { tier: 4, kind: 'scale' };
 }
@@ -211,7 +212,7 @@ function ctaNoun(cta) {
 function sharpenLine(missing) {
     if (!missing.length)
         return null;
-    return `**To sharpen this, give:** ${missing.map((m) => `${m.give} (it would change ${m.changes})`).join('; ')}.`;
+    return `**To sharpen this, give:** ${missing.map((m) => `${(0, text_signals_ts_1.readerLabel)(m.give)} (it would change ${m.changes})`).join('; ')}.`;
 }
 // A field of work named by a mass noun ("predictive cybersecurity") is not a product; it reads "a provider of predictive cybersecurity".
 const FIELD_WORD = /^(?:cybersecurity|security|analytics|intelligence|automation|monitoring|connectivity|compliance|observability|payments|lending|banking|logistics|insurance|forecasting|orchestration|governance|detection|protection|modernization|modernisation|engineering|consulting|outsourcing|management|testing|billing|marketing|finance|data|ai|learning|support)$/i;

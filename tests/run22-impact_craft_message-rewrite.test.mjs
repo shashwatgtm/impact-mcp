@@ -174,7 +174,7 @@ test("craft: missing inputs are named once at the end, each with what it would c
   assert.equal(sharpen(t), 1);
   assertSharpenAtEnd(t, "minimal");
   const tail = t.split("To sharpen this, give:")[1];
-  for (const k of ["product_name", "customer_need", "product_category", "competitor"]) assert.match(tail, new RegExp(k));
+  for (const k of ["product_name", "customer_need", "product_category", "competitor"]) assert.match(tail, new RegExp(k.replace(/_/g, " ")));
   const head = t.split("To sharpen this, give:")[0];
   assert.doesNotMatch(head, PLACEHOLDER);
   assert.doesNotMatch(head, /not supplied|your product\b|\[the need|\[Only if true and provable: customers switched/i);

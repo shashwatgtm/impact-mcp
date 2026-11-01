@@ -36,6 +36,7 @@ exports.priceBasis = priceBasis;
 exports.subjectOf = subjectOf;
 exports.selfRef = selfRef;
 exports.ownNounsOf = ownNounsOf;
+const text_signals_ts_1 = require("./text-signals.js");
 // Run 22 rewrite of impact_craft_message and impact_translate_execution: text helpers only.
 // Everything here is pure string work (no network, no file access, no environment, no logging). It reads the shape of what a user typed (a result, a problem, a
 // difference, an alternative, an audience with its notes) and puts the pieces into clean sentences. It holds no sector knowledge (that stays in verticals.ts, rule B82)
@@ -556,7 +557,7 @@ function proofFromRaw(texts) {
 /** The closing list of what is missing. */
 function sharpenText(missing) {
     // Always one line, so the layout of the answer never depends on which figures the user typed.
-    return missing.length ? `**To sharpen this, give:** ${missing.map((m) => `${m.give} (it would change ${m.changes})`).join('; ')}.` : '**To sharpen this, give:** nothing more; every input this answer reads was given.';
+    return missing.length ? `**To sharpen this, give:** ${missing.map((m) => `${(0, text_signals_ts_1.readerLabel)(m.give)} (it would change ${m.changes})`).join('; ')}.` : '**To sharpen this, give:** nothing more; every input this answer reads was given.';
 }
 function parseStatement(...a) { return (0, piece_wrap_ts_1.pieceOf)(parseStatementRaw(...a)); }
 /** The pieces of a positioning statement that the channel copy needs: the alternative ("Unlike X," or "Alternatives buyers use today: X"), the differences ("What sets it apart: ..." or the rest of the

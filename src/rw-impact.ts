@@ -1,3 +1,4 @@
+import { readerLabel } from './text-signals.ts';
 import { hasSignal, signal, readSignal, SIGNALS } from './text-signals.ts';
 // Run 22 rewrite of impact_pinpoint_value, impact_anchor_market and impact_map_alternatives: text helpers only.
 // Everything here is pure string work (no network, no file access, no environment, no logging). It holds cue words (words that tell what kind of
@@ -168,7 +169,7 @@ export function ctaNoun(cta: string): string {
 /** The closing list of what is missing: "To sharpen this, give: X (it would change Y); ...". null when nothing is missing. */
 export function sharpenLine(missing: { give: string; changes: string }[]): string | null {
   if (!missing.length) return null;
-  return `**To sharpen this, give:** ${missing.map((m) => `${m.give} (it would change ${m.changes})`).join('; ')}.`;
+  return `**To sharpen this, give:** ${missing.map((m) => `${readerLabel(m.give)} (it would change ${m.changes})`).join('; ')}.`;
 }
 
 // A field of work named by a mass noun ("predictive cybersecurity") is not a product; it reads "a provider of predictive cybersecurity".

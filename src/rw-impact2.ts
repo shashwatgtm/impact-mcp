@@ -1,3 +1,4 @@
+import { readerLabel } from './text-signals.ts';
 // Run 22 rewrite of impact_craft_message and impact_translate_execution: text helpers only.
 // Everything here is pure string work (no network, no file access, no environment, no logging). It reads the shape of what a user typed (a result, a problem, a
 // difference, an alternative, an audience with its notes) and puts the pieces into clean sentences. It holds no sector knowledge (that stays in verticals.ts, rule B82)
@@ -426,7 +427,7 @@ function proofFromRaw(texts: string[]): { counts: Piece[]; recognitions: Piece[]
 /** The closing list of what is missing. */
 export function sharpenText(missing: { give: string; changes: string }[]): string {
   // Always one line, so the layout of the answer never depends on which figures the user typed.
-  return missing.length ? `**To sharpen this, give:** ${missing.map((m) => `${m.give} (it would change ${m.changes})`).join('; ')}.` : '**To sharpen this, give:** nothing more; every input this answer reads was given.';
+  return missing.length ? `**To sharpen this, give:** ${missing.map((m) => `${readerLabel(m.give)} (it would change ${m.changes})`).join('; ')}.` : '**To sharpen this, give:** nothing more; every input this answer reads was given.';
 }
 
 // ---- the positioning statement a user hands to the channel tool ----------------------------------------------------------------------

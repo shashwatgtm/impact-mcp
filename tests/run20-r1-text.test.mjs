@@ -44,7 +44,7 @@ test("A17-O23: every hint starts with a capital letter or a digit", () => {
 
 test("A17-O23: the sales cycle hint keeps its 'shown, not used in the scoring' words; the customers hint says (D94) when it ranks the segments", () => {
   const p = tool("impact_anchor_market").inputSchema.properties;
-  assert.match(p.current_customers.description, /customer_pain and average_deal_size it ranks the segments/);
+  assert.match(p.current_customers.description, /customer pain and average deal size it ranks the segments/);
   assert.match(p.current_customers.description, /without them it is shown only/);
   assert.match(p.sales_cycle.description, /Shown in the output; not used in the scoring/);
 });
@@ -73,7 +73,7 @@ test("A17-O23: the price answer text uses an example with a period, not a bare r
   const out = await call("impact_identify_champions", { product_description: "last-mile delivery software", problem_solved: "failed first-attempt deliveries" });
   assert.doesNotMatch(out, /ACV range/i);
   assert.doesNotMatch(out, /\$50K-100K/);
-  assert.match(out, /price_point \(for example "\$50,000 a year"\)/);
+  assert.match(out, /price point \(for example "\$50,000 a year"\)/);
 });
 
 // ---- A17-O29: a tagline the tool invents carries the wrap, or is built from the user's words -----------------------------------
@@ -122,7 +122,7 @@ test("A17-O31: the framework guide and translate_execution describe the Full Aud
   const tr = await call("impact_translate_execution", { positioning_statement: "For heads of ops, Lanehop re-plans every route.", target_customer: TARGET, key_benefit: "cut cost per delivery by 18%" });
   for (const [n, out] of [["framework", fw], ["translate", tr]]) {
     assert.doesNotMatch(out, /complete scored assessment|complete positioning assessment/i, n);
-    const line = out.split("\n").find((l) => l.includes("impact_full_audit") && /audit/i.test(l) && !/^\d\./.test(l.trim()) && !/Getting Started/.test(l) && /(Or run|Use)/.test(l));
+    const line = out.split("\n").find((l) => l.includes("IMPACT Full Audit") && /audit/i.test(l) && !/^\d\./.test(l.trim()) && !/Getting Started/.test(l) && /(Or run|Use)/.test(l));
     assert.ok(line, `${n}: the line that points to the audit`);
     assert.match(line, /input completeness/i, `${n}: ${line}`);
     assert.match(line, /not (a verdict on|whether)/i, `${n}: ${line}`);
