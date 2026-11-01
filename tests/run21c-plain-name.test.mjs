@@ -22,7 +22,7 @@ test("impact_pinpoint_value: a long product text is not pasted into every statem
 
 test("a clear name is used as typed", async () => {
   const out = await call("impact_pinpoint_value", { product_name: "Lanehop", ...base });
-  assert.match(out, /\*\*Lanehop\*\* is the only/);
+  assert.match(out, /\*\*Lanehop\*\* is a freight visibility software/);
 });
 
 // Run 21c round 5 (test first, a judge's wrong sector finding): a customer service platform that also lists "employee service" and "workforce management" had its

@@ -522,14 +522,14 @@ const BASE_VERBS = new Set((
   'predict notify escalate comply meet hit beat exceed settle provision deploy migrate integrate import enrich personalise personalize engage ' +
   'activate adopt compare choose select decide show prove lend underwrite insure invest rebalance hedge learn tell ask spot flag rank tighten ' +
   'streamline unify replace remove stay pass clear pay collect bring give let put take use ensure enable help bill refund reclaim recoup ' +
-  'surface highlight verify validate monitor track stay hold open bridge replace align shrink slim speed-up ' +
+  'restore resolve surface highlight verify validate monitor track stay hold open bridge replace align shrink slim speed-up ' +
   'accelerate transform modernize modernise optimize optimise empower enhance strengthen consolidate standardize standardise centralize centralise minimize minimise maximize maximise extend free equip unlock gain achieve discover supercharge reimagine rethink'
 ).split(/\s+/).filter(Boolean));
 // verbs that can also stand at the start of a noun phrase ("route planning time", "audit preparation") are left out of BASE_VERBS;
 // these bases are safe to read in the third person ("plans every route" is a verb only after re-)
 const RE_BASES = new Set('plan route assign allocate book open start balance calculate train check rank score test order schedule price'.split(' '));
 const THIRD_BASES = new Set((
-  'combine merge join link blend orchestrate pair apply scan provide offer include watch use support work check ' +
+  'restore combine merge join link blend orchestrate pair apply scan provide offer include watch use support work check ' +
   'match rank find catch detect resolve prioritise prioritize reconcile automate clean cleanse connect monitor track turn give show let help keep save ' +
   'cut reduce lift close fix flag map send pull push build learn adapt handle cover protect secure stop block run capture suggest generate surface ' +
   'validate approve notify escalate predict scale ship deliver simplify unify remove replace enrich integrate migrate provision onboard serve assign ' +
@@ -1961,7 +1961,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
 
       const tailMissing: { give: string; changes: string }[] = [];
       if (!named) tailMissing.push({ give: 'product_name', changes: 'every statement, which now says "our product"' });
-      if (!catTyped) tailMissing.push({ give: 'category', changes: 'the "only" line and the sector read, which now rest on the other inputs' });
+      if (!catTyped) tailMissing.push({ give: 'category', changes: 'the category wording and the sector read, which now rest on the other inputs' });
       if (!metricItems.length) tailMissing.push({ give: 'customer metrics (one real customer result with its source)', changes: 'Tier 1 and the matrix, which quote no customer result today' });
       if (!args.business_model && (!ctx.model || /assumed/.test(ctx.line))) tailMissing.push({ give: 'business_model', changes: 'the proof types and calls to action, which follow the usual model of the sector today' });
       tailMissing.push({ give: "the buyer's current pain and a payback period from your best customers", changes: 'the economic buyer statement, which has no payback figure to cite' });
@@ -1980,18 +1980,18 @@ ${ctx.line}
 
 ---
 
-## The Only Statement
+## Value Statements
 
-The "only" claim stays inside brackets until it is true and you can prove it.
+These drafts use your supplied outcome and capability without claiming exclusivity. Confirm comparison evidence before adding an exclusive claim.
 
 ### Version 1 (Category-focused)
-> [Only if true and provable: **${P}** is the only ${catMid} ${onlyWith(capLead)}. It helps ${aud} ${outLead}${lab}.]
+> **${P}** is ${aOrAn(catMid)} ${catMid} ${onlyWith(capLead)}. It helps ${aud} ${outLead}${lab}.
 
 ### Version 2 (Outcome-focused)
-> We help **${aud}** ${outLead}${lab}. ${capFirst(capSentence)}. [Only if true and provable: no other ${catMid} can say the same.]
+> We help **${aud}** ${outLead}${lab}. ${capFirst(capSentence)}.
 
 ### Version 3 (Capability-focused)
-> [Only if true and provable: Unlike the alternatives in ${catPlainMid},] ${capSentence}, so ${aud} can ${outLead}${lab}.
+> ${capFirst(capSentence)}, so ${aud} can ${outLead}${lab}.
 
 ---
 
@@ -2056,7 +2056,7 @@ The ${signer === 'the budget owner' ? 'budget owner' : signer} will weigh ${note
 > "Hello, we help ${aud} ${outLead}${lab}.${cite ? ` For example: ${clean(cite)}.` : ''} Would ${cta} be useful?"
 
 **Sales Deck** (Slide title):
-> [Only if true and provable: "The only ${catMid} ${onlyWith(capLead)}"]
+> "${capFirst(catMid)} for ${sa}"
 
 ---
 
