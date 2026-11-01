@@ -2205,7 +2205,7 @@ ${sharpen0 ? `\n---\n\n## To sharpen this\n\n${sharpen0}\n` : ''}`;
       const ccText0 = (args.current_customers || '').trim();
       const painText = (args.customer_pain || '').trim();
       const ownMethod = segGiven && !!ccText0 && !!painText && !!acvNumber;
-      const missingForOwn = [!segGiven ? 'potential_segments' : '', !ccText0 ? 'current_customers' : '', !painText ? 'customer_pain' : '', !acvNumber ? 'average_deal_size' : ''].filter(Boolean);
+      const missingForOwn = [!segGiven ? 'potential segments' : '', !ccText0 ? 'current customers' : '', !painText ? 'customer pain' : '', !acvNumber ? 'average deal size' : ''].filter(Boolean);
       const stemsOf = (t: string) => contentStems(t);
       const ccStems0 = stemsOf(ccText0), painStems = stemsOf(painText);
       const shared = (seg: string, stems: Set<string>): string[] => [...stemsOf(seg.replace(/\([^)]*\)/g, ''))].filter((x) => stems.has(x));
@@ -2296,7 +2296,7 @@ ${sharpen0 ? `\n---\n\n## To sharpen this\n\n${sharpen0}\n` : ''}`;
       // Every segment has the same total: the scores choose nothing, and the answer says so instead of crowning the first-listed one.
       const allTied = tied.length === segmentScores.length && segmentScores.length > 1;
       const tieLine = tied.length > 1
-        ? `\nTie: ${tied.length === 2 ? 'both segments have' : `${tied.length} segments have`} the same total score (${beachhead.total}/25)${ownMethod ? ', because no segment shares a word with your customers or your pain and no counts separate them' : beachhead.keyword ? '' : ', the preset middle score, because no segment name contains a keyword'}. The scores cannot choose between them, and ${beachhead.name} is shown first only because you listed it first: choose using your own data.\n`
+        ? `\nTie: ${tied.length === 2 ? 'both segments have' : `${tied.length} segments have`} the same total score (${beachhead.total}/25)${ownMethod ? ', because no segment shares a word with your customers or your pain and no counts separate them' : beachhead.keyword ? '' : ', the preset middle score, because no affirmative preset category was established'}. The scores cannot choose between them, and ${beachhead.name} is shown first only because you listed it first: choose using your own data.\n`
         : '';
       const segLine = segGiven ? '' : '\nExample segment: replace with your own.\n';
       const acvShown = acvGiven ? `${acvGiven}${/\bACV\b/i.test(acvGiven) ? '' : ' ACV'}` : 'your price';
@@ -2332,7 +2332,7 @@ ${sharpen0 ? `\n---\n\n## To sharpen this\n\n${sharpen0}\n` : ''}`;
           : `${beachhead.name} comes first for ${prodName}${topShares}: your ${nSeg} segments were ranked from your own customers, pain and deal size.${tied.length > 1 ? ` ${tied.map((t) => t.name).join(' and ')} tie for the top score, and ${beachhead.name} is shown first only because you listed it first.` : ''} The match is by words, so ask three buyers in ${tied.length > 1 ? 'those segments' : beachhead.name} which problem they raise first before you commit.`)
         : (tied.length > 1
           ? `The keyword presets cannot separate ${tied.length === nSeg ? `any of your ${nSeg} segments` : `the top ${tied.length} segments (${tied.map((t) => t.name).join(', ')})`}, so nothing here chooses a beachhead for ${prodName}; ${missingForOwn.join(' and ')} ${missingForOwn.length > 1 ? 'were' : 'was'} not given. Choose with the segment-by-segment facts below.${oneFact}`
-          : `${capFirst(beachhead.name)} comes first only because its name contains the keyword "${beachhead.kw}": the presets do not use your deal size${acvGiven ? ` of ${acvGiven}` : ''}${cycleGiven ? `, your sales cycle of ${cycleGiven}` : ''} or anything known about your market (${missingForOwn.join(' and ')} ${missingForOwn.length > 1 ? 'were' : 'was'} not given). Treat ${beachhead.name} as the segment to test first for ${prodName}.${oneFact}`);
+          : `${capFirst(beachhead.name)} ${beachhead.keyword ? `comes first under the keyword presets because its description is read as the preset category "${beachhead.kw}"` : `has the middle score because no affirmative preset category was established from its description`}: the presets do not use your deal size${acvGiven ? ` of ${acvGiven}` : ''}${cycleGiven ? `, your sales cycle of ${cycleGiven}` : ''} or anything known about your market (${missingForOwn.join(' and ')} ${missingForOwn.length > 1 ? 'were' : 'was'} not given). Treat ${beachhead.name} as the segment to test first for ${prodName}.${oneFact}`);
       const askQ = (i: number): string => nsw(v && v.discovery.length ? v.discovery[i % v.discovery.length] : 'Which problem do you raise first, and what have you tried before?');
       const prodParts = productParts(args.product_description);
       const named = prodParts.slice(1);   // the parts named after the lead description (platforms, modules, products)
@@ -2349,7 +2349,7 @@ ${sharpen0 ? `\n---\n\n## To sharpen this\n\n${sharpen0}\n` : ''}`;
           seg: s.name, deal: acvGiven.replace(/\s*\([^)]*\)\s*$/, ''), cycle: cycleGiven.replace(/\s*\([^)]*\)\s*$/, ''), signer: comm ? roleOk(comm.signer) : '', motion: v ? nsw(v.salesMotion) : '',
           objections: v ? v.objections.map((o) => ({ objection: nsw(o.objection), response: nsw(o.response) })) : [], metrics: v ? v.metrics : [], parts: named, fit, usedObjections, usedMeasures, usedKinds,
         }, order);
-        return `**${s.name}** (${ownMethod ? `${s.total} of 25 from your own inputs` : s.keyword ? `${s.total} of 25 from the keyword "${s.kw}"` : `${s.total} of 25, no keyword`}).${cshare.length ? ` Your customers share "${real(s.name, cshare).join('", "')}" with it.` : ''} Find out ${facts.map((f, k) => `(${k + 1}) ${f}`).join('; ')}.`;
+        return `**${s.name}** (${ownMethod ? `${s.total} of 25 from your own inputs` : s.keyword ? `${s.total} of 25 from the preset category "${s.kw}"` : `${s.total} of 25, no affirmative preset category`}).${cshare.length ? ` Your customers share "${real(s.name, cshare).join('", "')}" with it.` : ''} Find out ${facts.map((f, k) => `(${k + 1}) ${f}`).join('; ')}.`;
       }).join('\n\n');
       // The product fit: which segments the parts of the product text sit closest to (words only; it never changes a score).
       const fitOrder = segmentScores.map((x) => ({ x, fit: segmentFit(x.name, prodParts) })).filter((r) => r.fit.length).sort((a, b) => b.fit.length - a.fit.length);
@@ -2424,8 +2424,8 @@ ${segmentScores.map((s, i) => `| ${i === 0 && !allTied ? '**' + s.name + '** (be
 ---
 
 ## ${allTied ? `No segment is chosen by the scores: ${tied.length} segments tie` : `Recommended Beachhead: ${beachhead.name}`}
-${tieLine}${!ownMethod && tied.length === 1 && beachhead.keyword ? `\nRead this as the highest keyword match only: ${beachhead.name} scores highest because its name contains the keyword "${beachhead.kw}", not because of anything known about your market. Score each segment yourself with your own data before you commit.\n` : ''}
-**What decided each score:** ${segmentScores.map((x) => ownMethod ? `${x.name}: ${x.ownRef.length ? `shares "${real(x.name, x.ownRef).join('", "')}" with your customers` : 'shares no word with your customers'}; ${x.ownPain.length ? `shares "${real(x.name, x.ownPain).join('", "')}" with your pain` : 'shares no word with your pain'}; ${x.ownTam !== null && maxTam ? `market value ${usdFull(x.ownTam)} from your counts and deal size` : 'budget at the middle score (no counts for two segments)'}` : `${x.name}: ${x.keyword ? `the word "${x.kw}"` : 'no keyword, so the middle score'}`).join('; ')}.
+${tieLine}${!ownMethod && tied.length === 1 && beachhead.keyword ? `\nRead this as the highest keyword match only: ${beachhead.name} scores highest because its description is read as the preset category "${beachhead.kw}", not because of anything known about your market. Score each segment yourself with your own data before you commit.\n` : ''}
+**What decided each score:** ${segmentScores.map((x) => ownMethod ? `${x.name}: ${x.ownRef.length ? `shares "${real(x.name, x.ownRef).join('", "')}" with your customers` : 'shares no word with your customers'}; ${x.ownPain.length ? `shares "${real(x.name, x.ownPain).join('", "')}" with your pain` : 'shares no word with your pain'}; ${x.ownTam !== null && maxTam ? `market value ${usdFull(x.ownTam)} from your counts and deal size` : 'budget at the middle score (no counts for two segments)'}` : `${x.name}: ${x.keyword ? `preset category "${x.kw}", read from "${x.name}"` : 'no affirmative preset category, so the middle score'}`).join('; ')}.
 
 ${`### ${tied.length > 1 ? 'What would break the tie' : 'Before you trust this ranking'}
 
