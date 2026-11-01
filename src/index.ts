@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { signal, hasSignal, readSignal } from './text-signals.ts';
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -2205,7 +2206,7 @@ ${sharpen0 ? `\n---\n\n## To sharpen this\n\n${sharpen0}\n` : ''}`;
       // Segment scores: keyword presets, unchanged (a segment with none of the keywords gets the middle score).
       const segmentScores = segments.map((segment) => {
         if (ownMethod) {
-          const rc = shared(segment, ccStems0), pn = shared(segment, painStems), tm = tamOf(segment);
+          const rc = shared(segment, ccStems0).filter(w => hasSignal(ccText0, new RegExp('\\b'+w+'\\w*','i'))), pn = shared(segment, painStems).filter(w => hasSignal(painText, new RegExp('\\b'+w+'\\w*','i'))), tm = tamOf(segment);
           const scoresOwn = {
             pain: byShared(pn.length), budget: maxTam && tm !== null ? Math.max(1, Math.min(5, Math.round(1 + 4 * tm / maxTam))) : 3,
             access: 3, reference: byShared(rc.length), competition: 3
@@ -2222,25 +2223,26 @@ ${sharpen0 ? `\n---\n\n## To sharpen this\n\n${sharpen0}\n` : ''}`;
           competition: 3
         };
 
-        if (segmentLower.includes('enterprise')) {
+        if (signal(segment, 'enterprise').state === 'affirmed') {
           scores = { pain: 4, budget: 5, access: 2, reference: 5, competition: 2 };
-        } else if (segmentLower.includes('mid-market') || segmentLower.includes('mid market')) {
+        } else if (signal(segment, 'midmarket').state === 'affirmed') {
           scores = { pain: 5, budget: 4, access: 4, reference: 4, competition: 3 };
-        } else if (segmentLower.includes('smb') || segmentLower.includes('small')) {
+        } else if (signal(segment, 'small').state === 'affirmed') {
           scores = { pain: 4, budget: 2, access: 5, reference: 2, competition: 4 };
-        } else if (segmentLower.includes('saas') || segmentLower.includes('tech')) {
+        } else if (hasSignal(segment, /\b(?:saas|tech|technology|software vendors)\b/i)) {
           scores = { pain: 5, budget: 4, access: 4, reference: 5, competition: 3 };
-        } else if (segmentLower.includes('finance') || segmentLower.includes('fintech')) {
+        } else if (signal(segment, 'finance').state === 'affirmed') {
           scores = { pain: 4, budget: 5, access: 3, reference: 4, competition: 2 };
         }
 
         // Whether a keyword set the scores (a segment with none gets the middle score on every criterion).
-        const kwMatch = segmentLower.match(/enterprise|mid-market|mid market|smb|small|saas|tech|finance|fintech/);
+        const preset = ['enterprise','midmarket','small'].find(k => signal(segment,k).state === 'affirmed');
+        const kwMatch = preset ? [preset] : hasSignal(segment, /\b(?:saas|tech|technology|software vendors)\b/i) ? ['tech'] : signal(segment,'finance').state === 'affirmed' ? ['finance'] : null;
         const keyword = !!kwMatch;
         return {
           name: segment,
           keyword,
-          kw: kwMatch ? kwMatch[0] : '',
+          kw: kwMatch ? kwMatch[0] : 'fact was not clear; no preset fired',
           ...scores,
           total: scores.pain + scores.budget + scores.access + scores.reference + scores.competition,
           ownPain: [] as string[], ownRef: [] as string[], ownTam: null as number | null
@@ -3514,13 +3516,13 @@ ${SUGGESTED}
 
       // Pinpoint Value (based on differentiation)
       if (typedLength(differentiation) > 30) {
-        scores.pinpoint = differentiation.includes('only') || differentiation.includes('unique') ? 85 : 70;
+        scores.pinpoint = hasSignal(differentiation, /only|unique/i, 'unique') ? 85 : 70;
       } else {
         scores.pinpoint = 50;
       }
 
       // Anchor Market (based on target specificity)
-      if (args.target_customer.includes('employees') || args.target_customer.includes('revenue') || args.target_customer.includes('Series')) {
+      if (hasSignal(args.target_customer, /employees|revenue|Series/, 'specificity')) {
         scores.anchor = 80;
       } else if (args.target_customer.split(' ').length > 3) {
         scores.anchor = 65;
@@ -3530,7 +3532,7 @@ ${SUGGESTED}
 
       // Craft Message (based on current positioning)
       if (args.current_positioning && typedLength(args.current_positioning) > 50) {
-        scores.craft = args.current_positioning.includes('unlike') || args.current_positioning.includes('only') ? 85 : 70;
+        scores.craft = hasSignal(args.current_positioning, /unlike|only/, 'unique') ? 85 : 70;
       } else if (args.current_positioning) {
         scores.craft = 55;
       } else {
@@ -3650,13 +3652,18 @@ Rated Thin: it is listed here only because the other areas scored lower.
 ### ${phase.charAt(0).toUpperCase() + phase.slice(1)} (${score}/100)
 ${phase === 'identify' ? `Your target customer ("${shortText(noNotes(args.target_customer))}") is long and specific enough for a high score in this area.` : ''}
 ${phase === 'map' ? `You named ${competitors.length} competitor${competitors.length === 1 ? '' : 's'}; this area counts how many you name, not who they are.` : ''}
-${phase === 'pinpoint' ? (args.key_differentiation ? `Your differentiation ("${shortText(args.key_differentiation)}") is long enough for a high score in this area${score >= 85 ? ' and uses the word "only" or "unique"' : ''}.` : 'No differentiation supplied yet.') : ''}
+${phase === 'pinpoint' ? (args.key_differentiation ? `Your differentiation ("${shortText(args.key_differentiation)}") is long enough for a high score in this area${score >= 85 ? ' and states a differentiator' : ''}.` : 'No differentiation supplied yet.') : ''}
 ${phase === 'anchor' ? (score >= 80 ? `Your target customer mentions employees, revenue or a funding series.` : `Your target customer is several words long.`) : ''}
-${phase === 'craft' ? (score >= 85 ? `Your current positioning is long and uses the word "unlike" or "only".` : score >= 70 ? `Your current positioning is long.` : `You supplied a current positioning statement.`) : ''}
+${phase === 'craft' ? (score >= 85 ? `Your current positioning is long and states a contrast.` : score >= 70 ? `Your current positioning is long.` : `You supplied a current positioning statement.`) : ''}
 ${phase === 'translate' ? `You supplied customer feedback; this area scores its length, not what it says.` : ''}
 `.replace(/\n{2,}/g, '\n')).join('')}
 
 ---
+
+## Sentences read by score rules
+- Differentiation: ${readSignal(differentiation, /only|unique/i, /no other vendor|one.of.a.kind/i).evidence.join('; ') || 'No affirmative differentiator was clear.'}
+- Target specificity: ${readSignal(args.target_customer, /employees|revenue|Series/, /staff|annual sales|funding round/i).evidence.join('; ') || 'No employee, sales or funding fact was clear.'}
+- Positioning: ${readSignal(args.current_positioning || '', /unlike|only/, /no other vendor|one.of.a.kind/i).evidence.join('; ') || 'No affirmative contrast was clear.'}
 
 ## Areas to work on next
 ${weakest.map(([phase, score]) => `

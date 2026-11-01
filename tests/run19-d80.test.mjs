@@ -333,12 +333,13 @@ test("problem 6: anchor_market arithmetic uses the user's own counts, deal size 
   // the count of another segment is used when that segment is the beachhead
   const r2 = (await call("impact_anchor_market", { product_description: "spend management software", potential_segments: ["Mid-size manufacturers", "Enterprise IT services firms"],
     company_counts: "Mid-size manufacturers: 3,200; Enterprise IT services firms: 600", average_deal_size: "$24K", percent_matching_icp: 50, year_one_share_percent: 10 })).text;
-  assert.match(r2, /Recommended Beachhead: Enterprise IT services firms/);
-  assert.match(r2, /600 companies/);
-  assert.match(r2, /\$14\.4M/);
-  assert.match(r2, /\$7\.2M/);
-  assert.match(r2, /\$0\.72M/);
-  assert.match(r2, /30 customers/);
+  // W4 R3: "mid-size" now reads as mid-market, so that preset wins. Arithmetic must follow it.
+  assert.match(r2, /Recommended Beachhead: Mid-size manufacturers/);
+  assert.match(r2, /3,200 companies/);
+  assert.match(r2, /\$76\.8M/);
+  assert.match(r2, /\$38\.4M/);
+  assert.match(r2, /\$3\.84M/);
+  assert.match(r2, /160 customers/);
 });
 test("problem 6: anchor_market names the missing input instead of guessing, line by line", async () => {
   const noPct = (await call("impact_anchor_market", { product_description: "spend management software", potential_segments: ["Mid-size manufacturers"], company_counts: "Mid-size manufacturers: 3,200", average_deal_size: "$24,000" })).text;
