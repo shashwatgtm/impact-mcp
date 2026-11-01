@@ -41,16 +41,26 @@ function attachWidgets(server) {
                 ?.filter((c) => c.type === "text")
                 .map((c) => c.text)
                 .join("\n");
-            if (typeof text === "string")
-                return {
-                    ...result,
-                    structuredContent: {
-                        ...(0, widget_model_ts_1.widgetPayload)(request.params.name, widget_registry_ts_1.WIDGETS[request.params.name], text),
-                        ...(request.params.name === "impact_full_audit"
-                            ? { positioningAudit: (0, audit_summary_ts_1.auditSummary)(text) }
-                            : {}),
-                    },
-                };
+            if (typeof text === "string") {
+                const display = { ...result.structuredContent, ...(0, widget_model_ts_1.widgetPayload)(request.params.name, widget_registry_ts_1.WIDGETS[request.params.name], text) };
+                const facts = {};
+                const summary = request.params.name === 'impact_full_audit' ? (0, audit_summary_ts_1.auditSummary)(text) : null;
+                if (summary)
+                    display.positioningAudit = summary;
+                if (summary?.kind === 'positioning-audit')
+                    facts.positioningAudit = { kind: summary.kind, draft: summary.draft, gaps: (summary.gaps ?? []).map(gap => gap.label) };
+                else if (summary)
+                    facts.positioningAudit = summary;
+                if (build_profile_ts_1.BUILD_PROFILE.payload === 'full')
+                    return { ...result, structuredContent: display };
+                // Display data and caller context are delivered only to the component.
+                if (display.marketSizing) {
+                    const { toolArgumentsEncoded, ...summary } = display.marketSizing;
+                    display.marketSizing = summary;
+                }
+                const { structuredContent, ...plain } = result;
+                return { ...plain, ...(Object.keys(facts).length ? { structuredContent: facts } : {}), _meta: { ...result._meta, ...display, toolArguments: request.params.arguments } };
+            }
         }
         return result;
     }));
