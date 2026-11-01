@@ -1,8 +1,4 @@
 "use strict";
-// Run 22 rewrite of impact_pinpoint_value, impact_anchor_market and impact_map_alternatives: text helpers only.
-// Everything here is pure string work (no network, no file access, no environment, no logging). It holds cue words (words that tell what kind of
-// thing a typed phrase is: a customer result, a piece of recognition, a count of users, a quote) and the small tools that turn a typed list into a clean
-// sentence. It holds no sector knowledge: sector facts stay in verticals.ts (rule B82), and no figure is ever added here.
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MEASURE_LINKS = void 0;
 exports.takeLabel = takeLabel;
@@ -34,6 +30,11 @@ exports.segmentType = segmentType;
 exports.isNamedPart = isNamedPart;
 exports.segmentFacts = segmentFacts;
 exports.partLabel = partLabel;
+const text_signals_ts_1 = require("./text-signals.js");
+// Run 22 rewrite of impact_pinpoint_value, impact_anchor_market and impact_map_alternatives: text helpers only.
+// Everything here is pure string work (no network, no file access, no environment, no logging). It holds cue words (words that tell what kind of
+// thing a typed phrase is: a customer result, a piece of recognition, a count of users, a quote) and the small tools that turn a typed list into a clean
+// sentence. It holds no sector knowledge: sector facts stay in verticals.ts (rule B82), and no figure is ever added here.
 const piece_wrap_ts_1 = require("./piece-wrap.js");
 // A source label at the end of a typed text: "(page claim)", "(case study)", "(hypothetical)", "(quote from the head of payments at X)".
 const LABEL = /\s*\(([^()]*\b(?:page claims?|page words?|page text|page quote|customer words|hypothetical|customer stor(?:y|ies)|story titles?|case stud(?:y|ies)|analyst reports?|press release|quote from|testimonial|review sites?|sources?)\b[^()]*)\)\s*[.!]?\s*$/i;
@@ -176,13 +177,16 @@ const SCALE = /(?:\b(?:rely|relies|trust|trusts|choose|chooses|use|uses|used)\b|
 /** What kind of proof a supplied item is, and the tier it belongs to (1 customer result, 2 third party, 4 social). */
 function classifyProof(item) {
     const t = item.trim();
+    const recognition = (0, text_signals_ts_1.readSignal)(t, RECOGNITION, text_signals_ts_1.SIGNALS.recognition);
+    if ((0, text_signals_ts_1.signal)(t, 'adverse_result').state === 'affirmed' || ['negated', 'unclear'].includes((0, text_signals_ts_1.signal)(t, 'positive_result').state) || ['negated', 'unclear'].includes(recognition.state))
+        return { tier: 4, kind: 'scale', held: true };
     if (/\bquote from\b|\btestimonial\b/i.test(t) || /^["“]/.test(t) || /["“][^"”]{12,}["”]/.test(t))
         return { tier: 4, kind: 'quote' };
-    if (RECOGNITION.test(t) && !/^[A-Z][\w-]+(?: [A-Z][\w-]+)? (?:cut|reduced|increased|improved|raised|saved)\b/.test(t))
+    if (recognition.state === 'affirmed' && !/^[A-Z][\w-]+(?: [A-Z][\w-]+)? (?:cut|reduced|increased|improved|raised|saved)\b/.test(t))
         return { tier: 2, kind: 'recognition' };
-    if (RESULT.test(t) && !/\b(?:rely|relies|trust|trusts)\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, RESULT, 'positive_result') && !/\b(?:rely|relies|trust|trusts)\b/i.test(t))
         return { tier: 1, kind: 'result' };
-    if (SCALE.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, SCALE))
         return { tier: 4, kind: 'scale' };
     return /\d/.test(t) ? { tier: 1, kind: 'result' } : { tier: 4, kind: 'scale' };
 }

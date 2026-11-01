@@ -1040,7 +1040,7 @@ const withoutSize = (t) => t.replace(SIZE_IN_EMPLOYEES, ' ');
 const statesAbsence = (x) => /^(?:no|none|not|nil|n\/a|without)\b/i.test(x.trim()) && /\b(?:supplied|given|provided|available|known|collected|verified|measured|yet)\b/i.test(x);
 function namedTeams(...texts) {
     const t = withoutSize(texts.filter(Boolean).join(' \n ')).replace(/\b(?:sales|revenue|marketing|finance|financial|support|customer|hr|people|it|security|engineering|devops|billing|supply chain|warehouse)\s+operations?\b/gi, (m) => m.replace(/\s+operations?$/i, ''));
-    const ids = FUNCTIONS.filter((f) => new RegExp(f.re.source, 'i').test(t)).map((f) => f.id);
+    const ids = FUNCTIONS.filter((f) => (0, text_signals_ts_1.hasSignal)(t, f.re, 'team_' + f.id)).map((f) => f.id);
     // an IT or HR service desk is one team (workplace), and the broad IT, API, modernization and engineering words are not separate teams beside a security or api read
     return ids.includes('workplace') ? ids.filter((i) => i !== 'it' && i !== 'people') : ids;
 }
@@ -1089,7 +1089,8 @@ function functionHitsIn(only, min, ...texts) {
     let best = null;
     let n = 0;
     for (const f of FUNCTIONS.filter((x) => !only || only.includes(x.id))) {
-        const hits = (t.match(f.re) || []).length;
+        const r = (0, text_signals_ts_1.readSignal)(t, f.re, text_signals_ts_1.SIGNALS['team_' + f.id]);
+        const hits = r.state === 'affirmed' ? Math.max(r.evidence.reduce((n, c) => n + (c.match(f.re) || []).length, 0), text_signals_ts_1.SIGNALS['team_' + f.id] && (0, text_signals_ts_1.hasSignal)(t, text_signals_ts_1.SIGNALS['team_' + f.id]) ? min : 0) : 0;
         if (hits > n) {
             best = f;
             n = hits;
@@ -1640,6 +1641,7 @@ ${sectorLine(v)}${longNote(args.product_description, problem, args.target_compan
 
 ### Primary Champion (Your Internal Advocate)
 **Most Likely Role**: ${capFirst(primaryChampion.role)}${inferredNote}
+${fn ? `Sentence read for the team: ${givenFn ? targetType : problem}.` : ''}
 
 **Why This Role**:
 - Owns the problem: ${primaryChampion.pain}
@@ -2086,11 +2088,12 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             const given = metricItems.map((text) => ({ text, ...(0, rw_impact_ts_1.classifyProof)(text) }));
             if (extraFact && !given.some((g) => (extraFact.match(/\d[\d,.]*/g) || []).every((n) => g.text.includes(n))))
                 given.push({ text: extraFact.replace(/(?:\\?[.!])+$/, ''), ...(0, rw_impact_ts_1.classifyProof)(extraFact) });
-            const tier = (n, kinds) => given.filter((g) => g.tier === n && (!kinds || kinds.includes(g.kind)));
+            const heldProof = given.filter(g => g.held);
+            const tier = (n, kinds) => given.filter((g) => !g.held && g.tier === n && (!kinds || kinds.includes(g.kind)));
             const results = tier(1);
             const cite = (results.find((r) => r.text.length <= 180) || { text: '' }).text;
             // The value matrix: the measures the user's own inputs already speak to, each next to what they say; a measure with nothing behind it is not an empty row.
-            const evidence = [...given.map((g) => ({ text: g.text, label: '' })), ...oc.items.map((x) => ({ text: x, label: oc.label }))];
+            const evidence = [...given.filter(g => !g.held).map((g) => ({ text: g.text, label: '' })), ...oc.items.map((x) => ({ text: x, label: oc.label }))];
             const cell = (s) => s.replace(/\|/g, '/').replace(/\s+/g, ' ').trim();
             const measures = rankMeasures(lz.metrics, `${args.key_outcome} ${args.customer_metrics || ''}`, args.unique_capability);
             const rows = [];
@@ -2178,6 +2181,7 @@ ${matrixNote}
 ## Proof Point Framework
 
 ### Tier 1: Customer Results (Strongest)
+${heldProof.length ? `**Adverse or unconfirmed evidence held:** Do not cite these statements as positive results. Sentence read: ${heldProof.map(p => p.text).join("; ")}.\n\n` : ''}
 ${results.length ? `Results you supplied (supplied by you: use one only if it is real and you can show it): ${inl(results.map((r) => r.text))}` : `You supplied no customer result, so none is quoted in this answer. The strongest proof for ${P} is one named customer with a before and after on ${measures[0] ? measures[0] : 'the result your outcome names'}, from the customer's own data and with the period named.`}
 
 **Proof collection questions** (ask your existing customers):

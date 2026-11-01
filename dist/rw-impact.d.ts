@@ -39,6 +39,7 @@ export type ProofKind = 'result' | 'recognition' | 'scale' | 'quote';
 export declare function classifyProof(item: string): {
     tier: 1 | 2 | 4;
     kind: ProofKind;
+    held?: boolean;
 };
 export declare const MEASURE_LINKS: [RegExp, RegExp][];
 /** How a call to action reads after "open to": "Request a scoping call" gives "a scoping call". */

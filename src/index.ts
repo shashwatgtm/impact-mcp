@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { signal, hasSignal, readSignal } from './text-signals.ts';
+import { signal, hasSignal, readSignal, SIGNALS } from './text-signals.ts';
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -894,7 +894,7 @@ const withoutSize = (t: string): string => t.replace(SIZE_IN_EMPLOYEES, ' ');
 const statesAbsence = (x: string): boolean => /^(?:no|none|not|nil|n\/a|without)\b/i.test(x.trim()) && /\b(?:supplied|given|provided|available|known|collected|verified|measured|yet)\b/i.test(x);
 export function namedTeams(...texts: (string | undefined)[]): string[] {
   const t = withoutSize(texts.filter(Boolean).join(' \n ')).replace(/\b(?:sales|revenue|marketing|finance|financial|support|customer|hr|people|it|security|engineering|devops|billing|supply chain|warehouse)\s+operations?\b/gi, (m) => m.replace(/\s+operations?$/i, ''));
-  const ids = FUNCTIONS.filter((f) => new RegExp(f.re.source, 'i').test(t)).map((f) => f.id);
+  const ids = FUNCTIONS.filter((f) => hasSignal(t,f.re,'team_'+f.id)).map((f) => f.id);
   // an IT or HR service desk is one team (workplace), and the broad IT, API, modernization and engineering words are not separate teams beside a security or api read
   return ids.includes('workplace') ? ids.filter((i) => i !== 'it' && i !== 'people') : ids;
 }
@@ -936,7 +936,7 @@ function overlayFn(v: Vertical | null, min: number, ...texts: (string | undefine
 function functionHitsIn(only: string[] | null, min: number, ...texts: (string | undefined)[]): FunctionRoles | null {
   const t = withoutSize(texts.filter(Boolean).join(' \n '));
   let best: FunctionRoles | null = null; let n = 0;
-  for (const f of FUNCTIONS.filter((x) => !only || only.includes(x.id))) { const hits = (t.match(f.re) || []).length; if (hits > n) { best = f; n = hits; } }
+  for (const f of FUNCTIONS.filter((x) => !only || only.includes(x.id))) { const r = readSignal(t,f.re,SIGNALS['team_'+f.id]); const hits = r.state === 'affirmed' ? Math.max(r.evidence.reduce((n,c)=>n+(c.match(f.re)||[]).length,0), SIGNALS['team_'+f.id] && hasSignal(t,SIGNALS['team_'+f.id]) ? min : 0) : 0; if (hits > n) { best = f; n = hits; } }
   return n >= min ? best : null;
 }
 
@@ -1494,6 +1494,7 @@ ${sectorLine(v)}${longNote(args.product_description, problem, args.target_compan
 
 ### Primary Champion (Your Internal Advocate)
 **Most Likely Role**: ${capFirst(primaryChampion.role)}${inferredNote}
+${fn ? `Sentence read for the team: ${givenFn ? targetType : problem}.` : ''}
 
 **Why This Role**:
 - Owns the problem: ${primaryChampion.pain}
@@ -1910,12 +1911,13 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const metricItems = splitItems(args.customer_metrics || '').filter((text) => !statesAbsence(text));
       const given = metricItems.map((text) => ({ text, ...classifyProof(text) }));
       if (extraFact && !given.some((g) => (extraFact.match(/\d[\d,.]*/g) || []).every((n) => g.text.includes(n)))) given.push({ text: extraFact.replace(/(?:\\?[.!])+$/, ''), ...classifyProof(extraFact) });
-      const tier = (n: 1 | 2 | 4, kinds?: ProofKind[]) => given.filter((g) => g.tier === n && (!kinds || kinds.includes(g.kind)));
+      const heldProof = given.filter(g => g.held);
+      const tier = (n: 1 | 2 | 4, kinds?: ProofKind[]) => given.filter((g) => !g.held && g.tier === n && (!kinds || kinds.includes(g.kind)));
       const results = tier(1);
       const cite = (results.find((r) => r.text.length <= 180) || { text: '' }).text;
 
       // The value matrix: the measures the user's own inputs already speak to, each next to what they say; a measure with nothing behind it is not an empty row.
-      const evidence = [...given.map((g) => ({ text: g.text, label: '' })), ...oc.items.map((x) => ({ text: x, label: oc.label }))];
+      const evidence = [...given.filter(g => !g.held).map((g) => ({ text: g.text, label: '' })), ...oc.items.map((x) => ({ text: x, label: oc.label }))];
       const cell = (s: string) => s.replace(/\|/g, '/').replace(/\s+/g, ' ').trim();
       const measures = rankMeasures(lz.metrics, `${args.key_outcome} ${args.customer_metrics || ''}`, args.unique_capability);
       const rows: string[] = [];
@@ -1994,6 +1996,7 @@ ${matrixNote}
 ## Proof Point Framework
 
 ### Tier 1: Customer Results (Strongest)
+${heldProof.length ? `**Adverse or unconfirmed evidence held:** Do not cite these statements as positive results. Sentence read: ${heldProof.map(p => p.text).join("; ")}.\n\n` : ''}
 ${results.length ? `Results you supplied (supplied by you: use one only if it is real and you can show it): ${inl(results.map((r) => r.text))}` : `You supplied no customer result, so none is quoted in this answer. The strongest proof for ${P} is one named customer with a before and after on ${measures[0] ? measures[0] : 'the result your outcome names'}, from the customer's own data and with the period named.`}
 
 **Proof collection questions** (ask your existing customers):
