@@ -24,6 +24,7 @@ exports.pctText = pctText;
 exports.parseCounts = parseCounts;
 exports.dropFraming = dropFraming;
 exports.createServer = createServer;
+const conversation_guidance_ts_1 = require("./conversation-guidance.js");
 const build_profile_ts_1 = require("./build-profile.js");
 const widget_layer_ts_1 = require("./widget-layer.js");
 const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
@@ -4125,11 +4126,11 @@ for (const t of Object.values(tools)) {
     props.your_sector = { type: 'string', enum: [...exports.YOUR_SECTOR_VALUES], description: YOUR_SECTOR_DESCRIPTION };
 }
 function createServer() {
-    const server = new index_js_1.Server({ name: exports.SERVER_NAME, version: exports.SERVER_VERSION }, { capabilities: { tools: {} } });
+    const server = new index_js_1.Server({ name: exports.SERVER_NAME, version: exports.SERVER_VERSION }, { capabilities: { tools: {} }, ...(build_profile_ts_1.BUILD_PROFILE.profile !== "current" ? { instructions: conversation_guidance_ts_1.CONVERSATION_INSTRUCTIONS } : {}) });
     if (build_profile_ts_1.BUILD_PROFILE.profile !== "current")
         (0, widget_layer_ts_1.attachWidgets)(server);
     server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => ({
-        tools: Object.entries(tools).map(([name, config]) => withMeta({ name, description: config.description, inputSchema: config.inputSchema })),
+        tools: Object.entries(tools).map(([name, config]) => withMeta((0, conversation_guidance_ts_1.conversationDefinition)({ name, description: config.description, inputSchema: config.inputSchema }))),
     }));
     server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
         // Run 20 round 1d (D086), the one choke point: every tools/call (stdio, hosted /mcp and /api/tools all come through here)

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { conversationDefinition, CONVERSATION_INSTRUCTIONS } from "./conversation-guidance.ts";
 import { BUILD_PROFILE } from './build-profile.ts';
 import { attachWidgets } from './widget-layer.ts';
 
@@ -3908,13 +3909,13 @@ for (const t of Object.values(tools)) {
 export function createServer(): Server {
   const server = new Server(
     { name: SERVER_NAME, version: SERVER_VERSION },
-    { capabilities: { tools: {} } }
+    { capabilities: { tools: {} }, ...(BUILD_PROFILE.profile !== "current" ? {instructions: CONVERSATION_INSTRUCTIONS} : {}) }
   );
 
   if (BUILD_PROFILE.profile !== "current") attachWidgets(server);
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: Object.entries(tools).map(([name, config]) => withMeta({ name, description: config.description, inputSchema: config.inputSchema })),
+    tools: Object.entries(tools).map(([name, config]) => withMeta(conversationDefinition({ name, description: config.description, inputSchema: config.inputSchema }))),
   }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
