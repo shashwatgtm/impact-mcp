@@ -15,7 +15,12 @@ const toolActions = {
     impact_pinpoint_value: actions.pinpoint, impact_anchor_market: actions.anchor,
     impact_craft_message: actions.craft, impact_translate_execution: actions.translate,
 };
-const quoted = (value) => `"${String(value ?? '').trim().replace(/[.!?]+$/, '')}"`;
+const quoted = (value) => {
+    const source = String(value ?? '').trim();
+    // Inputs are already escaped. Preserve punctuation and never leave a cut escape.
+    const shown = source.length > 280 ? source.slice(0, 280).replace(/\\+$/, '') + '...' : source;
+    return `"${shown}"`;
+};
 function auditReader(text, args) {
     const scores = [...text.matchAll(/^\| \*\*[IMPACT]\*\*:[^|]+\| (\d+)\/100/gm)].map(match => Number(match[1]));
     const total = /Input completeness score: (\d+)\/100/.exec(text)?.[1];

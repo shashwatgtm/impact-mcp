@@ -8,6 +8,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
+import { BUILD_PROFILE } from '../dist/build-profile.js';
 const { default: handler } = await import(new URL("../netlify/functions/mcp.mjs", import.meta.url));
 const ACCEPT = "application/json, text/event-stream";
 let nextId = 1;
@@ -75,8 +76,13 @@ test("D33: area scores and statuses keep the same thresholds (70 and 50), with w
 
 test("D33: the tool description in tools/list is truthful", async () => {
   const t = (await list()).find((x) => x.name === "impact_full_audit");
-  assert.equal(t.description, "Takes what your product does, your target customer and the problem you solve, and returns a positioning audit: an input completeness score for each IMPACT step, the proof you already have, your current positioning checked in words, a recommended positioning with tagline options, a 30-day action plan and the measures to track. Optional company name, differentiation, competitors, current positioning, customer feedback and business model make it fuller. The score measures how complete your inputs are, not how strong your positioning is.");
+  if (BUILD_PROFILE.profile === "current") assert.equal(t.description, "Takes what your product does, your target customer and the problem you solve, and returns a positioning audit: an input completeness score for each IMPACT step, the proof you already have, your current positioning checked in words, a recommended positioning with tagline options, a 30-day action plan and the measures to track. Optional company name, differentiation, competitors, current positioning, customer feedback and business model make it fuller. The score measures how complete your inputs are, not how strong your positioning is.");
+  else {
+    assert.match(t.description, /Ask what the product does/);
+    assert.match(t.description, /never invent these/);
+    assert.match(t.description, /impact_craft_message also fits/);
+  }
   // 27 Oct 2026: the longer description still says the score measures input completeness, not positioning strength
   assert.match(t.description, /input completeness score/);
-  assert.match(t.description, /not how strong your positioning is/);
+  assert.match(t.description, /not how strong (?:your|the) positioning is/);
 });
