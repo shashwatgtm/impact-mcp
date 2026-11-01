@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { BUILD_PROFILE } from './build-profile.ts';
 import { attachWidgets } from './widget-layer.ts';
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -3910,7 +3911,7 @@ export function createServer(): Server {
     { capabilities: { tools: {} } }
   );
 
-  attachWidgets(server);
+  if (BUILD_PROFILE.profile !== "current") attachWidgets(server);
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: Object.entries(tools).map(([name, config]) => withMeta({ name, description: config.description, inputSchema: config.inputSchema })),
