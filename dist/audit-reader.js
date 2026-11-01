@@ -32,7 +32,7 @@ function auditReader(text, args) {
     text = text.replace(/^> \*\*We\*\*.*$/m, () => args.key_differentiation ? `> **Difference described**: ${quoted(args.key_differentiation)}. Use this claim only if you can support it.` : '> **Difference**: Not supplied. Describe what is different and how you know.');
     text = text.replace('> **That** delivers a result you still have to state: write it with impact_pinpoint_value', '> **Result**: Not supplied. Add a customer outcome you can support');
     text = text.replace('> **Unlike** the alternative your buyers use most (add competitors)', '> **Alternative**: Not supplied. Name what buyers use today before using this draft');
-    // Keep the original grade, but do not turn the old keyword score into a false factual gap.
+    // Keep the original input tally, but do not turn the old keyword score into a false factual gap.
     if (/\d[\d,]*(?:\s+(?:to|-|and)\s+\d[\d,]*)?\s+(?:staff|employees|people|workers|team members)\b/i.test(String(args.target_customer ?? ''))) {
         text = text.replace('Your target customer does not mention employees, revenue or a funding series. What makes a company ideal for you?', 'You supplied a staff size or range. Add the segment or buying situation that makes these companies a fit.');
     }

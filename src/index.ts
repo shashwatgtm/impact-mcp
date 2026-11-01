@@ -3567,25 +3567,12 @@ ${SUGGESTED}
 
       const overallScore = Math.round((scores.identify + scores.map + scores.pinpoint + scores.anchor + scores.craft + scores.translate) / 6);
 
-      // Determine grade
-      let grade = 'F';
-      let gradeDescription = '';
-      if (overallScore >= 85) {
-        grade = 'A';
-        gradeDescription = 'Very complete: every area has detailed input';
-      } else if (overallScore >= 75) {
-        grade = 'B';
-        gradeDescription = 'Mostly complete: a few inputs could be more specific';
-      } else if (overallScore >= 65) {
-        grade = 'C';
-        gradeDescription = 'Partly complete: several inputs are short or missing';
-      } else if (overallScore >= 50) {
-        grade = 'D';
-        gradeDescription = 'Thin: many inputs are short or missing';
-      } else {
-        grade = 'F';
-        gradeDescription = 'Very thin: most inputs are short or missing';
-      }
+      // This is an input rule tally, not a grade of positioning quality.
+      const inputDescription = overallScore >= 85 ? 'Very complete: every area has detailed input'
+        : overallScore >= 75 ? 'Mostly complete: a few inputs could be more specific'
+        : overallScore >= 65 ? 'Partly complete: several inputs are short or missing'
+        : overallScore >= 50 ? 'Thin: many inputs are short or missing'
+        : 'Very thin: most inputs are short or missing';
 
       // Find weakest areas
       const sortedScores = Object.entries(scores).sort((a, b) => a[1] - b[1]);
@@ -3645,13 +3632,14 @@ ${ctx.line}${longNote(args.product_description, args.target_customer, args.probl
 
 ---
 
-## IMPACT Scorecard
+## Input detail checklist
 
-### Input completeness score: ${overallScore}/100 (Grade: ${grade})
-**Inputs**: ${gradeDescription}
+**Input completeness score: ${overallScore}/100**
+**This is not a positioning quality grade.** It is a rule tally based on input length, supplied fields and matched words. Buyer evidence is needed to assess the positioning.
+**Inputs**: ${inputDescription}
 **What this score measures**: how complete and specific your inputs are, not whether your positioning is right. Longer inputs and certain words (such as only, unique, unlike, employees, revenue and Series) raise it.
 
-| Phase | Score | Input detail | Priority |
+| Phase | Input rule score | Input detail | Priority |
 |-------|-------|--------|----------|
 | **I**: Identify Champions | ${scores.identify}/100 | ${scores.identify >= 70 ? 'Detailed' : scores.identify >= 50 ? 'Partial' : 'Thin'} | ${scores.identify < 60 ? 'High' : 'Low'} |
 | **M**: Map Alternatives | ${scores.map}/100 | ${scores.map >= 70 ? 'Detailed' : scores.map >= 50 ? 'Partial' : 'Thin'} | ${scores.map < 60 ? 'High' : 'Low'} |

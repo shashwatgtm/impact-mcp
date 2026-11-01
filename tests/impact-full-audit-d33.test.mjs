@@ -1,4 +1,4 @@
-// Run 15 D33 (owner decision, 30 September 2026): impact_full_audit keeps every number, threshold, letter grade and area score,
+// Run 15 D33 (owner decision, 30 September 2026): impact_full_audit keeps every number, threshold and area score; the November owner fix removes letter grades,
 // calls the overall figure an "input completeness score", says once what it measures, and describes the inputs instead of
 // judging the positioning. Codex C-IMP-02 and Claude chat's re-measure: the same product scored 41/100 (F), then 82/100 (B)
 // after padding with "very very great", "only unique" and 3 competitors named A, B and C. The numbers must stay; the words
@@ -50,23 +50,27 @@ const JUDGING = [/Overall Score/, /ready to scale/, /overhaul needed/, /minor re
 
 test("D33: the plain input keeps its numbers (41/100, F) and says what the score measures", async () => {
   const out = await call("impact_full_audit", BASE);
-  assert.match(out, /### Input completeness score: 41\/100 \(Grade: F\)/);
+  assert.match(out, /\*\*Input completeness score: 41\/100\*\*/);
   assert.ok(out.includes(MEASURES), "the measures sentence is printed");
+  assert.doesNotMatch(out, /Grade: [A-F]/);
+  assert.match(out, /not a positioning quality grade/);
   assert.equal(out.split("What this score measures").length - 1, 1, "said once");
   for (const re of JUDGING) assert.doesNotMatch(out, re);
 });
 
 test("D33: the same input padded with filler keeps its numbers (82/100, B) and still says what the score measures", async () => {
   const out = await call("impact_full_audit", PADDED);
-  assert.match(out, /### Input completeness score: 82\/100 \(Grade: B\)/);
+  assert.match(out, /\*\*Input completeness score: 82\/100\*\*/);
   assert.ok(out.includes(MEASURES), "the measures sentence is printed");
+  assert.doesNotMatch(out, /Grade: [A-F]/);
+  assert.match(out, /not a positioning quality grade/);
   assert.equal(out.split("What this score measures").length - 1, 1, "said once");
   for (const re of JUDGING) assert.doesNotMatch(out, re);
 });
 
 test("D33: area scores and statuses keep the same thresholds (70 and 50), with words about the inputs", async () => {
   const out = await call("impact_full_audit", PADDED);
-  assert.match(out, /\| Phase \| Score \| Input detail \| Priority \|/);
+  assert.match(out, /\| Phase \| Input rule score \| Input detail \| Priority \|/);
   assert.match(out, /\| \*\*I\*\*: Identify Champions \| 85\/100 \| Detailed \| Low \|/);
   assert.match(out, /\| \*\*T\*\*: Translate Execution \| 75\/100 \| Detailed \| Low \|/);
   const thin = await call("impact_full_audit", BASE);

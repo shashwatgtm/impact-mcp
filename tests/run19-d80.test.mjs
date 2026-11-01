@@ -3,7 +3,7 @@
 // Companies are the invented ones of the run 19 examples (Shelfwalk, Answerloop, Cloudmoat, Spendrill, Lanehop, Branchwire,
 // Example Logistics Co, Example Manufacturing Co, Example IT Services Co, Example Food Delivery Co). Real companies are tested only
 // in the private project repo (rule B81). Every figure below is an invented test input.
-// D72: impact_full_audit keeps every score and grade; a unit test below re-implements the old rules and compares.
+// D72: impact_full_audit keeps every score; the November owner fix removes letter grades; a unit test below re-implements the old rules and compares.
 // Run: node --test tests/run19-d80.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -374,7 +374,7 @@ test("problem 5: pinpoint_value prints no preset figure and labels the user's me
     assert.ok(r.includes(s.metrics.split(";")[0]));
   }
 });
-test("D72: full_audit keeps every score, weight, threshold and grade of the starting head", async () => {
+test("D72: full_audit keeps every score, weight and threshold while removing letter grades", async () => {
   // the old rules, re-implemented from src/index.ts at dc2a1620 lines 2040 to 2120
   const old = (a) => {
     const competitors = a.competitors || ["Status quo", "DIY solutions"];
@@ -395,7 +395,8 @@ test("D72: full_audit keeps every score, weight, threshold and grade of the star
     for (const a of [args, { product_description: args.product_description, target_customer: args.target_customer, problem_solved: args.problem_solved }]) {
       const r = (await call("impact_full_audit", a)).text;
       const o = old(a);
-      assert.match(r, new RegExp(`### Input completeness score: ${o.overall}/100 \\(Grade: ${o.grade}\\)`), s.id);
+      assert.ok(r.includes(`**Input completeness score: ${o.overall}/100**`), s.id);
+      assert.doesNotMatch(r, /Grade: [A-F]/);
       for (const [k, label] of [["identify", "I"], ["map", "M"], ["pinpoint", "P"], ["anchor", "A"], ["craft", "C"], ["translate", "T"]]) {
         assert.match(r, new RegExp(`\\| \\*\\*${label}\\*\\*: [A-Za-z ]+ \\| ${o.sc[k]}/100 \\|`), `${s.id} ${k}`);
       }
