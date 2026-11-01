@@ -81,7 +81,7 @@ test("r5 craft: the statement does not open with the category field word for wor
 test("r5 craft: Variation A ends on a whole clause of the problem", async () => {
   for (const a of [DATAVAULT, { ...DATAVAULT, customer_need: "engineers spend their week on upgrades and failovers that nobody planned for, while the roadmap waits and every release needs a freeze window and a long list of manual checks" }]) {
     const t = await call("impact_craft_message", a);
-    const A = varA(t);
+    const A = varA(t).replace(/^Unproved value hypothesis: /, '');
     const m = A.match(/^(?:Does this sound familiar|Are you struggling with|Do you): (.*?)\? /) || A.match(/^(?:Are you struggling with|Do you) (.*?)\? /);
     assert.ok(m, `no question in Variation A: ${A}`);
     const q = norm(m[1]);
