@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { auditReader } from "./audit-reader.ts";
 import { conversationDefinition, CONVERSATION_INSTRUCTIONS } from "./conversation-guidance.ts";
 import { BUILD_PROFILE } from './build-profile.ts';
 import { attachWidgets } from './widget-layer.ts';
@@ -3949,6 +3950,7 @@ export function createServer(): Server {
       setYourSector(callArgs.your_sector);
       let result: string;
       try { result = tool.execute(callArgs as any); } finally { setYourSector(undefined); }
+      if (BUILD_PROFILE.profile !== "current" && toolName === "impact_full_audit") result = auditReader(result, callArgs);
       return {
         content: [{ type: 'text', text: result }]
       };

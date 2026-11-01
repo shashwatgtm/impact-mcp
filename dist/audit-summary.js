@@ -50,7 +50,7 @@ function auditSummary(text) {
         gaps,
         nextAction: gaps[0].action,
         proof,
-        qualification: "This is generated from your inputs. Test the wording with buyers and verify each proof point. The original score measures input detail, not positioning strength.",
+        qualification: (text.match(/You gave thin detail on [^\n]+/)?.[0] ?? "The original score measures input detail, not positioning strength.") + " Test the wording with buyers and verify each proof point.",
     };
 }
 //# sourceMappingURL=audit-summary.js.map

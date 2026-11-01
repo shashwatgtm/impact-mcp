@@ -24,6 +24,7 @@ exports.pctText = pctText;
 exports.parseCounts = parseCounts;
 exports.dropFraming = dropFraming;
 exports.createServer = createServer;
+const audit_reader_ts_1 = require("./audit-reader.js");
 const conversation_guidance_ts_1 = require("./conversation-guidance.js");
 const build_profile_ts_1 = require("./build-profile.js");
 const widget_layer_ts_1 = require("./widget-layer.js");
@@ -4169,6 +4170,8 @@ function createServer() {
             finally {
                 setYourSector(undefined);
             }
+            if (build_profile_ts_1.BUILD_PROFILE.profile !== "current" && toolName === "impact_full_audit")
+                result = (0, audit_reader_ts_1.auditReader)(result, callArgs);
             return {
                 content: [{ type: 'text', text: result }]
             };
