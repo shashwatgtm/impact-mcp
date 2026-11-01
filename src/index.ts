@@ -2685,7 +2685,8 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const npLead = !B.headline && B.parts.length && ['np', 'noun'].includes(shapeOf(B.parts[0].text, kit)) && !clauseLead ? partsInline(B.parts).map((x) => clean(x)).join(', ') : '';
       const outcomeProof = /https?\\*:\/\//i.test(args.key_benefit) && hasSignal(args.key_benefit, /\b(?:measured|observed|customer result)\b/i);
       const hypothesisLabel = outcomeProof ? '' : 'Unproved value hypothesis: ';
-      const resultThat = headVerb ? `helps them ${bareHead}` : B.headline && headShape !== 'clause' ? `delivers ${kit.lowerFirst(clean(B.headline))}` : !B.headline && clauseLead ? `helps them ${clauseLead.includes(';') ? clauseOne || clauseLead : clauseLead}` : npLead ? `delivers ${kit.lowerFirst(npLead)}` : '';
+      const resultThatRaw = headVerb ? `helps them ${bareHead}` : B.headline && headShape !== 'clause' ? `delivers ${kit.lowerFirst(clean(B.headline))}` : !B.headline && clauseLead ? `helps them ${clauseLead.includes(';') ? clauseOne || clauseLead : clauseLead}` : npLead ? `delivers ${kit.lowerFirst(npLead)}` : '';
+      const resultThat = resultThatRaw.replace(/^delivers (have|get|ensure)\b/i, 'aims to help them $1');
       const resultOwn = ((): string => (headShape === 'clause' && B.headline ? sentence(B.headline, kit) : !resultThat ? `The result ${P} is built for: ${clean(oneBare)}.` : ''))();
       const detail = ((): string => {
         if (!B.parts.length || !B.headline) return '';
@@ -2801,7 +2802,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
 > ${hypothesisLabel}${stmt.join(' ')}
 
 ### One-Sentence Version
-> ${fresh(oneSentence)}${A.exclusion || audFullShown ? '\n' : ''}${A.exclusion ? `\n**Who this is not for:** ${capFirst(clean(A.exclusion))}, so these messages speak to ${aud} only.` : ''}${audFullShown ? `\n**The audience in full:** ${clean(A.aud)}.` : ''}${needMore.length ? `\n\n**More of the buyer's problem, in your words:**\n${needMore.map((p) => `- ${sentence(clip(p, 300), kit)}`).join('\n')}` : ''}
+> ${hypothesisLabel}${fresh(oneSentence)}${A.exclusion || audFullShown ? '\n' : ''}${A.exclusion ? `\n**Who this is not for:** ${capFirst(clean(A.exclusion))}, so these messages speak to ${aud} only.` : ''}${audFullShown ? `\n**The audience in full:** ${clean(A.aud)}.` : ''}${needMore.length ? `\n\n**More of the buyer's problem, in your words:**\n${needMore.map((p) => `- ${sentence(clip(p, 300), kit)}`).join('\n')}` : ''}
 
 ---`);
 
