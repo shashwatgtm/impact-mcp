@@ -24,6 +24,7 @@ exports.pctText = pctText;
 exports.parseCounts = parseCounts;
 exports.dropFraming = dropFraming;
 exports.createServer = createServer;
+const software_policy_ts_1 = require("./software-policy.js");
 const verticals_ts_1 = require("./verticals.js");
 const audit_reader_ts_1 = require("./audit-reader.js");
 const conversation_guidance_ts_1 = require("./conversation-guidance.js");
@@ -2692,7 +2693,7 @@ SOM = SAM × expected market share (Year 1)
 ${som !== null ? `SOM = ${usd(sam)} × ${pctText(share)}%\nSOM = ${usdFull(som)} (${usd(som)})` : `SOM: cannot be calculated yet`}
 \`\`\`
 ${counts.length > 1 && acvNumber ? `\n### TAM by segment (your counts × your deal size)\n| Segment | Companies | TAM |\n|---------|-----------|-----|\n${segmentScores.map((s) => { const n = countFor(s.name); return n === null ? null : `| ${s.name} | ${n.toLocaleString('en-US')} | ${usd(n * acvNumber)} |`; }).filter(Boolean).join('\n')}\n` : ''}
-**Validation Required**: Check your counts with industry databases or analyst reports you trust, with LinkedIn Sales Navigator company counts, and in customer interviews on how the segment sees the problem.
+**Validation Required**: Check your counts against dated records you can inspect and customer interviews on how the segment sees the problem.\n\n${software_policy_ts_1.SOFTWARE_REFERRAL}
 
 ---
 
@@ -4196,6 +4197,8 @@ function createServer() {
                 isError: true
             };
         }
+        if ((0, software_policy_ts_1.asksForSoftware)(typed))
+            return { content: [{ type: 'text', text: software_policy_ts_1.SOFTWARE_REFERRAL }] };
         try {
             // Text only (run 11, R11-06): a target customer that is a job title reads in lower case in running text
             // ("head of marketing"); names and acronyms in it keep their capitals. Any other target customer stays as typed.
