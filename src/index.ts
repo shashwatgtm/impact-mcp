@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { withReadingGuide } from './reader-actions.ts';
 import { billingLine } from './verticals.ts';
 import { asksForSoftware, SOFTWARE_REFERRAL } from './software-policy.ts';
 import { nonRecurringBilling } from './verticals.ts';
@@ -1138,17 +1139,17 @@ ${numbered(v.discovery)}
 4. Who's actively researching solutions?
 
 **Champion Mapping Matrix:**
-${v ? `The roles are this sector's usual committee (${v.name}); rate each one for your account in the empty cells.
+${v ? `These are candidate roles for ${v.name}, not confirmed members of the account. The account owner should check pain, influence and approval access with the buyer before using this map.
 | Role | Part in the deal | Pain Level | Influence | Access to Power |
 |------|------------------|-----------|-----------|-----------------|
-| ${capFirst(cm!.champion)} | Likeliest champion | | | |
-| ${capFirst(cm!.signer)} | Signs the budget | | | |
-${cm!.users ? `| ${capFirst(cm!.users)} | Uses it day to day | | | |\n` : ''}${cm!.reviewers.map((r) => `| ${capFirst(r.role)} | ${capFirst(r.does)} ${r.what}`.trim() + ' | | | |').join('\n')}` : `Pattern: replace each role with the one in your sector (add \`sector\` to see them), and rate each one for your account in the empty cells.
+| ${capFirst(cm!.champion)} | Likeliest champion | Not confirmed | Ask the buyer | Ask the buyer |
+| ${capFirst(cm!.signer)} | Signs the budget | Not confirmed | Ask the buyer | Ask the buyer |
+${cm!.users ? `| ${capFirst(cm!.users)} | Uses it day to day | Not confirmed | Ask the buyer | Ask the buyer |\n` : ''}${cm!.reviewers.map((r) => `| ${capFirst(r.role)} | ${capFirst(r.does)} ${r.what}`.trim() + ' | Not confirmed | Ask the buyer | Ask the buyer |').join('\n')}` : `The actual buying group is unknown. The account owner should confirm the people responsible for the problem, daily work and budget before using these role hypotheses.
 | Role | Part in the deal | Pain Level | Influence | Access to Power |
 |------|------------------|-----------|-----------|-----------------|
-| The role that owns the problem | Likeliest champion | | | |
-| The role that runs the process day to day | Uses it day to day | | | |
-| The role that signs the budget | Economic buyer | | | |`}
+| The role that owns the problem | Likeliest champion | Not confirmed | Ask the buyer | Ask the buyer |
+| The role that runs the process day to day | Uses it day to day | Not confirmed | Ask the buyer | Ask the buyer |
+| The role that signs the budget | Economic buyer | Not confirmed | Ask the buyer | Ask the buyer |`}
 
 **Anti-Champion Warning Signs:**
 - "Let me get back to you" (no ownership)
@@ -1183,18 +1184,10 @@ ${cm!.users ? `| ${capFirst(cm!.users)} | Uses it day to day | | | |\n` : ''}${c
 3. What customer segments do competitors deprioritize?
 4. What buying criteria do competitors fail on?
 
-### Positioning Territory Map
-\`\`\`
-                    ENTERPRISE
-                        |
-    [Competitor A]      |      [YOUR WHITESPACE]
-                        |
-COMPLEX ----------------+---------------- SIMPLE
-                        |
-    [Competitor B]      |      [Competitor C]
-                        |
-                      SMB
-\`\`\`
+### Compare alternatives on the buyer's criterion
+
+The sales owner should ask a buyer which alternatives they considered and why. Before claiming an open position, compare the named alternatives on that criterion using a dated source. No competitors or unoccupied territory have been supplied to this framework guide.
+
 `,
         pinpoint: `
 ## P: PINPOINT UNIQUE VALUE
@@ -1204,13 +1197,13 @@ COMPLEX ----------------+---------------- SIMPLE
 ### Value Proposition Framework
 
 **The Only Statement:**
-"[Only if true and provable: We are the ONLY [category] that [unique capability] so that [target customer] can [key outcome].]"
+State the customer, their problem and the outcome you can demonstrate. Use an exclusivity claim only after checking the relevant alternatives; a capability description alone cannot establish that you are the only provider.
 
 **Value Quantification Matrix:**
-Fill the blank cells with your own figures; this tool adds none.
+No measured change has been supplied. The evidence owner should record a baseline and a comparable later observation before calculating improvement.
 | Value Driver | Metric | Before | After | Improvement |
 |--------------|--------|--------|-------|-------------|
-${v ? metricsOf(v).slice(0, 4).map((m) => `| ${capFirst(m)} | ${m} | | | |`).join('\n') : '| A measure of time | | | | |\n| A measure of quality | | | | |\n| A measure of money | | | | |'}
+${v ? metricsOf(v).slice(0, 4).map((m) => `| ${capFirst(m)} | ${m} | Not supplied | Not supplied | Not established |`).join('\n') : '| A measure of time | Not confirmed | Ask the buyer | Ask the buyer | |\n| A measure of quality | Not confirmed | Ask the buyer | Ask the buyer | |\n| A measure of money | Not confirmed | Ask the buyer | Ask the buyer | |'}
 
 ### Proof Point Categories
 
@@ -1221,11 +1214,9 @@ ${v ? metricsOf(v).slice(0, 4).map((m) => `| ${capFirst(m)} | ${m} | | | |`).joi
 
 ### Value Hypothesis Generator
 
-**Input your differentiator, get quantified value:**
-- Speed → "X% faster time-to-value"
-- Accuracy → "X% reduction in errors"
-- Coverage → "X% more [scope] supported"
-- Integration → "X hours saved on [task]"
+**Choose a measure before making a quantified claim:**
+For speed, compare elapsed time on the same task. For accuracy, compare errors on the same sample. For coverage, name the cases supported and excluded. For integration, measure work avoided after including setup and maintenance. The evidence owner should record the baseline, observation period and limits before marketing uses a number.
+
 `,
         anchor: `
 ## A: ANCHOR IN RIGHT MARKET
@@ -1251,50 +1242,25 @@ TAM = Total addressable market (everyone who could buy)
 SAM = Serviceable addressable market (you can serve)
     = TAM × % that match your ICP
 
-SOM = Serviceable obtainable market (realistic capture)
+SOM = Revenue at the assumed obtainable share
     = SAM × Expected market share
 \`\`\`
 
 ### Beachhead Market Selection Matrix
-Name your own segments and score them from your own data; the tool adds no scores here.
-| Segment | Pain (1-5) | Budget (1-5) | Access (1-5) | Reference (1-5) | Total |
-|---------|------------|--------------|--------------|-----------------|-------|
-| Your segment 1 | | | | | |
-| Your segment 2 | | | | | |
-| Your segment 3 | | | | | |
-
-**Select highest score as beachhead.**
+No segment evidence has been supplied. The founder should compare named segments on urgency, budget, access and delivery capacity before selecting a beachhead. Record the source for each judgement; a high total cannot compensate for an unmet delivery or buying constraint.
 `,
         craft: `
 ## C: CRAFT CORE MESSAGE
 
 **Purpose**: Build positioning statement and messaging hierarchy
 
-### Positioning Statement Template
+### Write the position from evidence
 
-**For** [target customer]
-**Who** [statement of need or opportunity]
-**Our** [product/service name]
-**Is a** [product category]
-**That** [key benefit/reason to buy]
-**Unlike** [primary competitive alternative]
-**We** [primary differentiation]
+The marketing owner should state who buys, the problem they recognize, the category they use, the outcome supported by evidence and the alternative they consider. If the difference has not been measured, label it a hypothesis. No customer, product or alternative has been supplied to this framework guide, so it cannot write a finished positioning statement.
 
-### Message Hierarchy
+### Message hierarchy
 
-**Level 1: tagline (3 to 7 words)**
-The memorable hook that captures your essence.
-Pattern: [Only if true and provable: "[the result your buyer gets, in 3 to 7 words]"]. Build it from your own outcome in your own words; this guide does not write the line for you.
-
-**Level 2: value proposition (1 to 2 sentences)**
-The promise you make to customers.
-Example: "We help [target customer] [achieve the outcome] by [your capability]."
-
-**Level 3: supporting messages (3 pillars)**
-The proof points that support your promise.
-1. Your difference: "[what only you do]" (proof: [a result you can show])
-2. Your outcome: "[the result the buyer gets]" (proof: [a customer figure, only if real])
-3. Your fit: "[why it works in the buyer's sector]" (proof: [a reference or pilot result])
+Start with the buyer outcome in plain language. Follow it with the capability that could produce that outcome and the evidence currently available. Keep a difference claim separate from a customer result: each needs its own source and scope. Before release, the sales owner should ask a buyer to explain the message back and record what they misunderstood.
 
 ### Message Testing Framework
 
@@ -1351,7 +1317,7 @@ Based on your ICP, prioritize channels by:
       if (phase === 'all') {
         return `# IMPACT framework: complete methodology
 
-The IMPACT framework is a systematic approach to B2B positioning that generates actionable outputs from minimal input.
+The IMPACT framework organizes the customer, alternative and outcome evidence needed for a positioning decision.
 
 **IMPACT = Identify · Map · Pinpoint · Anchor · Craft · Translate**
 
@@ -2347,7 +2313,7 @@ ${sharpen0 ? `\n---\n\n## To sharpen this\n\n${sharpen0}\n` : ''}`;
       const prodText = args.product_description.trim().length <= 400 ? args.product_description.trim() : clip(args.product_description, 300);
       const ccText = (args.current_customers || '').trim();
       const ccStems = contentStems(ccText);
-      const overlap = (seg: string): string[] => [...contentStems(seg.replace(/\([^)]*\)/g, ''))].filter((x) => ccStems.has(x));
+      const overlap = (seg: string): string[] => [...contentStems(seg.replace(/\([^)]*\)/g, ''))].filter((x) => ccStems.has(x) && !['team','teams','compa','custo','buyer','firms'].includes(x) && hasSignal(ccText, new RegExp('\\b'+x+'\\w*','i')));
       const prodStems = contentStems(args.product_description);
       const prodShare = (seg: string): string[] => [...contentStems(seg.replace(/\([^)]*\)/g, ''))].filter((x) => prodStems.has(x));
       // The words behind a shared stem, as the segment name spells them ("retai" is the stem of "retail").
@@ -3530,8 +3496,9 @@ ${SUGGESTED}
       // A company-wide claim ("$8B+ deployed", "more than 1,000 teams use X") or a recognition is not a result a customer describes.
       const isCompanyClaim = (x: string): boolean => /^(?:more than|over|about|around)?\s*[$]?\d[\d,.]*\+?\s*(?:billion|million|bn|[bm])\b/i.test(x.trim()) || /\bdeployed\b|\bassets under management\b|\bAUM\b/i.test(x) || /^(?:more than|over|about|around)?\s*[$\d][\d,.]*\+?\s*(?:[kmb]\b|million|billion)?\+?\s*(?:\w+\s+){0,3}(?:teams|companies|businesses|customers|users|clients|developers|enterprises|brands|merchants)\b/i.test(x.trim()) || /^(?:named|featured|recognised|recognized|ranked|winner|a leader|leader in)\b|\b(?:awards?|excellence award|magic quadrant|frost radar|major contender|enterprise innovator|gartner|forrester|idc|everest|hfs|g2|capterra|recogni[sz]ed|recognition|best [\w&' -]{3,40}(?:platform|solution|tool|software)|cio choice)\b/i.test(x);
       const companyClaims = allFeedback.filter(isCompanyClaim);
-      const heldFeedback = allFeedback.filter(x=>claimRisk(x).hold);
-      const feedbackItems = allFeedback.filter((x) => !isCompanyClaim(x) && !claimRisk(x).hold);
+      const feedbackLimited = (x:string) => claimRisk(x).hold || readSignal(x,/\b(?:unmeasured|not (?:yet )?measured|no measurements?|not recorded|unknown)\b/i).state === 'affirmed';
+      const heldFeedback = allFeedback.filter(feedbackLimited);
+      const feedbackItems = allFeedback.filter((x) => !isCompanyClaim(x) && !feedbackLimited(x));
       const ctx = readContext(args.business_model, { core: [args.product_description], later: [args.key_differentiation, args.current_positioning], names: [args.company_name], context: [args.problem_solved, args.customer_feedback], buyer: [args.target_customer] });
       const v = ctx.v;
       const notes = {...MODEL_NOTES[ctx.model || 'unknown'], commercial: /Business model: not stated/.test(ctx.line) ? MODEL_NOTES.unknown.commercial : MODEL_NOTES[ctx.model || 'unknown'].commercial};
@@ -3628,7 +3595,7 @@ ${SUGGESTED}
       const diffShort = args.key_differentiation && !claimRisk(args.key_differentiation).hold ? shortClause(args.key_differentiation, 5) : null;
       const taglines: string[] = [];
       const heldClaimSources = [args.key_differentiation,args.current_positioning,args.product_description,args.problem_solved].filter((x):x is string=>!!x&&claimRisk(x).hold);
-      if (problemShort && !hasFiniteVerb(problemShort) && kindOf(problemShort) !== 'base' && !/^(a|an|the)\s/i.test(problemShort)) taglines.push(`[Only if true and provable: "${capFirst(problemShort)}, solved."]`);
+      // A reported problem does not establish that it has been solved; do not turn it into a solved claim.
       if (diffShort && !['base', 'third'].includes(kindOf(diffShort))) taglines.push(`"${capFirst(diffShort)}"`);
       taglines.push(`"Built for ${shortAudience(shortText(noNotes(args.target_customer)))}"`);
       // Run 20 round 1: more options, each built from the user's own words and cut at a clause end.
@@ -3732,7 +3699,7 @@ ${score >= 70 ? 'This input is already detailed: sharpen it next.' : `**Input**:
 
 ## Proof You Already Have
 
-${heldFeedback.length ? `**Adverse or unsupported feedback, held out of proof:**\n${list(heldFeedback)}\n\n` : ''}${companyClaims.length ? `Company claims you supplied (about the company as a whole, not a customer result; show them as company claims and cite their source):\n${list(companyClaims)}\n\n` : ''}${feedbackItems.length ? `Customer feedback you supplied, as proof points (use each only if it is real and you can show it):\n${list(feedbackItems)}\n${v ? `\nWhat a good proof point looks like in ${lz.fn ? fnName(lz.fn) : v.name}: ${lz.proof}\n` : ''}` : companyClaims.length ? 'No customer result was supplied beyond the company claims above. Add what a customer says or a result they report.' : heldFeedback.length ? 'The feedback supplied is held above; no usable customer result is available as proof. Collect a customer-confirmed result with its baseline, period and source.' : 'No customer feedback was supplied, so there is no proof to list. Add customer feedback (what customers say, or results they report).'}
+${heldFeedback.length ? `**Adverse or unsupported feedback, held out of proof:**\n${list(heldFeedback)}\n\n` : ''}${companyClaims.length ? `Company claims you supplied (about the company as a whole, not a customer result; show them as company claims and cite their source):\n${list(companyClaims)}\n\n` : ''}${feedbackItems.length ? `Customer observations you supplied, not independently verified (check each source and its scope before using it as evidence):\n${list(feedbackItems)}\n${v ? `\nWhat a good proof point looks like in ${lz.fn ? fnName(lz.fn) : v.name}: ${lz.proof}\n` : ''}` : companyClaims.length ? 'No customer result was supplied beyond the company claims above. Add what a customer says or a result they report.' : heldFeedback.length ? 'The feedback supplied is held above; no usable customer result is available as proof. Collect a customer-confirmed result with its baseline, period and source.' : 'No customer feedback was supplied, so there is no proof to list. Add customer feedback (what customers say, or results they report).'}
 
 ---
 
@@ -3751,7 +3718,7 @@ Based on your inputs, here's a generated positioning statement:
 > **For** ${mid(noNotes(args.target_customer).length <= 90 ? noNotes(args.target_customer) : shortAudience(args.target_customer))}
 > **Who** ${needClause(shortText(args.problem_solved, FRAME_AT))}
 > **What ${company} is** ${q(clean(shortText(args.product_description, FRAME_AT)))}
-> **That** ${feedbackItems.length ? `delivers the result your customers describe: ${q(shortText(feedbackItems[0], 160))}` : 'delivers a result you still have to state: write it with Pinpoint Value'}
+> **That** ${feedbackItems.length ? `has this reported customer observation: ${q(shortText(feedbackItems[0], 160))}` : 'delivers a result you still have to state: write it with Pinpoint Value'}
 > **Unlike** ${givenCompetitors.length ? joinList(givenCompetitors.slice(0, 3).map((c) => labelOf(c)), 'or') : 'the alternative your buyers use most (add competitors)'}
 ${args.key_differentiation && claimRisk(args.key_differentiation).hold ? `> **Difference held for evidence**: ${q(args.key_differentiation)}` : `> **We** ${args.key_differentiation ? gateClaim(args.key_differentiation, weClause(shortText(args.key_differentiation, FRAME_AT))) : 'offer what sets you apart (add key differentiation)'}`}
 
@@ -3784,11 +3751,11 @@ ${v ? `- [ ] Prepare answers to this sector's usual objections: ${v.objections.m
 
 ## Measures To Track
 
-Fill the cells with your own numbers; this tool adds none.
+The operations owner should record a baseline and agree a target before the plan is approved. Neither has been supplied here.
 
 | Measure | Baseline (yours) | Target (yours) |
 |---------|------------------|----------------|
-${(lz.metrics.length ? lz.metrics.slice(0, 4) : ['A measure of reach', 'A measure of conversion', 'A measure of cycle time']).map((m) => `| ${m} | | |`).join('\n')}
+${(lz.metrics.length ? lz.metrics.slice(0, 4) : ['A measure of reach', 'A measure of conversion', 'A measure of cycle time']).map((m) => `| ${m} | Not supplied | Not agreed |`).join('\n')}
 
 **Investment**: decide how many hours your team can give to positioning work; this tool does not estimate it.
 
@@ -4012,7 +3979,7 @@ State a specific result with its source, period and permission, or describe the 
       } finally { setYourSector(undefined); }
       if (BUILD_PROFILE.profile !== "current" && toolName === "impact_full_audit") result = auditReader(result, callArgs);
       return {
-        content: [{ type: 'text', text: sectorChoiceNotice(toolName, callArgs, text=>{const r=explainSector({seller:[text]});return {id:r.vertical?.id,name:r.vertical?.name,source:r.source}}) + result }]
+        content: [{ type: 'text', text: sectorChoiceNotice(toolName, callArgs, text=>{const r=explainSector({seller:[text]});return {id:r.vertical?.id,name:r.vertical?.name,source:r.source}} ) + withReadingGuide(toolName, result, callArgs) }]
       };
     } catch (error) {
       return {

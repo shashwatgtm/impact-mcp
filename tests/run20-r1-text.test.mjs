@@ -85,13 +85,11 @@ test("A17-O29: the framework guide's tagline example is a pattern in the wrap, n
   for (const args of [{}, { focus_phase: "craft" }, { focus_phase: "craft", sector: "cybersecurity" }]) {
     const out = await call("impact_get_framework", args);
     assert.doesNotMatch(out, INVENTED_TAGLINES, JSON.stringify(args));
-    const block = out.split("**Level 1: tagline (3 to 7 words)**")[1].split("**Level 2")[0];
-    assert.ok(block.includes(WRAP), `Level 1 block: ${block}`);
-    // every double-quoted string in the block is inside the wrap
-    for (const m of block.matchAll(/"([^"]+)"/g)) {
-      const before = block.slice(0, m.index);
-      assert.ok(before.lastIndexOf(WRAP) > before.lastIndexOf("]"), `unwrapped quote ${m[0]}`);
-    }
+    const block = out.split("### Write the position from evidence")[1].split("### Message Testing Framework")[0];
+    assert.match(block, /If the difference has not been measured, label it a hypothesis/);
+    assert.match(block, /No customer, product or alternative has been supplied/);
+    assert.doesNotMatch(block, /\[(?:target customer|key benefit|your capability|what only you do)\]/);
+
   }
 });
 

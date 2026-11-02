@@ -57,7 +57,7 @@ test("identify_champions: a billing problem that names Finance gets finance role
   assert.match(t, /billing and revenue operations/);
   assert.match(t, /Revenue operations lead or the billing manager|Finance Controller/);
   assert.match(t, /Most Likely Role\*\*: (?:the )?(?:CFO|Chief Financial Officer)/);
-  assert.doesNotMatch(t, /quota|CRO|CAC:LTV|Sales Operations Manager|activation rate|logo churn/i);
+  assert.doesNotMatch(t.split("## Reading the answer")[0], /quota|CRO|CAC:LTV|Sales Operations Manager|activation rate|logo churn/i);
 });
 test("identify_champions: an AI product for asset managers gets investment roles, and the problem is never pasted in as a role", async () => {
   const t = await call("impact_identify_champions", { company_name: "Forecastly", product_description: "Forecastly AI forecasts and confidence scores for investment teams", problem_solved: "analysing datasets larger than most teams can handle, while factor models rely on static inputs", target_company_type: "Asset managers, wealth managers, pension funds" });

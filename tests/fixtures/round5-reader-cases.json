@@ -1,0 +1,93 @@
+[
+  {
+    "tool": "impact_get_framework",
+    "args": {
+      "sector": "Logistics tech"
+    }
+  },
+  {
+    "tool": "impact_identify_champions",
+    "args": {
+      "product_description": "Dispatch planning software for regional logistics fleets",
+      "problem_solved": "Dispatch supervisors spend four hours each day reconciling routes after missed deliveries",
+      "target_company_type": "Regional fleets with 50 to 250 vehicles",
+      "price_point": "$24000 annual"
+    }
+  },
+  {
+    "tool": "impact_map_alternatives",
+    "args": {
+      "your_product": "Managed cybersecurity alert triage service",
+      "category": "Managed detection and response",
+      "competitors": [
+        "Internal SOC",
+        "Existing MSSP",
+        "SIEM automation rules"
+      ],
+      "competitor_weaknesses": "Buyer interview: internal SOC cannot cover weekends; the existing MSSP sends unprioritized alerts.",
+      "your_strengths": "Named analyst reviews weekend alerts; outcome improvement is not yet measured."
+    }
+  },
+  {
+    "tool": "impact_pinpoint_value",
+    "args": {
+      "category": "Telecom network incident automation",
+      "target_customer": "Network operations directors at regional telecom providers",
+      "key_outcome": "Reduce outage recovery time",
+      "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
+      "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
+    }
+  },
+  {
+    "tool": "impact_anchor_market",
+    "args": {
+      "product_description": "AI native contract review software",
+      "potential_segments": [
+        "Legal teams at SaaS companies",
+        "Procurement teams at manufacturers"
+      ],
+      "current_customers": "Three SaaS legal teams at $24000 ACV; no manufacturing customers",
+      "customer_pain": "Legal review queues delay vendor onboarding",
+      "average_deal_size": "$24000 annual",
+      "sales_cycle": "90 days",
+      "company_counts": "SaaS legal teams: 1800; manufacturing procurement teams: unknown",
+      "percent_matching_icp": 30,
+      "year_one_share_percent": 2
+    }
+  },
+  {
+    "tool": "impact_craft_message",
+    "args": {
+      "target_customer": "SOC managers at midmarket cybersecurity teams",
+      "customer_need": "clear urgent alerts before the next shift",
+      "product_category": "Alert triage software",
+      "key_benefit": "Prioritized alert queue with named owners",
+      "differentiation": "Links each alert to the affected business service; no measured response time claim yet"
+    }
+  },
+  {
+    "tool": "impact_translate_execution",
+    "args": {
+      "positioning_statement": "Clinic scheduling software that gives reception teams one shared appointment book",
+      "target_customer": "Practice managers at clinics with two to five locations",
+      "key_benefit": "Avoid double bookings between receptionists"
+    }
+  },
+  {
+    "tool": "impact_full_audit",
+    "args": {
+      "product_description": "Invoice processing service for regional insurers",
+      "target_customer": "Accounts payable heads at insurers with 100 to 500 employees",
+      "problem_solved": "Exception invoices wait four days for approval",
+      "key_differentiation": "Named reviewer resolves exceptions with an audit trail",
+      "competitors": [
+        "Internal AP team",
+        "Outsourcing incumbent"
+      ],
+      "current_positioning": "Clear invoice exceptions before the payment run",
+      "customer_feedback": "One AP head said visibility improved; processing time and error rate are not measured.",
+      "business_model": "services",
+      "your_sector": "ites"
+    }
+  }
+]

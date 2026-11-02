@@ -205,7 +205,8 @@ test("problem 8: get_framework: the ONLY statement is guarded; optional sector a
   const { VERTICALS } = await import(new URL("../src/verticals.ts", import.meta.url));
   const all = (await call("impact_get_framework", {})).text;
   assert.doesNotMatch(all, /^"We are the ONLY/m);
-  assert.match(all, /\[Only if true and provable: [^\]]*ONLY/i);
+  assert.match(all, /Use an exclusivity claim only after checking the relevant alternatives/);
+  assert.doesNotMatch(all, /\[(?:target customer|category|unique capability|key outcome)\]/i);
   assert.doesNotMatch(all, /\bVP Sales\b.*Strong Champion/);
   for (const v of VERTICALS) {
     const r = (await call("impact_get_framework", { focus_phase: "all", sector: v.name })).text;
