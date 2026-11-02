@@ -2,6 +2,7 @@
 // This file is not a test itself (its name has no ".test"). Companies in the tests are invented; the pool scenarios are loaded at run time
 // from the private project folder when it exists (they carry real names, which are never written into this public repo) and are skipped otherwise.
 import assert from "node:assert/strict";
+import {NO_REGION_SUFFIX} from "../src/region-reader.ts";
 
 const { default: handler } = await import(new URL("../netlify/functions/mcp.mjs", import.meta.url));
 let nextId = 1;
@@ -50,6 +51,8 @@ export function sections(text) {
 }
 export const sharpen = (t) => t.split("To sharpen this, give:").length - 1;
 export function assertSharpenAtEnd(t, label = "") {
+  // P1 adds exactly this question after the unchanged answer when the market is missing.
+  if(t.endsWith(NO_REGION_SUFFIX))t=t.slice(0,-NO_REGION_SUFFIX.length);
   assert.ok(sharpen(t) <= 1, `${label}: "To sharpen this, give:" appears ${sharpen(t)} times`);
   if (sharpen(t) === 1) {
     const after = t.split("To sharpen this, give:")[1];

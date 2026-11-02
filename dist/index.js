@@ -24,6 +24,7 @@ exports.pctText = pctText;
 exports.parseCounts = parseCounts;
 exports.dropFraming = dropFraming;
 exports.createServer = createServer;
+const region_reader_ts_1 = require("./region-reader.js");
 const reader_actions_ts_1 = require("./reader-actions.js");
 const verticals_ts_1 = require("./verticals.js");
 const software_policy_ts_1 = require("./software-policy.js");
@@ -4182,9 +4183,11 @@ function createServer() {
                     callArgs[f] = dropFraming(callArgs[f]);
             setYourSector(callArgs.your_sector);
             let result;
+            let regionEligible = true;
             try {
                 const claimFields = { impact_craft_message: ['key_benefit', 'differentiation'], impact_translate_execution: ['key_benefit', 'positioning_statement'] };
                 const held = (claimFields[toolName] || []).map(k => callArgs[k]).filter((x) => typeof x === 'string' && (0, text_signals_ts_1.claimRisk)(x).hold);
+                regionEligible = !held.length;
                 result = held.length ? `# Claim review before drafting
 
 **Unsupported or adverse claims held.** The supplied text does not support publishable copy. Keep its evidence qualification attached.
@@ -4199,7 +4202,7 @@ State a specific result with its source, period and permission, or describe the 
             if (build_profile_ts_1.BUILD_PROFILE.profile !== "current" && toolName === "impact_full_audit")
                 result = (0, audit_reader_ts_1.auditReader)(result, callArgs);
             return {
-                content: [{ type: 'text', text: (0, text_signals_ts_2.sectorChoiceNotice)(toolName, callArgs, text => { const r = (0, verticals_ts_3.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + (0, reader_actions_ts_1.withReadingGuide)(toolName, result, callArgs) }]
+                content: [{ type: 'text', text: (0, text_signals_ts_2.sectorChoiceNotice)(toolName, callArgs, text => { const r = (0, verticals_ts_3.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + (0, reader_actions_ts_1.withReadingGuide)(toolName, result, callArgs) + (regionEligible ? (0, region_reader_ts_1.regionNotes)(typed) : '') }]
             };
         }
         catch (error) {

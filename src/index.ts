@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {regionNotes} from './region-reader.ts';
 import { withReadingGuide } from './reader-actions.ts';
 import { billingLine } from './verticals.ts';
 import { asksForSoftware, SOFTWARE_REFERRAL } from './software-policy.ts';
@@ -3966,9 +3967,11 @@ export function createServer(): Server {
       for (const f of FRAMED_FIELDS) if (typeof callArgs[f] === 'string') callArgs[f] = dropFraming(callArgs[f] as string);
       setYourSector(callArgs.your_sector);
       let result: string;
+      let regionEligible=true;
       try {
         const claimFields:Record<string,string[]>={impact_craft_message:['key_benefit','differentiation'],impact_translate_execution:['key_benefit','positioning_statement']};
         const held=(claimFields[toolName]||[]).map(k=>callArgs[k]).filter((x):x is string=>typeof x==='string'&&claimRisk(x).hold);
+        regionEligible=!held.length;
         result=held.length ? `# Claim review before drafting
 
 **Unsupported or adverse claims held.** The supplied text does not support publishable copy. Keep its evidence qualification attached.
@@ -3979,7 +3982,7 @@ State a specific result with its source, period and permission, or describe the 
       } finally { setYourSector(undefined); }
       if (BUILD_PROFILE.profile !== "current" && toolName === "impact_full_audit") result = auditReader(result, callArgs);
       return {
-        content: [{ type: 'text', text: sectorChoiceNotice(toolName, callArgs, text=>{const r=explainSector({seller:[text]});return {id:r.vertical?.id,name:r.vertical?.name,source:r.source}} ) + withReadingGuide(toolName, result, callArgs) }]
+        content: [{ type: 'text', text: sectorChoiceNotice(toolName, callArgs, text=>{const r=explainSector({seller:[text]});return {id:r.vertical?.id,name:r.vertical?.name,source:r.source}} ) + withReadingGuide(toolName, result, callArgs) + (regionEligible ? regionNotes(typed) : '') }]
       };
     } catch (error) {
       return {
