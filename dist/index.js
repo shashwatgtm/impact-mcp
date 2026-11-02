@@ -1468,14 +1468,14 @@ The proof points that support your promise.
 
 ### Channel Adaptation Matrix
 
-${EXAMPLES}${v ? `\nThe calls to action follow how ${v.name} companies usually sell (${verticals_ts_2.MODEL_NAME[verticals_ts_2.SECTOR_MODEL[v.id]].split(" (")[0]}): ${callsToAction(v, verticals_ts_2.SECTOR_MODEL[v.id]).slice(0, 2).map((x) => `"${x}"`).join(' or ')}.` : ''}
+${EXAMPLES}\nBusiness model: not stated. Tell us how you charge and the plan will adjust.\nChoose a next step the buyer can accept without assuming a trial, subscription or contract.
 | Channel | Format | Length | CTA Focus | Key Message |
 |---------|--------|--------|-----------|-------------|
 | LinkedIn | Text + Image | 150 words | ${v ? 'Start a conversation' : 'Engage'} | Problem awareness |
-| Website Hero | Headline + Sub | 15 words | ${v ? callsToAction(v, verticals_ts_2.SECTOR_MODEL[v.id])[0] : 'Next step'} | Value prop |
+| Website Hero | Headline + Sub | 15 words | Discuss the buyer task | Value prop |
 | Cold Email | Subject + Body | 75 words | ${v ? 'A short call or a reply' : 'Reply'} | Pain + curiosity |
 | Sales Deck | Slides | 10 slides | ${v ? 'The next meeting or the proposal' : 'Meeting'} | Full story |
-| ${v && verticals_ts_2.SECTOR_MODEL[v.id] !== 'saas' ? 'Walkthrough or pilot review' : 'Demo or walkthrough'} | Script | 15 min | ${v ? callsToAction(v, verticals_ts_2.SECTOR_MODEL[v.id])[1] || 'Pilot or proposal' : 'Pilot or proposal'} | Capability proof |
+| Walkthrough | Script | 15 min | Agree an acceptance check | Capability proof |
 
 ### Execution Checklist
 
@@ -1723,8 +1723,8 @@ Watch for these red flags that indicate you're talking to the wrong person:
 
 | Warning Sign | What It Means | Action |
 |--------------|---------------|--------|
-| "Let me check with my team" | No decision authority | Ask: "Who else should be in this conversation?" |
-| Only discusses features | No business pain ownership | Pivot: "What happens if this doesn't get solved?" |
+| "Let me check with my team" | Decision authority unconfirmed | Ask: "Who else should be in this conversation?" |
+| Only discusses features | Problem ownership unconfirmed | Pivot: "What happens if this doesn't get solved?" |
 | Delegates to junior staff | Not a priority for them | Ask: "Who's driving this initiative?" |
 | No timeline urgency | Nice-to-have, not must-have | Probe: "What changed that made this a priority now?" |
 
@@ -2187,7 +2187,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             if (!metricItems.length)
                 tailMissing.push({ give: 'customer metrics (one real customer result with its source)', changes: 'Tier 1 and the matrix, which quote no customer result today' });
             if (!args.business_model && (!ctx.model || /assumed/.test(ctx.line)))
-                tailMissing.push({ give: 'business_model', changes: 'the proof types and calls to action, which follow the usual model of the sector today' });
+                tailMissing.push({ give: 'business_model', changes: 'the commercial next step; it remains conditional until you state how you charge' });
             tailMissing.push({ give: "the buyer's current pain and a payback period from your best customers", changes: 'the economic buyer statement, which has no payback figure to cite' });
             const sharpen = (0, rw_impact_ts_1.sharpenLine)(tailMissing);
             const objections = v ? `\n**Objections to prepare for** (the pattern of a good answer, from the sector notes):\n${v.objections.map((o) => `- "${o.objection}"${ctx.model === 'saas' || ctx.model === null || !verticals_ts_2.SAAS_ONLY.test(o.response) ? `: ${o.response}` : ''}`).join('\n')}\n` : '';
