@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.readingGuide = readingGuide;
 exports.withReadingGuide = withReadingGuide;
+const impact_reader_actions_ts_1 = require("./impact-reader-actions.js");
 const GUIDES = {
     pmf_scorecard: ['fit', 'The score compares supplied metrics with the selected benchmark. It does not establish product market fit outside that sample.', 'retention, cohort size and the benchmark choice', 'the decision to increase acquisition spending'],
     launch_commander: ['plan', 'This is a proposed launch sequence. A date and a goal do not establish delivery capacity.', 'the launch date, available capacity and buyer acceptance conditions', 'the launch scope'],
@@ -80,7 +81,9 @@ function readingGuide(name, result, args = {}) {
     const g = GUIDES[name];
     if (!g || !result || /^(?:Error|Invalid|Missing required|No contact|Contact declined)/i.test(result))
         return '';
-    const [kind, meaning, evidence, decision] = g;
+    const [kind, defaultMeaning, defaultEvidence, decision] = g;
+    const specific = (0, impact_reader_actions_ts_1.impactReading)(name, args);
+    const meaning = specific?.meaning || defaultMeaning, evidence = specific?.evidence || defaultEvidence;
     const held = /^# .*\bheld\b|^Use not approved|^Publication is not approved|^## Overall Score:[^\n]*\(NOT PROVED YET\)/im.test(result);
     const status = held ? ' Keep the stated hold in place; this guidance does not override it.' : '';
     let roles = kind === 'publish' ? [
@@ -102,6 +105,8 @@ function readingGuide(name, result, args = {}) {
         `CRO: validate ${evidence} with the relevant buyer or account owner before changing sales priorities.`,
         `Demand generation head: compare the next account sample with ${decision} before expanding outreach.`,
     ];
+    if (specific)
+        roles = specific.roles;
     const noPayback = name === 'roi_business_case_builder' && /^\| \*\*Payback Period\*\*[^\n]*No payback/im.test(result);
     const unsupportedClaim = /\(NOT PROVED YET\)|^> Unproved value hypothesis:|^Use not approved/m.test(result);
     const failedScore = name === 'icp_scoring_model' && /^# Scoring decision held/m.test(result);
@@ -114,7 +119,7 @@ function readingGuide(name, result, args = {}) {
             'Demand generation head: do not reuse this case as a positive return example before the buyer confirms a supported result.',
         ];
     if (unsupportedClaim)
-        roles = [
+        roles = specific?.heldRoles || [
             `Founder: keep the unsupported claim in ${decision} as a hypothesis until the stated evidence gap is resolved.`,
             `CEO: hold external use of ${decision} until the evidence owner approves the claim and its scope.`,
             'CMO: compare the claimed outcome with its original record, baseline and period before approving copy; an unmeasured outcome is not a fact.',
@@ -129,10 +134,10 @@ function readingGuide(name, result, args = {}) {
             'CRO: keep account decisions under manual review; record the evidence for each exception before outreach.',
             'Demand generation head: use a fresh held back sample for a revised model; do not tune on the failed test set.',
         ];
-    const contextual = roles.map(line => caseLabel ? line.replace(': ', ': For ' + caseLabel + ', ') : line);
+    const contextual = roles.map(line => caseLabel && !specific ? line.replace(': ', ': For ' + caseLabel + ', ') : line);
     if (name === 'launch_commander')
         return '\n\n## Reading the answer\n\nThis sequence is proposed. Change scope if the date, capacity or buyer acceptance check changes.\n\n## Decisions by role\n\nFounder: confirm the buyer before choosing launch scope.\nCEO: match owners to capacity before approving the date.\nCMO: verify the launch claim before briefing channels.\nCRO: agree the buyer acceptance check before offering a meeting.\nDemand generation head: check contact volume against channel capacity before outreach.\n';
-    return `\n\n## Reading the answer\n\n${caseLabel ? `For ${caseLabel}: ` : ''}${meaning}${status} The conclusion needs review if new evidence changes ${evidence}.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\n${contextual.join('\n\n')}\n`;
+    return `\n\n## Reading the answer\n\n${caseLabel ? `For ${caseLabel}: ` : ''}${meaning}${status} Evidence that could change this conclusion: ${evidence}.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\n${contextual.join('\n\n')}\n`;
 }
 function withReadingGuide(name, result, args = {}) {
     const guide = readingGuide(name, result, args);

@@ -1,3 +1,4 @@
+import {impactReading} from './impact-reader-actions.ts';
 /** Reading guidance is deterministic and does not turn supplied claims into verified facts. */
 type Guide = [string, string, string, string];
 const GUIDES: Record<string, Guide> = {
@@ -58,7 +59,9 @@ export function readingGuide(name: string, result: string, args: Record<string,u
   if(!caseLabel){const match=/\*Sector: (?:read from your inputs as|from your choice:)\s*([^.\n*]+)/.exec(result);if(match)caseLabel=match[1].trim()+' case';}
   const g = GUIDES[name];
   if (!g || !result || /^(?:Error|Invalid|Missing required|No contact|Contact declined)/i.test(result)) return '';
-  const [kind, meaning, evidence, decision] = g;
+  const [kind, defaultMeaning, defaultEvidence, decision] = g;
+  const specific=impactReading(name,args);
+  const meaning=specific?.meaning||defaultMeaning, evidence=specific?.evidence||defaultEvidence;
   const held = /^# .*\bheld\b|^Use not approved|^Publication is not approved|^## Overall Score:[^\n]*\(NOT PROVED YET\)/im.test(result);
   const status = held ? ' Keep the stated hold in place; this guidance does not override it.' : '';
   let roles = kind === 'publish' ? [
@@ -80,6 +83,7 @@ export function readingGuide(name: string, result: string, args: Record<string,u
     `CRO: validate ${evidence} with the relevant buyer or account owner before changing sales priorities.`,
     `Demand generation head: compare the next account sample with ${decision} before expanding outreach.`,
   ];
+  if(specific)roles=specific.roles;
   const noPayback=name==='roi_business_case_builder'&&/^\| \*\*Payback Period\*\*[^\n]*No payback/im.test(result);
   const unsupportedClaim=/\(NOT PROVED YET\)|^> Unproved value hypothesis:|^Use not approved/m.test(result);
   const failedScore=name==='icp_scoring_model'&&/^# Scoring decision held/m.test(result);
@@ -90,7 +94,7 @@ export function readingGuide(name: string, result: string, args: Record<string,u
     'CRO: confirm the cost baseline and achievable improvement with the buyer before revising the proposal.',
     'Demand generation head: do not reuse this case as a positive return example before the buyer confirms a supported result.',
   ];
-  if(unsupportedClaim)roles=[
+  if(unsupportedClaim)roles=specific?.heldRoles||[
     `Founder: keep the unsupported claim in ${decision} as a hypothesis until the stated evidence gap is resolved.`,
     `CEO: hold external use of ${decision} until the evidence owner approves the claim and its scope.`,
     'CMO: compare the claimed outcome with its original record, baseline and period before approving copy; an unmeasured outcome is not a fact.',
@@ -104,10 +108,10 @@ export function readingGuide(name: string, result: string, args: Record<string,u
     'CRO: keep account decisions under manual review; record the evidence for each exception before outreach.',
     'Demand generation head: use a fresh held back sample for a revised model; do not tune on the failed test set.',
   ];
-  const contextual=roles.map(line=>caseLabel?line.replace(': ', ': For '+caseLabel+', '):line);
+  const contextual=roles.map(line=>caseLabel&&!specific?line.replace(': ', ': For '+caseLabel+', '):line);
   if(name==='launch_commander')return '\n\n## Reading the answer\n\nThis sequence is proposed. Change scope if the date, capacity or buyer acceptance check changes.\n\n## Decisions by role\n\nFounder: confirm the buyer before choosing launch scope.\nCEO: match owners to capacity before approving the date.\nCMO: verify the launch claim before briefing channels.\nCRO: agree the buyer acceptance check before offering a meeting.\nDemand generation head: check contact volume against channel capacity before outreach.\n';
 
-  return `\n\n## Reading the answer\n\n${caseLabel ? `For ${caseLabel}: ` : ''}${meaning}${status} The conclusion needs review if new evidence changes ${evidence}.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\n${contextual.join('\n\n')}\n`;
+  return `\n\n## Reading the answer\n\n${caseLabel ? `For ${caseLabel}: ` : ''}${meaning}${status} Evidence that could change this conclusion: ${evidence}.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\n${contextual.join('\n\n')}\n`;
 }
 
 export function withReadingGuide(name:string,result:string,args:Record<string,unknown>={}):string {
