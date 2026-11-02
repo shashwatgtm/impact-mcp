@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { billingLine } from './verticals.ts';
 import { asksForSoftware, SOFTWARE_REFERRAL } from './software-policy.ts';
 import { nonRecurringBilling } from './verticals.ts';
 import { auditReader } from "./audit-reader.ts";
@@ -399,6 +400,8 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
   // (what the shared reader sees in context, role and buyer) only ever fill a gap, and a gap is not filled by a guess: the answer then uses neutral B2B wording.
   const sellerOnly = explainSector({ seller: [...descr, ...(r.names || [])] });
   let ex = coreOnly && coreOnly.vertical ? coreOnly : sellerOnly.vertical ? sellerOnly : { ...sellerOnly, vertical: null };
+  const coreLabel = coreT.filter((x): x is string => typeof x === 'string').map(x => sellerSectorLabel(x)).find(x => x.id);
+  if (!forcedSector && coreLabel?.id) ex = {...ex, vertical: VERTICALS.find(v => v.id === coreLabel.id) || null, source:'seller'} as typeof ex;
   // A forced sector keeps the sub-type notes the seller's words earn inside it (the same sector); a different reading never overrides it.
   if (forcedSector) { const fv = forcedVertical(); ex = { ...sellerOnly, vertical: fv && [coreOnly?.vertical, sellerOnly.vertical].find((x) => x && x.id === fv.id && !!x.subtype && SUBTYPES.some((t) => t.id === x.subtype)) || fv, source: 'seller' } as typeof ex; }
   // Services wording means a services business; a product noun (platform, software, app, cloud, tool) without services wording is a product, never a BPO or IT services firm.
@@ -455,7 +458,7 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
   const model = m.model
     ? `${MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})`
     : 'not stated. Tell us how you charge and the plan will adjust';
-  return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*${!m.model ? "\n\nBilling dependent steps are conditional: trials, seats and recurring renewals require a subscription; a statement of work requires a services contract; site or link commitments require connectivity billing. Confirm the applicable choice before using those steps." : ""}` };
+  return { v, model: m.model, line: billingLine(explicitModel, {seller: descr}, `*Sector: ${sector}. Business model: ${model}.*${!m.model ? "\n\nAny priced offer below requires a written quote and buyer agreement." : ""}`) };
 }
 // The measures of a sector. The AI native list in the data file is written for customer-service automation (resolution, handling time),
 // so for AI native only the measures that fit any AI product are shown (accuracy on the buyer's own data, and escalation to a person).
@@ -1911,7 +1914,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const catRest = noNotes(catSource).split(/\s*[:;]\s*/).slice(1).join('; ');
       const ctx = readContext(args.business_model, { core: [args.category], later: [args.unique_capability], names: [args.product_name], context: [args.key_outcome], buyer: [args.target_customer] });
       const v = ctx.v;
-      const notes = MODEL_NOTES[ctx.model || 'unknown'];
+      const notes = {...MODEL_NOTES[ctx.model || 'unknown'], commercial: /Business model: not stated/.test(ctx.line) ? MODEL_NOTES.unknown.commercial : MODEL_NOTES[ctx.model || 'unknown'].commercial};
       const lz = lensWithBuyer(v, args.target_customer, args.category, args.key_outcome, args.unique_capability);
       const com = v ? committeeParts(v) : null;
       // A role read from the sector's committee sentence is used only when it reads as a role (a sentence with a colon or a full stop is not one).
@@ -2479,7 +2482,7 @@ ${EXAMPLES}
 ${ownMethod ? `- Budget ${beachhead.budget}/5 comes from ${beachhead.ownTam !== null && maxTam ? 'your company counts times your deal size' : 'the middle score (company counts for at least two segments would score it from your own figures)'}; Accessibility and Competition are the middle score 3 because your inputs say nothing about them.` : beachhead.budget >= 4 ? `- Budget ${beachhead.budget}/5 is a preset for this keyword: check it against your own price${acvGiven ? ` (${acvShown})` : ''} before you rely on it.` : `- Budget ${beachhead.budget}/5 is a preset: ${acvGiven ? `check whether ${acvShown} fits what this segment can spend.` : 'check it against your own price.'}`}
 ${!ownMethod && beachhead.access <= 2 ? `- Accessibility ${beachhead.access}/5 is low in the preset: plan how you will reach these buyers (a channel, a partner or a referral).` : ''}
 
-${v ? `${ctx.model === 'saas' || ctx.model === null ? sectorBlock(v, ['vocabulary', 'committee', 'metrics', 'proof', 'motion'], 'What to check in each segment (sector view)') : noSeatWords(sectorBlock(v, ['vocabulary', 'committee', 'metrics', 'proof', 'motion'], 'What to check in each segment (sector view)'))}\n\nBefore you commit to a segment, check that the roles above exist in its companies, that they can reach your price, and that the sector's usual objections do not block the first sale.${ctx.model ? ` In a business like yours, buyers also weigh: ${MODEL_NOTES[ctx.model].commercial}.` : ''}\n` : ''}
+${v ? `${ctx.model === 'saas' || ctx.model === null ? sectorBlock(v, ['vocabulary', 'committee', 'metrics', 'proof', 'motion'], 'What to check in each segment (sector view)') : noSeatWords(sectorBlock(v, ['vocabulary', 'committee', 'metrics', 'proof', 'motion'], 'What to check in each segment (sector view)'))}\n\nBefore you commit to a segment, check that the roles above exist in its companies, that they can reach your price, and that the sector's usual objections do not block the first sale.${ctx.model ? ` In a business like yours, buyers also weigh: ${/Business model: not stated/.test(ctx.line) ? MODEL_NOTES.unknown.commercial : MODEL_NOTES[ctx.model].commercial}.` : ''}\n` : ''}
 ---
 
 ## Market Sizing (your figures only)
@@ -2626,7 +2629,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const ownLed = !weak && metricsRel.length === 0 && ownMeasuresFig.length >= 2;
       const allStems = stemSet(args.target_customer, args.customer_need || '', args.product_category || '', args.key_benefit, args.competitor || '', args.differentiation);
       const vocabShown = weak || ownLed ? [] : lz.vocab.filter((w) => !SAAS_ONLY.test(w) || inputStems.has(w.toLowerCase().replace(/s$/, '').slice(0, 5)));
-      const notes = MODEL_NOTES[ctx.model || 'unknown'];
+      const notes = {...MODEL_NOTES[ctx.model || 'unknown'], commercial: /Business model: not stated/.test(ctx.line) ? MODEL_NOTES.unknown.commercial : MODEL_NOTES[ctx.model || 'unknown'].commercial};
       // The price basis the inputs give: a usage priced product (usage, credits, infrastructure the buyer's workloads run on) is compared on usage, not on seats.
       const pb = priceBasis([args.product_name || '', args.product_category || '', args.key_benefit, args.differentiation, args.target_customer], [args.product_name || '', args.product_category || '']);
       const usagePriced = pb.kind === 'usage' && (!ctx.model || ctx.model === 'saas');
@@ -3035,9 +3038,9 @@ ${rows.join('\n')}
       const statement = args.positioning_statement;
       const nameList = [P === 'the product' ? '' : P, named.replace(/\s*\([^)]*\)/g, '').trim(), named, (named.split(/[\s,]+/)[0] || '')].filter((x, i, a) => x && x.length >= 2 && a.indexOf(x) === i);
       const SP = parseStatement(statement, nameList);
-      const ctx = readContext(args.business_model, { core: [SP.category || statement], later: [statement.match(/\b(?:is|are)\s+(?:an?|the)\s+/i) ? statement.replace(/^[^]*?\b(?:is|are)\s+(?:an?|the)\s+/i, '') : undefined], names: [args.product_name], context: [statement, args.key_benefit], buyer: [args.target_customer] });
+      const ctx = readContext(args.business_model, { core: [SP.category && /systematic strateg(?:y|ies)/i.test(SP.category) && /investment|asset allocators|pensions|wealth managers/i.test(args.target_customer) ? SP.category.replace(/systematic strateg/i, 'systematic investment strateg') : SP.category || statement], later: [statement.match(/\b(?:is|are)\s+(?:an?|the)\s+/i) ? statement.replace(/^[^]*?\b(?:is|are)\s+(?:an?|the)\s+/i, '') : undefined], names: [args.product_name], context: [statement, args.key_benefit], buyer: [args.target_customer] });
       const v = ctx.v;
-      const notes = MODEL_NOTES[ctx.model || 'unknown'];
+      const notes = {...MODEL_NOTES[ctx.model || 'unknown'], commercial: /Business model: not stated/.test(ctx.line) ? MODEL_NOTES.unknown.commercial : MODEL_NOTES[ctx.model || 'unknown'].commercial};
       // a bundle of several service lines (network, cloud, security, voice, IoT) is sold like a service, not with a site survey, which suits plain connectivity
       const kindHits = ['network', 'cloud', 'secur', 'interaction|communicat|cpaas|voice|messaging', 'iot', 'collaborat', 'analytic', 'software|platform'].filter((k) => new RegExp(k, 'i').test(`${SP.category} ${named} ${args.key_benefit}`)).length;
       const ctas0 = callsToAction(v, ctx.model);
@@ -3531,7 +3534,7 @@ ${SUGGESTED}
       const feedbackItems = allFeedback.filter((x) => !isCompanyClaim(x) && !claimRisk(x).hold);
       const ctx = readContext(args.business_model, { core: [args.product_description], later: [args.key_differentiation, args.current_positioning], names: [args.company_name], context: [args.problem_solved, args.customer_feedback], buyer: [args.target_customer] });
       const v = ctx.v;
-      const notes = MODEL_NOTES[ctx.model || 'unknown'];
+      const notes = {...MODEL_NOTES[ctx.model || 'unknown'], commercial: /Business model: not stated/.test(ctx.line) ? MODEL_NOTES.unknown.commercial : MODEL_NOTES[ctx.model || 'unknown'].commercial};
       const lz = lensWithBuyer(v, args.target_customer, args.problem_solved, args.product_description);
       const vocab = lz.vocab;
       const committee = lz.fn ? { signer: lz.fn.buyer, champion: lz.fn.champion, championInferred: false, users: null, reviewers: [] } as Committee : v ? committeeParts(v) : null;

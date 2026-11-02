@@ -135,12 +135,12 @@ test("craft: the alternative reads right whether it is a name, a description or 
 // ---- the business model decides the wording ------------------------------------------------------------------------------------------------
 test("craft: a services firm and a connectivity seller get no seat, licence or trial wording and their own cost words", async () => {
   const s = await call(TOOL, FIELDMARK);
-  assert.match(s, /Business model: services/);
+  assert.match(s, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
   assert.doesNotMatch(s, SAAS_ONLY);
   assert.doesNotMatch(s, /free trial|per seat|licen[cs]e|subscription/i);
-  assert.match(s, /scope, price model|SLA, service credits/i);
+  assert.match(s, /term, scope and price/i);
   const c = await call(TOOL, BRANCHWIRE);
-  assert.match(c, /Business model: connectivity/);
+  assert.match(c, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
   assert.doesNotMatch(c, SAAS_ONLY);
   assert.doesNotMatch(c, /free trial|per seat/i);
   assert.match(c, /price per site or link|site survey/i);

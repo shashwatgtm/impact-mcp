@@ -100,7 +100,7 @@ test("round 3: no figure is added, no placeholder, no repeated sentence", async 
     assert.doesNotMatch(t, PLACEHOLDER);
     assert.deepEqual(repeatedSentences(t), []);
     const given = Object.values(args).flat().join(" ");
-    const cleaned = t.replace(/\*\*Method used[^\n]*|^\| .*$|\(\d\)|TAM = .*|SAM = .*|SOM = .*|\d+(?:\/5| of 25|\/25)/gm, "");
+    const cleaned = t.replace("Which software fits your case is a judgement call. Ask Shashwat: book 45 minutes at https://calendly.com/shashwat-gtmhelix/45min", "").replace(/\*\*Method used[^\n]*|^\| .*$|\(\d\)|TAM = .*|SAM = .*|SOM = .*|\d+(?:\/5| of 25|\/25)/gm, "");
     for (let m of cleaned.match(/\$?\d[\d,]*(?:\.\d+)?%?/g) || []) {
       m = m.replace(/[,.]+$/, "");
       if (/^\d$/.test(m)) continue;

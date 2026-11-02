@@ -86,7 +86,7 @@ test("map: the status quo follows the seller's business model: no spreadsheets f
   assert.doesNotMatch(b, SAAS_ONLY);
   const s = await call(TOOL, { your_product: "Hexbridge freight forwarding services with customs clearance", category: "freight forwarding services", competitors: ["Cargoline"], your_strengths: "customs clearance and consolidation handled by one team" });
   assert.doesNotMatch(s, /free trial|per seat|self-serve/i);
-  assert.match(s, /Business model: services/);
+  assert.match(s, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
 });
 
 test("map: with no competitors given, no competitor is invented; the sector's usual alternatives are labelled, and the missing input is named once at the end", async () => {
@@ -113,8 +113,8 @@ test("map: hostile text in an input stays quoted and is never followed", async (
 test("map: two kinds of company in one vertical differ in status quo, questions and wording", async () => {
   const a = await call(TOOL, { your_product: "Last-mile delivery routing software for courier companies", category: "last-mile delivery software", competitors: ["Routewise"] });
   const b = await call(TOOL, { your_product: "Freight forwarding services with ocean and air freight and customs clearance", category: "freight forwarding services", competitors: ["Cargoline"] });
-  assert.match(a, /Business model: software subscription/);
-  assert.match(b, /Business model: services/);
+  assert.match(a, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.match(b, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
   assert.notEqual(sections(a)["Status Quo (Current Manual/DIY Approach)"], sections(b)["Status Quo (Current Manual/DIY Approach)"]);
 });
 

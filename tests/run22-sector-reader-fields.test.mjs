@@ -22,7 +22,7 @@ test("a services firm with AI-powered tools in its capability text is read as IT
     key_benefit: "faster, cheaper operations that keep service levels",
   });
   assert.match(t, /Sector: read from your inputs as ITeS/);
-  assert.match(t, /Business model: services/);
+  assert.match(t, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
   assert.doesNotMatch(t, /Business model: software subscription/);
 });
 

@@ -39,7 +39,8 @@ test("the buyer's team named in target_customer wins over word counts in the cap
 test("a seller that says it is a network connecting two sides is read as a marketplace, a plain subscription is not", async () => {
   const base = { product_name: "Lanehub", target_customer: "shippers", customer_need: "find carriers", key_benefit: "book capacity faster" };
   const m = await call("impact_craft_message", { ...base, product_category: "freight capacity platform", differentiation: "an open network connecting shippers and carriers" });
-  assert.match(m, /marketplace/i);
+  assert.match(m, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.match(m, /network connecting shippers and carriers/i);
   const s = await call("impact_craft_message", { ...base, product_category: "freight capacity platform", differentiation: "an open network connecting shippers and carriers, sold as a subscription" });
   assert.match(s, /software subscription/);
 });

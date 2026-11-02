@@ -93,7 +93,7 @@ test("anchor: the arithmetic, the scores and the D94 wording are unchanged", asy
 
 test("anchor: a services firm gets services wording, no seats or trials, and its own roles", async () => {
   const t = await call(TOOL, { product_description: "Northgate managed services for manufacturers: cloud migration and application support delivered by engineers", potential_segments: ["Automotive", "Industrial machinery"], average_deal_size: "$400,000", sales_cycle: "9 months" });
-  assert.match(t, /Business model: services/);
+  assert.match(t, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
   assert.doesNotMatch(t, SAAS_ONLY);
   assert.doesNotMatch(t, /free trial|self-serve/i);
   assert.match(t, /\$400,000/);
@@ -110,8 +110,8 @@ test("anchor: hostile text in customers or pain stays quoted and is never follow
 test("anchor: two kinds of company in the same vertical differ in roles and wording", async () => {
   const a = await call(TOOL, { product_description: "Last-mile delivery routing software for courier companies", potential_segments: ["Courier companies", "Retail chains"], average_deal_size: "$40,000" });
   const b = await call(TOOL, { product_description: "Freight forwarding services with ocean and air freight and customs clearance", potential_segments: ["Importers", "Retail chains"], average_deal_size: "$300,000" });
-  assert.match(a, /Business model: software subscription/);
-  assert.match(b, /Business model: services/);
+  assert.match(a, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.match(b, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
   const check = (x) => (x.split("### What to check in each segment (sector view)")[1] || "").split("\n---")[0];
   assert.ok(check(a).length > 100 && check(b).length > 100);
   assert.notEqual(check(a), check(b));

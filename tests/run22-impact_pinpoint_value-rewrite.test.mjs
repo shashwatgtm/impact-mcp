@@ -86,7 +86,7 @@ test("pinpoint: the value matrix keeps the user's results next to the measure th
 // ---- the business model decides the wording ------------------------------------------------------------------------------------
 test("pinpoint: a services firm and a connectivity seller get no seat, licence or trial wording, and their own call to action", async () => {
   const s = await call(TOOL, FIELDMARK);
-  assert.match(s, /Business model: services/);
+  assert.match(s, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
   assert.doesNotMatch(s, SAAS_ONLY);
   assert.doesNotMatch(s, /free trial|demo\b|per seat|licen[cs]e/i);
   assert.match(s, /scoping call/i);
@@ -133,8 +133,8 @@ test("pinpoint: hostile text in an input stays quoted and is never followed", as
 test("pinpoint: two kinds of company in the same vertical differ in model, roles and wording", async () => {
   const a = await call(TOOL, { product_name: "Lanehop", category: "last-mile delivery routing software", target_customer: "heads of last-mile operations at courier companies", key_outcome: "cut cost per delivery by 18%", unique_capability: "re-plans routes in under a minute" });
   const b = await call(TOOL, { product_name: "Hexbridge", category: "freight forwarding services with ocean and air freight", target_customer: "import and export managers at manufacturers", key_outcome: "fewer delayed shipments", unique_capability: "customs clearance and consolidation handled by one team", business_model: "services" });
-  assert.match(a, /Business model: software subscription/);
-  assert.match(b, /Business model: services/);
+  assert.match(a, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.match(b, /Business model: services[^\n]*\(from your answer\)/);
   const secA = sections(a)["Proof Point Framework"], secB = sections(b)["Proof Point Framework"];
   assert.notEqual(secA, secB);
   assert.doesNotMatch(b, /free trial|per seat/i);

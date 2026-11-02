@@ -482,7 +482,7 @@ function parseStatementRaw(statement: string, products: string | string[]): Stat
   }
   if (!out.diff.length) {
     const m = text.match(/^for\s+[^,]+(?:\([^)]*\))?[^,]*,\s*(.+)$/i);
-    if (m) { const rest = endStop(m[1]); if (!/\bunlike\b/i.test(rest)) out.diff.push(rest); }
+    if (m) { const rest = endStop(cm && cm.index !== undefined ? text.slice(cm.index) : m[1]); if (!/\bunlike\b/i.test(rest)) out.diff.push(rest); }
   }
   return out;
 }

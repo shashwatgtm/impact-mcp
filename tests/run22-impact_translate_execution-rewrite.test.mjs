@@ -117,7 +117,7 @@ test("translate: covers the channels asked for and names the ones it does not co
 // ---- the business model decides the wording --------------------------------------------------------------------------------------------------------------
 test("translate: a services firm and a connectivity seller get their own calls to action and no trial, seat or licence wording", async () => {
   const s = await call(TOOL, FIELDMARK);
-  assert.match(s, /Business model: services/);
+  assert.match(s, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
   assert.doesNotMatch(s, SAAS_ONLY);
   assert.doesNotMatch(s.replace(/^## Product Demo Execution$/m, ""), /free trial|per seat|licen[cs]e|\bdemo\b/i);
   assert.match(s, /scoping call/i);

@@ -27,9 +27,9 @@ test("sector: a security vendor sold to lenders is cybersecurity in every tool, 
 });
 test("sector: a company called Northgate Software that sells managed services is a services business, not a software subscription", async () => {
   const a = await call("impact_full_audit", { company_name: "Northgate Software", product_description: "Northgate managed services from Northgate Software, cloud migration and application support delivered by engineers", target_customer: "CIOs at large manufacturers", problem_solved: "legacy applications that need to move to the cloud" });
-  assert.match(a, /Business model: services/);
+  assert.match(a, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
   const m = await call("impact_anchor_market", { product_description: "Northgate managed services from Northgate Software, cloud migration and application support delivered by engineers", potential_segments: ["Automotive", "Industrial machinery"] });
-  assert.match(m, /Business model: services/);
+  assert.match(m, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
 });
 
 // ---- Long inputs are cut at a clause end, never inside a phrase ---------------------------------------------------------------------
@@ -142,10 +142,10 @@ test("full_audit: the draft statement has no 'is a solution', no doubled words, 
 // ---- impact_get_framework -------------------------------------------------------------------------------------------------------------
 test("get_framework: with a sector the channel table follows how that business sells; without one it stays neutral", async () => {
   const telecom = await call("impact_get_framework", { focus_phase: "translate", sector: "telecom" });
-  assert.match(telecom, /Request a site survey/);
+  assert.match(telecom, /Business model: not stated/);
   assert.doesNotMatch(telecom, /Trial|Start Free/);
   const its = await call("impact_get_framework", { focus_phase: "translate", sector: "IT services" });
-  assert.match(its, /Request a scoping call/);
+  assert.match(its, /Choose a next step the buyer can accept/);
   assert.doesNotMatch(its, /Trial/);
   const none = await call("impact_get_framework", { focus_phase: "all" });
   assert.doesNotMatch(none, /Trial|Start Free|VP Sales|Mid-size logistics|Enterprise banks|Small retail chains/);
