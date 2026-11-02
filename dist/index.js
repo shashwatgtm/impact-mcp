@@ -24,6 +24,7 @@ exports.pctText = pctText;
 exports.parseCounts = parseCounts;
 exports.dropFraming = dropFraming;
 exports.createServer = createServer;
+const verticals_ts_1 = require("./verticals.js");
 const audit_reader_ts_1 = require("./audit-reader.js");
 const conversation_guidance_ts_1 = require("./conversation-guidance.js");
 const build_profile_ts_1 = require("./build-profile.js");
@@ -38,7 +39,7 @@ const escape_inputs_ts_1 = require("./escape-inputs.js");
 const piece_wrap_ts_1 = require("./piece-wrap.js");
 const rw_impact_ts_1 = require("./rw-impact.js");
 const rw_impact2_ts_1 = require("./rw-impact2.js");
-const verticals_ts_1 = require("./verticals.js");
+const verticals_ts_2 = require("./verticals.js");
 // =============================================================================
 // IMPACT MCP v2.0.0 - Hypothesis-Driven B2B Positioning Engine
 // =============================================================================
@@ -401,7 +402,7 @@ const YOUR_SECTOR_DESCRIPTION = "Your company's own industry (not your customers
 const YOUR_SECTOR_ID = { logistics_tech: 'logistics-tech', fintech: 'fintech', saas: 'saas', vertical_saas: 'vertical-saas', ai_native: 'ai-native', ites: 'ites', telecom: 'telecom', software: 'software', cybersecurity: 'cybersecurity' };
 let forcedSector;
 function setYourSector(value) { forcedSector = typeof value === 'string' && exports.YOUR_SECTOR_VALUES.includes(value) ? value : undefined; }
-function forcedVertical() { return forcedSector && forcedSector !== 'other' ? verticals_ts_1.VERTICALS.find((x) => x.id === YOUR_SECTOR_ID[forcedSector]) ?? null : null; }
+function forcedVertical() { return forcedSector && forcedSector !== 'other' ? verticals_ts_2.VERTICALS.find((x) => x.id === YOUR_SECTOR_ID[forcedSector]) ?? null : null; }
 // Run 42B: the ONE gate for sub industry notes. A sub industry (an entry of SUBTYPES: its vocabulary, buyer roles, measures, objections, proof shape, usual model)
 // is returned only when the seller's own category or product description contains that sub industry's own words: its name, or at least two different
 // keywords (distinctive words) or two different phrases from its match list. Otherwise null, and every caller uses only the sector's general notes (or neutral B2B wording where a line has no general form).
@@ -410,7 +411,7 @@ const SUB_GENERIC = new Set(['of', 'in', 'on', 'to', 'at', 'by', 'an', 'as', 'or
 function subIndustryFor(v, sellerText) {
     if (!v || !v.subtype)
         return null;
-    const st = verticals_ts_1.SUBTYPES.find((x) => x.id === v.subtype);
+    const st = verticals_ts_2.SUBTYPES.find((x) => x.id === v.subtype);
     if (!st)
         return null;
     const text = sellerText.toLowerCase();
@@ -438,7 +439,7 @@ function subIndustryFor(v, sellerText) {
 function gateSubIndustry(v, sellerText) {
     if (!v || !v.subtype || subIndustryFor(v, sellerText))
         return v;
-    return verticals_ts_1.VERTICALS.find((x) => x.id === v.id) ?? v;
+    return verticals_ts_2.VERTICALS.find((x) => x.id === v.id) ?? v;
 }
 function readContext(explicitModel, r) {
     // A brand name is not a sector word ("Brightfield Software" is not a software product): it is taken out of the other texts before they are read.
@@ -449,15 +450,15 @@ function readContext(explicitModel, r) {
     const later0 = laterT;
     const descr = [...coreT, ...laterT];
     const full = { seller: [...descr, ...(r.names || [])], context: r.context, role: r.role, buyer: r.buyer };
-    const coreOnly = coreT.length ? (0, verticals_ts_1.explainSector)({ seller: coreT }) : null;
+    const coreOnly = coreT.length ? (0, verticals_ts_2.explainSector)({ seller: coreT }) : null;
     // Run 42b: the seller's own words decide the sector. The seller's text (core, later, names) is read first; the deal text, the job titles and the customers' industries
     // (what the shared reader sees in context, role and buyer) only ever fill a gap, and a gap is not filled by a guess: the answer then uses neutral B2B wording.
-    const sellerOnly = (0, verticals_ts_1.explainSector)({ seller: [...descr, ...(r.names || [])] });
+    const sellerOnly = (0, verticals_ts_2.explainSector)({ seller: [...descr, ...(r.names || [])] });
     let ex = coreOnly && coreOnly.vertical ? coreOnly : sellerOnly.vertical ? sellerOnly : { ...sellerOnly, vertical: null };
     // A forced sector keeps the sub-type notes the seller's words earn inside it (the same sector); a different reading never overrides it.
     if (forcedSector) {
         const fv = forcedVertical();
-        ex = { ...sellerOnly, vertical: fv && [coreOnly?.vertical, sellerOnly.vertical].find((x) => x && x.id === fv.id && !!x.subtype && verticals_ts_1.SUBTYPES.some((t) => t.id === x.subtype)) || fv, source: 'seller' };
+        ex = { ...sellerOnly, vertical: fv && [coreOnly?.vertical, sellerOnly.vertical].find((x) => x && x.id === fv.id && !!x.subtype && verticals_ts_2.SUBTYPES.some((t) => t.id === x.subtype)) || fv, source: 'seller' };
     }
     // Services wording means a services business; a product noun (platform, software, app, cloud, tool) without services wording is a product, never a BPO or IT services firm.
     const servicesWords = /\b(?:outsourc\w*|bpo|managed|consult\w*|staffing|agency|(?:\w+ )?services (?:company|firm|provider|partner|business)|(?:it|business|professional|customer|technology|digital) services|operations (?:company|partner)|transformation company|system integrat\w*)\b/i;
@@ -466,7 +467,7 @@ function readContext(explicitModel, r) {
     const sellerWholeText = [...descr].filter((x) => typeof x === 'string').join(' ');
     // Services wording in the seller's own words and no other trade read: the deal text may then say which kind of services (IT services, customer experience), never anything else.
     if (!forcedSector && !ex.vertical && servicesWords.test(sellerWholeText)) {
-        const w = (0, verticals_ts_1.explainSector)(full);
+        const w = (0, verticals_ts_2.explainSector)(full);
         if (w.vertical && w.vertical.id === 'ites')
             ex = { ...w, source: 'seller' };
     }
@@ -474,14 +475,14 @@ function readContext(explicitModel, r) {
     // The shared reader cuts a text at "for ..." (the buyer part), so "cloud platform for testing websites ... AI agents" can still read AI native from the label alone:
     // the seller's own texts are read once more as free text without the AI words, and a trade they name then wins (the shared guard covers the other cases).
     // "AI" is a feature of a product, not a sector: the category and the core of the description are read without it first, then the whole description.
-    if (!forcedSector && !(0, text_signals_ts_2.sellerSectorLabel)(coreText || sellerWholeText).id && ex.vertical && ex.vertical.id === 'ai-native' && (0, verticals_ts_1.detectModel)(undefined, { seller: descr }).model !== 'investment') {
+    if (!forcedSector && !(0, text_signals_ts_2.sellerSectorLabel)(coreText || sellerWholeText).id && ex.vertical && ex.vertical.id === 'ai-native' && (0, verticals_ts_2.detectModel)(undefined, { seller: descr }).model !== 'investment') {
         const noAi = (x) => (typeof x === 'string' ? x.replace(/\b(?:AI|A\.I\.)[- ](?:native|powered|led|driven|enabled|first|agents?|analyst|copilot|assistant|layered)\b|\bgenerative AI\b|\bGenAI\b|\bLLMs?\b|\b(?:agent )?copilots?\b|\bchatbots?\b|\bAI\b/gi, ' ') : x);
         const tries = [];
         if (coreT.length)
             tries.push({ seller: coreT.map(noAi) }, { context: coreT.map(noAi) });
         tries.push({ context: [...descr, ...(r.names || [])].map(noAi) });
         for (const t of tries) {
-            const again = (0, verticals_ts_1.explainSector)(t);
+            const again = (0, verticals_ts_2.explainSector)(t);
             if (again.vertical && again.vertical.id !== 'ai-native' && !notServices(again.vertical)) {
                 ex = { ...again, source: 'seller' };
                 break;
@@ -500,9 +501,9 @@ function readContext(explicitModel, r) {
     const ownWords = [...descr, ...(r.names || [])].filter((x) => typeof x === 'string').join(' | ');
     const v0 = gateSubIndustry(ex.vertical, ownWords);
     // The model is read from what the product is (core) first; the capability and positioning text can mention "tools" or "cloud" in any business.
-    const first = coreT.length ? (0, verticals_ts_1.detectModel)(explicitModel, { seller: coreT }) : null;
-    const read = first && (first.how === 'input' || first.how === 'read') ? first : (0, verticals_ts_1.detectModel)(explicitModel, { seller: descr });
-    const m0 = read.how === 'input' ? read : forcedSector ? (v0 ? { model: verticals_ts_1.SECTOR_MODEL[v0.id], how: 'sector' } : { model: null, how: 'unknown' }) : read.how === 'read' ? read : v0 ? { model: (v0.subtype ? verticals_ts_1.SUBTYPES.find((x) => x.id === v0.subtype)?.model : undefined) ?? verticals_ts_1.SECTOR_MODEL[v0.id], how: 'sector' } : read;
+    const first = coreT.length ? (0, verticals_ts_2.detectModel)(explicitModel, { seller: coreT }) : null;
+    const read = first && (first.how === 'input' || first.how === 'read') ? first : (0, verticals_ts_2.detectModel)(explicitModel, { seller: descr });
+    const m0 = read.how === 'input' || read.how === 'read' ? read : forcedSector ? (v0 ? { model: verticals_ts_2.SECTOR_MODEL[v0.id], how: 'sector' } : { model: null, how: 'unknown' }) : v0 ? { model: (v0.subtype ? verticals_ts_2.SUBTYPES.find((x) => x.id === v0.subtype)?.model : undefined) ?? verticals_ts_2.SECTOR_MODEL[v0.id], how: 'sector' } : read;
     // Run 22: a services firm that names "AI-powered tools" or a platform among its capabilities is still a services firm: when the whole text reads as ITeS and
     // only a tool word made it a subscription, the model is services (the shared reader does the same when it sees the whole text).
     const saasWords = /\b(?:saas|subscriptions?|per seat|per user|licen[cs]es?)\b/i;
@@ -513,13 +514,15 @@ function readContext(explicitModel, r) {
     const m2 = !forcedSector && m1.how !== 'input' && m1.model === 'saas' && twoSided.test(sellerText) && !saasWords.test(sellerText) ? { model: 'marketplace', how: 'read' } : m1;
     // A managed service (managed detection and response, a managed SOC, outsourced operations) is sold as a service even when it runs on a platform, unless the words say subscription or licence.
     const mgd = /\b(?:managed (?:detection|security|services?|service)|mdr\b|outsourc\w+|bpo\b)/i;
-    const m = !forcedSector && m2.how !== 'input' && m2.model === 'saas' && mgd.test(sellerText) && !saasWords.test(sellerText) ? { model: 'services', how: 'read' } : m2;
+    let m = !forcedSector && m2.how !== 'input' && m2.model === 'saas' && mgd.test(sellerText) && !saasWords.test(sellerText) ? { model: 'services', how: 'read' } : m2;
     // A seller that manages money gets the investment roles and measures, not the sector's own (shared sector file, profileFor).
-    const v = forcedSector ? v0 : gateSubIndustry((0, verticals_ts_1.profileFor)(v0, m.model, full), ownWords);
+    if (m.how !== 'input' && (0, verticals_ts_1.nonRecurringBilling)(sellerText))
+        m = { model: null, how: 'unknown' };
+    const v = forcedSector ? v0 : gateSubIndustry((0, verticals_ts_2.profileFor)(v0, m.model, full), ownWords);
     const from = ex.source === 'context' ? ' (from the deal text, because your own description names no sector)' : ex.source === 'role' ? ' (from the job titles, because your own description names no sector)' : ex.source === 'buyer' ? ' (from who you sell to, because your own description names no sector)' : '';
     const sector = forcedSector ? (v ? `from your choice: ${v.name}` : 'from your choice of other, so the wording stays neutral') : v ? `read from your inputs as ${v.name}${from}` : 'not clear from your inputs (name the industry in plain words for sector notes)';
     const model = m.model
-        ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})`
+        ? `${verticals_ts_2.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})`
         : 'not clear from your inputs; describe how you charge for advice that fits it';
     return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };
 }
@@ -540,7 +543,7 @@ function rankMeasures(measures, problem, product) {
 const sectorLine = (v) => forcedSector ? (v ? `*Sector: from your choice: ${v.name}.*` : '*Sector: from your choice of other, so no sector notes are added and the wording stays neutral.*') : v
     ? `*Sector: read from your inputs as ${v.name}.*`
     : '*Sector: not clear from your inputs, so no sector notes are added. Name the industry in plain words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity).*';
-const SECTOR_NAMES = verticals_ts_1.VERTICALS.map((v) => v.name).join(', ');
+const SECTOR_NAMES = verticals_ts_2.VERTICALS.map((v) => v.name).join(', ');
 // A sector typed on its own ("fintech", "IT services"): one word is enough here, unlike detectVertical, which reads whole texts.
 const SECTOR_WORDS = [
     ['vertical-saas', /vertical[- ]saas|field sales|fmcg|consumer goods|retail execution/i],
@@ -559,8 +562,8 @@ function findSector(text) {
         return null;
     for (const [id, re] of SECTOR_WORDS)
         if (re.test(t))
-            return verticals_ts_1.VERTICALS.find((v) => v.id === id) || null;
-    return (0, verticals_ts_1.detectVertical)(t);
+            return verticals_ts_2.VERTICALS.find((v) => v.id === id) || null;
+    return (0, verticals_ts_2.detectVertical)(t);
 }
 // Typed items placed in one sentence: where an item lands (results, recognition, scale) never changes the list layout of the answer.
 const inl = (items) => items.join('; ');
@@ -1462,14 +1465,14 @@ The proof points that support your promise.
 
 ### Channel Adaptation Matrix
 
-${EXAMPLES}${v ? `\nThe calls to action follow how ${v.name} companies usually sell (${verticals_ts_1.MODEL_NAME[verticals_ts_1.SECTOR_MODEL[v.id]].split(" (")[0]}): ${callsToAction(v, verticals_ts_1.SECTOR_MODEL[v.id]).slice(0, 2).map((x) => `"${x}"`).join(' or ')}.` : ''}
+${EXAMPLES}${v ? `\nThe calls to action follow how ${v.name} companies usually sell (${verticals_ts_2.MODEL_NAME[verticals_ts_2.SECTOR_MODEL[v.id]].split(" (")[0]}): ${callsToAction(v, verticals_ts_2.SECTOR_MODEL[v.id]).slice(0, 2).map((x) => `"${x}"`).join(' or ')}.` : ''}
 | Channel | Format | Length | CTA Focus | Key Message |
 |---------|--------|--------|-----------|-------------|
 | LinkedIn | Text + Image | 150 words | ${v ? 'Start a conversation' : 'Engage'} | Problem awareness |
-| Website Hero | Headline + Sub | 15 words | ${v ? callsToAction(v, verticals_ts_1.SECTOR_MODEL[v.id])[0] : 'Next step'} | Value prop |
+| Website Hero | Headline + Sub | 15 words | ${v ? callsToAction(v, verticals_ts_2.SECTOR_MODEL[v.id])[0] : 'Next step'} | Value prop |
 | Cold Email | Subject + Body | 75 words | ${v ? 'A short call or a reply' : 'Reply'} | Pain + curiosity |
 | Sales Deck | Slides | 10 slides | ${v ? 'The next meeting or the proposal' : 'Meeting'} | Full story |
-| ${v && verticals_ts_1.SECTOR_MODEL[v.id] !== 'saas' ? 'Walkthrough or pilot review' : 'Demo or walkthrough'} | Script | 15 min | ${v ? callsToAction(v, verticals_ts_1.SECTOR_MODEL[v.id])[1] || 'Pilot or proposal' : 'Pilot or proposal'} | Capability proof |
+| ${v && verticals_ts_2.SECTOR_MODEL[v.id] !== 'saas' ? 'Walkthrough or pilot review' : 'Demo or walkthrough'} | Script | 15 min | ${v ? callsToAction(v, verticals_ts_2.SECTOR_MODEL[v.id])[1] || 'Pilot or proposal' : 'Pilot or proposal'} | Capability proof |
 
 ### Execution Checklist
 
@@ -2066,7 +2069,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
                 },
                 business_model: {
                     type: 'string',
-                    enum: verticals_ts_1.BUSINESS_MODELS,
+                    enum: verticals_ts_2.BUSINESS_MODELS,
                     description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose proof types; read from your inputs when not given'
                 }
             },
@@ -2184,7 +2187,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
                 tailMissing.push({ give: 'business_model', changes: 'the proof types and calls to action, which follow the usual model of the sector today' });
             tailMissing.push({ give: "the buyer's current pain and a payback period from your best customers", changes: 'the economic buyer statement, which has no payback figure to cite' });
             const sharpen = (0, rw_impact_ts_1.sharpenLine)(tailMissing);
-            const objections = v ? `\n**Objections to prepare for** (the pattern of a good answer, from the sector notes):\n${v.objections.map((o) => `- "${o.objection}"${ctx.model === 'saas' || ctx.model === null || !verticals_ts_1.SAAS_ONLY.test(o.response) ? `: ${o.response}` : ''}`).join('\n')}\n` : '';
+            const objections = v ? `\n**Objections to prepare for** (the pattern of a good answer, from the sector notes):\n${v.objections.map((o) => `- "${o.objection}"${ctx.model === 'saas' || ctx.model === null || !verticals_ts_2.SAAS_ONLY.test(o.response) ? `: ${o.response}` : ''}`).join('\n')}\n` : '';
             const sectorPart0 = v ? `\n${sectorBlock(v, lz.fn ? [] : ['vocabulary', 'committee'], 'Sector view')}${lz.fn ? `\n- **Who usually buys:** ${lz.fn.buyer} signs; ${lz.fn.champion} champions; ${lz.fn.tech} check the fit.\n${teamBlock(lz.fn, v)}` : ''}\n${objections}` : '';
             const sectorPart = ctx.model === 'saas' || ctx.model === null ? sectorPart0 : (0, rw_impact_ts_1.noSeatWords)(sectorPart0);
             const longAud = audFull.length > LONG_AT;
@@ -2765,7 +2768,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
                 },
                 business_model: {
                     type: 'string',
-                    enum: verticals_ts_1.BUSINESS_MODELS,
+                    enum: verticals_ts_2.BUSINESS_MODELS,
                     description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose the cost and proof lines; read from your inputs when not given'
                 }
             },
@@ -2800,7 +2803,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             // the user's own results name what is measured (two or more own measures) and no sector measure touches them: the sector's words, roles and objections are those of another field
             const ownLed = !weak && metricsRel.length === 0 && ownMeasuresFig.length >= 2;
             const allStems = (0, rw_impact2_ts_1.stemSet)(args.target_customer, args.customer_need || '', args.product_category || '', args.key_benefit, args.competitor || '', args.differentiation);
-            const vocabShown = weak || ownLed ? [] : lz.vocab.filter((w) => !verticals_ts_1.SAAS_ONLY.test(w) || inputStems.has(w.toLowerCase().replace(/s$/, '').slice(0, 5)));
+            const vocabShown = weak || ownLed ? [] : lz.vocab.filter((w) => !verticals_ts_2.SAAS_ONLY.test(w) || inputStems.has(w.toLowerCase().replace(/s$/, '').slice(0, 5)));
             const notes = MODEL_NOTES[ctx.model || 'unknown'];
             // The price basis the inputs give: a usage priced product (usage, credits, infrastructure the buyer's workloads run on) is compared on usage, not on seats.
             const pb = (0, rw_impact2_ts_1.priceBasis)([args.product_name || '', args.product_category || '', args.key_benefit, args.differentiation, args.target_customer], [args.product_name || '', args.product_category || '']);
@@ -3227,7 +3230,7 @@ ${rows.join('\n')}
                 },
                 business_model: {
                     type: 'string',
-                    enum: verticals_ts_1.BUSINESS_MODELS,
+                    enum: verticals_ts_2.BUSINESS_MODELS,
                     description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose calls to action and commercial terms; read from your inputs when not given'
                 }
             },
@@ -3262,7 +3265,7 @@ ${rows.join('\n')}
             const ownMeasures = [...(0, rw_impact2_ts_1.durationMeasures)([args.key_benefit, statement]), ...(0, rw_impact2_ts_1.figureMeasures)([args.key_benefit, statement])];
             const measures = !weak && metricsRel.length ? metricsRel : ownMeasures.length ? ownMeasures : lz.metrics;
             const proofSector = !weak && (metricsRel.length > 0 || relevantTo(proofSector0, 2)) ? proofSector0 : '';
-            const vocab = weak ? [] : lz.vocab.filter((w) => !verticals_ts_1.SAAS_ONLY.test(w) || inputStems.has(w.toLowerCase().replace(/s$/, '').slice(0, 5)));
+            const vocab = weak ? [] : lz.vocab.filter((w) => !verticals_ts_2.SAAS_ONLY.test(w) || inputStems.has(w.toLowerCase().replace(/s$/, '').slice(0, 5)));
             const committee = lz.fn ? { signer: lz.fn.buyer, champion: lz.fn.champion, championInferred: false, users: null, reviewers: [] } : v ? committeeParts(v) : null;
             // a developer led software product starts with a try on a real project; the demo stays as the second step
             const devLed = (ctx.model === 'saas' || ctx.model === null) && !!v && v.id === 'software' && /developer|engineer/i.test(args.target_customer);
@@ -3723,7 +3726,7 @@ ${SUGGESTED}
                 },
                 business_model: {
                     type: 'string',
-                    enum: verticals_ts_1.BUSINESS_MODELS,
+                    enum: verticals_ts_2.BUSINESS_MODELS,
                     description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the score'
                 }
             },
@@ -4221,7 +4224,7 @@ State a specific result with its source, period and permission, or describe the 
             if (build_profile_ts_1.BUILD_PROFILE.profile !== "current" && toolName === "impact_full_audit")
                 result = (0, audit_reader_ts_1.auditReader)(result, callArgs);
             return {
-                content: [{ type: 'text', text: (0, text_signals_ts_2.sectorChoiceNotice)(toolName, callArgs, text => { const r = (0, verticals_ts_1.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + result }]
+                content: [{ type: 'text', text: (0, text_signals_ts_2.sectorChoiceNotice)(toolName, callArgs, text => { const r = (0, verticals_ts_2.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + result }]
             };
         }
         catch (error) {

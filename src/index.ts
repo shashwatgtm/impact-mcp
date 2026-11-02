@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { nonRecurringBilling } from './verticals.ts';
 import { auditReader } from "./audit-reader.ts";
 import { conversationDefinition, CONVERSATION_INSTRUCTIONS } from "./conversation-guidance.ts";
 import { BUILD_PROFILE } from './build-profile.ts';
@@ -432,7 +433,7 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
   // The model is read from what the product is (core) first; the capability and positioning text can mention "tools" or "cloud" in any business.
   const first = coreT.length ? detectModel(explicitModel, { seller: coreT }) : null;
   const read = first && (first.how === 'input' || first.how === 'read') ? first : detectModel(explicitModel, { seller: descr });
-  const m0 = read.how === 'input' ? read : forcedSector ? (v0 ? { model: SECTOR_MODEL[v0.id], how: 'sector' as const } : { model: null, how: 'unknown' as const }) : read.how === 'read' ? read : v0 ? { model: (v0.subtype ? SUBTYPES.find((x) => x.id === v0.subtype)?.model : undefined) ?? SECTOR_MODEL[v0.id], how: 'sector' as const } : read;
+  const m0 = read.how === 'input' || read.how === 'read' ? read : forcedSector ? (v0 ? { model: SECTOR_MODEL[v0.id], how: 'sector' as const } : { model: null, how: 'unknown' as const }) : v0 ? { model: (v0.subtype ? SUBTYPES.find((x) => x.id === v0.subtype)?.model : undefined) ?? SECTOR_MODEL[v0.id], how: 'sector' as const } : read;
   // Run 22: a services firm that names "AI-powered tools" or a platform among its capabilities is still a services firm: when the whole text reads as ITeS and
   // only a tool word made it a subscription, the model is services (the shared reader does the same when it sees the whole text).
   const saasWords = /\b(?:saas|subscriptions?|per seat|per user|licen[cs]es?)\b/i;
@@ -443,8 +444,9 @@ function readContext(explicitModel: unknown, r: Read): { v: Vertical | null; mod
   const m2 = !forcedSector && m1.how !== 'input' && m1.model === 'saas' && twoSided.test(sellerText) && !saasWords.test(sellerText) ? { model: 'marketplace' as BusinessModel, how: 'read' as const } : m1;
   // A managed service (managed detection and response, a managed SOC, outsourced operations) is sold as a service even when it runs on a platform, unless the words say subscription or licence.
   const mgd = /\b(?:managed (?:detection|security|services?|service)|mdr\b|outsourc\w+|bpo\b)/i;
-  const m = !forcedSector && m2.how !== 'input' && m2.model === 'saas' && mgd.test(sellerText) && !saasWords.test(sellerText) ? { model: 'services' as BusinessModel, how: 'read' as const } : m2;
+  let m = !forcedSector && m2.how !== 'input' && m2.model === 'saas' && mgd.test(sellerText) && !saasWords.test(sellerText) ? { model: 'services' as BusinessModel, how: 'read' as const } : m2;
   // A seller that manages money gets the investment roles and measures, not the sector's own (shared sector file, profileFor).
+  if (m.how !== 'input' && nonRecurringBilling(sellerText)) m = { model: null, how: 'unknown' };
   const v = forcedSector ? v0 : gateSubIndustry(profileFor(v0, m.model, full), ownWords);
   const from = ex.source === 'context' ? ' (from the deal text, because your own description names no sector)' : ex.source === 'role' ? ' (from the job titles, because your own description names no sector)' : ex.source === 'buyer' ? ' (from who you sell to, because your own description names no sector)' : '';
   const sector = forcedSector ? (v ? `from your choice: ${v.name}` : 'from your choice of other, so the wording stays neutral') : v ? `read from your inputs as ${v.name}${from}` : 'not clear from your inputs (name the industry in plain words for sector notes)';
