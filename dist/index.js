@@ -517,6 +517,8 @@ function readContext(explicitModel, r) {
     const mgd = /\b(?:managed (?:detection|security|services?|service)|mdr\b|outsourc\w+|bpo\b)/i;
     let m = !forcedSector && m2.how !== 'input' && m2.model === 'saas' && mgd.test(sellerText) && !saasWords.test(sellerText) ? { model: 'services', how: 'read' } : m2;
     // A seller that manages money gets the investment roles and measures, not the sector's own (shared sector file, profileFor).
+    if (m.how === 'sector')
+        m = { model: null, how: 'unknown' };
     if (m.how !== 'input' && (0, verticals_ts_1.nonRecurringBilling)(sellerText))
         m = { model: null, how: 'unknown' };
     const v = forcedSector ? v0 : gateSubIndustry((0, verticals_ts_2.profileFor)(v0, m.model, full), ownWords);
@@ -524,8 +526,8 @@ function readContext(explicitModel, r) {
     const sector = forcedSector ? (v ? `from your choice: ${v.name}` : 'from your choice of other, so the wording stays neutral') : v ? `read from your inputs as ${v.name}${from}` : 'not clear from your inputs (name the industry in plain words for sector notes)';
     const model = m.model
         ? `${verticals_ts_2.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})`
-        : 'not clear from your inputs; describe how you charge for advice that fits it';
-    return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };
+        : 'not stated. Tell us how you charge and the plan will adjust';
+    return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*${!m.model ? "\n\nBilling dependent steps are conditional: trials, seats and recurring renewals require a subscription; a statement of work requires a services contract; site or link commitments require connectivity billing. Confirm the applicable choice before using those steps." : ""}` };
 }
 // The measures of a sector. The AI native list in the data file is written for customer-service automation (resolution, handling time),
 // so for AI native only the measures that fit any AI product are shown (accuracy on the buyer's own data, and escalation to a person).
