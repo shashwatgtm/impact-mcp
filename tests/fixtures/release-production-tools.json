@@ -614,12 +614,12 @@
         },
         "_meta": {
           "ui": {
-            "resourceUri": "ui://helix-wave3-88383ada2f02/impact_full_audit.html",
+            "resourceUri": "ui://helix-wave3-6b8120611bee/impact_full_audit.html",
             "visibility": [
               "model"
             ]
           },
-          "openai/outputTemplate": "ui://helix-wave3-88383ada2f02/impact_full_audit.html"
+          "openai/outputTemplate": "ui://helix-wave3-6b8120611bee/impact_full_audit.html"
         }
       }
     ]

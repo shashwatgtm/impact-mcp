@@ -15,8 +15,8 @@ import { widgetPayload } from "./widget-model.ts";
 import { WIDGET_HTML } from "./widget-document.ts";
 import { WIDGETS } from "./widget-registry.ts";
 // Keep the reviewed slice resource address stable while its widget document is unchanged.
-// Production 768b3108350308eabdb5d1bbafab5a49f2007af3 uses this address; unrelated reader builds must not change tools/list.
-const resourceVersion = BUILD_PROFILE.profile === "slice" ? "88383ada2f02" : BUILD_PROFILE.buildHash;
+// Public production tools/list captured 2026-11-04 uses this address; unrelated reader builds must not change it.
+const resourceVersion = BUILD_PROFILE.profile === "slice" ? "6b8120611bee" : BUILD_PROFILE.buildHash;
 const uri = (name: string) => `ui://helix-wave3-${resourceVersion}/${name}.html`;
 export function attachWidgets(server: Server): void {
   const selected = BUILD_PROFILE.profile === "wave" ? WIDGETS : Object.fromEntries(Object.entries(WIDGETS).filter(([name]) => name === "impact_full_audit"));
