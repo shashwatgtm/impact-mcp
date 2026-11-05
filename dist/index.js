@@ -24,6 +24,8 @@ exports.pctText = pctText;
 exports.parseCounts = parseCounts;
 exports.dropFraming = dropFraming;
 exports.createServer = createServer;
+const input_evidence_ts_1 = require("./input-evidence.js");
+const value_evidence_ts_1 = require("./value-evidence.js");
 const reader_actions_ts_1 = require("./reader-actions.js");
 const verticals_ts_1 = require("./verticals.js");
 const software_policy_ts_1 = require("./software-policy.js");
@@ -2053,8 +2055,13 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             // the proof tier it belongs to with its own label; nothing is invented; what is missing is named once, at the end.
             const named = (args.product_name || '').trim();
             const P = (0, rw_impact_ts_1.plainName)(named, runningName(named.replace(/\s*\([^)]*\)/g, ''))) || 'our product';
+            const evidenceReview = (0, value_evidence_ts_1.pinpointEvidenceReview)(args, P);
+            if (evidenceReview)
+                return evidenceReview;
             const catTyped = (args.category || '').trim();
-            const catSource = catTyped || 'solution';
+            const validProductType = (0, value_evidence_ts_1.readsAsProductType)(catTyped);
+            const categoryNotice = catTyped && !validProductType ? '**Product type missing:** the supplied category is a problem, activity or technology. Supply the kind of product or service before using it as a category statement.\n' : '';
+            const catSource = catTyped ? (validProductType ? catTyped : 'product') : 'solution';
             // In a sentence the category is its leading noun phrase ("predictive cybersecurity: attack path intelligence ..." reads "predictive cybersecurity").
             const catPlain = noNotes(catSource).split(/\s*[:;]\s*/)[0] || catSource;
             const category = (0, rw_impact_ts_1.categoryNoun)(catPlain);
@@ -2152,8 +2159,8 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             const tailMissing = [];
             if (!named)
                 tailMissing.push({ give: 'product_name', changes: 'every statement, which now says "our product"' });
-            if (!catTyped)
-                tailMissing.push({ give: 'category', changes: 'the category wording and the sector read, which now rest on the other inputs' });
+            if (!catTyped || !validProductType)
+                tailMissing.push({ give: 'category (a product type)', changes: 'the category wording and the sector read, which now rest on the other inputs' });
             if (!metricItems.length)
                 tailMissing.push({ give: 'customer metrics (one real customer result with its source)', changes: 'Tier 1 and the matrix, which quote no customer result today' });
             if (!args.business_model && (!ctx.model || /assumed/.test(ctx.line)))
@@ -2168,6 +2175,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
 
 ${longAud ? `**Who this is for:** ${audFull}.` : `**Who this is for:** ${capFirst(audFull)}.`}${catTyped ? ` ${capFirst(P)} is ${aOrAn(catMid)} ${catMid}.${catRest ? ` It covers ${catRest}.` : ''}` : ''}
 ${ctx.line}
+${categoryNotice}
 
 ---
 
@@ -4169,11 +4177,13 @@ function createServer() {
     server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
         // Run 20 round 1d (D086), the one choke point: every tools/call (stdio, hosted /mcp and /api/tools all come through here)
         // reaches a tool here. Run 40S (D6, safe by design): the input checks read the text as typed (hidden characters removed); then every text is escaped once, so nothing the caller typed can form markup in any answer. The words stay (src/escape-inputs.ts).
-        const typed = (0, escape_inputs_ts_1.cleanDeep)(request.params.arguments);
+        let typed = (0, escape_inputs_ts_1.cleanDeep)(request.params.arguments);
+        const inputEvidence = (0, input_evidence_ts_1.guardInputs)(typed, tools[request.params.name]?.inputSchema);
+        typed = inputEvidence.args;
         const problem = checkRequiredInputs(request.params.name, typed);
         const safeArgs = (0, escape_inputs_ts_1.escapeDeep)(typed);
-        if (problem) {
-            return { content: [{ type: 'text', text: problem }], isError: true };
+        if (problem || inputEvidence.stop) {
+            return { content: [{ type: 'text', text: (problem || 'Missing required input. Supply the missing evidence before continuing.') + (inputEvidence.notice ? '\n\n' + inputEvidence.notice : '') }], isError: true };
         }
         const toolName = request.params.name;
         const tool = tools[toolName];
@@ -4217,7 +4227,7 @@ State a specific result with its source, period and permission, or describe the 
             if (build_profile_ts_1.BUILD_PROFILE.profile !== "current" && toolName === "impact_full_audit")
                 result = (0, audit_reader_ts_1.auditReader)(result, callArgs);
             return {
-                content: [{ type: 'text', text: (0, text_signals_ts_2.sectorChoiceNotice)(toolName, callArgs, text => { const r = (0, verticals_ts_3.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + (0, reader_actions_ts_1.withReadingGuide)(toolName, result, callArgs) }]
+                content: [{ type: 'text', text: inputEvidence.notice + (inputEvidence.notice ? '\n\n' : '') + (0, text_signals_ts_2.sectorChoiceNotice)(toolName, callArgs, text => { const r = (0, verticals_ts_3.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + (0, reader_actions_ts_1.withReadingGuide)(toolName, (0, input_evidence_ts_1.holdBuyerCopy)(toolName, callArgs, result), callArgs) }]
             };
         }
         catch (error) {
