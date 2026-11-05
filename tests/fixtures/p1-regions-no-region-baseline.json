@@ -472,7 +472,7 @@
       },
       {
         "name": "impact_full_audit",
-        "description": "Takes what your product does, your target customer and the problem you solve, and returns a positioning audit: an input completeness score for each IMPACT step, the proof you already have, your current positioning checked in words, a recommended positioning with tagline options, a 30-day action plan and the measures to track. Optional company name, differentiation, competitors, current positioning, customer feedback and business model make it fuller. The score measures how complete your inputs are, not how strong your positioning is.",
+        "description": "Use for a full positioning review or when someone asks help me explain why we are different. Ask what the product does, who it serves and the problem it solves before calling; never invent these or fill missing facts with placeholders such as Not supplied. Clarify what unlabelled numbers mean. For a request only to phrase a message, impact_craft_message also fits; use this tool for the full review. Returns input completeness scores, supplied proof, a positioning draft and next actions. Scores measure how complete the inputs are, not how strong the positioning is. Never invent proof.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -482,19 +482,19 @@
             },
             "product_description": {
               "type": "string",
-              "description": "What your product does"
+              "description": "What the product or service does, in the user's words. Ask if missing; do not invent or use a placeholder."
             },
             "target_customer": {
               "type": "string",
-              "description": "Who you serve"
+              "description": "Who it serves, as supplied by the user. Ask if missing. Keep staff ranges as ranges and clarify unlabelled numbers."
             },
             "problem_solved": {
               "type": "string",
-              "description": "The problem you solve"
+              "description": "The problem the user says they solve. Ask if missing; do not invent or use a placeholder."
             },
             "key_differentiation": {
               "type": "string",
-              "description": "What makes you unique"
+              "description": "A difference the user can describe. Leave out if unknown; do not invent uniqueness or proof."
             },
             "competitors": {
               "type": "array",
@@ -509,7 +509,7 @@
             },
             "customer_feedback": {
               "type": "string",
-              "description": "What customers say about you"
+              "description": "Customer feedback actually supplied by the user. Leave out if absent; never invent quotes or outcomes."
             },
             "business_model": {
               "type": "string",
@@ -553,6 +553,74 @@
           "readOnlyHint": true,
           "destructiveHint": false,
           "openWorldHint": false
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "positioningAudit",
+            "plainText"
+          ],
+          "properties": {
+            "plainText": {
+              "type": "string"
+            },
+            "positioningAudit": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "kind",
+                    "draft",
+                    "gaps"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "positioning-audit"
+                    },
+                    "draft": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "gaps": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "kind",
+                    "reason"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "unavailable"
+                    },
+                    "reason": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "_meta": {
+          "ui": {
+            "resourceUri": "ui://helix-wave3-6b8120611bee/impact_full_audit.html",
+            "visibility": [
+              "model"
+            ]
+          },
+          "openai/outputTemplate": "ui://helix-wave3-6b8120611bee/impact_full_audit.html"
         }
       }
     ]
@@ -883,7 +951,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "461b1da55c7aecb2dce9a374afff5da6020e9d4bd4d4083695191d93a5939bb0"
+      "sha256": "dacbc65e6c114b6e0e742ca32d5fe22fa88209bbbb0cf545f6b92e1601f11edd"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -895,7 +963,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "9042519d63d2f2f15cbd7b5eb109caa847b22688882df3f9caf7798116a20bbc"
+      "sha256": "594283ceda2b6e7ce229405a5c2ee696bf2b602059426c18eed76a3f54113abd"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -907,7 +975,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "34450ef5ce7058206117ad22863e66022ceef00dca197171af33520b955c5852"
+      "sha256": "252f9f8ededdac8221bb488de70104f6405db3ab344bf07b6cb6c2234475b4b0"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -919,7 +987,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "d7f29f41fc9b9a947497dac2b2995ba77016dce232ae298262cbdd0413980834"
+      "sha256": "a6a4b45e991f8a4f98843de3d73a77adf7805f8ac6b3aaab1e9e501c2858c9a8"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -931,7 +999,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "97b9676090a4122704ce656a02515d3cebaeefd4db4072d6ce307c20c49177b9"
+      "sha256": "9f96bd8ee31d0a1bd3e86603d5ff864527969b61eca313396e8c2b6e51e407ba"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -943,7 +1011,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "54e24c7b5e68351d385a4149a5878fc86223b5ed2d0f3fc1e0bbdcf09aacd69e"
+      "sha256": "336f2600d285b8bfa6b43558755edd6d4aeea72e6775b027516a403a7eec4c86"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -955,7 +1023,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "696a16de72b621dcbbe5066b041ab602a2c127aa98a51a7ab314b25ab6efcb0b"
+      "sha256": "14da2f9ed1e6ef3d31d0ccb1e54c449f81e17beead1025030fd74a949caa8787"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -967,7 +1035,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "a8174d7ea1d67633e8737d369a736f34c1c4a5ea0b751d8e71db9d62de6af4c9"
+      "sha256": "98fc8031dec7abe7fb161b7f4ef696d2580fe0f7462fd2d16981022b01acca6f"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -979,7 +1047,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "49fe5a9159aa540868e47e8599bfcd184c281684b4bfc6d83b52bbd3e7d58a0a"
+      "sha256": "3e2090db53f0a1c31eb59ffa3451c746e1dff575b157da956850dca575f35d57"
     },
     {
       "tool": "impact_anchor_market",
@@ -1268,7 +1336,7 @@
         "target_customer": "Practice managers at clinics with two to five locations",
         "key_benefit": "Avoid double bookings between receptionists"
       },
-      "sha256": "cddcf402c6602c7b65182c8db53d2c10e4bbb8630219ac45a233280e22f649e1"
+      "sha256": "ed83ac658e6a6e81ff3adfae276e1b8d97ce2120234119a80d671a6f05a00dcb"
     },
     {
       "tool": "impact_translate_execution",
@@ -1278,7 +1346,7 @@
         "target_customer": "Practice managers at clinics with two to five locations",
         "key_benefit": "Avoid double bookings between receptionists"
       },
-      "sha256": "11d653c4d6d11bff078c9b595706c4d07c2310da2229b51eb2e39ea53cbd57a6"
+      "sha256": "84e5c8aa927c6094e4d2fb99bb66aae8bc695b10d163a4fa078ba7f266f751e0"
     },
     {
       "tool": "impact_translate_execution",
@@ -1288,7 +1356,7 @@
         "target_customer": "Practice managers at clinics with two to five locations",
         "key_benefit": "Avoid double bookings between receptionists"
       },
-      "sha256": "b5429301da54d72748cf8e3f1663bcaacbfb0bee0c808f27a4606485bbbab0dd"
+      "sha256": "e4f9af2e7b67e296650c081f660635d80aeab9abd61d9e33e8e97e601f41e000"
     },
     {
       "tool": "impact_translate_execution",
@@ -1298,7 +1366,7 @@
         "target_customer": "Practice managers at clinics with two to five locations",
         "key_benefit": "Avoid double bookings between receptionists"
       },
-      "sha256": "193edc7030e28dbcec4bf1f2471cbc2bb9754e5890fb505e2e1cba093bf403f4"
+      "sha256": "c80ef68d8d095ea3c15c1f52f5658d515cac64cce09188a50cf0ac179594601d"
     },
     {
       "tool": "impact_translate_execution",
@@ -1308,7 +1376,7 @@
         "target_customer": "Practice managers at clinics with two to five locations",
         "key_benefit": "Avoid double bookings between receptionists"
       },
-      "sha256": "5d29530e2427f9c6de655b305b3125af571f17c08b8014b05537e76075d2d0bc"
+      "sha256": "8eefdfcc5941a2d831f8b4651a63d2a9179cc4de1ff51526fe67006f6fca259d"
     },
     {
       "tool": "impact_translate_execution",
@@ -1318,7 +1386,7 @@
         "target_customer": "Practice managers at clinics with two to five locations",
         "key_benefit": "Avoid double bookings between receptionists"
       },
-      "sha256": "4869fbaa57e02f2ca0144ebcfbd1b3c10198f4955fb1191d42b63b6abfc67bc0"
+      "sha256": "73fbf38ef880696c46661f401ddb31cbe303404f0891e495d24e2749612417c9"
     },
     {
       "tool": "impact_translate_execution",
@@ -1328,7 +1396,7 @@
         "target_customer": "Practice managers at clinics with two to five locations",
         "key_benefit": "Avoid double bookings between receptionists"
       },
-      "sha256": "8fd0d4e3a9848ef65580bdefc78697adb0a5faca3d4d7667f0690dcc38e96f34"
+      "sha256": "806d53df4bc6b0c27c3c29cd823ad33e236ee1fc12ada768b740e18826808340"
     },
     {
       "tool": "impact_translate_execution",
@@ -1338,7 +1406,7 @@
         "target_customer": "Practice managers at clinics with two to five locations",
         "key_benefit": "Avoid double bookings between receptionists"
       },
-      "sha256": "3f076071bdcd08c153c042cac86c105e479b2edc110d4ad493e1c14f6212460b"
+      "sha256": "e7b483b96256fc9265d6c57f829564ed6cf91d72b9515da895c96fe58383c4c0"
     },
     {
       "tool": "impact_translate_execution",
@@ -1348,7 +1416,7 @@
         "target_customer": "Practice managers at clinics with two to five locations",
         "key_benefit": "Avoid double bookings between receptionists"
       },
-      "sha256": "1eb86b5869636262b54dfe2d1936749019edd8a5231d3dc4728c46594c81a90c"
+      "sha256": "ed8182cd69a0ee13cf0d48dadafd918dc11c324617673eb3d23fa308221808fb"
     },
     {
       "tool": "impact_full_audit",
@@ -1367,7 +1435,7 @@
         "business_model": "services",
         "your_sector": "logistics_tech"
       },
-      "sha256": "ff75cc96cb8dd169afa8883db2e0ea830170f11f7ec58ecdda6756bf4878437e"
+      "sha256": "665aaccfb35d71e88902aff04a69ad1df9ae5dbf49fd937e8543cdbbaaeaa53d"
     },
     {
       "tool": "impact_full_audit",
@@ -1386,7 +1454,7 @@
         "business_model": "services",
         "your_sector": "fintech"
       },
-      "sha256": "4669c09513e419ccf580449096f1a729619bffa7145dbd8fe2156202a9897e4b"
+      "sha256": "07d104c5cd24c8f1f4b97b85a294a74e095a37a6b91ed001d7c3bba3b83be6bb"
     },
     {
       "tool": "impact_full_audit",
@@ -1405,7 +1473,7 @@
         "business_model": "services",
         "your_sector": "saas"
       },
-      "sha256": "0c918e564bad55f0e9e54986f49f22eee36ad24d9717cb8cf32910fe91e08bc9"
+      "sha256": "026d71b768e3dec23ce12b5ffc01be9c6a530d5d2887cf3d8bcaa59cb03d2d31"
     },
     {
       "tool": "impact_full_audit",
@@ -1424,7 +1492,7 @@
         "business_model": "services",
         "your_sector": "vertical_saas"
       },
-      "sha256": "47ea5cbda5b0f2af7caf0aeb5996382eb2b7b22d0e7cf5bc1f6785c9bc46e690"
+      "sha256": "498a82e08e2db34a28d8daaf8393a7766278c6218eca2d4c6dbb19b21867d05f"
     },
     {
       "tool": "impact_full_audit",
@@ -1443,7 +1511,7 @@
         "business_model": "services",
         "your_sector": "ai_native"
       },
-      "sha256": "1a40123a84bb015e819cce4bee3337658b84a709eb635636001db7225df5ceb6"
+      "sha256": "b95a9060c86cff25d15265f069e22551e612198096dcca173cc122c4560b5d40"
     },
     {
       "tool": "impact_full_audit",
@@ -1462,7 +1530,7 @@
         "business_model": "services",
         "your_sector": "ites"
       },
-      "sha256": "57c126707e46fff9e123d1406cb1a3efd02b853080e9ecf4708c11067d24dfe2"
+      "sha256": "0ff5ebeddf79ca298bab7c49de39451103688c041f9510f337ff04ccc9bc0043"
     },
     {
       "tool": "impact_full_audit",
@@ -1481,7 +1549,7 @@
         "business_model": "services",
         "your_sector": "telecom"
       },
-      "sha256": "8f147f37274bdd6d32c5931ca06c66ef225f28150c17d50f880a849de1b5669b"
+      "sha256": "180e117327f224c6d0c0a8a8bcbf27b15da14a04bcd9bbee092280507d26dad3"
     },
     {
       "tool": "impact_full_audit",
@@ -1500,7 +1568,7 @@
         "business_model": "services",
         "your_sector": "software"
       },
-      "sha256": "ef6c493c3270513914c8a9f045707194f550f020b57dfaa0fe8a959c94a186c6"
+      "sha256": "5b10a3554f9157a800d8343a946ab247419c4ab602b1ba4b8f5e454b722c2136"
     },
     {
       "tool": "impact_full_audit",
@@ -1519,7 +1587,7 @@
         "business_model": "services",
         "your_sector": "cybersecurity"
       },
-      "sha256": "8f8ab1d56138ac7fc07d9a7e5e8d4858096e4d26d90550752e1a18ce8048a247"
+      "sha256": "e72877c284045d60b08f382afab4fae0f434c8afe0f2309f5d72837d574abc75"
     }
   ]
 }
