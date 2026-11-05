@@ -182,8 +182,9 @@ export function sectorChoiceNotice(tool:string,args:Record<string,unknown>,infer
  const chosen=typeof args.your_sector==='string'?args.your_sector.replace(/_/g,'-'):GTM_INDUSTRY_TOOLS.includes(tool)&&typeof args.industry==='string'?args.industry.replace(/_/g,'-'):null;
  if(!chosen||!SECTOR_LABELS[chosen])return '';
  const texts=(fields[tool]||[]).map(f=>args[f]).filter((v):v is string=>typeof v==='string'&&!!v.trim());
- for(const text of texts)if(excludesSellerSector(text,chosen))return `**Sector conflict:** You selected ${SECTOR_LABELS[chosen]}, but the description explicitly excludes that sector. The selected ${SECTOR_LABELS[chosen]} is used. Sentence read: "${text}".\n\n`;
- for(const text of texts){const label=sellerSectorLabel(text),r=infer(text);const id=label.id||(label.state!=='negated'&&r.source==='seller'?r.id:null);if(id&&id!==chosen)return `**Sector conflict:** You selected ${SECTOR_LABELS[chosen]}, but the description reads as ${SECTOR_LABELS[id]||r.name||id}. The selected ${SECTOR_LABELS[chosen]} is used. Sentence read: "${text}".\n\n`;}
+ const evidence=(text:string):string=>text.length<200?`Sentence read: "${text}".`:`Description excerpt: "${text.slice(0,160).replace(/\s+\S*$/, '')}" (excerpt only; review the complete description and its qualifications).`;
+ for(const text of texts)if(excludesSellerSector(text,chosen))return `**Sector conflict:** You selected ${SECTOR_LABELS[chosen]}, but the description explicitly excludes that sector. The selected ${SECTOR_LABELS[chosen]} is used. ${evidence(text)}\n\n`;
+ for(const text of texts){const label=sellerSectorLabel(text),r=infer(text);const id=label.id||(label.state!=='negated'&&r.source==='seller'?r.id:null);if(id&&id!==chosen)return `**Sector conflict:** You selected ${SECTOR_LABELS[chosen]}, but the description reads as ${SECTOR_LABELS[id]||r.name||id}. The selected ${SECTOR_LABELS[chosen]} is used. ${evidence(text)}\n\n`;}
  return '';
 }
 

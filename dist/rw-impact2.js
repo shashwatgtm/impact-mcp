@@ -461,7 +461,7 @@ function audienceShortRaw(aud, kit) {
     if (a.length <= 90)
         return a;
     const lead = (0, rw_impact_ts_1.leadAud)(aud);
-    if (lead)
+    if (lead && lead.length <= 120)
         return kit.mid(lead);
     // a list of industries ("enterprises in insurance, banking and capital markets, retail ...") is shortened to its first two items, never cut at the first comma
     const ind = aud.trim().match(/^(.{3,40}?)\s+(in|across)\s+([^,;]{3,30}),\s+([^,;]{3,30}?)(?:\s+and\s+[^,;]{3,30})?,\s+/i);
@@ -565,7 +565,7 @@ function parseStatement(...a) { return (0, piece_wrap_ts_1.pieceOf)(parseStateme
 function parseStatementRaw(statement, products) {
     const names = (Array.isArray(products) ? products : [products]).map((x) => x.trim()).filter((x) => x.length >= 2);
     const out = { alt: '', diff: [], category: '', need: '', features: [], facts: [] };
-    const text = WS(statement);
+    const text = WS(statement).replace(/\s+(?=(?:Alternatives? buyers (?:use|used|weigh|consider) today|What sets it apart|Business model|Proof|Objections):)/gi, '. ');
     const sents = text.split(/(?<=[.!?])\s+(?=[A-Z])/);
     for (const s0 of sents) {
         const s = endStop(s0);
@@ -633,7 +633,7 @@ function parseStatementRaw(statement, products) {
     if (!out.diff.length) {
         const m = text.match(/^for\s+[^,]+(?:\([^)]*\))?[^,]*,\s*(.+)$/i);
         if (m) {
-            const rest = endStop(cm && cm.index !== undefined ? text.slice(cm.index) : m[1]);
+            const rest = endStop((cm && cm.index !== undefined ? text.slice(cm.index) : m[1]).split(/\.\s+(?=(?:Alternatives?|Business model|Proof|Objections|What sets it apart)\b)/i)[0]);
             if (!/\bunlike\b/i.test(rest))
                 out.diff.push(rest);
         }

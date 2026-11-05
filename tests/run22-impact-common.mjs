@@ -31,7 +31,7 @@ export function cuts(text) {
   }
   return out;
 }
-const norm = (s) => s.toLowerCase().replace(/[“”"'`*]/g, "").replace(/\s+/g, " ").trim();
+const norm = (s) => s.toLowerCase().replace(/\\([!"#$%&\x27()*+,\-./:;<=>?@[\]\\^_`{|}~])/g, "$1").replace(/[“”"'`*]/g, "").replace(/\s+/g, " ").trim();
 // Does the answer use this input? A window of up to 4 words from the middle of the item has to appear (case and quotes ignored).
 export function uses(answer, item) {
   const words = norm(item).replace(/\((?:page claims?|case stud(?:y|ies)|hypothetical|customer stories|[^)]*story title[^)]*|[^)]*quote from[^)]*|analyst report)\)/g, " ").replace(/[()]/g, " ").replace(/[.;,!?]+/g, " ").split(" ").filter(Boolean);

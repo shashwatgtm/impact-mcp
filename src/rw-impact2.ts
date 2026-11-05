@@ -350,7 +350,7 @@ function audienceShortRaw(aud: string, kit: Kit2): string {
   const a = kit.mid(aud.trim());
   if (a.length <= 90) return a;
   const lead = leadAud(aud);
-  if (lead) return kit.mid(lead);
+  if (lead && lead.length <= 120) return kit.mid(lead);
   // a list of industries ("enterprises in insurance, banking and capital markets, retail ...") is shortened to its first two items, never cut at the first comma
   const ind = aud.trim().match(/^(.{3,40}?)\s+(in|across)\s+([^,;]{3,30}),\s+([^,;]{3,30}?)(?:\s+and\s+[^,;]{3,30})?,\s+/i);
   if (ind && !/\b(?:and|or)$/i.test(ind[3]) && ind[1].split(/\s+/).length <= 4 && ![ind[3], ind[4]].some((x) => /^(?:plus|and|or|including|as well|with|such)\b|\d/i.test(x.trim()))) return kit.mid(`${ind[1]} ${ind[2]} ${ind[3].trim()}, ${ind[4].trim()} and other industries`);
@@ -438,7 +438,7 @@ export function parseStatement(...a: Parameters<typeof parseStatementRaw>): Retu
 function parseStatementRaw(statement: string, products: string | string[]): StatementParts {
   const names = (Array.isArray(products) ? products : [products]).map((x) => x.trim()).filter((x) => x.length >= 2);
   const out: StatementParts = { alt: '', diff: [], category: '', need: '', features: [], facts: [] };
-  const text = WS(statement);
+  const text = WS(statement).replace(/\s+(?=(?:Alternatives? buyers (?:use|used|weigh|consider) today|What sets it apart|Business model|Proof|Objections):)/gi, '. ');
   const sents = text.split(/(?<=[.!?])\s+(?=[A-Z])/);
   for (const s0 of sents) {
     const s = endStop(s0);
@@ -482,7 +482,7 @@ function parseStatementRaw(statement: string, products: string | string[]): Stat
   }
   if (!out.diff.length) {
     const m = text.match(/^for\s+[^,]+(?:\([^)]*\))?[^,]*,\s*(.+)$/i);
-    if (m) { const rest = endStop(cm && cm.index !== undefined ? text.slice(cm.index) : m[1]); if (!/\bunlike\b/i.test(rest)) out.diff.push(rest); }
+    if (m) { const rest = endStop((cm && cm.index !== undefined ? text.slice(cm.index) : m[1]).split(/\.\s+(?=(?:Alternatives?|Business model|Proof|Objections|What sets it apart)\b)/i)[0]); if (!/\bunlike\b/i.test(rest)) out.diff.push(rest); }
   }
   return out;
 }

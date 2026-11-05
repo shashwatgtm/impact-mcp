@@ -3622,6 +3622,8 @@ Show one thing they cannot get from ${alt ? alt.label : 'their current approach'
             const sh = (0, rw_impact2_ts_1.sharpenText)(missing);
             return `# Channel Execution Playbook
 
+${named ? `**Product supplied:** ${named}` : ''}
+
 ## What the copy is built from
 - **The message**: ${heroLine}
 - **The audience**: ${aud}${A.gloss ? ` (${A.gloss})` : ''}.${A.exclusion ? ` ${capFirst(clean(A.exclusion))}, so the copy speaks to ${aud} only.` : ''}
@@ -4142,6 +4144,21 @@ for (const t of Object.values(tools)) {
     const props = (t.inputSchema.properties ??= {});
     props.your_sector = { type: 'string', enum: [...exports.YOUR_SECTOR_VALUES], description: YOUR_SECTOR_DESCRIPTION };
 }
+// Preserve each supplied passage once, including overlapping contract fields.
+function heldClaimEvidence(args) {
+    const recorded = [];
+    return ['product_name', 'target_customer', 'key_benefit', 'positioning_statement']
+        .filter(field => typeof args[field] === 'string' && args[field].trim())
+        .map(field => {
+        let text = args[field];
+        for (const prior of [...recorded].sort((a, b) => b.text.length - a.text.length))
+            if (prior.text.length >= 40 && text.includes(prior.text)) {
+                text = text.split(prior.text).join(`(see supplied ${prior.field.replace(/_/g, ' ')} above)`);
+            }
+        recorded.push({ field, text: args[field] });
+        return `**Supplied ${field.replace(/_/g, ' ')} (unvalidated):** ${text}`;
+    }).join('\n\n');
+}
 function createServer() {
     const server = new index_js_1.Server({ name: exports.SERVER_NAME, version: exports.SERVER_VERSION }, { capabilities: { tools: {} }, ...(build_profile_ts_1.BUILD_PROFILE.profile !== "current" ? { instructions: conversation_guidance_ts_1.CONVERSATION_INSTRUCTIONS } : {}) });
     if (build_profile_ts_1.BUILD_PROFILE.profile !== "current")
@@ -4190,7 +4207,7 @@ function createServer() {
 
 **Unsupported or adverse claims held.** The supplied text does not support publishable copy. Keep its evidence qualification attached.
 
-${['product_name', 'target_customer', 'key_benefit', 'positioning_statement'].filter(k => typeof callArgs[k] === 'string').map(k => `**Supplied ${k.replace(/_/g, ' ')} (unvalidated):** ${callArgs[k]}`).join('\n\n')}
+${heldClaimEvidence(callArgs)}
 
 State a specific result with its source, period and permission, or describe the product's function without a result claim. Then draft the message.` : tool.execute(callArgs);
             }
