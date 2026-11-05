@@ -5,6 +5,7 @@
 // Run: node --no-warnings --test tests/run22-impact_translate_execution-rewrite.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import {regionNotes} from "../src/region-reader.ts";
 import { call, PLACEHOLDER, repeatedSentences, cuts, uses, sections, assertSharpenAtEnd, sharpen, loadPool, SAAS_ONLY } from "./run22-impact-common.mjs";
 
 const TOOL = "impact_translate_execution";
@@ -141,7 +142,10 @@ test("translate: no figure, customer or promise is added that the user did not g
   for (const a of ALL) {
     const t = await call(TOOL, a);
     const given = Object.values(a).join(" ");
-    const cleaned = t.replace(/^\|\s*\d+\s*\|/gm, "").replace(/Slide \d|Email \d|Post \d|^\s*\d+\s*\|?|^\s*\d+\.\s|\b\d+(?:-\d+)? (?:minutes|min|seconds|slides|days)\b|\b\d+(?:-\d+)? min\b|^\*\*\d+-\d+ min|Step \d|\b90 days\b|ISO 27001|SOC 2|\(\d+ slides\)|10 slides|30-day plan/gm, "");
+    // P1 legal citations carry source years and access dates. The no invented figure guard still covers all channel copy.
+    const appendix=regionNotes(a);assert.ok(t.endsWith(appendix),"exact separately tested region appendix");
+    const copy=t.slice(0,-appendix.length);
+    const cleaned = copy.replace(/^\|\s*\d+\s*\|/gm, "").replace(/Slide \d|Email \d|Post \d|^\s*\d+\s*\|?|^\s*\d+\.\s|\b\d+(?:-\d+)? (?:minutes|min|seconds|slides|days)\b|\b\d+(?:-\d+)? min\b|^\*\*\d+-\d+ min|Step \d|\b90 days\b|ISO 27001|SOC 2|\(\d+ slides\)|10 slides|30-day plan/gm, "");
     for (const m of cleaned.match(/\$?\d[\d,]*(?:\.\d+)?\s?(?:%|x\b|X\b|k\b|M\b)?/g) || []) assert.ok(given.includes(m.trim()), `${a.product_name}: figure not from the inputs: ${m}`);
     assert.doesNotMatch(t, /lower total cost of ownership|guarantee|proven track record|industry-leading|best-in-class|world-class|\bthe only\b/i, a.product_name);
   }
