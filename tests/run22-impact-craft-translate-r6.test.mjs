@@ -1,3 +1,4 @@
+import {pathToFileURL} from "node:url";
 // Run 22 round 6, impact_craft_message and impact_translate_execution: written before the fixes (test first). Faults left after round 5:
 // (1) a voice AI product ("AI agents that automate conversations, understand context and act in real time"): the tagline puts the agents' verbs on the buyer, the subheadline
 //     repeats the headline, the answer to the "we already use IVR" objection does not meet it, there is no language section, the roles are generic, the commercials slide says "users";
@@ -179,7 +180,7 @@ test("r6: earlier gains stay (no placeholder, no repeated sentence, no cut name)
 
 // ---- the project E11 style check over invented rows (needs the private project folder) -------------------------------------------------------------------
 let lib = null;
-try { lib = await import("/home/user/directory-submission-work/work/run21/eval/e11lib21.mjs"); } catch { /* the private folder is absent */ }
+try { lib = await import(pathToFileURL(`${process.env.HELIX_WORK || "/home/user/directory-submission-work/work"}/run21/eval/e11lib21.mjs`).href); } catch { /* the private folder is absent */ }
 const rowOf = (a, company) => ({
   id: `R6-${company}`, company, product: a.product_name, productDesc: a.product_name, category: a.product_category, targetCustomer: a.target_customer, segments: [a.target_customer.split(/[,;]/)[0]],
   problem: a.customer_need, outcome: a.key_benefit, capability: a.key_benefit.split(/[;:]/)[0], differentiation: a.differentiation, competitors: [a.competitor || "manual work"],

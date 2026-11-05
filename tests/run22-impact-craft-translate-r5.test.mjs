@@ -1,3 +1,4 @@
+import {pathToFileURL} from "node:url";
 // Run 22 round 5, impact_craft_message and impact_translate_execution: written before the fixes (test first). Faults judged at 3 or flagged in the last packet:
 // (1) a data infrastructure product: the positioning statement opens with the category field word for word (bracket and all), Variation A cuts the problem to a fragment,
 //     a contract figure is the only measure although the pitch is built on a ten minute start, and a per seat objection sits next to usage pricing;
@@ -216,7 +217,7 @@ test("r5: earlier gains stay (no placeholder, no repeated sentence, no cut name)
 
 // ---- the project E11 style check over invented rows with a bracket in the category and a usage priced or results-led product (needs the private project folder) ----
 let lib = null;
-try { lib = await import("/home/user/directory-submission-work/work/run21/eval/e11lib21.mjs"); } catch { /* the private folder is absent */ }
+try { lib = await import(pathToFileURL(`${process.env.HELIX_WORK || "/home/user/directory-submission-work/work"}/run21/eval/e11lib21.mjs`).href); } catch { /* the private folder is absent */ }
 const rowOf = (a, company) => ({
   id: `R5-${company}`, company, product: a.product_name, productDesc: a.product_name, category: a.product_category, targetCustomer: a.target_customer, segments: [a.target_customer.split(/[,;]/)[0]],
   problem: a.customer_need, outcome: a.key_benefit, capability: a.key_benefit.split(/[;:]/)[0], differentiation: a.differentiation, competitors: [a.competitor],

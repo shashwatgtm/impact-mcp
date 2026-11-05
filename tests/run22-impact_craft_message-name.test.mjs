@@ -1,3 +1,4 @@
+import {pathToFileURL} from "node:url";
 // Run 22 round 3 follow-up, impact_craft_message: written before the fix (test first). A product typed as a description that opens with an ordinary capitalised word
 // followed by a comma list ("Modern cloud, security and data services ...") must not be named by that first word; only a typed brand (a word with an inner capital, a digit
 // or a dot, such as Voxel or Voxa.ai) followed by its own list is named by the brand alone. The rows are invented; the real E11 check of the project (the "name cut to
@@ -34,7 +35,7 @@ test("name: a typed brand with an inner capital, a digit or a dot followed by it
 
 // ---- the real E11 check over invented rows (needs the private project folder) ----------------------------------------------------------------
 let lib = null;
-try { lib = await import("/home/user/directory-submission-work/work/run21/eval/e11lib21.mjs"); } catch { /* the private folder is absent */ }
+try { lib = await import(pathToFileURL(`${process.env.HELIX_WORK || "/home/user/directory-submission-work/work"}/run21/eval/e11lib21.mjs`).href); } catch { /* the private folder is absent */ }
 test("name: the project E11 check gives no flag on invented rows in the styles plain and para, for both tools", { skip: !lib }, async () => {
   const bad = [];
   for (const o of OPENERS) for (const named of [null, "Zentrix"]) {

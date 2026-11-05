@@ -1,3 +1,4 @@
+import {pathToFileURL} from "node:url";
 // Run 22: shared helpers for the three rewrite tests (impact_pinpoint_value, impact_anchor_market, impact_map_alternatives).
 // This file is not a test itself (its name has no ".test"). Companies in the tests are invented; the pool scenarios are loaded at run time
 // from the private project folder when it exists (they carry real names, which are never written into this public repo) and are skipped otherwise.
@@ -60,10 +61,10 @@ export function assertSharpenAtEnd(t, label = "") {
 
 // The pool scenarios (T6 to T9, H, P, Q; never T1 to T5), loaded from the private project when it is present.
 export async function loadPool() {
-  const root = "/home/user/directory-submission-work/work/";
+  const root = (process.env.HELIX_WORK || "/home/user/directory-submission-work/work") + "/";
   try {
-    const { BUILD20 } = await import(root + "run20/eval/builders20.mjs");
-    const { loadSet } = await import(root + "run21/eval/common21.mjs");
+    const { BUILD20 } = await import(pathToFileURL(root + "run20/eval/builders20.mjs").href);
+    const { loadSet } = await import(pathToFileURL(root + "run21/eval/common21.mjs").href);
     const all = [];
     for (const s of ["T", "H", "P", "Q"]) all.push(...(await loadSet(s)));
     const ok = all.filter((s) => !/^T[1-5]$/.test(s.id));
