@@ -2103,7 +2103,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             const onlyWith = (d) => { const k = kindOf(d); const t = lowerFirst(clean(d)); if (isNamedClause(clean(d)))
                 return `where ${clean(d)}`; return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
             // The supplied results, placed by what each one is.
-            const metricItems = splitItems(args.customer_metrics || '').filter((text) => !statesAbsence(text));
+            const metricItems = splitItems(args.customer_metrics || '').filter((text) => !statesAbsence(text) || /\d/.test(text));
             const given = metricItems.map((text) => ({ text, ...(0, rw_impact_ts_1.classifyProof)(text) }));
             if (extraFact && !given.some((g) => (extraFact.match(/\d[\d,.]*/g) || []).every((n) => g.text.includes(n))))
                 given.push({ text: extraFact.replace(/(?:\\?[.!])+$/, ''), ...(0, rw_impact_ts_1.classifyProof)(extraFact) });
@@ -4169,8 +4169,9 @@ function createServer() {
                 isError: true
             };
         }
-        if ((0, software_policy_ts_1.asksForSoftware)(typed))
-            return { content: [{ type: 'text', text: software_policy_ts_1.SOFTWARE_REFERRAL }] };
+        const advice = (0, software_policy_ts_1.softwareAdvice)(typed);
+        if (advice)
+            return { content: [{ type: 'text', text: advice }] };
         try {
             // Text only (run 11, R11-06): a target customer that is a job title reads in lower case in running text
             // ("head of marketing"); names and acronyms in it keep their capitals. Any other target customer stays as typed.
@@ -4189,7 +4190,7 @@ function createServer() {
 
 **Unsupported or adverse claims held.** The supplied text does not support publishable copy. Keep its evidence qualification attached.
 
-${held.map(x => `- ${x}`).join('\n')}
+${['product_name', 'target_customer', 'key_benefit', 'positioning_statement'].filter(k => typeof callArgs[k] === 'string').map(k => `**Supplied ${k.replace(/_/g, ' ')} (unvalidated):** ${callArgs[k]}`).join('\n\n')}
 
 State a specific result with its source, period and permission, or describe the product's function without a result claim. Then draft the message.` : tool.execute(callArgs);
             }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { withReadingGuide } from './reader-actions.ts';
 import { billingLine } from './verticals.ts';
-import { asksForSoftware, SOFTWARE_REFERRAL } from './software-policy.ts';
+import { softwareAdvice, SOFTWARE_REFERRAL } from './software-policy.ts';
 import { nonRecurringBilling } from './verticals.ts';
 import { auditReader } from "./audit-reader.ts";
 import { conversationDefinition, CONVERSATION_INSTRUCTIONS } from "./conversation-guidance.ts";
@@ -1922,7 +1922,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       const onlyWith = (d: string) => { const k = kindOf(d); const t = lowerFirst(clean(d)); if (isNamedClause(clean(d))) return `where ${clean(d)}`; return k === 'third' ? `that ${t}` : k === 'base' ? `that can ${t}` : `with ${t}`; };
 
       // The supplied results, placed by what each one is.
-      const metricItems = splitItems(args.customer_metrics || '').filter((text) => !statesAbsence(text));
+      const metricItems = splitItems(args.customer_metrics || '').filter((text) => !statesAbsence(text) || /\d/.test(text));
       const given = metricItems.map((text) => ({ text, ...classifyProof(text) }));
       if (extraFact && !given.some((g) => (extraFact.match(/\d[\d,.]*/g) || []).every((n) => g.text.includes(n)))) given.push({ text: extraFact.replace(/(?:\\?[.!])+$/, ''), ...classifyProof(extraFact) });
       const heldProof = given.filter(g => g.held);
@@ -3956,7 +3956,8 @@ export function createServer(): Server {
       };
     }
   
-    if (asksForSoftware(typed)) return { content: [{ type: 'text', text: SOFTWARE_REFERRAL }] };
+    const advice = softwareAdvice(typed);
+    if (advice) return { content: [{ type: 'text', text: advice }] };
 
     try {
       // Text only (run 11, R11-06): a target customer that is a job title reads in lower case in running text
@@ -3973,7 +3974,7 @@ export function createServer(): Server {
 
 **Unsupported or adverse claims held.** The supplied text does not support publishable copy. Keep its evidence qualification attached.
 
-${held.map(x=>`- ${x}`).join('\n')}
+${['product_name','target_customer','key_benefit','positioning_statement'].filter(k=>typeof callArgs[k]==='string').map(k=>`**Supplied ${k.replace(/_/g,' ')} (unvalidated):** ${callArgs[k]}`).join('\n\n')}
 
 State a specific result with its source, period and permission, or describe the product's function without a result claim. Then draft the message.` : tool.execute(callArgs as any);
       } finally { setYourSector(undefined); }
