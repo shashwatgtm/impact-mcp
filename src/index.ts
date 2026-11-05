@@ -3500,7 +3500,7 @@ ${SUGGESTED}
     }) => {
       const company = (args.company_name || '').trim() || 'your product';
       const competitors = args.competitors || ['Status quo', 'DIY solutions'];
-      const differentiation = args.key_differentiation?.trim() && !statesAbsence(args.key_differentiation) && !/\b(?:not (?:yet )?established|unknown|unverified|no unique approach)\b/i.test(args.key_differentiation) ? args.key_differentiation : ''; 
+      const differentiation = args.key_differentiation || 'unique approach';
       const givenCompetitors = (args.competitors || []).filter((c) => c && c.trim());
       const allFeedback = splitItems(args.customer_feedback).filter((x) => !statesAbsence(x));
       // A company-wide claim ("$8B+ deployed", "more than 1,000 teams use X") or a recognition is not a result a customer describes.
@@ -3602,20 +3602,20 @@ ${SUGGESTED}
 
       // ---- Words only (not part of the score): the generated positioning, tagline options, proof and word checks ----
       const problemShort = claimRisk(args.problem_solved).hold ? null : shortClause(shortText(args.problem_solved), 6);
-      const diffShort = differentiation && !claimRisk(differentiation).hold ? shortClause(differentiation, 5) : null;
+      const diffShort = args.key_differentiation && !claimRisk(args.key_differentiation).hold ? shortClause(args.key_differentiation, 5) : null;
       const taglines: string[] = [];
       const heldClaimSources = [args.key_differentiation,args.current_positioning,args.product_description,args.problem_solved].filter((x):x is string=>!!x&&claimRisk(x).hold);
       // A reported problem does not establish that it has been solved; do not turn it into a solved claim.
       if (diffShort && !['base', 'third'].includes(kindOf(diffShort))) taglines.push(`"${capFirst(diffShort)}"`);
       taglines.push(`"Built for ${shortAudience(shortText(noNotes(args.target_customer)))}"`);
       // Run 20 round 1: more options, each built from the user's own words and cut at a clause end.
-      const diffWide = differentiation && !claimRisk(differentiation).hold ? shortClause(differentiation, 9) : null;
+      const diffWide = args.key_differentiation && !claimRisk(args.key_differentiation).hold ? shortClause(args.key_differentiation, 9) : null;
       if (diffWide && diffWide !== diffShort && !['base', 'third'].includes(kindOf(diffWide))) taglines.push(`"${capFirst(diffWide)}"`);
       const posLead = (args.current_positioning || args.product_description || '').split(/[:;]|\s-\s/)[0].trim();
       const posShort = posLead && !claimRisk(args.current_positioning || args.product_description || '').hold && shortClause(posLead, 9);
       if (posShort && !taglines.some((t) => t.toLowerCase().includes(posShort.toLowerCase()))) taglines.push(`"${capFirst(posShort)}"`);
       // When no clause of 9 words or fewer exists, the first words of the differentiation and of the positioning (never ending on a joining word) are offered.
-      for (const src of [differentiation, posLead]) {
+      for (const src of [args.key_differentiation, posLead]) {
         const fw = src && !claimRisk(src).hold && !heldClaimSources.some(x=>x.startsWith(src)) ? leadPhrase(src) : '';
         if (fw && fw.split(/\s+/).length >= 3 && !taglines.some((t) => t.toLowerCase().includes(fw.toLowerCase()))) taglines.push(`"${capFirst(fw)}"`);
       }
@@ -3730,7 +3730,7 @@ Based on your inputs, here's a generated positioning statement:
 > **What ${company} is** ${q(clean(shortText(args.product_description, FRAME_AT)))}
 > **That** ${feedbackItems.length ? `has this reported customer observation: ${q(shortText(feedbackItems[0], 160))}` : 'delivers a result you still have to state: write it with Pinpoint Value'}
 > **Unlike** ${givenCompetitors.length ? joinList(givenCompetitors.slice(0, 3).map((c) => labelOf(c)), 'or') : 'the alternative your buyers use most (add competitors)'}
-${!differentiation ? '> **Difference not established**: What verified difference does the buyer recognise?' : claimRisk(differentiation).hold ? `> **Difference held for evidence**: ${q(differentiation)}` : `> **We** ${differentiation ? gateClaim(differentiation, weClause(shortText(differentiation, FRAME_AT))) : 'offer what sets you apart (add key differentiation)'}`}
+${args.key_differentiation && claimRisk(args.key_differentiation).hold ? `> **Difference held for evidence**: ${q(args.key_differentiation)}` : `> **We** ${args.key_differentiation ? gateClaim(args.key_differentiation, weClause(shortText(args.key_differentiation, FRAME_AT))) : 'offer what sets you apart (add key differentiation)'}`}
 
 ### Tagline Options
 ${heldClaimSources.length ? 'Unsupported or generic claims were held out of these options. A proof review is needed before drafting a claim from them.\n' : ''}${numbered(taglines.map((t) => (SUPERLATIVE.test(t) && !/Only if true/.test(t) ? `[Only if true and provable: ${t}]` : t)).filter((t) => { const w = t.replace(/^\[Only if true and provable: |\]$/g, '').replace(/^"|"$/g, '').split(/\s+/); return w.length <= 9 && !/^(?:combined|made|built|based|layered|powered)$/i.test(w[w.length - 1]); }))}
