@@ -2117,8 +2117,10 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
             if (extraFact && !given.some((g) => (extraFact.match(/\d[\d,.]*/g) || []).every((n) => g.text.includes(n))))
                 given.push({ text: extraFact.replace(/(?:\\?[.!])+$/, ''), ...(0, rw_impact_ts_1.classifyProof)(extraFact) });
             const heldProof = given.filter(g => g.held);
+            const isAvoidedCost = (t) => /\b(?:avoids?|avoided|saves the cost of|instead of paying|would otherwise cost|illustrative)\b/i.test(t);
             const tier = (n, kinds) => given.filter((g) => !g.held && g.tier === n && (!kinds || kinds.includes(g.kind)));
-            const results = tier(1);
+            const avoidedCosts = given.filter((g) => !g.held && isAvoidedCost(g.text));
+            const results = tier(1).filter((r) => !isAvoidedCost(r.text));
             const cite = (results.find((r) => r.text.length <= 180) || { text: '' }).text;
             // The value matrix: the measures the user's own inputs already speak to, each next to what they say; a measure with nothing behind it is not an empty row.
             const evidence = [...given.filter(g => !g.held).map((g) => ({ text: g.text, label: '' })), ...oc.items.map((x) => ({ text: x, label: oc.label }))];
@@ -2211,7 +2213,7 @@ ${matrixNote}
 
 ### Tier 1: Customer Results (Strongest)
 ${heldProof.length ? `**Adverse or unconfirmed evidence held:** Do not cite these statements as positive results. Sentence read: ${heldProof.map(p => p.text).join("; ")}.\n\n` : ''}
-${results.length ? `Results you supplied (supplied by you: use one only if it is real and you can show it): ${inl(results.map((r) => r.text))}` : `You supplied no customer result, so none is quoted in this answer. The strongest proof for ${P} is one named customer with a before and after on ${measures[0] ? measures[0] : 'the result your outcome names'}, from the customer's own data and with the period named.`}
+${results.length ? `Results you supplied (supplied by you: use one only if it is real and you can show it): ${inl(results.map((r) => r.text))}` : `You supplied no customer result, so none is quoted in this answer. The strongest proof for ${P} is one named customer with a before and after on ${measures[0] ? measures[0] : 'the result your outcome names'}, from the customer's own data and with the period named.`}${avoidedCosts.length ? `\nCost avoided, as you stated it (a claim to prove with the buyer's own figures, not a customer result): ${inl(avoidedCosts.map((r) => r.text))}` : ''}
 
 **Proof collection questions** (ask your existing customers):
 1. "What measure improved most after working with ${named ? P : 'us'}?"
