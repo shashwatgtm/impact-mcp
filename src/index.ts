@@ -1072,7 +1072,7 @@ const tools = {
   // Tool 1: Get Framework Overview
   // ---------------------------------------------------------------------------
   impact_get_framework: {
-    description: 'Returns the IMPACT positioning method step by step: identify champions, map alternatives, pinpoint value, anchor in a market, craft the message and translate it to execution, with a template or checklist for each step. An optional focus phase returns one step only, and your sector adds that sector\'s buyer roles, measures and proof points.',
+    description: 'Helps you decide which positioning steps to run, and in what order. You give nothing, or one IMPACT step to focus on and your sector. You get the IMPACT positioning method step by step (identify champions, map alternatives, pinpoint value, anchor in a market, craft the message, translate it to execution), with a template or checklist for each step; a focus step returns that step only, and your sector adds its buyer roles, measures and proof points.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1356,7 +1356,7 @@ ${SUGGESTED}
   // Tool 2: Identify Champions
   // ---------------------------------------------------------------------------
   impact_identify_champions: {
-    description: 'Takes what your product does and the problem it solves, and returns hypotheses for who buys it: the champion, the economic buyer, the technical influencer, commercial and control reviewers and daily users, with warning signs of an anti-champion, a path to develop the champion and what to give them. Optional company name, target company type, price point and sector fit the roles to your market. These are roles to test, not named people.',
+    description: 'Helps you decide who inside the buyer will push for you. You give what your product does and the problem it solves, plus optional company name, target company type, price point and sector. You get hypotheses for the champion, the economic buyer, the technical influencer, commercial and control reviewers and daily users, warning signs of an anti champion, a path to develop the champion and what to give them. These are roles to test, not named people.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1592,7 +1592,7 @@ ${SUGGESTED}
   // Tool 3: Map Alternatives
   // ---------------------------------------------------------------------------
   impact_map_alternatives: {
-    description: 'Takes your product and its category, and returns a map of the alternatives your buyers weigh: one card for each competitor you name, the status-quo options you list and doing nothing, where you can lead, and discovery questions to learn more. Optional competitor weaknesses and your strengths fill the cards, and your sector adds its questions and objections. It uses only what you give and says what would sharpen the map.',
+    description: 'Helps you decide what buyers compare you with, and where you can lead. You give your product and its category, plus optional competitors, their weaknesses and your strengths. You get one card for each competitor you name, the status quo and doing nothing, where you can lead and discovery questions, with your sector\'s questions and objections. It uses only what you give and says what would sharpen the map.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1823,7 +1823,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
   // Tool 4: Pinpoint Unique Value
   // ---------------------------------------------------------------------------
   impact_pinpoint_value: {
-    description: 'Takes your target customer, the main outcome they get and what you do that others do not, and returns value proposition statements in three versions, a value matrix for your own figures, proof points ranked from customer results to social proof, versions for different audiences and channels, and questions to test the value. Optional product name, category, customer results and business model shape it.',
+    description: 'Helps you decide what you can claim that buyers will believe. You give your target customer, the main outcome they get and what you do that others do not, plus optional product name, category, customer results and business model. You get value statements in three versions, a value matrix for your own figures, proof points ranked from customer results to social proof, versions for different audiences and channels, and questions to test the value.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2088,7 +2088,7 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
   // Tool 5: Anchor in Right Market
   // ---------------------------------------------------------------------------
   impact_anchor_market: {
-    description: 'Takes what your product does and the segments you are weighing, and returns a beachhead market choice: your segments ranked from your own customers, pain and deal size when you give all three (the answer says which method it used), otherwise scored on keywords in their names; a TAM/SAM/SOM calculation that uses only the company counts, deal size and percentages you give; a three-year expansion path and an ICP hypothesis for the chosen segment. It never chooses a segment you did not name: without segments it recommends none and explains how to find yours from your own customers.',
+    description: 'Helps you decide which market segment to win first. You give what your product does and the segments you are weighing, plus optional customers, pain, deal size and company counts. You get a beachhead choice: your segments ranked from your own customers, pain and deal size when you give all three (the answer says which method it used), otherwise scored on keywords in their names; a TAM, SAM and SOM calculation from only the figures you give; a three year expansion path and an ICP hypothesis for the chosen segment. It never chooses a segment you did not name.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2524,7 +2524,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
   // Tool 6: Craft Core Message
   // ---------------------------------------------------------------------------
   impact_craft_message: {
-    description: 'Takes your target customer, the key benefit and what sets you apart, and returns a positioning statement (full and one sentence), a message hierarchy from tagline to three supporting pillars, versions for different audiences, objection handling and ways to test the message. Optional product name, customer need, category, main competitor and business model fit it to your market. It writes from your own words, in whole sentences.',
+    description: 'Helps you decide what your core message is, and how to test it. You give your target customer, the key benefit and what sets you apart, plus optional product name, customer need, category, main competitor and business model. You get a positioning statement (full and one sentence), a message hierarchy from tagline to three supporting pillars, versions for different audiences, objection handling and ways to test the message. It writes from your own words, in whole sentences.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2961,7 +2961,7 @@ ${rows.join('\n')}
   // Tool 7: Translate to Execution
   // ---------------------------------------------------------------------------
   impact_translate_execution: {
-    description: 'Takes a positioning statement, your target customer and the key benefit, and returns copy to edit for the channels you choose: a website hero, a LinkedIn tagline and post drafts, a three-email cold sequence, a sales deck outline and a 15-minute demo script, with calls to action that fit your business model and the order to work the channels in. Optional channels, product name and business model shape it.',
+    description: 'Helps you decide how your positioning should read in each channel. You give a positioning statement, your target customer and the key benefit, plus optional channels, product name and business model. You get copy to edit: a website hero, a LinkedIn tagline and post drafts, a three email cold sequence, a sales deck outline and a 15 minute demo script, with calls to action that fit your business model and the order to work the channels in.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -3442,7 +3442,7 @@ ${SUGGESTED}
   // Tool 8: Full Positioning Audit
   // ---------------------------------------------------------------------------
   impact_full_audit: {
-    description: 'Takes what your product does, your target customer and the problem you solve, and returns a positioning audit: an input completeness score for each IMPACT step, the proof you already have, your current positioning checked in words, a recommended positioning with tagline options, a 30-day action plan and the measures to track. Optional company name, differentiation, competitors, current positioning, customer feedback and business model make it fuller. The score measures how complete your inputs are, not how strong your positioning is.',
+    description: 'Helps you decide whether your positioning is working and what to fix first. You give what your product does, your target customer and the problem you solve, plus optional company name, differentiation, competitors, current positioning, customer feedback and business model. You get a positioning audit: an input completeness score for each IMPACT step, the proof you already have, your current positioning checked in words, a recommended positioning with tagline options, a 30 day action plan and the measures to track. The score measures how complete your inputs are, not how strong your positioning is.',
     inputSchema: {
       type: 'object',
       properties: {
