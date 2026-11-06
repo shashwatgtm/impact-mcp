@@ -1,0 +1,18 @@
+[
+ {
+  "row": 4,
+  "tool": "impact_pinpoint_value",
+  "base": {
+   "target_customer": "Heads of customer operations at mid-sized consumer lenders in India",
+   "key_outcome": "payment reminder and verification calls answered in the customer's language, without the operations team staffing every minute",
+   "unique_capability": "One committed per-minute rate with telephony and the platform fee included",
+   "customer_metrics": "Avoids an illustrative $172,800 a year at the outsourced call centre, net of the minutes passed to a person."
+  },
+  "changed": {
+   "target_customer": "Chief financial officers at mid-sized consumer lenders in India",
+   "key_outcome": "payment reminder and verification calls answered in the customer's language, without the operations team staffing every minute",
+   "unique_capability": "One committed per-minute rate with telephony and the platform fee included",
+   "customer_metrics": "Avoids an illustrative $172,800 a year at the outsourced call centre, net of the minutes passed to a person."
+  }
+ }
+]

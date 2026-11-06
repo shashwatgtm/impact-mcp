@@ -27,6 +27,7 @@ exports.createServer = createServer;
 const input_evidence_ts_1 = require("./input-evidence.js");
 const value_evidence_ts_1 = require("./value-evidence.js");
 const region_reader_ts_1 = require("./region-reader.js");
+const echo_layer_ts_1 = require("./echo-layer.js");
 const reader_actions_ts_1 = require("./reader-actions.js");
 const verticals_ts_1 = require("./verticals.js");
 const software_policy_ts_1 = require("./software-policy.js");
@@ -4222,7 +4223,7 @@ function createServer() {
 
 ${heldClaimEvidence(callArgs)}
 
-State a specific result with its source, period and permission, or describe the product's function without a result claim. Then draft the message.` : tool.execute(callArgs);
+State a specific result with its source, period and permission, or describe the product's function without a result claim. Then draft the message.` : (0, echo_layer_ts_1.applyEcho)(String(toolName), callArgs, tool.execute(callArgs));
             }
             finally {
                 setYourSector(undefined);

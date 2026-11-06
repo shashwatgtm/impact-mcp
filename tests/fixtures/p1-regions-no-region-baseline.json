@@ -951,7 +951,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "dacbc65e6c114b6e0e742ca32d5fe22fa88209bbbb0cf545f6b92e1601f11edd"
+      "sha256": "33147a45e46c160f6716c6aff8c5362a7881e454063b9b3ab0e98cd5ea4eefc1"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -963,7 +963,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "594283ceda2b6e7ce229405a5c2ee696bf2b602059426c18eed76a3f54113abd"
+      "sha256": "fc09170bd107a08810b34a7db3bd68f2f3d2fd2aad53cec65b25eee80e07e679"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -975,7 +975,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "252f9f8ededdac8221bb488de70104f6405db3ab344bf07b6cb6c2234475b4b0"
+      "sha256": "098466b6b0c9777108b137b825904a7bc2697b12f89029cfac242d7af0e2dc23"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -987,7 +987,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "a6a4b45e991f8a4f98843de3d73a77adf7805f8ac6b3aaab1e9e501c2858c9a8"
+      "sha256": "20037cdeaf2b9a5011ee68d8cf91870670af8e0cb40251d7f3501557f0a7de8a"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -999,7 +999,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "9f96bd8ee31d0a1bd3e86603d5ff864527969b61eca313396e8c2b6e51e407ba"
+      "sha256": "751948d7e3633148e104f1163906000336cc6719fea86deb770c52a551b64d30"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -1011,7 +1011,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "336f2600d285b8bfa6b43558755edd6d4aeea72e6775b027516a403a7eec4c86"
+      "sha256": "03b9e44c64f6ec41682d6068269b0442f46f22721730ab29e5c311a2879dcaea"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -1023,7 +1023,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "14da2f9ed1e6ef3d31d0ccb1e54c449f81e17beead1025030fd74a949caa8787"
+      "sha256": "77944bd2ea2b4c3f8f1426edca231fefa195be5597a0a624f3522ef0260a3310"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -1035,7 +1035,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "98fc8031dec7abe7fb161b7f4ef696d2580fe0f7462fd2d16981022b01acca6f"
+      "sha256": "83e5e9cd1f97819557b9c6bdf7eb3160b28b3a1df2b3fbfef3f0d4e1f653ddb4"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -1047,7 +1047,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "3e2090db53f0a1c31eb59ffa3451c746e1dff575b157da956850dca575f35d57"
+      "sha256": "495ffdefb42a078e0b7c43dbcceaf05bacdc4a1dd4de01af20a74c7a5be89d68"
     },
     {
       "tool": "impact_anchor_market",

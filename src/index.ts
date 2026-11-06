@@ -2,6 +2,7 @@
 import { guardInputs, holdBuyerCopy } from './input-evidence.ts';
 import { pinpointEvidenceReview, readsAsProductType } from './value-evidence.ts';
 import {regionNotes} from './region-reader.ts';
+import {applyEcho} from './echo-layer.ts';
 import { withReadingGuide } from './reader-actions.ts';
 import { billingLine } from './verticals.ts';
 import { softwareAdvice, SOFTWARE_REFERRAL } from './software-policy.ts';
@@ -4006,7 +4007,7 @@ export function createServer(): Server {
 
 ${heldClaimEvidence(callArgs)}
 
-State a specific result with its source, period and permission, or describe the product's function without a result claim. Then draft the message.` : tool.execute(callArgs as any);
+State a specific result with its source, period and permission, or describe the product's function without a result claim. Then draft the message.` : applyEcho(String(toolName), callArgs as Record<string, unknown>, tool.execute(callArgs as any));
       } finally { setYourSector(undefined); }
       if (BUILD_PROFILE.profile !== "current" && toolName === "impact_full_audit") result = auditReader(result, callArgs);
       return {
