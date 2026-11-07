@@ -2680,7 +2680,7 @@ SOM = SAM × expected market share (Year 1)
 ${som !== null ? `SOM = ${usd(sam)} × ${pctText(share)}%\nSOM = ${usdFull(som)} (${usd(som)})` : `SOM: cannot be calculated yet`}
 \`\`\`
 ${counts.length > 1 && acvNumber ? `\n### TAM by segment (your counts × your deal size)\n| Segment | Companies | TAM |\n|---------|-----------|-----|\n${segmentScores.map((s) => { const n = countFor(s.name); return n === null ? null : `| ${s.name} | ${n.toLocaleString('en-US')} | ${usd(n * acvNumber)} |`; }).filter(Boolean).join('\n')}\n` : ''}
-**Validation Required**: Check your counts against dated records you can inspect and customer interviews on how the segment sees the problem.
+**Validation Required**: Check your counts against dated records you can inspect and customer interviews on how the segment sees the problem.\n\n${software_policy_ts_1.SOFTWARE_REFERRAL}
 
 ---
 

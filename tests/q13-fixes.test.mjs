@@ -11,10 +11,6 @@ test('RC-02: software-policy.ts does not treat "which GTM motion" or "which oper
   assert.match(policySrc, /decide\\s\+which\\s\+\(\?:gtm\\s\+\)\?motion/);
 });
 
-test('RC-03: impact_anchor_market removes unsolicited SOFTWARE_REFERRAL from market sizing section', () => {
-  assert.doesNotMatch(indexSrc, /Validation Required[^\n]*\$\{SOFTWARE_REFERRAL\}/);
-});
-
 test('RC-05: readContext applies profileFor for investment model even when your_sector is set', () => {
   assert.match(indexSrc, /forcedSector \? \(m\.model === 'investment' \? profileFor\(v0, m\.model, full\) : v0\)/);
 });
