@@ -41,7 +41,9 @@ function softwareQuestions(value) {
             return false;
         if (/\b(?:not asking|do not recommend|don't recommend|do not suggest|don't suggest|no software recommendations|do not choose|don't choose|do not compare|don't compare)\b/i.test(sentence))
             return false;
-        if (/\b(?:which|what) (?:buyer|customer(?! success)|audience|team|role|persona|people|employee|metric|KPI|strategy|step|action|message|campaign|report|dashboard|workflow|field)s?\b/i.test(sentence))
+        if (/\b(?:which|what) (?:(?:go[ -]to[ -]market|GTM)\s+)?(?:motion|operational\s+pain|pain|problem|challenge|segment|buyer|customer(?! success)|audience|team|role|persona|people|employee|metric|KPI|strategy|step|action|message|campaign|report|dashboard|workflow|field)s?\b/i.test(sentence))
+            return false;
+        if (/\bhow\s+do\s+we\s+(?:score|prioriti[sz]e|segment|target|qualify|decide\s+which\s+(?:gtm\s+)?motion)\b/i.test(sentence))
             return false;
         if (/^\s*(?:please\s+)?(?:choose|pick|recommend|suggest|compare)\s+(?:a\s+|the\s+)?(?:(?:go[ -]to[ -]market|GTM)\s+)?(?:motion|strategy|positioning|message)\b/i.test(sentence))
             return false;

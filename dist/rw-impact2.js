@@ -356,6 +356,8 @@ function leadClauseRaw(text, max = 110, need = false, tight = false) {
                 if (after <= 5)
                     continue;
             }
+            if (/^\s(?:that|which|with|using|across)\s/i.test(m[0]) && at < 45)
+                continue;
             const left = t.slice(0, at).trim();
             if (/^\s(?:with|by|from|for|to)\s/.test(m[0]) && /(?:ed|ing)$/i.test(left.split(/\s+/).pop() || ''))
                 continue;

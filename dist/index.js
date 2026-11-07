@@ -249,7 +249,7 @@ function aOrAn(phrase) {
         return /^[AEFHILMNORSX8]/.test(w) ? 'an' : 'a';
     if (/^(hour|honest|heir)/i.test(w))
         return 'an';
-    return /^[aeiou]/i.test(w) && !/^(uni|use|usu|uti|eu|one|once)/i.test(w) ? 'an' : 'a';
+    return /^[aeiou]/i.test(w) && !/^(uni|use|usa|usu|uti|eu|one|once)/i.test(w) ? 'an' : 'a';
 }
 function cap(phrase) {
     const t = fixNames(phrase.trim());
@@ -530,7 +530,7 @@ function readContext(explicitModel, r) {
         m = { model: null, how: 'unknown' };
     if (m.how !== 'input' && (0, verticals_ts_2.nonRecurringBilling)(sellerText))
         m = { model: null, how: 'unknown' };
-    const v = forcedSector ? v0 : gateSubIndustry((0, verticals_ts_3.profileFor)(v0, m.model, full), ownWords);
+    const v = forcedSector ? (m.model === 'investment' ? (0, verticals_ts_3.profileFor)(v0, m.model, full) : v0) : gateSubIndustry((0, verticals_ts_3.profileFor)(v0, m.model, full), ownWords);
     const from = ex.source === 'context' ? ' (from the deal text, because your own description names no sector)' : ex.source === 'role' ? ' (from the job titles, because your own description names no sector)' : ex.source === 'buyer' ? ' (from who you sell to, because your own description names no sector)' : '';
     const sector = forcedSector ? (v ? `from your choice: ${v.name}` : 'from your choice of other, so the wording stays neutral') : v ? `read from your inputs as ${v.name}${from}` : 'not clear from your inputs (name the industry in plain words for sector notes)';
     const model = m.model
@@ -752,6 +752,8 @@ function shortClauseRaw(phrase, max) {
         const n = left.split(/\s+/).length;
         // a comma inside a list ("define, design, develop, ...") is not a clause boundary: the item after it is one or two words
         if (m[0] === ',' && (t.slice(m.index + 1).split(/,|;|\sand\s|\sor\s/)[0] || '').trim().split(/\s+/).length <= 2)
+            continue;
+        if (/^\s+(?:by|in|within|from|at|for|per)\s$/i.test(m[0]) && /^\s*(?:\d|[$₹€£]|a\s+minute|an\s+hour|seconds?|minutes?|hours?|days?|weeks?|months?)/i.test(t.slice(m.index + m[0].length)))
             continue;
         if (n >= 3 && n <= max && !BASE_VERBS.has(left.split(/\s+/).pop().toLowerCase()) && !JOINING_WORD.test(left.split(/\s+/).pop()))
             return left;
@@ -1810,7 +1812,8 @@ ${SUGGESTED}
             const used = new Set();
             for (const c of named) {
                 const key = nameOf(c).toLowerCase();
-                const hitIdx = key.length >= 3 ? weaknessItems.map((w, i) => (w.toLowerCase().includes(key) ? i : -1)).filter((i) => i >= 0) : [];
+                const leadKey = c.split(/\s*(?:\(|:|—|–|\s-\s)/)[0].trim().toLowerCase();
+                const hitIdx = key.length >= 3 ? weaknessItems.map((w, i) => (w.toLowerCase().includes(key) || (leadKey.length >= 3 && w.toLowerCase().includes(leadKey)) ? i : -1)).filter((i) => i >= 0) : [];
                 if (hitIdx.length) {
                     matched.set(c, hitIdx.map((i) => weaknessItems[i]));
                     hitIdx.forEach((i) => used.add(i));
@@ -2677,7 +2680,7 @@ SOM = SAM × expected market share (Year 1)
 ${som !== null ? `SOM = ${usd(sam)} × ${pctText(share)}%\nSOM = ${usdFull(som)} (${usd(som)})` : `SOM: cannot be calculated yet`}
 \`\`\`
 ${counts.length > 1 && acvNumber ? `\n### TAM by segment (your counts × your deal size)\n| Segment | Companies | TAM |\n|---------|-----------|-----|\n${segmentScores.map((s) => { const n = countFor(s.name); return n === null ? null : `| ${s.name} | ${n.toLocaleString('en-US')} | ${usd(n * acvNumber)} |`; }).filter(Boolean).join('\n')}\n` : ''}
-**Validation Required**: Check your counts against dated records you can inspect and customer interviews on how the segment sees the problem.\n\n${software_policy_ts_1.SOFTWARE_REFERRAL}
+**Validation Required**: Check your counts against dated records you can inspect and customer interviews on how the segment sees the problem.
 
 ---
 
@@ -3795,10 +3798,10 @@ ${SUGGESTED}
                 scores.craft = 30;
             }
             // Translate Execution (based on customer feedback indicating market presence)
-            if (args.customer_feedback && typedLength(args.customer_feedback) > 50) {
+            if (args.customer_feedback && allFeedback.length > 0 && typedLength(args.customer_feedback) > 50) {
                 scores.translate = 75;
             }
-            else if (args.customer_feedback) {
+            else if (args.customer_feedback && allFeedback.length > 0) {
                 scores.translate = 55;
             }
             else {
@@ -4233,7 +4236,8 @@ State a specific result with its source, period and permission, or describe the 
             if (build_profile_ts_1.BUILD_PROFILE.profile !== "current" && toolName === "impact_full_audit")
                 result = (0, audit_reader_ts_1.auditReader)(result, callArgs);
             return {
-                content: [{ type: 'text', text: inputEvidence.notice + (inputEvidence.notice ? '\n\n' : '') + (0, text_signals_ts_2.sectorChoiceNotice)(toolName, callArgs, text => { const r = (0, verticals_ts_3.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + (0, reader_actions_ts_1.withReadingGuide)(toolName, (0, input_evidence_ts_1.holdBuyerCopy)(toolName, callArgs, result), callArgs) + (regionEligible ? (0, region_reader_ts_1.regionNotes)(typed) : '') }]
+                content: [{ type: 'text', text: inputEvidence.notice + (inputEvidence.notice ? '\n\n' : '') + (0, text_signals_ts_2.sectorChoiceNotice)(toolName, callArgs, text => { const chosenId = typeof callArgs.your_sector === 'string' ? YOUR_SECTOR_ID[callArgs.your_sector] : undefined; const chosenV = chosenId ? verticals_ts_3.VERTICALS.find(v => v.id === chosenId) : undefined; if (chosenV && (chosenV.match.test(text) || (chosenV.weak && chosenV.weak.test(text))))
+                            return { id: chosenV.id, name: chosenV.name, source: 'seller' }; const r = (0, verticals_ts_3.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + (0, reader_actions_ts_1.withReadingGuide)(toolName, (0, input_evidence_ts_1.holdBuyerCopy)(toolName, callArgs, result), callArgs) + (regionEligible ? (0, region_reader_ts_1.regionNotes)(typed) : '') }]
             };
         }
         catch (error) {

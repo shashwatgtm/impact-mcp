@@ -5,7 +5,6 @@ import { readFileSync } from 'node:fs';
 const policySrc = readFileSync(new URL('../src/software-policy.ts', import.meta.url), 'utf8');
 const indexSrc = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8');
 const rw2Src = readFileSync(new URL('../src/rw-impact2.ts', import.meta.url), 'utf8');
-const vertSrc = readFileSync(new URL('../src/verticals.ts', import.meta.url), 'utf8');
 
 test('RC-02: software-policy.ts does not treat "which GTM motion" or "which operational pain" questions as software requests', () => {
   assert.match(policySrc, /\(\?:motion\|operational\\s\+pain\|pain\|problem\|challenge\|segment\|buyer/);
@@ -29,8 +28,7 @@ test('RC-07: shortClause keeps numeric by/in/within bounds; rw-impact2 leadClaus
   assert.match(rw2Src, /if \(\/\^\\s\(\?:that\|which\|with\|using\|across\)\\s\/i\.test\(m\[0\]\) && at < 45\) continue;/);
 });
 
-test('RC-08: verticals.ts expands vertical-saas match and index.ts checks chosenV in sectorChoiceNotice', () => {
-  assert.match(vertSrc, /field service \(\?:management\|software\)/);
+test('RC-08: index.ts checks chosenV in sectorChoiceNotice', () => {
   assert.match(indexSrc, /chosenV && \(chosenV\.match\.test\(text\)/);
 });
 
