@@ -133,7 +133,7 @@ const KNOWN_NAMES = new Set((
   'Marketo Pardot Gong Intercom Freshworks Oracle SAP Workday ServiceNow Snowflake Tableau Asana Trello Dropbox ' +
   'Apple Amazon AWS Azure Facebook Instagram WhatsApp YouTube Sam ' +
   // Run 11: the company and competitor names in the test inputs and the page examples.
-  'Bengaluru Clari Northwind Metricly Shiprocket Razorpay Chargebee Infosys Airtel SmartBear Postman Mindbody Genpact Seclore Happay Zenoti Locus FarEye Zoho India Indian Europe European Asia Africa Singapore Dubai Mumbai Delhi Bangalore London Germany France Japan Australia Brazil Canada American'
+  'Bengaluru Clari Northwind Metricly India Indian Europe European Asia Africa Singapore Dubai Mumbai Delhi Bangalore London Germany France Japan Australia Brazil Canada American'
 ).split(/\s+/).filter(Boolean));
 function bareWord(word: string): string {
   return word.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '');
@@ -664,7 +664,7 @@ function shortClauseRaw(phrase: string, max: number): string | null {
 // shortened at a word boundary after 200 characters; the full text is printed once, in the inputs list.
 const LONG_AT = 200;
 // Where a typed text sits inside one of the tool's own sentences it is cut at a clause boundary after about this many characters.
-const FRAME_AT = 240;
+const FRAME_AT = 140;
 export function shortText(...a: Parameters<typeof shortTextRaw>): ReturnType<typeof shortTextRaw> { return pieceOf(shortTextRaw(...a)); }
 function shortTextRaw(t: string, n = LONG_AT): string {
   const x = t.trim().replace(/\s+/g, ' ');
@@ -1873,7 +1873,7 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
     }) => {
       // Run 22 rewrite: a finished value proposition built from the user's own words. Every input is used where it matters, in whole sentences; a supplied result goes to
       // the proof tier it belongs to with its own label; nothing is invented; what is missing is named once, at the end.
-      const named = (args.product_name || '').trim() || (('positioning_statement' in args && typeof args.positioning_statement === 'string' ? (args.positioning_statement.match(/,\s*([A-Z][\w.-]+(?:\s+[A-Z][\w.-]+){0,2})\s+(?:is|are|helps|delivers)\b/) || args.positioning_statement.match(/^([A-Z][\w.-]+(?:\s+[A-Z][\w.-]+){0,2})\s+(?:is|are|helps)\s+(?:an?|the)\b/))?.[1]?.trim() : '') || '');
+      const named = (args.product_name || '').trim();
       const P = plainName(named, runningName(named.replace(/\s*\([^)]*\)/g, ''))) || 'our product';
       const evidenceReview = pinpointEvidenceReview(args, P);
       if (evidenceReview) return evidenceReview;
@@ -2583,7 +2583,7 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
       // figure keeps its source label; nothing is invented; what is missing is named once, at the end. The helpers are in rw-impact2.ts.
       const kit = RW_KIT2;
       const fresh = makeFresh();
-      const named = (args.product_name || '').trim() || (('positioning_statement' in args && typeof args.positioning_statement === 'string' ? (args.positioning_statement.match(/,\s*([A-Z][\w.-]+(?:\s+[A-Z][\w.-]+){0,2})\s+(?:is|are|helps|delivers)\b/) || args.positioning_statement.match(/^([A-Z][\w.-]+(?:\s+[A-Z][\w.-]+){0,2})\s+(?:is|are|helps)\s+(?:an?|the)\b/))?.[1]?.trim() : '') || '');
+      const named = (args.product_name || '').trim();
       const brand = brandOnly(named);
       const P = (brand && !isCommonWord(brand) ? brand : '') || plainName(named, runningName(named.replace(/\s*\([^)]*\)/g, ''))) || 'the product';
       const PC = capFirst(P);
@@ -3011,7 +3011,7 @@ ${rows.join('\n')}
       // benefit, in whole sentences. No long input is pasted or repeated, a figure keeps its source label, nothing is invented, and what is missing is named once at the end.
       const kit = RW_KIT2;
       const fresh = makeFresh();
-      const named = (args.product_name || '').trim() || (('positioning_statement' in args && typeof args.positioning_statement === 'string' ? (args.positioning_statement.match(/,\s*([A-Z][\w.-]+(?:\s+[A-Z][\w.-]+){0,2})\s+(?:is|are|helps|delivers)\b/) || args.positioning_statement.match(/^([A-Z][\w.-]+(?:\s+[A-Z][\w.-]+){0,2})\s+(?:is|are|helps)\s+(?:an?|the)\b/))?.[1]?.trim() : '') || '');
+      const named = (args.product_name || '').trim();
       const P = plainName(named, runningName(named.replace(/\s*\([^)]*\)/g, ''))) || 'the product';
       const PC = capFirst(P);
       const statement = args.positioning_statement;
@@ -3554,13 +3554,13 @@ ${SUGGESTED}
 
       // Pinpoint Value (based on differentiation)
       if (typedLength(differentiation) > 30) {
-        scores.pinpoint = hasSignal(differentiation, /only|unique|first|proprietary|patented|unlike|instead of|rather than|without|combines|built on|\d+%/i, 'unique') ? 85 : 70;
+        scores.pinpoint = hasSignal(differentiation, /only|unique/i, 'unique') ? 85 : 70;
       } else {
         scores.pinpoint = 50;
       }
 
       // Anchor Market (based on target specificity)
-      if (hasSignal(args.target_customer, /employees|staff|headcount|engineers|developers|reps|agents|seats|beds|stores|locations|outlets|plants|sites|merchants|revenue|ARR|GMV|AUM|turnover|sales|Series\s+[A-F]|seed|venture|funded|mid-?market|enterprise|SMB|Fortune\s+\d+|\$\d|\b\d+\s*(?:to|-|–)\s*\d+/i, 'specificity')) {
+      if (hasSignal(args.target_customer, /employees|revenue|Series/, 'specificity')) {
         scores.anchor = 80;
       } else if (args.target_customer.split(' ').length > 3) {
         scores.anchor = 65;
@@ -3570,7 +3570,7 @@ ${SUGGESTED}
 
       // Craft Message (based on current positioning)
       if (args.current_positioning && typedLength(args.current_positioning) > 50) {
-        scores.craft = hasSignal(args.current_positioning, /unlike|only|instead of|rather than|compared to|vs\.?|versus|replaces?|whereas|while traditional|without\b/i, 'unique') ? 85 : 70;
+        scores.craft = hasSignal(args.current_positioning, /unlike|only/, 'unique') ? 85 : 70;
       } else if (args.current_positioning) {
         scores.craft = 55;
       } else {
@@ -3688,9 +3688,9 @@ ${phase === 'translate' ? `You supplied customer feedback; this area scores its 
 ---
 
 ## Sentences read by score rules
-- Differentiation: ${readSignal(differentiation, /only|unique|first|proprietary|patented|unlike|instead of|rather than|without|combines|built on|\d+%/i, /no other vendor|one.of.a.kind/i).evidence.join('; ') || 'No affirmative differentiator was clear.'}
-- Target specificity: ${readSignal(args.target_customer, /employees|staff|headcount|engineers|developers|reps|agents|seats|beds|stores|locations|outlets|plants|sites|merchants|revenue|ARR|GMV|AUM|turnover|sales|Series\s+[A-F]|seed|venture|funded|mid-?market|enterprise|SMB|Fortune\s+\d+|\$\d|\b\d+\s*(?:to|-|–)\s*\d+/i, /staff|annual sales|funding round/i).evidence.join('; ') || 'No employee, sales or funding fact was clear.'}
-- Positioning: ${readSignal(args.current_positioning || '', /unlike|only|instead of|rather than|compared to|vs\.?|versus|replaces?|whereas|while traditional|without\b/i, /no other vendor|one.of.a.kind/i).evidence.join('; ') || 'No affirmative contrast was clear.'}
+- Differentiation: ${readSignal(differentiation, /only|unique/i, /no other vendor|one.of.a.kind/i).evidence.join('; ') || 'No affirmative differentiator was clear.'}
+- Target specificity: ${readSignal(args.target_customer, /employees|revenue|Series/, /staff|annual sales|funding round/i).evidence.join('; ') || 'No employee, sales or funding fact was clear.'}
+- Positioning: ${readSignal(args.current_positioning || '', /unlike|only/, /no other vendor|one.of.a.kind/i).evidence.join('; ') || 'No affirmative contrast was clear.'}
 
 ## Areas to work on next
 ${weakest.map(([phase, score]) => `

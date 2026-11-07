@@ -446,7 +446,7 @@ function parseStatementRaw(statement: string, products: string | string[]): Stat
     let m: RegExpMatchArray | null;
     if ((m = s.match(/^alternatives?(?: buyers)? (?:use|used|weigh|consider) today:\s*(.+)$/i))) { out.alt = out.alt || m[1].trim(); continue; }
     if ((m = s.match(/^what sets it apart:\s*(.+)$/i))) { out.diff.push(...splitSemi(m[1])); continue; }
-    if ((m = s.match(/(?:^|\s)(?:unlike|instead of|rather than|compared to|against)\s+([^,]+?(?:\([^)]*\))?),\s*(.+)$/i))) { out.alt = out.alt || m[1].trim(); out.diff.push(m[2].trim()); continue; }
+    if ((m = s.match(/(?:^|\s)unlike\s+([^,]+?(?:\([^)]*\))?),\s*(.+)$/i))) { out.alt = out.alt || m[1].trim(); out.diff.push(m[2].trim()); continue; }
   }
   const esc1 = (x: string): string => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const nameRe = names.length ? `(?:${names.map(esc1).join('|')})` : '';
@@ -477,8 +477,10 @@ function parseStatementRaw(statement: string, products: string | string[]): Stat
       if (items.length >= 3) { out.features = items.filter((x) => !isFact(x)); out.facts = items.filter(isFact); }
     }
   }
-  const nd = (nameRe ? text.match(new RegExp(`\\bwho\\s+(.{6,400}?),\\s+(?:the\\s+)?${nameRe}\\s+(?:is|are|helps?|gives?|delivers?)\\b`, 'i')) : null) || text.match(/\bwho\s+(.{6,400}?),\s+(?:the\s+)?[A-Z][\w.-]+(?:\s+[A-Z][\w.-]+){0,3}\s+(?:is|are|helps?|gives?|delivers?)\b/i);
-  if (nd) out.need = nd[1].trim().replace(/^struggle with\s+/i, '');
+  if (nameRe) {
+    const nd = text.match(new RegExp(`\\bwho\\s+(.{6,400}?),\\s+(?:the\\s+)?${nameRe}\\s+(?:is|are|helps?|gives?)\\b`, 'i'));
+    if (nd) out.need = nd[1].trim().replace(/^struggle with\s+/i, '');
+  }
   if (!out.diff.length) {
     const m = text.match(/^for\s+[^,]+(?:\([^)]*\))?[^,]*,\s*(.+)$/i);
     if (m) { const rest = endStop((cm && cm.index !== undefined ? text.slice(cm.index) : m[1]).split(/\.\s+(?=(?:Alternatives?|Business model|Proof|Objections|What sets it apart)\b)/i)[0]); if (!/\bunlike\b/i.test(rest)) out.diff.push(rest); }
