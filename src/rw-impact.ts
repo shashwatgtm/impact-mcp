@@ -210,7 +210,7 @@ export function splitStrengths(...a: Parameters<typeof splitStrengthsRaw>): Retu
 /** Strengths typed as one comma list are shared out over the cards (a "(page claims)" note at the end goes with every part); an item without such a list stays whole. */
 function splitStrengthsRaw(items: string[]): string[] {
   const out: string[] = [];
-  const JOINERS = /^(?:as|with|in|of|for|and|to|that|which|from|by|at|on|plus|but|while|who)\b/i;
+  const JOINERS = /^(?:as|with|in|of|for|and|to|that|which|from|by|at|on|plus|but|while|who|unlike|whereas|because|since|so|reducing|cutting|saving|allowing|enabling|giving|keeping|making|including|such)\b/i;
   for (const it of items) {
     const note = /\((?:page claims?)\)\s*$/i.test(it) ? ' (page claim)' : '';
     const body = it.replace(/\s*\((?:page claims?)\)\s*$/i, '');
