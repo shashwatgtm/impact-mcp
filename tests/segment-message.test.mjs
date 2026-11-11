@@ -81,3 +81,9 @@ test('approved guide company exercises stay illustrative and route to discovery'
   const b={...known,product,segments:[segment],proof:{kind:'illustrative',result:'An illustrative pilot improved the handoff'}};const r=await message(b,{...choices,champion_segment:'Operations leads at '+segment});const d=data(r);assert.ok(d.buyer_lines.every(s=>s.startsWith('Unproved hypothesis:')));assert.deepEqual(d.actions.map(a=>a.label),['Draft discovery questions']);
  }
 });
+test('the supplied sector reaches both independent maps and both message tools',async()=>{
+ for(const sector of ['logistics_tech','fintech','saas','vertical_saas','ai_native','ites','telecom','software','cybersecurity']){
+  const b={...known,sector};const mapped=data(await map(b)),draft=data(await message(b));
+  for(const step of [...mapped.steps,...draft.steps])assert.equal(step.inputs.your_sector,sector);
+ }
+});

@@ -27,3 +27,8 @@ test('invalid nested briefs, markup and explicit absence of a champion cannot pa
   const r=await rpc('tools/call',{name:'impact_build_segment_message',arguments:{stage:'map',brief}});assert.equal(r.isError,true);assert.doesNotMatch(r.content[0].text,/<script>|!\[logo\]/);
  }
 });
+test('compiled stdio exposes nine tools and returns the same new map answer as hosted HTTP',async()=>{
+ const {Client}=await import('@modelcontextprotocol/sdk/client/index.js');const {StdioClientTransport}=await import('@modelcontextprotocol/sdk/client/stdio.js');
+ const transport=new StdioClientTransport({command:process.execPath,args:['dist/index.js'],cwd:new URL('..',import.meta.url).pathname,stderr:'pipe'});const client=new Client({name:'chain-stdio-test',version:'1.0'});
+ const args={stage:'map',brief:known};try{await client.connect(transport);assert.equal((await client.listTools()).tools.length,9);assert.deepEqual(await client.callTool({name:'impact_build_segment_message',arguments:args}),await rpc('tools/call',{name:'impact_build_segment_message',arguments:args}));}finally{await client.close();}
+});

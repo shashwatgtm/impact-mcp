@@ -81,6 +81,13 @@ export declare function runSegmentMessage(input: unknown, invoke: Invoke): Promi
             tool: string;
             passed: string;
             inputs: {
+                your_sector: string;
+                company_name: string;
+                product_description: string;
+                problem_solved: string;
+                target_company_type: string;
+            } | {
+                your_sector?: undefined;
                 company_name: string;
                 product_description: string;
                 problem_solved: string;
@@ -90,6 +97,14 @@ export declare function runSegmentMessage(input: unknown, invoke: Invoke): Promi
             tool: string;
             passed: string;
             inputs: {
+                your_sector: string;
+                your_product: string;
+                category: string;
+                competitors: string[];
+                competitor_weaknesses: string | undefined;
+                your_strengths: string;
+            } | {
+                your_sector?: undefined;
                 your_product: string;
                 category: string;
                 competitors: string[];
@@ -137,6 +152,15 @@ export declare function runSegmentMessage(input: unknown, invoke: Invoke): Promi
             passed: string;
             inputs: {
                 customer_metrics?: string | undefined;
+                your_sector: string;
+                product_name: string;
+                category: string;
+                target_customer: string;
+                key_outcome: string;
+                unique_capability: string;
+            } | {
+                customer_metrics?: string | undefined;
+                your_sector?: undefined;
                 product_name: string;
                 category: string;
                 target_customer: string;
@@ -147,6 +171,16 @@ export declare function runSegmentMessage(input: unknown, invoke: Invoke): Promi
             tool: string;
             passed: string;
             inputs: {
+                your_sector: string;
+                product_name: string;
+                target_customer: string;
+                customer_need: string;
+                product_category: string;
+                key_benefit: string;
+                competitor: string;
+                differentiation: string;
+            } | {
+                your_sector?: undefined;
                 product_name: string;
                 target_customer: string;
                 customer_need: string;

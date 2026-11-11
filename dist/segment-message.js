@@ -7,6 +7,7 @@ const node_crypto_1 = require("node:crypto");
 const chain_inputs_ts_1 = require("./chain-inputs.js");
 const software_policy_ts_1 = require("./software-policy.js");
 const text_signals_ts_1 = require("./text-signals.js");
+const verticals_ts_1 = require("./verticals.js");
 exports.SEGMENT_MESSAGE_TOOL = 'impact_build_segment_message';
 const briefSchema = {
     type: 'object', additionalProperties: false, description: 'The segment brief carried unchanged between calls.',
@@ -20,7 +21,7 @@ const briefSchema = {
         capability: (0, chain_inputs_ts_1.textField)('The capability that could produce that outcome.'),
         trigger: (0, chain_inputs_ts_1.textField)('What makes the problem matter now.'), measure: (0, chain_inputs_ts_1.textField)('The measure and its definition.'),
         sector: (0, chain_inputs_ts_1.textField)('Your sector in your own words.'),
-        agreed_claim: (0, chain_inputs_ts_1.textField)('Optional agreed claim from the ChatGPT Positioning Workshop. The chain starts from it when given.'),
+        agreed_claim: (0, chain_inputs_ts_1.textField)('The agreed claim from the ChatGPT Positioning Workshop, if available. The chain starts from it when given.'),
         proof: {
             type: 'object', additionalProperties: false, required: ['kind'], properties: {
                 kind: { type: 'string', enum: ['none', 'illustrative', 'customer_result'] },
@@ -121,6 +122,10 @@ async function runSegmentMessage(input, invoke) {
         return { content: [{ type: 'text', text: 'Name the segment and the real alternatives, including the current approach, before mapping.' }], isError: true };
     if ((0, software_policy_ts_1.softwareAdvice)(b))
         return { content: [{ type: 'text', text: software_policy_ts_1.SOFTWARE_REFERRAL }] };
+    const sectorValues = ['logistics_tech', 'fintech', 'saas', 'vertical_saas', 'ai_native', 'ites', 'telecom', 'software', 'cybersecurity', 'other'];
+    const sectorText = b.sector.trim().toLowerCase();
+    const selected = sectorValues.includes(sectorText) ? sectorText : (0, verticals_ts_1.explainSector)({ seller: [b.sector] }).vertical?.id.replace(/-/g, '_');
+    const sectorArgs = selected ? { your_sector: selected } : {};
     const proof = proofReview(b), statusQuo = questions(b), alternatives = alternativesFor(b), receipt = (0, exports.reviewReceipt)(b);
     const prefix = firstSections(proof.gaps, statusQuo);
     const warnings = [];
@@ -134,8 +139,8 @@ async function runSegmentMessage(input, invoke) {
         if (a.choices || a.review_receipt)
             return fail('Run the map without choices first. Confirm your choices after reading both maps.');
         // Independent tool calls are started side by side, without feeding either output into the other.
-        const championArgs = { company_name: b.product, product_description: b.product_description, problem_solved: b.problem, target_company_type: b.segments[0] };
-        const alternativeArgs = { your_product: b.product_description, category: b.category, competitors: alternatives, competitor_weaknesses: b.weak_points, your_strengths: b.capability };
+        const championArgs = { company_name: b.product, product_description: b.product_description, problem_solved: b.problem, target_company_type: b.segments[0], ...sectorArgs };
+        const alternativeArgs = { your_product: b.product_description, category: b.category, competitors: alternatives, competitor_weaknesses: b.weak_points, your_strengths: b.capability, ...sectorArgs };
         const [champion, alternative] = await Promise.all([invoke('impact_identify_champions', championArgs), invoke('impact_map_alternatives', alternativeArgs)]);
         if (champion.isError || alternative.isError)
             return fail(prefix + '\nThe map needs complete inputs.\n' + responseText(champion) + '\n' + responseText(alternative));
@@ -173,11 +178,11 @@ async function runSegmentMessage(input, invoke) {
     const capability = copy(b.capability, 'the capability to test', 'Capability');
     const category = copy(b.category, 'product', 'Category'), problem = copy(b.problem, 'the problem to test', 'Problem');
     const alternativeName = copy(c.alternative, 'the selected alternative', 'Alternative');
-    const valueArgs = { product_name: product, category, target_customer: target, key_outcome: outcome, unique_capability: capability, ...(proof.real ? { customer_metrics: `${b.proof.result} (${b.proof.period}; ${b.proof.source})` } : {}) };
+    const valueArgs = { product_name: product, category, target_customer: target, key_outcome: outcome, unique_capability: capability, ...sectorArgs, ...(proof.real ? { customer_metrics: `${b.proof.result} (${b.proof.period}; ${b.proof.source})` } : {}) };
     const value = await invoke('impact_pinpoint_value', valueArgs);
     if (value.isError)
         return fail(prefix + '\nThe value draft needs complete inputs.\n' + responseText(value));
-    const messageArgs = { product_name: product, target_customer: target, customer_need: problem, product_category: category, key_benefit: outcome, competitor: alternativeName, differentiation: capability };
+    const messageArgs = { product_name: product, target_customer: target, customer_need: problem, product_category: category, key_benefit: outcome, competitor: alternativeName, differentiation: capability, ...sectorArgs };
     const message = await invoke('impact_craft_message', messageArgs);
     if (message.isError)
         return fail(prefix + '\nThe message draft needs complete inputs.\n' + responseText(message));
