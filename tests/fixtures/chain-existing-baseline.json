@@ -1,0 +1,138 @@
+{
+  "base": "db4f054b71f91dcdc0da7479e3aebdde19d961cc",
+  "tools": [
+    {
+      "name": "impact_get_framework",
+      "sha": "b95bee47fe5e63f4e33f48fd737e8c02872688dddc1b27e7bce0a36a556d6a0c"
+    },
+    {
+      "name": "impact_identify_champions",
+      "sha": "ceeef6aeaaedfcd02ec85006050832ea8491eccc4147363daa8c236589c4a9fb"
+    },
+    {
+      "name": "impact_map_alternatives",
+      "sha": "7057f9eb513daced7eb7a22067b5c17b3afe2feab3b51fbef58d7bebb7c9a47d"
+    },
+    {
+      "name": "impact_pinpoint_value",
+      "sha": "6e783e6055e89fed30f5e7956f86785079dadccc106905aaefa7d4895319177e"
+    },
+    {
+      "name": "impact_anchor_market",
+      "sha": "f5337f46dc3ce5ba9ba02cd0de87d50c3b5df27f27ef732a9110c3d22a692a66"
+    },
+    {
+      "name": "impact_craft_message",
+      "sha": "72cbfa00e4e3cdcff19358b38de6cbc9b697cf0c336e0557ee0108350b3de629"
+    },
+    {
+      "name": "impact_translate_execution",
+      "sha": "160580e71399f9514c8efaa7aedd9f8113d2adebe3b6cf4e37a8c7a11139478d"
+    },
+    {
+      "name": "impact_full_audit",
+      "sha": "d345fd4d61d0b3163637e59d89cf971568bcf0f672dba8e6835c19ce24ee4e7f"
+    }
+  ],
+  "cases": [
+    {
+      "name": "impact_get_framework",
+      "args": {
+        "sector": "Logistics tech"
+      },
+      "sha": "d4d6953b2ed2b3cf22f3f5c25f1bb1e3fc4fee4e039e7893134329ab99b4610c"
+    },
+    {
+      "name": "impact_identify_champions",
+      "args": {
+        "product_description": "Dispatch planning software for regional logistics fleets",
+        "problem_solved": "Dispatch supervisors spend four hours each day reconciling routes after missed deliveries",
+        "target_company_type": "Regional fleets with 50 to 250 vehicles",
+        "price_point": "$24000 annual"
+      },
+      "sha": "d3c0ae4db35f61ce846f2ccdd13d0825bd5859961e60f46096fed8ab45daec99"
+    },
+    {
+      "name": "impact_map_alternatives",
+      "args": {
+        "your_product": "Managed cybersecurity alert triage service",
+        "category": "Managed detection and response",
+        "competitors": [
+          "Internal SOC",
+          "Existing MSSP",
+          "SIEM automation rules"
+        ],
+        "competitor_weaknesses": "Buyer interview: internal SOC cannot cover weekends; the existing MSSP sends unprioritized alerts.",
+        "your_strengths": "Named analyst reviews weekend alerts; outcome improvement is not yet measured."
+      },
+      "sha": "8eeb7666bbe3593101a04a41ab502d0624eae38c6b8c7b07f33fc7ff3f9859da"
+    },
+    {
+      "name": "impact_pinpoint_value",
+      "args": {
+        "category": "Telecom network incident automation",
+        "target_customer": "Network operations directors at regional telecom providers",
+        "key_outcome": "Reduce outage recovery time",
+        "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
+        "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
+      },
+      "sha": "b1fde09f396bd15200ea579f296963293a8b18ce54a90bbaaa1c04f0faa768b9"
+    },
+    {
+      "name": "impact_anchor_market",
+      "args": {
+        "product_description": "AI native contract review software",
+        "potential_segments": [
+          "Legal teams at SaaS companies",
+          "Procurement teams at manufacturers"
+        ],
+        "current_customers": "Three SaaS legal teams at $24000 ACV; no manufacturing customers",
+        "customer_pain": "Legal review queues delay vendor onboarding",
+        "average_deal_size": "$24000 annual",
+        "sales_cycle": "90 days",
+        "company_counts": "SaaS legal teams: 1800; manufacturing procurement teams: unknown",
+        "percent_matching_icp": 30,
+        "year_one_share_percent": 2
+      },
+      "sha": "6cb9fa2f2d54e7fd6c36335d080f893b9dc0f823520fd320f7d0ddde32b72584"
+    },
+    {
+      "name": "impact_craft_message",
+      "args": {
+        "target_customer": "SOC managers at midmarket cybersecurity teams",
+        "customer_need": "clear urgent alerts before the next shift",
+        "product_category": "Alert triage software",
+        "key_benefit": "Prioritized alert queue with named owners",
+        "differentiation": "Links each alert to the affected business service; no measured response time claim yet"
+      },
+      "sha": "9de919a5dcdf7f6709d4d36845e5d5d47768c0089de33b27ef9a1d09771873aa"
+    },
+    {
+      "name": "impact_translate_execution",
+      "args": {
+        "positioning_statement": "Clinic scheduling software that gives reception teams one shared appointment book",
+        "target_customer": "Practice managers at clinics with two to five locations",
+        "key_benefit": "Avoid double bookings between receptionists"
+      },
+      "sha": "d01feb4f2554cb6d271ef8288ffd3870ed0af363af764c12d3b34da4a73af7f9"
+    },
+    {
+      "name": "impact_full_audit",
+      "args": {
+        "product_description": "Invoice processing service for regional insurers",
+        "target_customer": "Accounts payable heads at insurers with 100 to 500 employees",
+        "problem_solved": "Exception invoices wait four days for approval",
+        "key_differentiation": "Named reviewer resolves exceptions with an audit trail",
+        "competitors": [
+          "Internal AP team",
+          "Outsourcing incumbent"
+        ],
+        "current_positioning": "Clear invoice exceptions before the payment run",
+        "customer_feedback": "One AP head said visibility improved; processing time and error rate are not measured.",
+        "business_model": "services",
+        "your_sector": "ites"
+      },
+      "sha": "fa04f5408148e8524d042fc45b80bc952da8e98b774863879975559541c4225a"
+    }
+  ]
+}

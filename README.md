@@ -261,3 +261,11 @@ Full policy: <https://impact.gtmhelix.com/privacy/> (also in [PRIVACY.md](PRIVAC
 - **Third-party sharing:** none by us. Netlify hosts the server and processes requests under its own policy (https://www.netlify.com/privacy/). Fonts are served from this site, so loading a page contacts no one else.
 - **Retention:** we keep no tool inputs or outputs. Netlify keeps its own platform logs under its policy.
 - **Contact:** shashwat@gtmhelix.com
+
+### Build our message for this segment
+
+`impact_build_segment_message` runs in chat with a mandatory pause. The map call starts the existing champion and alternatives tools independently. It leads with proof gaps and questions about the current approach, then returns both maps and a review receipt. The buyer confirms the champion, the target customer wording and the alternative. Chat carries that same brief and receipt into the message call; the server stores no brief.
+
+The message call uses the existing value and message tools. An optional agreed claim from the ChatGPT Positioning Workshop is the starting point. Without a real customer result with source and measurement period, the buyer lines stay labelled unproved hypotheses, figures are held out, and only discovery questions are offered next. With a result supplied, the sales kit is also offered. The tool still asks the buyer to check that trigger, measure and mechanism concern the same thing, test the category word and take the draft to five buyers.
+
+The display-only view is derived from the shared Helix results view and served at `ui://helix/results/chains/v1.html`. Choices send a message to chat; the widget does not call tools or calculate. Text-only hosts receive the complete same answer. The tool page is `/tools/build-segment-message/` and has no form. To regenerate the additive view after a display change, run `python scripts/build-chain-view.py`, then `npm run build`. The font licences sit beside the bundled fonts.
