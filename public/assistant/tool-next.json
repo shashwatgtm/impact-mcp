@@ -1009,6 +1009,26 @@
       }
     },
     {
+      "tool": "customer_result_to_content",
+      "title": "Turn this customer result into content",
+      "slug": "customer-result-to-content",
+      "repository": "craft-content-mcp",
+      "url": "https://craft-content.gtmhelix.com/tools/customer-result-to-content/",
+      "source_page": "public/tools/customer-result-to-content/index.html",
+      "job": "Keep one customer result unchanged across content",
+      "questions": [
+        "Which gaps remain on this proof card?",
+        "Does written approval cover every intended use?"
+      ],
+      "next_tool": "craft_content_improver",
+      "why": "Review the drafts after checking the proof and permission.",
+      "next": {
+        "tool": "craft_content_improver",
+        "title": "CRAFT Content Improver",
+        "url": "https://craft-content.gtmhelix.com/tools/craft-content-improver/"
+      }
+    },
+    {
       "tool": "impact_build_segment_message",
       "title": "Build our message for this segment",
       "slug": "build-segment-message",
