@@ -1007,6 +1007,32 @@
         "title": "Launch Commander",
         "url": "https://craft-gtm.gtmhelix.com/tools/launch-commander/"
       }
+    },
+    {
+      "tool": "impact_build_segment_message",
+      "title": "Build our message for this segment",
+      "slug": "build-segment-message",
+      "repository": "impact-mcp",
+      "url": "https://impact.gtmhelix.com/tools/build-segment-message/",
+      "source_page": "public/tools/build-segment-message/index.html",
+      "job": "Build a segment message with its proof gaps visible",
+      "questions": [
+        "Which alternative should this message aim at?",
+        "What customer result supports the claim?"
+      ],
+      "next_tool": "competitive_trap_setter",
+      "why": "Discover what keeps the buyer with the current approach before building sales assets.",
+      "next": {
+        "tool": "competitive_trap_setter",
+        "title": "Competitive Trap Setter",
+        "url": "https://revenue-enablement.gtmhelix.com/tools/competitive-trap-setter/"
+      },
+      "conditional_next": {
+        "when": "A relevant real customer result with source and period is supplied",
+        "tool": "sales_enablement_content",
+        "title": "Sales Enablement Content",
+        "url": "https://craft-content.gtmhelix.com/tools/sales-enablement-content/"
+      }
     }
   ],
   "basis": "Existing tool pages and tools.gtmhelix.com/tools/ job tables. Next tool links are editorial recommendations for review, not automatic calls."
