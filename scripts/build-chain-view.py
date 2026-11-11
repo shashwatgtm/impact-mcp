@@ -38,6 +38,7 @@ h=h.replace("'content_repurposer'].includes(view.tool)","'content_repurposer','c
 h=h.replace('content_repurposer:content})','content_repurposer:content,customer_result_to_content:chain,impact_build_segment_message:chain})')
 h=h.replace('HELIX GTM CONSULTING','Helix GTM Consulting')
 h=h.replace('--ink:#1a0e10;--paper:#faf8f6','--ink:#1D1416;--paper:#FBF7F1').replace('Archivo,Arial,sans-serif','"Instrument Sans",Arial,sans-serif')
+h=h.replace('a{color:var(--ox)}','a{color:var(--ox);min-height:40px;display:inline-flex;align-items:center}')
 h=h.replace('h2{font-size:1.3rem}', 'h1,h2,h3{font-family:Fraunces,Georgia,serif}h2{font-size:1.3rem}')
 h=h.replace('letter-spacing:.1em;font-size:12px','font-size:14px')
 h=h.replace('border:1px solid #ead9d5','border:1px solid #EADFD6')
