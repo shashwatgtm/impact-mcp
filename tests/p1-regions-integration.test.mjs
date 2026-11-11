@@ -12,7 +12,7 @@ const text=r=>r.content.filter(x=>x.type==='text').map(x=>x.text).join('\n');
 const stripSuffix=v=>typeof v==='string'?(v.endsWith(NO_REGION_SUFFIX)?v.slice(0,-NO_REGION_SUFFIX.length):v):Array.isArray(v)?v.map(stripSuffix):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,stripSuffix(x)])):v;
 const removeQuestion=r=>stripSuffix({...r,content:r.content});
 const suffix=t=>t.includes('## Region and industry context')?t.slice(t.indexOf('## Region and industry context')):'';
-test('All tool names descriptions schemas annotations and lists stay unchanged',async()=>assert.deepEqual(await rpc(handler,'tools/list'),baseline.tool_list));
+test('All tool names descriptions schemas annotations and lists stay unchanged',async()=>{const result=await rpc(handler,'tools/list');assert.deepEqual({...result,tools:result.tools.filter(t=>t.name!=='impact_build_segment_message')},baseline.tool_list)});
 for(const row of baseline.rows)test('No region byte parity and three runs: '+row.tool+' '+row.vertical,async()=>{
  for(let i=0;i<3;i++){const result=await rpc(handler,'tools/call',{name:row.tool,arguments:row.args});assert.ok(text(result).endsWith(NO_REGION_SUFFIX));assert.equal(hash(removeQuestion(result)),row.sha256);}
 });

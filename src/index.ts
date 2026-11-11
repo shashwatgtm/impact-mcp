@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import { guardInputs, holdBuyerCopy } from './input-evidence.ts';
+import { attachSegmentMessage } from './segment-message-registration.ts';
+import { attachChainResults } from './chain-results.ts';
 import { pinpointEvidenceReview, readsAsProductType } from './value-evidence.ts';
 import {regionNotes} from './region-reader.ts';
 import {applyEcho} from './echo-layer.ts';
@@ -4028,6 +4030,8 @@ State a specific result with its source, period and permission, or describe the 
     }
   });
 
+  attachSegmentMessage(server);
+  attachChainResults(server, 'impact_build_segment_message', 'Build our message for this segment');
   return server;
 }
 

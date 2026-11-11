@@ -1,4 +1,5 @@
 import { readerLabel, readerIssue } from "../../dist/text-signals.js";
+const toolReaderLabel = name => name === 'impact_build_segment_message' ? 'Build our message for this segment' : readerLabel(name);
 // Hosted MCP endpoint: Streamable HTTP, stateless, JSON responses.
 // Follows Netlify's guide "How to build and deploy an MCP server on Netlify" (2026-09-12):
 // one function, a fresh server and transport per request, POST only, rate limited.
@@ -171,18 +172,18 @@ export default async (req, context) => {
       const schemas = await toolSchemas();
       const name = params.name;
       if (typeof name !== "string" || name.length > MAX_NAME) {
-        return toolError(body.id, "Unknown tool. Available tools: " + [...schemas.keys()].map(readerLabel).join(", ") + ".");
+        return toolError(body.id, "Unknown tool. Available tools: " + [...schemas.keys()].map(toolReaderLabel).join(", ") + ".");
       }
       const args = params.arguments;
       if (schemas.has(name) && args !== undefined && args !== null) {
         const wrong = wrongType(schemas.get(name), args, "", [], false).map((p) => (p.startsWith(" must") ? "arguments" + p : p));
         if (wrong.length > 0) {
-          return toolError(body.id, "Invalid input for " + readerLabel(name) + ": " + wrong.map(readerIssue).join(" "));
+          return toolError(body.id, "Invalid input for " + toolReaderLabel(name) + ": " + wrong.map(readerIssue).join(" "));
         }
       }
       const long = argumentsTooLong(name, args);
       if (long.length > 0) {
-        return toolError(body.id, "Invalid input for " + readerLabel(schemas.has(name) ? name : "requested tool") + ": " + long.map(readerIssue).join(" "));
+        return toolError(body.id, "Invalid input for " + toolReaderLabel(schemas.has(name) ? name : "requested tool") + ": " + long.map(readerIssue).join(" "));
       }      if (schemas.has(name)) countUse("impact", name, req, "mcp", context);
     }
     const server = createServer();
