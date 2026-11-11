@@ -150,19 +150,20 @@ export async function runSegmentMessage(input: unknown, invoke: Invoke) {
   if (a.review_receipt !== receipt || !c?.confirmed || unknown(c.champion) || deniedChampion || unknown(c.champion_segment) || !alternatives.includes(c.alternative)) return fail(prefix + '\nPause for your choices. Read the maps first, confirm the champion and target customer wording, then choose an alternative from that map. Carry the unchanged brief and its review receipt from the map call.');
   // Keep the segment in the confirmed target wording so a role from another segment cannot silently enter the chain.
   if (!c.champion_segment.toLowerCase().includes(b.segments[0].toLowerCase())) return fail(prefix + '\nKeep the chosen segment unchanged in the confirmed target customer wording. Run a new map if the segment changed.');
+  if (!proof.real && [c.champion_segment, c.alternative].some(text => containsFigure(text) || illustrative.test(text))) return fail(prefix + '\nThe confirmed target or alternative contains a figure or illustrative claim. Keep your choice intact: use figure-free wording in a new map, then confirm it before drafting buyer lines.');
   const held: string[] = [];
   const copy = (value: string, fallback: string, field: string) => {
     if (!proof.real && (containsFigure(value) || illustrative.test(value))) { held.push(`${field}: remove the figure or illustrative claim before using this line with a buyer.`); return fallback; }
     return value;
   };
-  const product = copy(b.product, 'The product', 'Product'), target = copy(c.champion_segment, 'the agreed segment', 'Target customer');
+  const product = copy(b.product, 'The product', 'Product'), target = c.champion_segment;
   const outcome = copy(b.desired_outcome, 'the outcome to test', 'Outcome');
   // A workshop claim can be a complete statement, not an outcome clause.
   // Keep it as the starting message instead of inserting it after "can".
   const workshopClaim = !unknown(b.agreed_claim) ? copy(b.agreed_claim!, 'The workshop claim needs review before use', 'Workshop claim') : undefined;
   const capability = copy(b.capability, 'the capability to test', 'Capability');
   const category = copy(b.category, 'product', 'Category'), problem = copy(b.problem, 'the problem to test', 'Problem');
-  const alternativeName = copy(c.alternative, 'the selected alternative', 'Alternative');
+  const alternativeName = c.alternative;
   const valueArgs = { product_name: product, category, target_customer: target, key_outcome: outcome, unique_capability: capability, ...sectorArgs, ...(proof.real ? { customer_metrics: `${b.proof.result} (${b.proof.period}; ${b.proof.source})` } : {}) };
   const value = await invoke('impact_pinpoint_value', valueArgs);
   if (value.isError) return fail(prefix + '\nThe value draft needs complete inputs.\n' + responseText(value));

@@ -112,3 +112,6 @@ test('a complete workshop statement stays intact as the starting message',async(
  const agreed_claim='For security leads at regional banks, our product ties a leaked credential finding to a named owner with a dated record.';
  const b={...known,agreed_claim};const d=data(await message(b));assert.equal(d.buyer_lines[0],'Unproved hypothesis: '+agreed_claim);assert.equal(d.steps[0].inputs.key_outcome,known.desired_outcome);assert.ok(!d.buyer_lines.some(s=>s.includes('can For ')||s.includes('can for security')));
 });
+test('the proof gate holds numeric choices instead of silently changing their handoff wording',async()=>{
+ const b={...known,alternatives:['A review every 12 months','Doing nothing']};const r=await message(b,{...choices,alternative:b.alternatives[0]});assert.equal(r.isError,true);assert.match(r.content[0].text,/Keep your choice intact/);assert.equal(r.structuredContent,undefined);
+});
