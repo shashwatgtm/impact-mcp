@@ -56,7 +56,8 @@ test('coordinator: no sales kit action without a real customer result; incomplet
  for(const proof of [{kind:'none'},{kind:'illustrative',result:'Pilot from 12 days to 1 day'},{kind:'customer_result',result:'Time fell from 12 days to 1 day'}, {kind:'customer_result',result:'Serves 250 enterprises',source:'https://example.invalid/report',period:'The last year'}]){
   const d=data(await message({...known,proof}));assert.deepEqual(d.actions.map(a=>a.label),['Draft discovery questions']);assert.ok(d.actions[0].prompt.includes('competitive_trap_setter'));
  }
- const b={...known,proof:{kind:'customer_result',result:'A bank reduced the time from a leaked credential finding to a named owner from 12 days to 1 day',source:'https://example.invalid/approved-customer-result',period:'The customer pilot month'}};
+ // Synthetic positive gate exercise for an unnamed product, not a company claim.
+ const b={...known,product:'A security product',proof:{kind:'customer_result',result:'A bank reduced the time from a leaked credential finding to a named owner from 12 days to 1 day',source:'https://example.invalid/approved-customer-result',period:'The customer pilot month'}};
  const d=data(await message(b));assert.deepEqual(d.actions.map(a=>a.label),['Run the sales kit','Draft discovery questions']);assert.ok(d.steps[0].inputs.customer_metrics.includes(b.proof.source));
 });
 const verticals={
@@ -70,16 +71,36 @@ const verticals={
  software:['Release leads cannot show who owns a failed deployment.','The release team has no record of the person handling a failed deployment.','Release leads can show the owner of each failed deployment.'],
  cybersecurity:['Security leads cannot show who acted on a leaked credential finding.','The security team has no record of the person handling a leaked credential.','Security leads can show who acted on each leaked credential finding.'],
 };
+const contexts={
+ logistics:['regional delivery providers','Delivery exception management software','delivery exception management platform','a delayed delivery','delivery and owner mapping'],
+ fintech:['mid-size payment service providers','Payment reconciliation software','payment reconciliation platform','an unsettled payment','payment exception and owner mapping'],
+ saas:['mid-market customer success teams','Renewal risk management software','customer retention platform','an at risk renewal','renewal risk and owner mapping'],
+ vertical_saas:['regional appointment-based service businesses','Appointment follow-up software','appointment management platform','a missed appointment','appointment and owner mapping'],
+ ai_native:['mid-market customer support teams','An AI support assistant that assigns unresolved requests to a person','customer support automation platform','an unresolved request','request and owner mapping'],
+ ites:['regional managed service providers','A managed service for delivery handoffs','service operations service','a failed service handoff','service owner assignment'],
+ telecom:['regional network operators','A network incident support service','network support service','an unresolved outage','network incident and owner mapping'],
+ software:['mid-market software engineering teams','Deployment review software','release management platform','a failed deployment','deployment and owner mapping'],
+ cybersecurity:['mid-size regional banks','Predictive threat intelligence software','predictive threat intelligence platform','a leaked credential finding','asset and owner mapping'],
+};
 for(const [sector,problems]of Object.entries(verticals))test(`free text exact, equivalent and opposite: ${sector}`,async()=>{
  const alternativeText=['The in-house process has no dated record.','Internal searches do not leave a dated trail.','The in-house process keeps a dated record.'];
  const out=[];
- for(let i=0;i<3;i++){const b={...known,sector,problem:problems[i],weak_points:alternativeText[i]};const r=await map(b);const d=data(r);assert.ok(d.champion_map.includes(problems[i]),problems[i]);assert.equal(d.steps[1].inputs.competitor_weaknesses,alternativeText[i]);out.push(r.content[0].text);}
+ for(let i=0;i<3;i++){const [segment,product_description,category,item,mechanism]=contexts[sector];const b={...known,product:'An operations product',sector,product_description,category,segments:[segment],alternatives:['The current in-house process','Doing nothing'],problem:problems[i],desired_outcome:'Reduce the time from '+item+' to a named owner',capability:mechanism+' with a dated response record',trigger:'The team could not show who acted on '+item,measure:'Time from '+item+' to a named owner',weak_points:alternativeText[i]};const r=await map(b);const d=data(r);assert.ok(d.champion_map.includes(problems[i]),problems[i]);assert.equal(d.steps[1].inputs.competitor_weaknesses,alternativeText[i]);out.push(r.content[0].text);}
  assert.notEqual(out[0],out[2]);
 });
 test('approved guide company exercises stay illustrative and route to discovery',async()=>{
- for(const [product,segment]of [['CloudSEK','mid-size US regional banks'],['Juspay','mid-size banks moving card payments'],['HappyRobot','mid-size freight brokers'],['Darwinbox','US mid-market HR teams'],['Emergent','agencies building client apps']]){
-  const b={...known,product,segments:[segment],proof:{kind:'illustrative',result:'An illustrative pilot improved the handoff'}};const r=await message(b,{...choices,champion_segment:'Operations leads at '+segment});const d=data(r);assert.ok(d.buyer_lines.every(s=>s.startsWith('Unproved hypothesis:')));assert.deepEqual(d.actions.map(a=>a.label),['Draft discovery questions']);
+ const exercises=[
+  ['CloudSEK','mid-size US regional banks','cybersecurity','Predictive threat intelligence platform','Identify a named owner for a leaked credential finding','asset and owner mapping'],
+  ['Juspay','mid-size banks moving card payments','fintech','Card payment processing platform','Resolve a failed card payment handoff','payment routing and a dated exception record'],
+  ['HappyRobot','mid-size freight brokers','ai_native','Voice assistant for freight operations','Resolve a shipment enquiry','shipment context and a handoff to the operations owner'],
+  ['Darwinbox','US mid-market HR teams','saas','HR operations platform','Complete an employee onboarding handoff','employee records and assigned onboarding owners'],
+  ['Emergent','agencies building client apps','ai_native','App building platform','Deliver a reviewed client app','app generation and a client review record'],
+ ];
+ for(const [product,segment,sector,category,desired_outcome,capability]of exercises){
+  const b={...known,product,product_description:category,segments:[segment],sector,category,desired_outcome,capability,problem:'The team cannot show who owns the unfinished work',alternatives:['The current in-house process','Doing nothing'],proof:{kind:'illustrative',result:'An illustrative pilot improved the handoff'}};
+  const r=await message(b,{...choices,champion_segment:'Operations leads at '+segment,alternative:b.alternatives[0]});const d=data(r);assert.ok(d.buyer_lines.every(s=>s.startsWith('Unproved hypothesis:')));assert.deepEqual(d.actions.map(a=>a.label),['Draft discovery questions']);
  }
+
 });
 test('the supplied sector reaches both independent maps and both message tools',async()=>{
  for(const sector of ['logistics_tech','fintech','saas','vertical_saas','ai_native','ites','telecom','software','cybersecurity']){
