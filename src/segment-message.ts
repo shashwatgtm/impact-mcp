@@ -156,7 +156,10 @@ export async function runSegmentMessage(input: unknown, invoke: Invoke) {
     return value;
   };
   const product = copy(b.product, 'The product', 'Product'), target = copy(c.champion_segment, 'the agreed segment', 'Target customer');
-  const outcome = copy(b.agreed_claim || b.desired_outcome, 'the outcome to test', b.agreed_claim ? 'Workshop claim' : 'Outcome');
+  const outcome = copy(b.desired_outcome, 'the outcome to test', 'Outcome');
+  // A workshop claim can be a complete statement, not an outcome clause.
+  // Keep it as the starting message instead of inserting it after "can".
+  const workshopClaim = !unknown(b.agreed_claim) ? copy(b.agreed_claim!, 'The workshop claim needs review before use', 'Workshop claim') : undefined;
   const capability = copy(b.capability, 'the capability to test', 'Capability');
   const category = copy(b.category, 'product', 'Category'), problem = copy(b.problem, 'the problem to test', 'Problem');
   const alternativeName = copy(c.alternative, 'the selected alternative', 'Alternative');
@@ -171,7 +174,7 @@ export async function runSegmentMessage(input: unknown, invoke: Invoke) {
   // are a separate explicit surface, with the proof gate applied to every line.
   const label = proof.real ? 'Value hypothesis, check against the supplied customer result' : 'Unproved hypothesis';
   const draftLines = [
-    ...(b.agreed_claim ? [outcome] : []),
+    ...(workshopClaim ? [workshopClaim] : []),
     `${product} offers ${capability}, so ${target} can ${outcome.charAt(0).toLowerCase() + outcome.slice(1)}.`,
     `${product} helps ${target} ${outcome.charAt(0).toLowerCase() + outcome.slice(1)}.`,
     `${product} offers ${capability}. Compare this with ${alternativeName} before claiming a difference.`,
@@ -184,6 +187,7 @@ export async function runSegmentMessage(input: unknown, invoke: Invoke) {
     `Trigger: ${b.trigger}`, `Measure: ${b.measure}`, `Mechanism: ${b.capability}`,
     'Collect a comparable result on the buyer\'s own work, with its definition, period, source and permission. Record the outcome even if nothing improves.',
     'First draft until buyers test it. Record their own words and revise the alternative or trigger when they disagree.',
+    ...(workshopClaim ? ['Start with the agreed workshop claim above. Check that the supplied outcome and capability support the same claim before using the other draft lines.'] : []),
     categoryQuestion,
   ];
   const buyer_test_questions = [

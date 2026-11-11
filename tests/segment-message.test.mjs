@@ -108,3 +108,7 @@ test('the supplied sector reaches both independent maps and both message tools',
   for(const step of [...mapped.steps,...draft.steps])assert.equal(step.inputs.your_sector,sector);
  }
 });
+test('a complete workshop statement stays intact as the starting message',async()=>{
+ const agreed_claim='For security leads at regional banks, our product ties a leaked credential finding to a named owner with a dated record.';
+ const b={...known,agreed_claim};const d=data(await message(b));assert.equal(d.buyer_lines[0],'Unproved hypothesis: '+agreed_claim);assert.equal(d.steps[0].inputs.key_outcome,known.desired_outcome);assert.ok(!d.buyer_lines.some(s=>s.includes('can For ')||s.includes('can for security')));
+});
