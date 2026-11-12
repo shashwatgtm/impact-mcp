@@ -25,6 +25,8 @@ exports.parseCounts = parseCounts;
 exports.dropFraming = dropFraming;
 exports.createServer = createServer;
 const input_evidence_ts_1 = require("./input-evidence.js");
+const segment_message_registration_ts_1 = require("./segment-message-registration.js");
+const chain_results_ts_1 = require("./chain-results.js");
 const value_evidence_ts_1 = require("./value-evidence.js");
 const region_reader_ts_1 = require("./region-reader.js");
 const echo_layer_ts_1 = require("./echo-layer.js");
@@ -4250,6 +4252,8 @@ State a specific result with its source, period and permission, or describe the 
             };
         }
     });
+    (0, segment_message_registration_ts_1.attachSegmentMessage)(server);
+    (0, chain_results_ts_1.attachChainResults)(server, 'impact_build_segment_message', 'Build our message for this segment');
     return server;
 }
 // =============================================================================

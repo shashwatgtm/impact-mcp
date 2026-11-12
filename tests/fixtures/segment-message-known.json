@@ -1,0 +1,15 @@
+{
+ "product":"CloudSEK",
+ "product_description":"Predictive threat intelligence that links indicators to our own assets and named owners",
+ "segments":["mid-size US regional banks"],
+ "problem":"Cannot show who acted on a leaked credential finding or when",
+ "category":"predictive threat intelligence platform",
+ "alternatives":["a digital risk protection platform","a generic threat intelligence feed","a managed security provider","the identity platform's built-in leaked credential alert","annual external penetration tests","in-house dark web searches by the SOC","the sector's information sharing body","Doing nothing"],
+ "weak_points":"a digital risk protection platform may stop at a list of findings, with no owner; a generic threat intelligence feed gives indicators with no link to our own assets",
+ "desired_outcome":"Reduce the time from a leaked credential finding to a named owner",
+ "capability":"asset and owner mapping with a dated response record",
+ "trigger":"The bank could not show what it monitored or who acted",
+ "measure":"Time from a leaked credential finding to a named owner, with a dated record",
+ "sector":"cybersecurity",
+ "proof":{"kind":"none"}
+}
