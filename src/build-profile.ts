@@ -1,2 +1,2 @@
 // Generated at build time. Committed builds must use current.
-export const BUILD_PROFILE: { profile: "current" | "slice" | "wave"; payload: "meta" | "full"; domainEnabled: boolean; buildHash: string } = { profile: "current", payload: "meta", domainEnabled: false, buildHash: "aba59d7d607a" };
+export const BUILD_PROFILE: { profile: "current" | "slice" | "wave"; payload: "meta" | "full"; domainEnabled: boolean; buildHash: string } = { profile: "current", payload: "meta", domainEnabled: false, buildHash: "720095a40659" };
