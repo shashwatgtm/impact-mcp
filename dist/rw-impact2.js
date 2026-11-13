@@ -388,10 +388,51 @@ function needPieces(...a) { return (0, piece_wrap_ts_1.pieceOf)(needPiecesRaw(..
 function needPiecesRaw(need) { return splitSemi(WS(need)); }
 // ---- a difference -----------------------------------------------------------------------------------------------------------------
 const PARTICIPLE = /^(?:built|designed|made|powered|trained|grounded|based|backed|engineered|delivered|run|owned|governed|certified|licensed|hosted|managed|developed|created|focused|tuned|tailored|aimed|set|priced|billed|rooted|wired|sold|supported|integrated|specialized|specialised|optimized|optimised|dedicated|certified|accredited|trusted|proven|positioned|located|founded|headquartered)\b/i;
+/** "rank" -> "ranks", "catch" -> "catches", "verify" -> "verifies", "are" -> "is", "have" -> "has", "do" -> "does". */
+function thirdPerson(verb) {
+    const w = verb.toLowerCase();
+    if (w === 'are')
+        return 'is';
+    if (w === 'have')
+        return 'has';
+    if (w === 'do')
+        return 'does';
+    if (/[^aeiou]y$/.test(w))
+        return verb.slice(0, -1) + 'ies';
+    if (/(?:s|sh|ch|x|z|o)$/.test(w))
+        return verb + 'es';
+    return verb + 's';
+}
+/** A finite verb within the first five words, before any "that", "which" or "who": the text is a sentence, not a noun phrase. */
+function hasOwnVerb(t) {
+    const words = t.split(/\s+/).slice(0, 6);
+    for (let i = 1; i < words.length; i++) {
+        const w = words[i].toLowerCase().replace(/[^a-z']/g, '');
+        if (/^(?:that|which|who|whose|where|when|to|for|with|of|and|or)$/.test(w))
+            return false;
+        if (/^(?:is|are|was|were|has|have|had|can|cannot|can't|will|won't|does|doesn't|did)$/.test(w))
+            return true;
+    }
+    return false;
+}
 function differenceSentence(...a) { return (0, piece_wrap_ts_1.pieceOf)(differenceSentenceRaw(...a)); }
 /** A difference as a sentence about the product. A named clause, a result verb, a third person verb, a noun phrase, a participle ("built from the ground up ...") and a head with a colon each get their own wording. */
 function differenceSentenceRaw(P, item, kit, fallback) {
     const t = endStop(WS(item));
+    // 13 Nov 2026: a difference written as a full sentence about the product ("our product ranks every
+    // misconfiguration ...", "we rank ...", "<name> ranks ...") is rebuilt with the product as its subject,
+    // so it never follows "offers" as if it were a noun phrase.
+    const own = t.match(/^(?:our|my|the|this)\s+(?:own\s+)?(?:product|platform|solution|tool|software|app|service|offering|system)\s+(.*)$/i)
+        || (P && t.toLowerCase().startsWith(P.toLowerCase() + ' ') ? [t, t.slice(P.length + 1)] : null);
+    // a verb is read from the word itself or from an object that follows it ("replans every route", "replan every route")
+    const objectNext = (rest) => /^\S+\s+(?:every|each|all|the|a|an|your|their|its|any|both|more|fewer|less|them|it|you)\b/i.test(rest);
+    if (own && own[1].split(/\s+/).length >= 2 && (kit.kindOf(own[1]) === 'third' || (/^[a-z]{3,}s\s/.test(own[1]) && !/^[a-z]+(?:ss|us|is)\s/.test(own[1]) && objectNext(own[1]))))
+        return sentence(`${P} ${own[1]}`, kit);
+    if (own && own[1].split(/\s+/).length >= 2 && /^(?:is|has|can|will|does)\b/i.test(own[1]))
+        return sentence(`${P} ${own[1]}`, kit);
+    const weLead = t.match(/^we\s+(\S+)(\s+.*)$/i);
+    if (weLead && (kit.kindOf(weLead[1]) === 'base' || (/^[a-z]{3,}$/.test(weLead[1]) && !/s$/.test(weLead[1]) && objectNext(weLead[1] + weLead[2]))))
+        return sentence(`${P} ${thirdPerson(weLead[1])}${weLead[2]}`, kit);
     const lead = t.match(/^(?:it|we|they|this)\s+(.*)$/i);
     if (lead)
         return sentence(`${P} ${lead[1]}`, kit);
@@ -406,7 +447,10 @@ function differenceSentenceRaw(P, item, kit, fallback) {
     if (exports.THIRD_MORE.has((t.split(/\s+/)[0] || '').toLowerCase()) && !/^[A-Za-z-]+,/.test(t))
         return sentence(`${P} ${kit.lowerFirst(t)}`, kit);
     const k = kit.kindOf(t);
-    // a noun phrase follows "offers" (the shared fallback would read a name-like start such as "AI agents that learn" as a clause about a named feature)
+    // a noun phrase follows "offers" (the shared fallback would read a name-like start such as "AI agents that learn" as a clause about a named feature);
+    // a text whose own subject already has a finite verb in its first words ("every alert is ranked by risk") stands after a colon instead (13 Nov 2026)
+    if ((sh === 'np' || sh === 'noun') && k !== 'base' && k !== 'third' && hasOwnVerb(t))
+        return sentence(`${P}: ${t}`, kit);
     if ((sh === 'np' || sh === 'noun') && k !== 'base' && k !== 'third')
         return sentence(`${P} offers ${kit.lowerFirst(t)}`, kit);
     return sentence(fallback(P, t), kit);

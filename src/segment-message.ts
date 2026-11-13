@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { type Node, textField as t, validateChain, httpsUrl } from './chain-inputs.ts';
-import { softwareAdvice, SOFTWARE_REFERRAL } from './software-policy.ts';
+import { softwareAdvice } from './software-policy.ts';
 import { readSignal, claimRisk } from './text-signals.ts';
 import { explainSector } from './verticals.ts';
 
@@ -111,7 +111,9 @@ export async function runSegmentMessage(input: unknown, invoke: Invoke) {
   if (missing.length) return { content: [{ type: 'text', text: `Supply ${missing.map(k => k.replace(/_/g, ' ')).join(', ')} in the conversation before mapping this segment.` }], isError: true };
   if (b.segments.length !== 1 || multipleSegments(b.segments[0])) return { content: [{ type: 'text', text: 'One segment per run. Choose the segment to work on first.' }], isError: true };
   if (unknown(b.segments[0]) || b.alternatives.some(unknown)) return { content: [{ type: 'text', text: 'Name the segment and the real alternatives, including the current approach, before mapping.' }], isError: true };
-  if (softwareAdvice(b)) return { content: [{ type: 'text', text: SOFTWARE_REFERRAL }] };
+  // Software questions follow the shared policy: GTM stack goes to the booking, other technology gets the plain decline (13 Nov 2026).
+  const advice = softwareAdvice(b);
+  if (advice) return { content: [{ type: 'text', text: advice }] };
   const sectorValues = ['logistics_tech', 'fintech', 'saas', 'vertical_saas', 'ai_native', 'ites', 'telecom', 'software', 'cybersecurity', 'other'];
   const sectorText = b.sector.trim().toLowerCase();
   const selected = sectorValues.includes(sectorText) ? sectorText : explainSector({ seller: [b.sector] }).vertical?.id.replace(/-/g, '_');
