@@ -1,3 +1,4 @@
+// 13 Nov 2026 (owner): tools with no price no longer print "Business model: not stated" (src/pricing-lines.ts); these checks now assert that no business model is claimed.
 // Run 20 round 1 quality pass (impact): the causes the fresh judges of set T gave, as tests. Companies are invented (Exposurewatch,
 // Northgate Software, Ledgerline, Meshline, Forecastly, Lanehop); figures are invented test inputs. No real company name is used here.
 // Run: node --test tests/run20-r1b-quality.test.mjs
@@ -27,9 +28,9 @@ test("sector: a security vendor sold to lenders is cybersecurity in every tool, 
 });
 test("sector: a company called Northgate Software that sells managed services is a services business, not a software subscription", async () => {
   const a = await call("impact_full_audit", { company_name: "Northgate Software", product_description: "Northgate managed services from Northgate Software, cloud migration and application support delivered by engineers", target_customer: "CIOs at large manufacturers", problem_solved: "legacy applications that need to move to the cloud" });
-  assert.match(a, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.doesNotMatch(a, /Business model: (?!not stated)/);
   const m = await call("impact_anchor_market", { product_description: "Northgate managed services from Northgate Software, cloud migration and application support delivered by engineers", potential_segments: ["Automotive", "Industrial machinery"] });
-  assert.match(m, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.doesNotMatch(m, /Business model: (?!not stated)/);
 });
 
 // ---- Long inputs are cut at a clause end, never inside a phrase ---------------------------------------------------------------------
@@ -142,7 +143,7 @@ test("full_audit: the draft statement has no 'is a solution', no doubled words, 
 // ---- impact_get_framework -------------------------------------------------------------------------------------------------------------
 test("get_framework: with a sector the channel table follows how that business sells; without one it stays neutral", async () => {
   const telecom = await call("impact_get_framework", { focus_phase: "translate", sector: "telecom" });
-  assert.match(telecom, /Business model: not stated/);
+  assert.doesNotMatch(telecom, /Business model: (?!not stated)/);
   assert.doesNotMatch(telecom, /Trial|Start Free/);
   const its = await call("impact_get_framework", { focus_phase: "translate", sector: "IT services" });
   assert.match(its, /Choose a next step the buyer can accept/);

@@ -1,3 +1,4 @@
+// 13 Nov 2026 (owner): tools with no price no longer print "Business model: not stated" (src/pricing-lines.ts); these checks now assert that no business model is claimed.
 // Run 22 rewrite of impact_pinpoint_value, written before the code (test first). The answer has to read as a finished value proposition: every input used
 // where it matters, in whole sentences; supplied results placed in the right proof tier with their labels; nothing invented; missing inputs named once at the end.
 // Companies are invented (Ledgerlink, Fieldmark, Branchwire, Cloudmoat, Lanehop, Hexbridge); every figure is an invented test input. The pool scenarios are loaded
@@ -86,7 +87,7 @@ test("pinpoint: the value matrix keeps the user's results next to the measure th
 // ---- the business model decides the wording ------------------------------------------------------------------------------------
 test("pinpoint: a services firm and a connectivity seller get no seat, licence or trial wording, and their own call to action", async () => {
   const s = await call(TOOL, FIELDMARK);
-  assert.match(s, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.doesNotMatch(s, /Business model: (?!not stated)/);
   assert.doesNotMatch(s, SAAS_ONLY);
   assert.doesNotMatch(s, /free trial|demo\b|per seat|licen[cs]e/i);
   assert.match(s, /scoping call/i);
@@ -133,7 +134,7 @@ test("pinpoint: hostile text in an input stays quoted and is never followed", as
 test("pinpoint: two kinds of company in the same vertical differ in model, roles and wording", async () => {
   const a = await call(TOOL, { product_name: "Lanehop", category: "last-mile delivery routing software", target_customer: "heads of last-mile operations at courier companies", key_outcome: "cut cost per delivery by 18%", unique_capability: "re-plans routes in under a minute" });
   const b = await call(TOOL, { product_name: "Hexbridge", category: "freight forwarding services with ocean and air freight", target_customer: "import and export managers at manufacturers", key_outcome: "fewer delayed shipments", unique_capability: "customs clearance and consolidation handled by one team", business_model: "services" });
-  assert.match(a, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.doesNotMatch(a, /Business model: (?!not stated)/);
   assert.match(b, /Business model: services[^\n]*\(from your answer\)/);
   const secA = sections(a)["Proof Point Framework"], secB = sections(b)["Proof Point Framework"];
   assert.notEqual(secA, secB);

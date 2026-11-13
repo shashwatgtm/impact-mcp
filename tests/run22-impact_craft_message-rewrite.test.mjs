@@ -1,3 +1,4 @@
+// 13 Nov 2026 (owner): tools with no price no longer print "Business model: not stated" (src/pricing-lines.ts); these checks now assert that no business model is claimed.
 // Run 22 rewrite of impact_craft_message, written before the code (test first). The answer has to read as a finished positioning and message draft: every input used
 // where it matters, in whole sentences; results with a figure keep their source label; nothing is invented; what is missing is named once at the end, never as a bracket
 // prompt in the text. Companies are invented (Lanehop, Branchwire, Fieldmark, Cloudmoat, Stackhaul, Spendwise, Payrail); every figure is an invented test input.
@@ -135,12 +136,12 @@ test("craft: the alternative reads right whether it is a name, a description or 
 // ---- the business model decides the wording ------------------------------------------------------------------------------------------------
 test("craft: a services firm and a connectivity seller get no seat, licence or trial wording and their own cost words", async () => {
   const s = await call(TOOL, FIELDMARK);
-  assert.match(s, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.doesNotMatch(s, /Business model: (?!not stated)/);
   assert.doesNotMatch(s, SAAS_ONLY);
   assert.doesNotMatch(s, /free trial|per seat|licen[cs]e|subscription/i);
   assert.match(s, /term, scope and price/i);
   const c = await call(TOOL, BRANCHWIRE);
-  assert.match(c, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.doesNotMatch(c, /Business model: (?!not stated)/);
   assert.doesNotMatch(c, SAAS_ONLY);
   assert.doesNotMatch(c, /free trial|per seat/i);
   assert.match(c, /price per site or link|site survey/i);

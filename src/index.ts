@@ -5,6 +5,7 @@ import { attachChainResults } from './chain-results.ts';
 import { pinpointEvidenceReview, readsAsProductType } from './value-evidence.ts';
 import {regionNotes} from './region-reader.ts';
 import {applyEcho} from './echo-layer.ts';
+import { pricingLines } from './pricing-lines.ts';
 import { withReadingGuide } from './reader-actions.ts';
 import { billingLine } from './verticals.ts';
 import { softwareAdvice, SOFTWARE_REFERRAL } from './software-policy.ts';
@@ -4016,6 +4017,7 @@ ${heldClaimEvidence(callArgs)}
 State a specific result with its source, period and permission, or describe the product's function without a result claim. Then draft the message.` : applyEcho(String(toolName), callArgs as Record<string, unknown>, tool.execute(callArgs as any));
       } finally { setYourSector(undefined); }
       if (BUILD_PROFILE.profile !== "current" && toolName === "impact_full_audit") result = auditReader(result, callArgs);
+      result = pricingLines(String(toolName), result);
       return {
         content: [{ type: 'text', text: inputEvidence.notice + (inputEvidence.notice ? '\n\n' : '') + sectorChoiceNotice(toolName, callArgs, text=>{const chosenId = typeof callArgs.your_sector === 'string' ? YOUR_SECTOR_ID[callArgs.your_sector] : undefined; const chosenV = chosenId ? VERTICALS.find(v => v.id === chosenId) : undefined; if (chosenV && (chosenV.match.test(text) || (chosenV.weak && chosenV.weak.test(text)))) return {id:chosenV.id,name:chosenV.name,source:'seller'}; const r=explainSector({seller:[text]});return {id:r.vertical?.id,name:r.vertical?.name,source:r.source}} ) + withReadingGuide(toolName, holdBuyerCopy(toolName, callArgs, result), callArgs) + (regionEligible ? regionNotes(typed) : '') }]
       };

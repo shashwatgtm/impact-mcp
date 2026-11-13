@@ -1,3 +1,4 @@
+// 13 Nov 2026 (owner): tools with no price no longer print "Business model: not stated" (src/pricing-lines.ts); these checks now assert that no business model is claimed.
 // Run 21c job 2 (test first): impact_pinpoint_value assumed the usual model of the whole sector (connectivity for telecom) when the seller's words named no
 // model, even when the reader had named a kind with a model of its own (a messaging platform is sold per message). The answer must state the kind's model.
 // A company in plain words (no name). Run: node --no-warnings --test tests/run21c-model.test.mjs
@@ -14,6 +15,6 @@ const call = async (name, args) => {
 
 test("a business messaging platform is not told it sells connectivity", async () => {
   const t = await call("impact_pinpoint_value", { product_name: "Pingly", category: "A2P business messaging platform: one API to send SMS and WhatsApp messages", target_customer: "banks and retailers that send alerts and one time passwords", key_outcome: "messages reach the phone and reporting shows delivery", unique_capability: "one API for every channel with delivery reporting" });
-  assert.match(t, /Business model: not stated\. Tell us how you charge and the plan will adjust\./, "messaging API does not establish the fee basis");
+  assert.doesNotMatch(t, /Business model: (?!not stated)/, "messaging API does not establish the fee basis");
   assert.doesNotMatch(t, /per site or link|site survey|connectivity \(per site/i);
 });

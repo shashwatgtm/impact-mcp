@@ -30,6 +30,7 @@ const chain_results_ts_1 = require("./chain-results.js");
 const value_evidence_ts_1 = require("./value-evidence.js");
 const region_reader_ts_1 = require("./region-reader.js");
 const echo_layer_ts_1 = require("./echo-layer.js");
+const pricing_lines_ts_1 = require("./pricing-lines.js");
 const reader_actions_ts_1 = require("./reader-actions.js");
 const verticals_ts_1 = require("./verticals.js");
 const software_policy_ts_1 = require("./software-policy.js");
@@ -4237,6 +4238,7 @@ State a specific result with its source, period and permission, or describe the 
             }
             if (build_profile_ts_1.BUILD_PROFILE.profile !== "current" && toolName === "impact_full_audit")
                 result = (0, audit_reader_ts_1.auditReader)(result, callArgs);
+            result = (0, pricing_lines_ts_1.pricingLines)(String(toolName), result);
             return {
                 content: [{ type: 'text', text: inputEvidence.notice + (inputEvidence.notice ? '\n\n' : '') + (0, text_signals_ts_2.sectorChoiceNotice)(toolName, callArgs, text => { const chosenId = typeof callArgs.your_sector === 'string' ? YOUR_SECTOR_ID[callArgs.your_sector] : undefined; const chosenV = chosenId ? verticals_ts_3.VERTICALS.find(v => v.id === chosenId) : undefined; if (chosenV && (chosenV.match.test(text) || (chosenV.weak && chosenV.weak.test(text))))
                             return { id: chosenV.id, name: chosenV.name, source: 'seller' }; const r = (0, verticals_ts_3.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + (0, reader_actions_ts_1.withReadingGuide)(toolName, (0, input_evidence_ts_1.holdBuyerCopy)(toolName, callArgs, result), callArgs) + (regionEligible ? (0, region_reader_ts_1.regionNotes)(typed) : '') }]

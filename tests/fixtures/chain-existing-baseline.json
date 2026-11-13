@@ -40,7 +40,7 @@
       "args": {
         "sector": "Logistics tech"
       },
-      "sha": "d4d6953b2ed2b3cf22f3f5c25f1bb1e3fc4fee4e039e7893134329ab99b4610c"
+      "sha": "c5666b3ca0a7d465343845db2b60b16fdeff8c0d58cae7a751e2c2d3c14a05c8"
     },
     {
       "name": "impact_identify_champions",
@@ -65,7 +65,7 @@
         "competitor_weaknesses": "Buyer interview: internal SOC cannot cover weekends; the existing MSSP sends unprioritized alerts.",
         "your_strengths": "Named analyst reviews weekend alerts; outcome improvement is not yet measured."
       },
-      "sha": "8eeb7666bbe3593101a04a41ab502d0624eae38c6b8c7b07f33fc7ff3f9859da"
+      "sha": "046aa14d0a7315f5e79553293dba18c619d91dbed093eca3f71729f86937d57b"
     },
     {
       "name": "impact_pinpoint_value",
@@ -76,7 +76,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha": "b1fde09f396bd15200ea579f296963293a8b18ce54a90bbaaa1c04f0faa768b9"
+      "sha": "1717c5a5136570ac127e6c4c7702f861f8310156d698038029e0a74c12e82581"
     },
     {
       "name": "impact_anchor_market",
@@ -105,7 +105,7 @@
         "key_benefit": "Prioritized alert queue with named owners",
         "differentiation": "Links each alert to the affected business service; no measured response time claim yet"
       },
-      "sha": "9de919a5dcdf7f6709d4d36845e5d5d47768c0089de33b27ef9a1d09771873aa"
+      "sha": "48d807488d24595cf2e52bce8738cf276c8fd4add36a363ca67484a4ce663118"
     },
     {
       "name": "impact_translate_execution",

@@ -1,3 +1,4 @@
+// 13 Nov 2026 (owner): tools with no price no longer print "Business model: not stated" (src/pricing-lines.ts); these checks now assert that no business model is claimed.
 // Run 42: the layout of an answer does not depend on typed digits or repeated items, and the buyer's team and the seller's own words decide
 // the roles and the model. Invented companies only (B81 applies to real-company runs, not to unit tests of generic rules).
 import test from "node:test";
@@ -39,7 +40,7 @@ test("the buyer's team named in target_customer wins over word counts in the cap
 test("a seller that says it is a network connecting two sides is read as a marketplace, a plain subscription is not", async () => {
   const base = { product_name: "Lanehub", target_customer: "shippers", customer_need: "find carriers", key_benefit: "book capacity faster" };
   const m = await call("impact_craft_message", { ...base, product_category: "freight capacity platform", differentiation: "an open network connecting shippers and carriers" });
-  assert.match(m, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.doesNotMatch(m, /Business model: (?!not stated)/);
   assert.match(m, /network connecting shippers and carriers/i);
   const s = await call("impact_craft_message", { ...base, product_category: "freight capacity platform", differentiation: "an open network connecting shippers and carriers, sold as a subscription" });
   assert.match(s, /software subscription/);

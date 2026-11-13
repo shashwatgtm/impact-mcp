@@ -632,7 +632,7 @@
       "args": {
         "sector": "Logistics dispatch planning software"
       },
-      "sha256": "db42f177fa37b9ee2c81fe0e9080ed3d49a06f8830c0da0da795e587b5cd4096"
+      "sha256": "475eb4dbbee28c1f455b87a463b78c849a9f4152424cda04030d127c6e0b5a6c"
     },
     {
       "tool": "impact_get_framework",
@@ -640,7 +640,7 @@
       "args": {
         "sector": "Fintech payment reconciliation"
       },
-      "sha256": "3a99616e708fc961bba79a771598c082324220ae737000e6ea0fbe162dc0796d"
+      "sha256": "4da2365985589832601f4964aee8021e8a9b93b52bfd6403e0c4e3b43fff9e19"
     },
     {
       "tool": "impact_get_framework",
@@ -648,7 +648,7 @@
       "args": {
         "sector": "SaaS subscription management platform"
       },
-      "sha256": "1901034e7d75e13f01451244bc5fb15b2cd4c9157fbad17c50e747cd68f35ddf"
+      "sha256": "6b858563de6ad0ae15aec79e4922e9d2c4702fd27fc5ec2a2642d598877758a0"
     },
     {
       "tool": "impact_get_framework",
@@ -656,7 +656,7 @@
       "args": {
         "sector": "Vertical SaaS retail execution software"
       },
-      "sha256": "829edc2d92274ef454650f983827a10bda167942c3097c992bad7be028a2d72b"
+      "sha256": "f8315620c19693beb3c2829d7857a10d74a9d9aae759886e18aafd311f7efbb5"
     },
     {
       "tool": "impact_get_framework",
@@ -664,7 +664,7 @@
       "args": {
         "sector": "AI native document review agents"
       },
-      "sha256": "6d82648661192711021ee545e25143652eebbf20f6968c1c4dfee1c1a37f8dd5"
+      "sha256": "cd0681baf32468a41f1bce4dae4ade91470e6ec55f176e3ffe7b1f0fea151f14"
     },
     {
       "tool": "impact_get_framework",
@@ -672,7 +672,7 @@
       "args": {
         "sector": "ITeS business process outsourcing services"
       },
-      "sha256": "268f62ebcde5e759f1fa259fb1483c6ad7088beca9f79b96893fb3fa2e701e91"
+      "sha256": "2747a48ca064d5282076fca0d1c6a5d7f870a08eaff7954de54d72060a278011"
     },
     {
       "tool": "impact_get_framework",
@@ -680,7 +680,7 @@
       "args": {
         "sector": "Telecom network connectivity services"
       },
-      "sha256": "40847df6d1a1829846a2961b022ffff2e4b0a740c4a5cdb3fcebc2cfcfcd8f86"
+      "sha256": "6c71786b5a585296f80e08961fe1aec70f981085317a2f9626b87ef11426e711"
     },
     {
       "tool": "impact_get_framework",
@@ -688,7 +688,7 @@
       "args": {
         "sector": "API testing and monitoring tool for backend developers"
       },
-      "sha256": "0900350ff72fb94df140294344ddeb622492c7732b0c21b81585a44cf05cbeb1"
+      "sha256": "80aa878dfb152ca69129a72691f062883072cac3ea35a0af95cdb1f29987fae4"
     },
     {
       "tool": "impact_get_framework",
@@ -696,7 +696,7 @@
       "args": {
         "sector": "Cybersecurity threat detection software"
       },
-      "sha256": "c5742667d43b8f6bc3fd859900cb5d0480f2c342d776611ce7a394c43461db79"
+      "sha256": "7e3202170464824d5441cc2b5ded3088a5dc6b31eb0c7abdd6f76d6ce0639b6e"
     },
     {
       "tool": "impact_identify_champions",
@@ -811,7 +811,7 @@
         "competitor_weaknesses": "Buyer interview: internal SOC cannot cover weekends; the existing MSSP sends unprioritized alerts.",
         "your_strengths": "Named analyst reviews weekend alerts; outcome improvement is not yet measured."
       },
-      "sha256": "243ed2bf6760778a7606933d154c46a1127a22bde526bcfabd973ad8110d7137"
+      "sha256": "e9490b7e9f06308b526573d88bbb9127c8cfa66ccc30b43f497a9beba69ad3d6"
     },
     {
       "tool": "impact_map_alternatives",
@@ -827,7 +827,7 @@
         "competitor_weaknesses": "Buyer interview: internal SOC cannot cover weekends; the existing MSSP sends unprioritized alerts.",
         "your_strengths": "Named analyst reviews weekend alerts; outcome improvement is not yet measured."
       },
-      "sha256": "014cf9a259ba3321f1dd20059197fd9134cf616a77734cfc5e7d4bbd25fb8be0"
+      "sha256": "a061408532a7775a62e401a60b2e7d8be02a3e7b07d0a9c82560029f2f6d330c"
     },
     {
       "tool": "impact_map_alternatives",
@@ -875,7 +875,7 @@
         "competitor_weaknesses": "Buyer interview: internal SOC cannot cover weekends; the existing MSSP sends unprioritized alerts.",
         "your_strengths": "Named analyst reviews weekend alerts; outcome improvement is not yet measured."
       },
-      "sha256": "239449528db57e7839850af49b6ae94f1b42ef3c7c7d1cce586a2480c053e8ff"
+      "sha256": "a7d9e8818d5134cf9fbd6defb43ea0bc5deee391be1d2cd2d0d0e8dd2e215b4e"
     },
     {
       "tool": "impact_map_alternatives",
@@ -891,7 +891,7 @@
         "competitor_weaknesses": "Buyer interview: internal SOC cannot cover weekends; the existing MSSP sends unprioritized alerts.",
         "your_strengths": "Named analyst reviews weekend alerts; outcome improvement is not yet measured."
       },
-      "sha256": "972605f669c0a8c819fbcf4326e30f68d2c7ba116abbd50c6c0970e9981533ca"
+      "sha256": "b310cdcb4aabc4a422cf4cea2881d30006d3000f4aa2c8f5bd1cbdbac92437fd"
     },
     {
       "tool": "impact_map_alternatives",
@@ -907,7 +907,7 @@
         "competitor_weaknesses": "Buyer interview: internal SOC cannot cover weekends; the existing MSSP sends unprioritized alerts.",
         "your_strengths": "Named analyst reviews weekend alerts; outcome improvement is not yet measured."
       },
-      "sha256": "d419d2a0f754f27abc671744d7f158667d38319bb75e9c5fbd98e73909d6ad7d"
+      "sha256": "23f0d0b59f53d88ddae2813c1bd6264dc910ea7b0c9858b4a679a3e8f21cc25a"
     },
     {
       "tool": "impact_map_alternatives",
@@ -923,7 +923,7 @@
         "competitor_weaknesses": "Buyer interview: internal SOC cannot cover weekends; the existing MSSP sends unprioritized alerts.",
         "your_strengths": "Named analyst reviews weekend alerts; outcome improvement is not yet measured."
       },
-      "sha256": "a352de4d1c440a3e54bd6865cb18bf21c1db21773d67e00f3db3ff4db34e2a7f"
+      "sha256": "45ede6bd3fa71fe5ea95c0e93bde45e559f209a1fd5cc011f2eb4beb780c7e58"
     },
     {
       "tool": "impact_map_alternatives",
@@ -939,7 +939,7 @@
         "competitor_weaknesses": "Buyer interview: internal SOC cannot cover weekends; the existing MSSP sends unprioritized alerts.",
         "your_strengths": "Named analyst reviews weekend alerts; outcome improvement is not yet measured."
       },
-      "sha256": "f2f6d11f88b28302a6946de0a342ad51cae848b80058f152bf3784a2e038216f"
+      "sha256": "a308f5c3e28304c45e0551f9aef58f263a9e80289566885838b565c9bce8704b"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -951,7 +951,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "33147a45e46c160f6716c6aff8c5362a7881e454063b9b3ab0e98cd5ea4eefc1"
+      "sha256": "40eb5a096422711b7bb5b3aabbfc2069b8e4340b0525ae577229fd869fc13947"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -963,7 +963,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "fc09170bd107a08810b34a7db3bd68f2f3d2fd2aad53cec65b25eee80e07e679"
+      "sha256": "59b048f0025b9feaf8210fb0a6afd729236846fe8b438d229d52afad29ccfe8a"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -999,7 +999,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "751948d7e3633148e104f1163906000336cc6719fea86deb770c52a551b64d30"
+      "sha256": "18cfec936059b547ee13c0d13776ee4c784b920a1069afb21d94cc412136c871"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -1011,7 +1011,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "03b9e44c64f6ec41682d6068269b0442f46f22721730ab29e5c311a2879dcaea"
+      "sha256": "8cefd3732c3eac8daec8d0f888455bf2d6111ab85628f6c0c380c101538b1b3f"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -1023,7 +1023,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "77944bd2ea2b4c3f8f1426edca231fefa195be5597a0a624f3522ef0260a3310"
+      "sha256": "bba9205efbbefc440d7340cb22cd93ac0a33510d67127a24d274f6473a141d2a"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -1035,7 +1035,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "83e5e9cd1f97819557b9c6bdf7eb3160b28b3a1df2b3fbfef3f0d4e1f653ddb4"
+      "sha256": "e2531044e81821bc74343a7b10677c7d1dba8b0d6133083efdaa4553d7e56018"
     },
     {
       "tool": "impact_pinpoint_value",
@@ -1047,7 +1047,7 @@
         "unique_capability": "Routes each incident to the engineer on call with affected circuit context",
         "customer_metrics": "One customer pilot: median recovery time fell from 80 to 50 minutes over 12 incidents in October. No controlled comparison."
       },
-      "sha256": "495ffdefb42a078e0b7c43dbcceaf05bacdc4a1dd4de01af20a74c7a5be89d68"
+      "sha256": "98cae7aa5b11207256a3d7f96511e807a6a873f975388054ef604aedd5c4675f"
     },
     {
       "tool": "impact_anchor_market",
@@ -1230,7 +1230,7 @@
         "key_benefit": "Prioritized alert queue with named owners",
         "differentiation": "Links each alert to the affected business service; no measured response time claim yet"
       },
-      "sha256": "d681251703f505605e45d4a63368157d72ca738798900dcc18e7194ad59270e7"
+      "sha256": "8c4ea6bc6beb6841c6ab52bc54774eeafb553f2eea917d2e68a129034277a699"
     },
     {
       "tool": "impact_craft_message",
@@ -1242,7 +1242,7 @@
         "key_benefit": "Prioritized alert queue with named owners",
         "differentiation": "Links each alert to the affected business service; no measured response time claim yet"
       },
-      "sha256": "af411adf71b60c33c184a133c726625bd9fc25a8829fa9c98b2d83d2b329c516"
+      "sha256": "dc4ac6de307286f579f4bf532b483b0d2585cc71b130b294e5e773f92f59c0af"
     },
     {
       "tool": "impact_craft_message",
@@ -1278,7 +1278,7 @@
         "key_benefit": "Prioritized alert queue with named owners",
         "differentiation": "Links each alert to the affected business service; no measured response time claim yet"
       },
-      "sha256": "9547e383b268120f4ae187380858127b0d494d5fac9b68a2c4ed493e303b1453"
+      "sha256": "c325f074ba2d72c23a50629a86f5fe75efc5968aaaf513effe8babfb1cc95bb3"
     },
     {
       "tool": "impact_craft_message",
@@ -1290,7 +1290,7 @@
         "key_benefit": "Prioritized alert queue with named owners",
         "differentiation": "Links each alert to the affected business service; no measured response time claim yet"
       },
-      "sha256": "521557d6a6cddb45e1ccede2faf9b2130c242453beb9fdb247bb8318a46364f7"
+      "sha256": "e12b87af8fb6f28c754619e4b528a3c7154bb3e5cc9f951be099ddcabde52f1e"
     },
     {
       "tool": "impact_craft_message",
@@ -1302,7 +1302,7 @@
         "key_benefit": "Prioritized alert queue with named owners",
         "differentiation": "Links each alert to the affected business service; no measured response time claim yet"
       },
-      "sha256": "610f914e2b57c69ecd439cbe5ee759a4d5585519fa578801c96698927449514a"
+      "sha256": "d926a7fde749a0f1a72c643ad7d3aeb98c20cdf296773ad316f7337bcb814881"
     },
     {
       "tool": "impact_craft_message",
@@ -1314,7 +1314,7 @@
         "key_benefit": "Prioritized alert queue with named owners",
         "differentiation": "Links each alert to the affected business service; no measured response time claim yet"
       },
-      "sha256": "bf08f835441bc7391dea783a74a47ee4b8787b7f9cca18a3d1cdaca16d34d7d2"
+      "sha256": "9d965037e2d4bafffcf5618d3de11dafbaa27a70bf638d754981392419333ad0"
     },
     {
       "tool": "impact_craft_message",
@@ -1326,7 +1326,7 @@
         "key_benefit": "Prioritized alert queue with named owners",
         "differentiation": "Links each alert to the affected business service; no measured response time claim yet"
       },
-      "sha256": "3791f213fe0f44c000a37354ebf18818a0bafefb7c33783f1a26cf01a0f5d869"
+      "sha256": "fb7abd4548c9e97db41f0b93b60d28c70ef2efb1a1d4be23f20d3871fb65b4db"
     },
     {
       "tool": "impact_translate_execution",

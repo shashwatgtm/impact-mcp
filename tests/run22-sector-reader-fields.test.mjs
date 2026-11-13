@@ -1,3 +1,4 @@
+// 13 Nov 2026 (owner): tools with no price no longer print "Business model: not stated" (src/pricing-lines.ts); these checks now assert that no business model is claimed.
 // Run 22 sector reader job, impact: how the tool's fields reach the shared reader (readContext in src/index.ts). Invented company, plain words.
 // A services firm whose capability text names "AI-powered tools" was read as a software subscription although the sector read from the whole
 // text was IT and business services. Run: node --test tests/run22-sector-reader-fields.test.mjs
@@ -22,7 +23,7 @@ test("a services firm with AI-powered tools in its capability text is read as IT
     key_benefit: "faster, cheaper operations that keep service levels",
   });
   assert.match(t, /Sector: read from your inputs as ITeS/);
-  assert.match(t, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.doesNotMatch(t, /Business model: (?!not stated)/);
   assert.doesNotMatch(t, /Business model: software subscription/);
 });
 
