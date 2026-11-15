@@ -119,11 +119,13 @@ export async function runSegmentMessage(input: unknown, invoke: Invoke) {
   const selected = sectorValues.includes(sectorText) ? sectorText : explainSector({ seller: [b.sector] }).vertical?.id.replace(/-/g, '_');
   const sectorArgs = selected ? { your_sector: selected } : {};
   const proof = proofReview(b), statusQuo = questions(b), alternatives = alternativesFor(b), receipt = reviewReceipt(b);
+  // The chat can resolve this opaque reference against the prior tool result.
+  const resultRef = createHash('sha256').update(JSON.stringify(['segment-result-v1', canonical(a)])).digest('hex');
   const prefix = firstSections(proof.gaps, statusQuo);
   const warnings: string[] = [];
   if (/^(?:cannot|can.t|unable to|no\b|lack\b)/i.test(b.problem.trim())) warnings.push('Problem fragment: rewrite this as a complete sentence in the buyer\'s words.');
   const categoryQuestion = `Test the category word with buyers too: ${b.category}. What do they think it means?`;
-  const shared = { proof_gaps: proof.gaps, status_quo_questions: statusQuo, warnings, category_question: categoryQuestion };
+  const shared = { result_ref: resultRef, proof_gaps: proof.gaps, status_quo_questions: statusQuo, warnings, category_question: categoryQuestion };
   const rolePrompt = 'Translate the generic role title for this segment. What has this person taken to the economic buyer, and what happened?';
   const fail = (text: string) => ({ content: [{ type: 'text', text }], isError: true });
   if (a.stage === 'map') {
@@ -135,10 +137,9 @@ export async function runSegmentMessage(input: unknown, invoke: Invoke) {
     if (champion.isError || alternative.isError) return fail(prefix + '\nThe map needs complete inputs.\n' + responseText(champion) + '\n' + responseText(alternative));
     const champion_map = responseText(champion), alternatives_map = responseText(alternative);
     const role = champion_map.match(/\*\*Most Likely Role\*\*:\s*([^\n]+)/)?.[1] || 'The person who owns this problem';
-    const choiceContext = `Carry this unchanged brief and review receipt to the next call only after I confirm the champion and alternative. Brief: ${JSON.stringify(b)}. Review receipt: ${receipt}.`;
     const actions = [
-      { label: `Use this champion: ${role}`, prompt: `My champion choice is ${role}. Ask me to translate the title and confirm the target customer wording and alternative. ${choiceContext}` },
-      ...alternatives.map(name => ({ label: `Use this alternative: ${name}`, prompt: `My alternative choice is ${name}. Confirm the champion and target customer wording with me before the message call. ${choiceContext}` })),
+      { kind: 'champion', label: `Use this champion: ${role}` },
+      ...alternatives.map((name, index) => ({ kind: 'alternative', index: index + 1, label: `Use this alternative: ${name}` })),
     ];
     const steps = [
       { tool: 'Champion identification, independent map', passed: `Product: ${b.product_description}\nProblem: ${b.problem}\nSegment: ${b.segments[0]}`, inputs: championArgs },
@@ -202,8 +203,14 @@ export async function runSegmentMessage(input: unknown, invoke: Invoke) {
   ];
   const pack = { product, target_customer: target, problem, alternative: alternativeName, buyer_lines, capability, proof_status: proof.real ? 'Customer result supplied, check relevance' : 'Unproved hypothesis' };
   const actions = [
-    ...(proof.real ? [{ label: 'Run the sales kit', prompt: `Ask CRAFT Content to run sales_enablement_content from this reviewed message pack. Keep each proof point with its source and test whether it answers the objection. ${JSON.stringify(pack)} Result: ${b.proof.result}. Source: ${b.proof.source}. Period: ${b.proof.period}.` }] : []),
-    { label: 'Draft discovery questions', prompt: `Ask Revenue Enablement to run competitive_trap_setter for discovery questions about the current approach, from this message pack. Treat the capabilities as hypotheses. ${JSON.stringify(pack)}` },
+    ...(proof.real ? [{
+      kind: 'sales', label: 'Run the sales kit', destination: 'CRAFT Content / sales_enablement_content',
+      fields: { ...pack, proof_result: b.proof.result, proof_source: b.proof.source, proof_period: b.proof.period },
+    }] : []),
+    {
+      kind: 'discovery', label: 'Draft discovery questions', destination: 'Revenue Enablement / competitive_trap_setter',
+      fields: { target_customer: target, problem, alternative: alternativeName, capability },
+    },
   ];
   const steps = [
     { tool: 'Value, after human confirmation', passed: `Target customer: ${target}\nOutcome to test: ${outcome}\nCapability: ${capability}\nProof: ${proof.real ? b.proof.result : 'none given for the result yet'}`, inputs: valueArgs },
