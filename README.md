@@ -3,7 +3,7 @@
 
 ## Use it hosted (no install)
 
-Add `https://impact.gtmhelix.com/mcp` as a Streamable HTTP connector. It needs no sign in. On 15 November 2026 the hosted server reported version 2.2.27 and 9 tools. [Connection instructions](https://impact.gtmhelix.com/connect/). You can also open the [web app](https://impact.gtmhelix.com/).
+Add `https://impact.gtmhelix.com/mcp` as a Streamable HTTP connector. It needs no sign in. The hosted endpoint always runs the newest version (2.2.27) available on this site. It listed 9 tools on 15 November 2026. [Connection instructions](https://impact.gtmhelix.com/connect/). You can also open the [web app](https://impact.gtmhelix.com/).
 
 For a local stdio connection, run `npx -y @shashwatgtmalpha/impact-mcp`. On 15 November 2026 the latest published npm version was 2.2.27. Check the available version with `npm view @shashwatgtmalpha/impact-mcp version`.
 
