@@ -2,7 +2,7 @@
   "name": "@shashwatgtmalpha/impact-mcp",
   "mcpName": "io.github.shashwatgtm/impact-mcp",
   "version": "2.2.27",
-  "description": "IMPACT Framework MCP server for B2B positioning: champions, alternatives, value, market, message and execution. Runs locally over stdio (npm) or hosted over Streamable HTTP.",
+  "description": "Nine IMPACT tools for B2B positioning, competitive alternatives, value propositions, segment messaging and positioning audits. Available over stdio or hosted Streamable HTTP.",
   "main": "dist/index.js",
   "bin": {
     "impact-mcp": "dist/index.js"
@@ -21,14 +21,17 @@
     "b2b",
     "gtm",
     "marketing",
-    "impact-framework"
+    "impact-framework",
+    "product-positioning",
+    "value-proposition",
+    "messaging"
   ],
   "author": "Shashwat Ghosh <shashwat@gtmhelix.com> (https://gtmhelix.com/about/)",
-  "homepage": "https://tools.gtmhelix.com/connectors/",
+  "homepage": "https://impact.gtmhelix.com/",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/shashwatgtm/impact-mcp.git"
+    "url": "git+https://github.com/shashwatgtm/impact-mcp.git"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
