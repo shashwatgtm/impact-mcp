@@ -112,10 +112,15 @@ export declare function runSegmentMessage(input: unknown, invoke: Invoke): Promi
                 your_strengths: string;
             };
         })[];
-        actions: {
+        actions: ({
+            kind: string;
+            index: number;
             label: string;
-            prompt: string;
-        }[];
+        } | {
+            kind: string;
+            label: string;
+        })[];
+        result_ref: string;
         proof_gaps: string[];
         status_quo_questions: string[];
         warnings: string[];
@@ -190,10 +195,34 @@ export declare function runSegmentMessage(input: unknown, invoke: Invoke): Promi
                 differentiation: string;
             };
         })[];
-        actions: {
+        actions: ({
+            kind: string;
             label: string;
-            prompt: string;
-        }[];
+            destination: string;
+            fields: {
+                proof_result: string | undefined;
+                proof_source: string | undefined;
+                proof_period: string | undefined;
+                product: string;
+                target_customer: string;
+                problem: string;
+                alternative: string;
+                buyer_lines: string[];
+                capability: string;
+                proof_status: string;
+            };
+        } | {
+            kind: string;
+            label: string;
+            destination: string;
+            fields: {
+                target_customer: string;
+                problem: string;
+                alternative: string;
+                capability: string;
+            };
+        })[];
+        result_ref: string;
         proof_gaps: string[];
         status_quo_questions: string[];
         warnings: string[];
