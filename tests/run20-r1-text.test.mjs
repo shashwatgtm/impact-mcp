@@ -159,6 +159,6 @@ test("percentages: a very small percent is never shown as 0%", async () => {
 
 test("percentages: the sizing figures still come from the exact percentages the user gave", async () => {
   const out = await call("impact_anchor_market", anchorArgs({ percent_matching_icp: 12.345678, year_one_share_percent: 100 }));
-  // 3,200 x $36,000 = $115,200,000; x 12.345678% = $14,222,221
-  assert.match(out, /SAM = \$14,222,221 \(\$14\.22M\)/);
+  // 3,200 x $36,000 = $115,200,000; x 12.345678% = $14,222,221.056, displayed to the cent
+  assert.match(out, /SAM = \$14,222,221\.06 \(\$14\.22M\)/);
 });
