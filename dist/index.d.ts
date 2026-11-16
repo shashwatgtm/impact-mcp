@@ -68,13 +68,9 @@ interface IndustryRoles {
 }
 export declare function industryOf(...texts: (string | undefined)[]): IndustryRoles | null;
 export declare function pctText(n: number): string;
-export declare function parseCounts(s: unknown): {
-    name: string;
-    count: number;
-}[];
+export { parseCounts } from './anchor-sizing.ts';
 export declare const SERVER_NAME = "impact-mcp";
 export declare const SERVER_VERSION = "2.2.27";
 export declare function dropFraming(text: string): string;
 export declare function createServer(): Server;
-export {};
 //# sourceMappingURL=index.d.ts.map

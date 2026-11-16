@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SERVER_VERSION = exports.SERVER_NAME = exports.YOUR_SECTOR_VALUES = void 0;
+exports.SERVER_VERSION = exports.SERVER_NAME = exports.parseCounts = exports.YOUR_SECTOR_VALUES = void 0;
 exports.noNotes = noNotes;
 exports.splitItems = splitItems;
 exports.subIndustryFor = subIndustryFor;
@@ -21,9 +21,9 @@ exports.namedTeams = namedTeams;
 exports.functionOf = functionOf;
 exports.industryOf = industryOf;
 exports.pctText = pctText;
-exports.parseCounts = parseCounts;
 exports.dropFraming = dropFraming;
 exports.createServer = createServer;
+const anchor_sizing_ts_1 = require("./anchor-sizing.js");
 const input_evidence_ts_1 = require("./input-evidence.js");
 const segment_message_registration_ts_1 = require("./segment-message-registration.js");
 const chain_results_ts_1 = require("./chain-results.js");
@@ -1205,26 +1205,8 @@ function pctText(n) {
         return 'under 0.1';
     return Number.isInteger(r) ? String(r) : r.toFixed(1);
 }
-// "Mid-size manufacturers: 3,200; IT services firms: 1,800" gives one count per named segment; a bare number has no name.
-function parseCounts(s) {
-    if (typeof s !== 'string')
-        return [];
-    const out = [];
-    for (const raw of s.split(/\n|;/).map((x) => x.trim()).filter(Boolean)) {
-        const m = raw.match(/^(?:(.*?)\s*[:=]\s*)?(?:about |around |roughly |~)?(\d[\d,]*(?:\.\d+)?)\s*([km])?\b/i);
-        if (!m)
-            continue;
-        const n = parseFloat(m[2].replace(/,/g, '')) * (m[3] ? (m[3].toLowerCase() === 'k' ? 1e3 : 1e6) : 1);
-        if (Number.isFinite(n) && n > 0)
-            out.push({ name: (m[1] || '').trim(), count: Math.round(n) });
-    }
-    return out;
-}
-const sameName = (a, b) => {
-    const x = a.toLowerCase().replace(/\s+/g, ' ').trim();
-    const y = b.toLowerCase().replace(/\s+/g, ' ').trim();
-    return !!x && !!y && (x === y || (x.length >= 4 && y.includes(x)) || (y.length >= 4 && x.includes(y)));
-};
+var anchor_sizing_ts_2 = require("./anchor-sizing.js");
+Object.defineProperty(exports, "parseCounts", { enumerable: true, get: function () { return anchor_sizing_ts_2.parseCounts; } });
 // =============================================================================
 // TOOL DEFINITIONS
 // =============================================================================
@@ -2417,8 +2399,8 @@ ${sharpen0 ? `\n---\n\n## To sharpen this\n\n${sharpen0}\n` : ''}`;
             const shared = (seg, stems) => [...stemsOf(seg.replace(/\([^)]*\)/g, ''))].filter((x) => stems.has(x));
             const byShared = (n) => (n <= 0 ? 1 : n === 1 ? 3 : n === 2 ? 4 : 5);
             // Market value per segment from the user's own counts and deal size, for the budget criterion (needs counts for at least two segments).
-            const countsAll = parseCounts(args.company_counts);
-            const tamOf = (seg) => { const n = countsAll.find((c) => c.name && sameName(c.name, seg)); return n && acvNumber ? n.count * acvNumber : null; };
+            const allocation = (0, anchor_sizing_ts_1.allocateCounts)(args.company_counts, segments);
+            const tamOf = (seg) => { const n = allocation.named.get(seg); return n !== undefined && acvNumber ? n * acvNumber : null; };
             const tamList = segments.map(tamOf).filter((x) => x !== null);
             const maxTam = tamList.length >= 2 ? Math.max(...tamList) : 0;
             // Segment scores: keyword presets, unchanged (a segment with none of the keywords gets the middle score).
@@ -2472,16 +2454,10 @@ ${sharpen0 ? `\n---\n\n## To sharpen this\n\n${sharpen0}\n` : ''}`;
             segmentScores.sort((a, b) => b.total - a.total);
             const beachhead = segmentScores[0];
             // Market sizing uses only the user's own figures (problem 5 and 6 of the real-world test).
-            const counts = parseCounts(args.company_counts);
             const countText = (args.company_counts || '').trim();
             const unreadable = countText ? countText.split(/\n|;/).map((x) => x.trim()).filter((x) => x && !/\d/.test(x)) : [];
-            const countFor = (name) => {
-                const named = counts.find((c) => c.name && sameName(c.name, name));
-                if (named)
-                    return named.count;
-                const bare = counts.find((c) => !c.name);
-                return bare && name === beachhead.name ? bare.count : null;
-            };
+            const countFor = (name) => allocation.named.get(name)
+                ?? (name === beachhead.name ? allocation.recommendedOnly : null);
             const beachCount = countFor(beachhead.name);
             const pct = typeof args.percent_matching_icp === 'number' ? args.percent_matching_icp : null;
             const share = typeof args.year_one_share_percent === 'number' ? args.year_one_share_percent : null;
@@ -2492,7 +2468,9 @@ ${sharpen0 ? `\n---\n\n## To sharpen this\n\n${sharpen0}\n` : ''}`;
             const customersText = (n) => Number.isInteger(n) ? `${n.toLocaleString('en-US')} customers` : n < 1 ? 'less than 1 customer' : `about ${n >= 10 ? Math.round(n).toLocaleString('en-US') : (Math.round(n * 10) / 10)} customers`;
             const needs = [];
             if (beachCount === null)
-                needs.push(counts.length ? `company counts for ${beachhead.name} (you gave counts, but none for this segment: add "${beachhead.name}: <number>")` : `company counts (for example "${beachhead.name}: 3,200")`);
+                needs.push(allocation.named.size ? `company counts for ${beachhead.name} (you gave counts, but none for this segment: add "${beachhead.name}: <number>")` : `company counts (for example "${beachhead.name}: 3,200")`);
+            if (beachCount === null && countText && !allocation.named.size)
+                needs.push('a whole company count for each named segment; label the counts or specify an equal split that divides into whole companies');
             if (!acvNumber)
                 needs.push('average deal size (for example "$50,000")');
             if (pct === null)
@@ -2597,7 +2575,7 @@ ${perSegment}
             if (!cycleGiven)
                 sharpenItems.push({ give: 'sales_cycle', changes: 'the deal-fit checks, which cannot name how long a decision may take' });
             if (beachCount === null)
-                sharpenItems.push({ give: counts.length ? `company counts for ${beachhead.name} (a line written as "${beachhead.name}: " followed by the number)` : 'company counts, one line per segment', changes: 'the sizing, which cannot yet count companies' + (ownMethod ? ' and the budget score' : '') });
+                sharpenItems.push({ give: allocation.named.size ? `company counts for ${beachhead.name} (a line written as "${beachhead.name}: " followed by the number)` : 'company counts, one line per segment', changes: 'the sizing, which cannot yet count companies' + (ownMethod ? ' and the budget score' : '') });
             if (pct === null)
                 sharpenItems.push({ give: 'percent_matching_icp', changes: 'SAM, which cannot be calculated yet' });
             if (share === null)
@@ -2674,15 +2652,15 @@ This tool adds no company count, ICP share, market share or deal size of its own
 ${[pct, share].some((x) => x !== null && pctText(x) !== String(x)) ? '\n*Percentages are shown to one decimal; the sizing uses the exact figures you gave.*\n' : ''}${unreadable.length ? `\nNot read as a count (no number in it): ${unreadable.map((u) => `"${u}"`).join('; ')}.\n` : ''}
 \`\`\`
 TAM = Total potential customers × ACV
-${tam !== null ? `TAM = ${beachCount.toLocaleString('en-US')} companies × ${acvGiven}\nTAM = ${usdFull(tam)} (${usd(tam)})` : `TAM: cannot be calculated yet`}
+${tam !== null ? `TAM = ${beachCount.toLocaleString('en-US')} companies × ${acvGiven}\nTAM = ${(0, anchor_sizing_ts_1.dollars)((0, anchor_sizing_ts_1.cents)([beachCount, acvNumber], 0))} (${usd(tam)})` : `TAM: cannot be calculated yet`}
 
 SAM = TAM × % that match your ICP
-${sam !== null ? `SAM = ${usd(tam)} × ${pctText(pct)}%\nSAM = ${usdFull(sam)} (${usd(sam)})` : `SAM: cannot be calculated yet`}
+${sam !== null ? `SAM = ${usd(tam)} × ${pctText(pct)}%\nSAM = ${(0, anchor_sizing_ts_1.dollars)((0, anchor_sizing_ts_1.cents)([beachCount, acvNumber, pct], 1))} (${usd(sam)})` : `SAM: cannot be calculated yet`}
 
 SOM = SAM × expected market share (Year 1)
-${som !== null ? `SOM = ${usd(sam)} × ${pctText(share)}%\nSOM = ${usdFull(som)} (${usd(som)})` : `SOM: cannot be calculated yet`}
+${som !== null ? `SOM = ${usd(sam)} × ${pctText(share)}%\nSOM = ${(0, anchor_sizing_ts_1.dollars)((0, anchor_sizing_ts_1.cents)([beachCount, acvNumber, pct, share], 2))} (${usd(som)})` : `SOM: cannot be calculated yet`}
 \`\`\`
-${counts.length > 1 && acvNumber ? `\n### TAM by segment (your counts × your deal size)\n| Segment | Companies | TAM |\n|---------|-----------|-----|\n${segmentScores.map((s) => { const n = countFor(s.name); return n === null ? null : `| ${s.name} | ${n.toLocaleString('en-US')} | ${usd(n * acvNumber)} |`; }).filter(Boolean).join('\n')}\n` : ''}
+${(0, anchor_sizing_ts_1.segmentTable)(segments, countFor, acvNumber, pct, share)}
 **Validation Required**: Check your counts against dated records you can inspect and customer interviews on how the segment sees the problem.\n\n${software_policy_ts_1.SOFTWARE_REFERRAL}
 
 ---
