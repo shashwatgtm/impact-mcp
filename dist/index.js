@@ -408,7 +408,7 @@ const cleanRaw = (s) => s.trim().replace(/(?:\\?[.!])+$/, '');
 // from the deal text, job titles and the buyer. The business model is read from core plus later only.
 // Run 42B: the seller's own industry, one optional input on every tool. When given it decides the sector (no reading of the text overrides it); "other" means neutral wording.
 exports.YOUR_SECTOR_VALUES = ['logistics_tech', 'fintech', 'saas', 'vertical_saas', 'ai_native', 'ites', 'telecom', 'software', 'cybersecurity', 'other'];
-const YOUR_SECTOR_DESCRIPTION = "Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.";
+const YOUR_SECTOR_DESCRIPTION = "Your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. Format is text using one of the listed labels. For example, \"logistics_tech\".";
 const YOUR_SECTOR_ID = { logistics_tech: 'logistics-tech', fintech: 'fintech', saas: 'saas', vertical_saas: 'vertical-saas', ai_native: 'ai-native', ites: 'ites', telecom: 'telecom', software: 'software', cybersecurity: 'cybersecurity' };
 let forcedSector;
 function setYourSector(value) { forcedSector = typeof value === 'string' && exports.YOUR_SECTOR_VALUES.includes(value) ? value : undefined; }
@@ -1238,18 +1238,18 @@ const tools = {
     // Tool 1: Get Framework Overview
     // ---------------------------------------------------------------------------
     impact_get_framework: {
-        description: 'Helps you decide which positioning steps to run, and in what order. You give nothing, or one IMPACT step to focus on and your sector. You get the IMPACT positioning method step by step (identify champions, map alternatives, pinpoint value, anchor in a market, craft the message, translate it to execution), with a template or checklist for each step; a focus step returns that step only, and your sector adds its buyer roles, measures and proof points.',
+        description: "Helps you decide which positioning steps to run, and in what order. You give nothing, or one IMPACT step to focus on and your sector. You get the IMPACT positioning method step by step (identify champions, map alternatives, pinpoint value, anchor in a market, craft the message, translate it to execution), with a template or checklist for each step; a focus step returns that step only, and your sector adds its buyer roles, measures and proof points. Read-only for business data. It needs no sign-in and stores no inputs or outputs. Hosted usage metadata is recorded. No input returns all six steps. Invalid focus_phase or sector choices return an error naming the allowed values. Use this instead of impact_full_audit when you need the IMPACT method and templates before applying it to a product.",
         inputSchema: {
             type: 'object',
             properties: {
                 focus_phase: {
                     type: 'string',
-                    description: 'Specific phase to focus on (identify/map/pinpoint/anchor/craft/translate)',
+                    description: "Specific phase to focus on (identify/map/pinpoint/anchor/craft/translate). Format is text using one of the listed labels. For example, \"identify\".",
                     enum: ['identify', 'map', 'pinpoint', 'anchor', 'craft', 'translate', 'all']
                 },
                 sector: {
                     type: 'string',
-                    description: 'Your sector in your own words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity). Adds how the six steps read in that sector. The same as your selected sector; your selected sector wins when both are given'
+                    description: "Your sector in your own words (for example logistics tech, fintech, SaaS, vertical SaaS, AI native, IT services, telecom, software or cybersecurity). Adds how the six steps read in that sector. The same as your selected sector; your selected sector wins when both are given. Format is text."
                 }
             }
         },
@@ -1520,29 +1520,29 @@ ${SUGGESTED}
     // Tool 2: Identify Champions
     // ---------------------------------------------------------------------------
     impact_identify_champions: {
-        description: 'Helps you decide who inside the buyer will push for you. You give what your product does and the problem it solves, plus optional company name, target company type, price point and sector. You get hypotheses for the champion, the economic buyer, the technical influencer, commercial and control reviewers and daily users, warning signs of an anti champion, a path to develop the champion and what to give them. These are roles to test, not named people.',
+        description: "Helps you decide who inside the buyer will push for you. You give what your product does and the problem it solves, plus optional company name, target company type, price point and sector. You get hypotheses for the champion, the economic buyer, the technical influencer, commercial and control reviewers and daily users, warning signs of an anti champion, a path to develop the champion and what to give them. These are roles to test, not named people. Read-only for business data. It needs no sign-in and stores no inputs or outputs. Hosted usage metadata is recorded. Missing required fields or invalid values return an error naming what to supply or correct. Use this instead of buyer_group_analyzer when you need champion-role hypotheses from a product and problem.",
         inputSchema: {
             type: 'object',
             properties: {
                 company_name: {
                     type: 'string',
-                    description: 'Your company name'
+                    description: "Your company name. Format is text. For example, \"invoice review service\"."
                 },
                 product_description: {
                     type: 'string',
-                    description: 'What your product does (1-2 sentences)'
+                    description: "What your product does (1-2 sentences). Format is text. For example, \"checks invoice exceptions before approval\"."
                 },
                 problem_solved: {
                     type: 'string',
-                    description: 'The core problem you solve'
+                    description: "The core problem you solve. Format is text. For example, \"invoice exceptions delay month-end close\"."
                 },
                 target_company_type: {
                     type: 'string',
-                    description: 'Type of companies you target (e.g., "mid-size fintech companies", "enterprise manufacturers")'
+                    description: "Type of companies you target (e.g., \"mid-size fintech companies\", \"enterprise manufacturers\"). Format is text."
                 },
                 price_point: {
                     type: 'string',
-                    description: 'What you charge, with the period, in your own words (for example "$50,000 a year" or "$3,750 per month")'
+                    description: "What you charge, with the period, in your own words (for example \"$50,000 a year\" or \"$3,750 per month\"). Format is text."
                 }
             },
             required: ['product_description', 'problem_solved']
@@ -1749,30 +1749,30 @@ ${SUGGESTED}
     // Tool 3: Map Alternatives
     // ---------------------------------------------------------------------------
     impact_map_alternatives: {
-        description: 'Helps you decide what buyers compare you with, and where you can lead. You give your product and its category, plus optional competitors, their weaknesses and your strengths. You get one card for each competitor you name, the status quo and doing nothing, where you can lead and discovery questions, with your sector\'s questions and objections. It uses only what you give and says what would sharpen the map.',
+        description: "Helps you decide what buyers compare you with, and where you can lead. You give your product and its category, plus optional competitors, their weaknesses and your strengths. You get one card for each competitor you name, the status quo and doing nothing, where you can lead and discovery questions, with your sector's questions and objections. It uses only what you give and says what would sharpen the map. Read-only for business data. It needs no sign-in and stores no inputs or outputs. Hosted usage metadata is recorded. Missing required fields or invalid values return an error naming what to supply or correct. Use this instead of competitive_intel when you need positioning against competitors, the current approach and doing nothing.",
         inputSchema: {
             type: 'object',
             properties: {
                 your_product: {
                     type: 'string',
-                    description: 'What your product does'
+                    description: "What your product does. Format is text. For example, \"invoice review service\"."
                 },
                 category: {
                     type: 'string',
-                    description: 'Your product category (e.g., "cloud security monitoring", "last-mile delivery software")'
+                    description: "Your product category (e.g., \"cloud security monitoring\", \"last-mile delivery software\"). Format is text."
                 },
                 competitors: {
                     type: 'array',
-                    items: { type: 'string' },
-                    description: 'List of competitor names, and the status-quo options your buyers use (for example "spreadsheets"). A description in brackets after a name is kept'
+                    items: { type: 'string', description: "Format is text. For example, \"the current manual review process\"." },
+                    description: "List of competitor names, and the status-quo options your buyers use (for example \"spreadsheets\"). A description in brackets after a name is kept. Format is a JSON array."
                 },
                 competitor_weaknesses: {
                     type: 'string',
-                    description: 'Known competitor weaknesses or customer complaints, one per line or separated by semicolons. A weakness that names a competitor is shown on its card'
+                    description: "Known competitor weaknesses or customer complaints, one per line or separated by semicolons. A weakness that names a competitor is shown on its card. Format is text. For example, \"handoffs require manual reconciliation\"."
                 },
                 your_strengths: {
                     type: 'string',
-                    description: 'What you do better than competitors, one per line or separated by semicolons'
+                    description: "What you do better than competitors, one per line or separated by semicolons. Format is text. For example, \"checks invoice exceptions before approval\"."
                 }
             },
             required: ['your_product', 'category']
@@ -2022,38 +2022,38 @@ ${sectorPart}${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
     // Tool 4: Pinpoint Unique Value
     // ---------------------------------------------------------------------------
     impact_pinpoint_value: {
-        description: 'Helps you decide what you can claim that buyers will believe. You give your target customer, the main outcome they get and what you do that others do not, plus optional product name, category, customer results and business model. You get value statements in three versions, a value matrix for your own figures, proof points ranked from customer results to social proof, versions for different audiences and channels, and questions to test the value.',
+        description: "Helps you decide what you can claim that buyers will believe. You give your target customer, the main outcome they get and what you do that others do not, plus optional product name, category, customer results and business model. You get value statements in three versions, a value matrix for your own figures, proof points ranked from customer results to social proof, versions for different audiences and channels, and questions to test the value. Read-only for business data. It needs no sign-in and stores no inputs or outputs. Hosted usage metadata is recorded. Missing required fields or invalid values return an error naming what to supply or correct. Use this instead of impact_craft_message when you need outcome and proof statements before writing the core message.",
         inputSchema: {
             type: 'object',
             properties: {
                 product_name: {
                     type: 'string',
-                    description: 'Your product/company name'
+                    description: "Your product/company name. Format is text. For example, \"invoice review service\"."
                 },
                 category: {
                     type: 'string',
-                    description: 'Product category'
+                    description: "Product category. Format is text. For example, \"manufacturing\"."
                 },
                 target_customer: {
                     type: 'string',
-                    description: 'Who you serve (e.g., "cloud security leads at mid-size fintech companies")'
+                    description: "Who you serve (e.g., \"cloud security leads at mid-size fintech companies\"). Format is text."
                 },
                 key_outcome: {
                     type: 'string',
-                    description: 'The main result customers achieve'
+                    description: "The main result customers achieve. Format is text. For example, \"resolve invoice exceptions before month-end\"."
                 },
                 unique_capability: {
                     type: 'string',
-                    description: 'What you do that others cannot/don\'t'
+                    description: "What you do that others cannot/don't. Format is text. For example, \"checks invoice exceptions before approval\"."
                 },
                 customer_metrics: {
                     type: 'string',
-                    description: 'Any customer results data (e.g., "critical exposures down 70% in one quarter; audit preparation from 3 weeks to 4 days")'
+                    description: "Any customer results data (e.g., \"critical exposures down 70% in one quarter; audit preparation from 3 weeks to 4 days\"). Format is text."
                 },
                 business_model: {
                     type: 'string',
                     enum: verticals_ts_3.BUSINESS_MODELS,
-                    description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose proof types; read from your inputs when not given'
+                    description: "How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose proof types; read from your inputs when not given. Format is text using one of the listed labels. For example, \"saas\"."
                 }
             },
             required: ['target_customer', 'key_outcome', 'unique_capability']
@@ -2287,50 +2287,50 @@ ${sharpen ? `---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
     // Tool 5: Anchor in Right Market
     // ---------------------------------------------------------------------------
     impact_anchor_market: {
-        description: 'Helps you decide which market segment to win first. You give what your product does and the segments you are weighing, plus optional customers, pain, deal size and company counts. You get a beachhead choice: your segments ranked from your own customers, pain and deal size when you give all three (the answer says which method it used), otherwise scored on keywords in their names; a TAM, SAM and SOM calculation from only the figures you give; a three year expansion path and an ICP hypothesis for the chosen segment. It never chooses a segment you did not name.',
+        description: "Helps you decide which market segment to win first. You give what your product does and the segments you are weighing, plus optional customers, pain, deal size and company counts. You get a beachhead choice: your segments ranked from your own customers, pain and deal size when you give all three (the answer says which method it used), otherwise scored on keywords in their names; a TAM, SAM and SOM calculation from only the figures you give; a three year expansion path and an ICP hypothesis for the chosen segment. It never chooses a segment you did not name. Read-only for business data. It needs no sign-in and stores no inputs or outputs. Hosted usage metadata is recorded. Missing required fields or invalid values return an error naming what to supply or correct. Use this instead of tam_sam_som_calculator when you need to choose among supplied market segments before sizing the chosen one.",
         inputSchema: {
             type: 'object',
             properties: {
                 product_description: {
                     type: 'string',
-                    description: 'What your product does'
+                    description: "What your product does. Format is text. For example, \"checks invoice exceptions before approval\"."
                 },
                 potential_segments: {
                     type: 'array',
-                    items: { type: 'string' },
-                    description: 'The market segments you are weighing, in your own words (for example Mid-market fintech, Enterprise banks, Small retail chains). Needed for a recommendation: without segments no segment is chosen, and the answer explains how to find yours'
+                    items: { type: 'string', description: "Format is text. For example, \"weekly invoice exception review\"." },
+                    description: "The market segments you are weighing, in your own words (for example Mid-market fintech, Enterprise banks, Small retail chains). Needed for a recommendation: without segments no segment is chosen, and the answer explains how to find yours. Format is a JSON array."
                 },
                 current_customers: {
                     type: 'string',
-                    description: 'Description of your current/best customers. With customer pain and average deal size it ranks the segments (the answer says which method it used); without them it is shown only and the keyword presets score the segments'
+                    description: "Description of your current/best customers. With customer pain and average deal size it ranks the segments (the answer says which method it used); without them it is shown only and the keyword presets score the segments. Format is text. For example, \"manufacturers with 200 to 500 employees\"."
                 },
                 customer_pain: {
                     type: 'string',
-                    description: 'The problem your best customers describe, in their words. With current customers and average deal size it ranks the segments from your own inputs; without them the keyword presets are used'
+                    description: "The problem your best customers describe, in their words. With current customers and average deal size it ranks the segments from your own inputs; without them the keyword presets are used. Format is text. For example, \"invoice exceptions delay month-end close\"."
                 },
                 average_deal_size: {
                     type: 'string',
-                    description: 'Your annual contract value (ACV) as one amount (e.g., "$50,000", "$50K" or "$1.5M"); a range is refused'
+                    description: "Your annual contract value (ACV) as one amount (e.g., \"$50,000\", \"$50K\" or \"$1.5M\"); a range is refused. Format is text."
                 },
                 sales_cycle: {
                     type: 'string',
-                    description: 'Typical sales cycle length. Shown in the output; not used in the scoring'
+                    description: "Typical sales cycle length. Shown in the output; not used in the scoring. Format is text. For example, \"60 days\"."
                 },
                 company_counts: {
                     type: 'string',
-                    description: 'How many companies you could sell to in each segment, one per line or separated by semicolons (for example "Mid-market fintech: 3,200; Enterprise banks: 600"). A single number is read as the count for the recommended segment. Needed for market sizing'
+                    description: "How many companies you could sell to in each segment, one per line or separated by semicolons (for example \"Mid-market fintech: 3,200; Enterprise banks: 600\"). A single number is read as the count for the recommended segment. Needed for market sizing. Format is text."
                 },
                 percent_matching_icp: {
                     type: 'number',
                     exclusiveMinimum: 0,
                     maximum: 100,
-                    description: 'The percent of those companies that match your ideal customer profile (for example 25). Needed for SAM'
+                    description: "The percent of those companies that match your ideal customer profile (for example 25). Needed for SAM. Format is a JSON number."
                 },
                 year_one_share_percent: {
                     type: 'number',
                     exclusiveMinimum: 0,
                     maximum: 100,
-                    description: 'The share of the matching companies you expect to win in year one, in percent (for example 1). Needed for SOM'
+                    description: "The share of the matching companies you expect to win in year one, in percent (for example 1). Needed for SOM. Format is a JSON number."
                 }
             },
             required: ['product_description']
@@ -2725,42 +2725,42 @@ ${sharpen ? `\n---\n\n## To sharpen this\n\n${sharpen}\n` : ''}
     // Tool 6: Craft Core Message
     // ---------------------------------------------------------------------------
     impact_craft_message: {
-        description: 'Helps you decide what your core message is, and how to test it. You give your target customer, the key benefit and what sets you apart, plus optional product name, customer need, category, main competitor and business model. You get a positioning statement (full and one sentence), a message hierarchy from tagline to three supporting pillars, versions for different audiences, objection handling and ways to test the message. It writes from your own words, in whole sentences.',
+        description: "Helps you decide what your core message is, and how to test it. You give your target customer, the key benefit and what sets you apart, plus optional product name, customer need, category, main competitor and business model. You get a positioning statement (full and one sentence), a message hierarchy from tagline to three supporting pillars, versions for different audiences, objection handling and ways to test the message. It writes from your own words, in whole sentences. Read-only for business data. It needs no sign-in and stores no inputs or outputs. Hosted usage metadata is recorded. Missing required fields or invalid values return an error naming what to supply or correct. Use this instead of impact_translate_execution when you need the core positioning statement and message hierarchy.",
         inputSchema: {
             type: 'object',
             properties: {
                 product_name: {
                     type: 'string',
-                    description: 'Your product name'
+                    description: "Your product name. Format is text. For example, \"invoice review service\"."
                 },
                 target_customer: {
                     type: 'string',
-                    description: 'Target customer description'
+                    description: "Target customer description. Format is text. For example, \"manufacturers with 200 to 500 employees\"."
                 },
                 customer_need: {
                     type: 'string',
-                    description: 'The need they have, written as an action (for example "lose days chasing low-risk cloud alerts")'
+                    description: "The need they have, written as an action (for example \"lose days chasing low-risk cloud alerts\"). Format is text."
                 },
                 product_category: {
                     type: 'string',
-                    description: 'Your product category, written as a noun phrase (for example "cloud security monitoring platform")'
+                    description: "Your product category, written as a noun phrase (for example \"cloud security monitoring platform\"). Format is text."
                 },
                 key_benefit: {
                     type: 'string',
-                    description: 'Primary benefit/reason to buy'
+                    description: "Primary benefit/reason to buy. Format is text. For example, \"resolve invoice exceptions before month-end\"."
                 },
                 competitor: {
                     type: 'string',
-                    description: 'Primary alternative/competitor'
+                    description: "Primary alternative/competitor. Format is text. For example, \"the current manual review process\"."
                 },
                 differentiation: {
                     type: 'string',
-                    description: 'Your unique differentiation'
+                    description: "Your unique differentiation. Format is text. For example, \"checks invoice exceptions before approval\"."
                 },
                 business_model: {
                     type: 'string',
                     enum: verticals_ts_3.BUSINESS_MODELS,
-                    description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose the cost and proof lines; read from your inputs when not given'
+                    description: "How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose the cost and proof lines; read from your inputs when not given. Format is text using one of the listed labels. For example, \"saas\"."
                 }
             },
             required: ['target_customer', 'key_benefit', 'differentiation']
@@ -3194,35 +3194,35 @@ ${rows.join('\n')}
     // Tool 7: Translate to Execution
     // ---------------------------------------------------------------------------
     impact_translate_execution: {
-        description: 'Helps you decide how your positioning should read in each channel. You give a positioning statement, your target customer and the key benefit, plus optional channels, product name and business model. You get copy to edit: a website hero, a LinkedIn tagline and post drafts, a three email cold sequence, a sales deck outline and a 15 minute demo script, with calls to action that fit your business model and the order to work the channels in.',
+        description: "Helps you decide how your positioning should read in each channel. You give a positioning statement, your target customer and the key benefit, plus optional channels, product name and business model. You get copy to edit: a website hero, a LinkedIn tagline and post drafts, a three email cold sequence, a sales deck outline and a 15 minute demo script, with calls to action that fit your business model and the order to work the channels in. Read-only for business data. It needs no sign-in and stores no inputs or outputs. Hosted usage metadata is recorded. Missing required fields or invalid values return an error naming what to supply or correct. Use this instead of impact_craft_message when you already have positioning and need channel-specific copy.",
         inputSchema: {
             type: 'object',
             properties: {
                 positioning_statement: {
                     type: 'string',
-                    description: 'Your core positioning statement'
+                    description: "Your core positioning statement. Format is text. For example, \"Finance teams need a clear owner for each invoice exception.\"."
                 },
                 target_customer: {
                     type: 'string',
-                    description: 'Target customer profile'
+                    description: "Target customer profile. Format is text. For example, \"manufacturers with 200 to 500 employees\"."
                 },
                 key_benefit: {
                     type: 'string',
-                    description: 'Primary benefit, written as an action (for example "fix critical exposures first")'
+                    description: "Primary benefit, written as an action (for example \"fix critical exposures first\"). Format is text."
                 },
                 channels: {
                     type: 'array',
-                    items: { type: 'string' },
-                    description: 'Which channels to cover, from website, linkedin, cold_email, sales_deck and product_demo. Others are listed as not covered; with none, all five are covered'
+                    items: { type: 'string', description: "Format is text. For example, \"website\"." },
+                    description: "Which channels to cover, from website, linkedin, cold_email, sales_deck and product_demo. Others are listed as not covered; with none, all five are covered. Format is a JSON array. For example, [\"website\"]."
                 },
                 product_name: {
                     type: 'string',
-                    description: 'Your product name'
+                    description: "Your product name. Format is text. For example, \"invoice review service\"."
                 },
                 business_model: {
                     type: 'string',
                     enum: verticals_ts_3.BUSINESS_MODELS,
-                    description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose calls to action and commercial terms; read from your inputs when not given'
+                    description: "How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used to choose calls to action and commercial terms; read from your inputs when not given. Format is text using one of the listed labels. For example, \"saas\"."
                 }
             },
             required: ['positioning_statement', 'target_customer', 'key_benefit']
@@ -3680,47 +3680,47 @@ ${SUGGESTED}
     // Tool 8: Full Positioning Audit
     // ---------------------------------------------------------------------------
     impact_full_audit: {
-        description: 'Helps you decide whether your positioning is working and what to fix first. You give what your product does, your target customer and the problem you solve, plus optional company name, differentiation, competitors, current positioning, customer feedback and business model. You get a positioning audit: an input completeness score for each IMPACT step, the proof you already have, your current positioning checked in words, a recommended positioning with tagline options, a 30 day action plan and the measures to track. The score measures how complete your inputs are, not how strong your positioning is.',
+        description: "Helps you decide whether your positioning is working and what to fix first. You give what your product does, your target customer and the problem you solve, plus optional company name, differentiation, competitors, current positioning, customer feedback and business model. You get a positioning audit: an input completeness score for each IMPACT step, the proof you already have, your current positioning checked in words, a recommended positioning with tagline options, a 30 day action plan and the measures to track. The score measures how complete your inputs are, not how strong your positioning is. Read-only for business data. It needs no sign-in and stores no inputs or outputs. Hosted usage metadata is recorded. Missing required fields or invalid values return an error naming what to supply or correct. Use this instead of impact_craft_message when you need a full positioning review across all six IMPACT steps.",
         inputSchema: {
             type: 'object',
             properties: {
                 company_name: {
                     type: 'string',
-                    description: 'Your company name'
+                    description: "Your company name. Format is text. For example, \"invoice review service\"."
                 },
                 product_description: {
                     type: 'string',
-                    description: 'What your product does'
+                    description: "What your product does. Format is text. For example, \"checks invoice exceptions before approval\"."
                 },
                 target_customer: {
                     type: 'string',
-                    description: 'Who you serve'
+                    description: "Who you serve. Format is text. For example, \"manufacturers with 200 to 500 employees\"."
                 },
                 problem_solved: {
                     type: 'string',
-                    description: 'The problem you solve'
+                    description: "The problem you solve. Format is text. For example, \"invoice exceptions delay month-end close\"."
                 },
                 key_differentiation: {
                     type: 'string',
-                    description: 'What makes you unique'
+                    description: "What makes you unique. Format is text. For example, \"checks invoice exceptions before approval\"."
                 },
                 competitors: {
                     type: 'array',
-                    items: { type: 'string' },
-                    description: 'Main competitors'
+                    items: { type: 'string', description: "Format is text. For example, \"the current manual review process\"." },
+                    description: "Main competitors. Format is a JSON array. For example, [\"the current manual review process\"]."
                 },
                 current_positioning: {
                     type: 'string',
-                    description: 'Your current positioning statement or tagline'
+                    description: "Your current positioning statement or tagline. Format is text. For example, \"manual invoice review\"."
                 },
                 customer_feedback: {
                     type: 'string',
-                    description: 'What customers say about you'
+                    description: "What customers say about you. Format is text. For example, \"The reviewer asked who owns unresolved exceptions.\"."
                 },
                 business_model: {
                     type: 'string',
                     enum: verticals_ts_3.BUSINESS_MODELS,
-                    description: 'How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the score'
+                    description: "How you sell (saas, services, connectivity, transactions, marketplace, hardware_software or investment). Used in the plan; read from your inputs when not given. It does not change the score. Format is text using one of the listed labels. For example, \"saas\"."
                 }
             },
             required: ['product_description', 'target_customer', 'problem_solved']
@@ -4022,7 +4022,7 @@ ${SUGGESTED}
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'impact-mcp';
-exports.SERVER_VERSION = '2.2.27';
+exports.SERVER_VERSION = '2.2.28';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "impact_get_framework": "IMPACT Framework Guide",

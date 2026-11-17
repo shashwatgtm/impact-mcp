@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.shashwatgtm/impact-mcp",
+  "description": "B2B positioning, market selection, value evidence and messaging using IMPACT.",
+  "websiteUrl": "https://tools.gtmhelix.com/connectors/",
+  "repository": {
+    "url": "https://github.com/shashwatgtm/impact-mcp.git",
+    "source": "github"
+  },
+  "version": "2.2.28",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@shashwatgtmalpha/impact-mcp",
+      "version": "2.2.28",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
