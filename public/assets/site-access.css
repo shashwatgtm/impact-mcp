@@ -44,3 +44,71 @@ html body .brand { display: inline-flex; align-items: center; }
  html:root body #hx-consent .hx-d { background:#352831 !important; color:#fff4ef !important; }
  html:root body :is(button,a,summary,input,select):focus-visible { outline:3px solid #ffd699 !important; }
 }
+
+@media(min-width:1000px){html.hx-look body .message-tool-hero {padding-top:16px!important;} .message-tool-hero .hx11-tool-acts {margin-top:8px!important;} }
+
+/* Measured controls on tool, install and editorial pages. */
+@layer helix-accessibility {
+div.card > p > a,
+div.links > a,
+div.wrap > p > a,
+nav.wrap.nav > a.logo,
+p.caption > a,
+p.hx-byline > a,
+p.hx-sample-more > a { box-sizing:border-box !important; min-width:44px !important; min-height:44px !important; max-width:100%; vertical-align:middle; }
+div.card > p > a,
+div.links > a,
+div.wrap > p > a,
+nav.wrap.nav > a.logo,
+p.caption > a,
+p.hx-byline > a,
+p.hx-sample-more > a { display:inline-flex !important; align-items:center; overflow-wrap:anywhere; }
+p.hx-sample-more > a { margin-inline-end:.35rem; margin-block:.15rem; }
+@media(max-width:600px){
+p.hx-sample-more > a { display:flex !important; width:fit-content; }
+}
+@media(prefers-color-scheme:light) {
+div.hero-grid > div > p.caption,
+div.hero-grid > div > p.eyebrow,
+div.wrap > p.caption { color:#301d22 !important; background-color:#fff8f2 !important; }
+#impact-anchor-market > div.hx-table,
+#impact-craft-message > div.hx-table,
+#impact-full-audit > div.hx-table,
+#impact-get-framework > div.hx-table,
+#impact-identify-champions > div.hx-table,
+#impact-map-alternatives > div.hx-table,
+#impact-pinpoint-value > div.hx-table,
+#impact-translate-execution > div.hx-table,
+#run > div.win.hx-form-win,
+details.hx9-menu > summary,
+div.cards > article.card,
+div.facts > div,
+div.hero-grid > aside.card,
+div.hero-grid > div > div.win,
+div.hero-grid > figure.hx8-vis.hx10-split-vis,
+div.hx-moment > ul.tools,
+div.hx-panel > pre.hx-addr,
+div.hx-viz > figure.hx-viz-p,
+div.hx10-diagrams > figure.hx8-vis.hx9-diagram.hx10-dia,
+div.hx10-term-row > figure.hx8-vis.hx9-term,
+div.hxr-body.hx-result-body.hx-sample-body > div.hx-table,
+div.icp-cards > article.card,
+div.wrap > div.card,
+ol.flow > li,
+picture.hx7-cred-photo > img,
+picture.hx7-strip-photo > img,
+section.hx-section > article.hxr.hxr-example,
+section.hx-section > div.hx-table,
+section.hx-section > div.win,
+section.hx-section.hx-wash > div.win,
+ul.hx-whos > li.hx-who,
+ul.tools > li > a.trow { border-color:#746873 !important; }
+}
+@media(prefers-color-scheme:dark) {
+picture.hx7-cred-photo > img,
+picture.hx7-strip-photo > img { border-color:#baabb1 !important; }
+html body #hx-consent .hx-a { background:#783b4f !important; color:#fff5ef !important; border-color:#dec1c7 !important; }
+}
+}
+
+@layer helix-accessibility { .top ~ #hx-consent, body #hx-consent {border-color:#847780 !important;} body #hx-consent > p > a {display:inline !important; vertical-align:baseline !important;} }
