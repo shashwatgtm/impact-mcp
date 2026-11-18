@@ -1,6 +1,6 @@
 # IMPACT
 
-> IMPACT is a free web app and AI connector with nine positioning tools built on Shashwat Ghosh's IMPACT framework, for CMOs and marketing teams. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit. Add https://impact.gtmhelix.com/mcp in Claude, ChatGPT, Cursor, VS Code and Windsurf, no sign-in. In ChatGPT, you can also install the Helix Positioning plugin from the ChatGPT plugin directory: https://chatgpt.com/plugins/plugin_asdk_app_6ae0ffb607a88191a65779b6ba962cb7
+> IMPACT is a free web app and AI connector with nine positioning tools built on Shashwat Ghosh's IMPACT framework, for CMOs and marketing teams. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit. Add https://impact.gtmhelix.com/mcp in Claude, ChatGPT, Cursor, VS Code and Windsurf, no sign-in. In ChatGPT, you can also install the Helix Positioning plugin from the ChatGPT plugin directory: https://chatgpt.com/plugins/plugin_asdk_app_6ae0ffb607a88191a65779b6ba962cb7 The hosted IMPACT MCP server has 9 tools. Use the web app or direct MCP connection for Build our message for this segment.
 
 - Web app (no sign-in): https://impact.gtmhelix.com/
 - MCP server URL (Streamable HTTP, no sign-in, read-only tools): https://impact.gtmhelix.com/mcp
@@ -30,7 +30,7 @@
 
 ### What is IMPACT?
 
-IMPACT is a free web app and AI connector with nine positioning tools built on Shashwat Ghosh's IMPACT framework, for CMOs and marketing teams. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit. Add https://impact.gtmhelix.com/mcp in Claude, ChatGPT, Cursor, VS Code and Windsurf, no sign-in. In ChatGPT, you can also install the Helix Positioning plugin from the ChatGPT plugin directory: https://chatgpt.com/plugins/plugin_asdk_app_6ae0ffb607a88191a65779b6ba962cb7
+IMPACT is a free web app and AI connector with nine positioning tools built on Shashwat Ghosh's IMPACT framework, for CMOs and marketing teams. Describe your product, buyers and rivals, and each tool returns a structured positioning draft with hypotheses to test, or a full audit. Add https://impact.gtmhelix.com/mcp in Claude, ChatGPT, Cursor, VS Code and Windsurf, no sign-in. In ChatGPT, you can also install the Helix Positioning plugin from the ChatGPT plugin directory: https://chatgpt.com/plugins/plugin_asdk_app_6ae0ffb607a88191a65779b6ba962cb7 The hosted IMPACT MCP server has 9 tools. Use the web app or direct MCP connection for Build our message for this segment.
 
 ### Is IMPACT free, and do I need an account?
 
