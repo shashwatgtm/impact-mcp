@@ -1,4 +1,7 @@
 # IMPACT MCP v2.2.28
+
+By Helix GTM Consulting (https://gtmhelix.com), built by Shashwat Ghosh, Co-Founder and Fractional CMO.
+
 **Hypothesis-Driven B2B Positioning Engine**: 8 tools implementing the IMPACT framework for strategic positioning and go-to-market messaging.
 
 ## Use it hosted (no install)
