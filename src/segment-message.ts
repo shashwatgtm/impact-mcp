@@ -48,7 +48,7 @@ export const segmentMessageDefinition = {
       } as Node,
     }, required: ['stage', 'brief'],
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+  annotations: { title: 'Build our message for this segment', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
 };
 export type SegmentBrief = {
   product: string; product_description: string; segments: string[]; problem: string; category: string;
