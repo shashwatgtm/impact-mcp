@@ -53,7 +53,7 @@ exports.segmentMessageDefinition = {
             },
         }, required: ['stage', 'brief'],
     },
-    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    annotations: { title: 'Build our message for this segment', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
 };
 const unknown = (s) => !s?.trim() || /^(?:none(?: yet)?|unknown|not (?:given|stated|supplied|confirmed)|n\/?a|tbd|i (?:do not|don.t) know)[.!]?$/i.test(s.trim());
 const illustrative = /\b(?:illustrative|hypothetical|example|assumed|assumption|projected|projection|target|goal|not (?:a )?(?:real|measured) result|no (?:real|measured) result)\b/i;
