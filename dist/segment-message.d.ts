@@ -16,6 +16,7 @@ export declare const segmentMessageDefinition: {
         required: string[];
     };
     annotations: {
+        title: string;
         readOnlyHint: boolean;
         destructiveHint: boolean;
         openWorldHint: boolean;

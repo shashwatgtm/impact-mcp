@@ -1,26 +1,26 @@
 <!doctype html>
 <html lang="en" class="hx-look">
-<head>
+<head><meta name="googlebot-news" content="noindex">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IMPACT Docs | Helix GTM Consulting</title>
+<title>IMPACT Docs: MCP and REST API | Helix GTM</title>
 <meta name="description" content="How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas. Free, with no sign in.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="author" content="Shashwat Ghosh, Helix GTM Consulting">
 <link rel="canonical" href="https://impact.gtmhelix.com/docs/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="IMPACT by Helix GTM Consulting">
-<meta property="og:title" content="IMPACT Docs | Helix GTM Consulting">
+<meta property="og:title" content="IMPACT Docs: MCP and REST API | Helix GTM">
 <meta property="og:description" content="How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas. Free, with no sign in.">
 <meta property="og:url" content="https://impact.gtmhelix.com/docs/">
-<meta property="og:image" content="https://impact.gtmhelix.com/og.png">
+<meta property="og:image" content="https://impact.gtmhelix.com/assets/share/docs.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="IMPACT by Helix GTM Consulting">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="IMPACT Docs | Helix GTM Consulting">
+<meta name="twitter:title" content="IMPACT Docs: MCP and REST API | Helix GTM">
 <meta name="twitter:description" content="How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas. Free, with no sign in.">
-<meta name="twitter:image" content="https://impact.gtmhelix.com/og.png">
+<meta name="twitter:image" content="https://impact.gtmhelix.com/assets/share/docs.jpg">
 <meta name="twitter:creator" content="@Shashwat_Ghosh">
 <link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -154,7 +154,7 @@
    "@type": "WebPage",
    "@id": "https://impact.gtmhelix.com/docs/#page",
    "url": "https://impact.gtmhelix.com/docs/",
-   "name": "IMPACT Docs | Helix GTM Consulting",
+   "name": "IMPACT Docs: MCP and REST API | Helix GTM",
    "description": "How to call the 8 IMPACT tools over MCP or REST: addresses, limits, errors and every input field, from the server's own schemas. Free, with no sign in.",
    "isPartOf": {
     "@id": "https://impact.gtmhelix.com/#site"
@@ -162,7 +162,7 @@
    "about": {
     "@id": "https://impact.gtmhelix.com/#app"
    },
-   "dateModified": "2026-11-02",
+   "dateModified": "2026-11-19",
    "inLanguage": "en",
    "primaryImageOfPage": "https://impact.gtmhelix.com/og.png"
   },
@@ -202,6 +202,7 @@
 <script src="/assets/analytics.js?v=2eb2d1413a" data-privacy="/privacy/" defer></script>
 <script src="/assets/look.js?v=8ddfc15129" defer></script>
 <script src="https://gtmhelix.com/journey/history.js" defer></script>
+<link rel="stylesheet" href="/assets/site-access.css?v=95e0a8874d">
 </head>
 <body>
 <a class="hx-skip" href="#main">Skip to content</a>
@@ -227,7 +228,7 @@
   <ul class="hx-prose">
     <li>Address: <code>https://impact.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
-    <li>Rate limit: 300 requests per minute per IP address. Server: <code>impact-mcp</code> version 2.2.27.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>impact-mcp</code> version 2.2.28.</li>
     <li>Limits: up to 262,144 bytes per call, text fields of up to 4,000 characters and one call per request (no batches). A call over a limit is refused before the tool runs.</li>
     <li>Local use: <code>npx -y @shashwatgtmalpha/impact-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
   </ul>
@@ -277,13 +278,14 @@
 <tr><td>2.2.20</td><td>12 October 2026</td><td>safety fix only: the instruction echo safeguard; tool list and answers otherwise unchanged</td></tr>
 <tr><td>2.2.24</td><td>15 October 2026</td><td>security update only: MCP SDK 1.31.0 (advisory GHSA-6qxp-vccf-f47h); tool list and answers unchanged</td></tr>
 <tr><td>2.2.26</td><td>16 October 2026</td><td>security update: text you type is shown with a small backslash before characters that could start a link, image, tag or code, so it can never become live markup; tool list unchanged</td></tr>
-<tr><td>2.2.27 (this site)</td><td>17 October 2026</td><td>quality update: sector knowledge for the nine verticals on all eight tools; new optional input your_sector (your own industry) and business model inputs; sub industry notes only when your own words name one; a usage count per tool (no text you type is kept)</td></tr>
+<tr><td>2.2.27</td><td>17 October 2026</td><td>quality update: sector knowledge for the nine verticals on all eight tools; new optional input your_sector (your own industry) and business model inputs; sub industry notes only when your own words name one; a usage count per tool (no text you type is kept)</td></tr>
+<tr><td>2.2.28 (this site)</td><td>17 November 2026</td><td>Tool and parameter descriptions clarify usage, inputs and returned sections.</td></tr>
   </tbody></table></div>
 </section>
 
 <section class="hx-section hx-wash" aria-labelledby="ref-h">
   <h2 id="ref-h">Tool reference</h2>
-  <p class="hx-sub">Generated from the server's own input schemas, version 2.2.27.</p>
+  <p class="hx-sub">Tool names and input formats for server version 2.2.28.</p>
 </section>
 <section class="hx-section" id="impact-get-framework" aria-labelledby="d-impact-get-framework">
   <h3 id="d-impact-get-framework">IMPACT Framework Guide</h3>

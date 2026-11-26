@@ -6,49 +6,49 @@ import { explainSector } from './verticals.ts';
 
 export const SEGMENT_MESSAGE_TOOL = 'impact_build_segment_message';
 const briefSchema: Node = {
-  type: 'object', additionalProperties: false, description: 'The segment brief carried unchanged between calls.',
+  type: 'object', additionalProperties: false, description: "The segment brief carried unchanged between calls. Format is a JSON object. For example, {\"product\":\"invoice review service\",\"product_description\":\"checks invoice exceptions before approval\",\"segments\":[\"manufacturers with 200 to 500 employees\"],\"problem\":\"invoice exceptions delay month-end close\",\"category\":\"manufacturing\",\"alternatives\":[\"the current manual review process\"],\"desired_outcome\":\"resolve invoice exceptions before month-end\",\"capability\":\"checks invoice exceptions before approval\",\"trigger\":\"an audit review due next quarter\",\"measure\":\"days from invoice receipt to approval\",\"sector\":\"manufacturing\",\"proof\":{\"kind\":\"none\"}}.",
   properties: {
-    product: t('The product name.'), product_description: t('What the product does, from your own brief.'),
-    segments: { type: 'array', minItems: 1, maxItems: 1, items: t('The segment to work on. Keep its wording unchanged.') },
-    problem: t('The problem in the champion\'s words.'), category: t('The category word you want to test.'),
-    alternatives: { type: 'array', minItems: 1, maxItems: 30, items: t('An alternative, including the current approach and doing nothing.') },
-    weak_points: t('Your notes about weak points to test. They are not competitor facts.'),
-    desired_outcome: t('The outcome the buyer wants, without an illustrative improvement figure.'),
-    capability: t('The capability that could produce that outcome.'),
-    trigger: t('What makes the problem matter now.'), measure: t('The measure and its definition.'),
-    sector: t('Your sector in your own words.'),
-    agreed_claim: t('The agreed claim from the ChatGPT Positioning Workshop, if available. The chain starts from it when given.'),
+    product: t("The product name. Format is text. For example, \"invoice review service\"."), product_description: t("What the product does, from your own brief. Format is text. For example, \"checks invoice exceptions before approval\"."),
+    segments: { type: 'array', minItems: 1, maxItems: 1, items: t("The segment to work on. Keep its wording unchanged. Format is text. For example, \"manufacturers with 200 to 500 employees\".") , description: "Format is a JSON array. For example, [\"manufacturers with 200 to 500 employees\"]." },
+    problem: t("The problem in the champion's words. Format is text. For example, \"invoice exceptions delay month-end close\"."), category: t("The category word you want to test. Format is text. For example, \"manufacturing\"."),
+    alternatives: { type: 'array', minItems: 1, maxItems: 30, items: t("An alternative, including the current approach and doing nothing. Format is text. For example, \"the current manual review process\".") , description: "Format is a JSON array. For example, [\"the current manual review process\"]." },
+    weak_points: t("Your notes about weak points to test. They are not competitor facts. Format is text. For example, \"handoffs require manual reconciliation\"."),
+    desired_outcome: t("The outcome the buyer wants, without an illustrative improvement figure. Format is text. For example, \"resolve invoice exceptions before month-end\"."),
+    capability: t("The capability that could produce that outcome. Format is text. For example, \"checks invoice exceptions before approval\"."),
+    trigger: t("What makes the problem matter now. Format is text. For example, \"an audit review due next quarter\"."), measure: t("The measure and its definition. Format is text. For example, \"days from invoice receipt to approval\"."),
+    sector: t("Your sector in your own words. Format is text. For example, \"manufacturing\"."),
+    agreed_claim: t("The agreed claim from the ChatGPT Positioning Workshop, if available. The chain starts from it when given. Format is text. For example, \"Finance teams need a clear owner for each invoice exception.\"."),
     proof: {
       type: 'object', additionalProperties: false, required: ['kind'], properties: {
-        kind: { type: 'string', enum: ['none', 'illustrative', 'customer_result'] },
-        result: t('A real customer result, or the illustrative result kept out of buyer copy.'),
-        source: t('The source of the customer result, using https.'),
-        period: t('The period actually measured, not the publication date.'),
+        kind: { type: 'string', enum: ['none', 'illustrative', 'customer_result'] , description: "Format is text using one of the listed labels. For example, \"none\"." },
+        result: t("A real customer result, or the illustrative result kept out of buyer copy. Format is text. For example, \"Company-reported pilot reduced approval time from 12 to 9 days in October 2026.\"."),
+        source: t("The source of the customer result, using https. Format is text. For example, \"https://example.org/approved-evidence\"."),
+        period: t("The period actually measured, not the publication date. Format is text. For example, \"October 2026\"."),
       },
-    },
+     description: "Format is a JSON object. For example, {\"kind\":\"none\"}." },
   },
   required: ['product', 'product_description', 'segments', 'problem', 'category', 'alternatives', 'desired_outcome', 'capability', 'trigger', 'measure', 'sector', 'proof'],
 };
 export const segmentMessageDefinition = {
   name: SEGMENT_MESSAGE_TOOL, title: 'Build our message for this segment',
-  description: 'Build our message for this segment when our sellers do not use the message or buyers stay with what they have. Needs the product, segment, champion problem, alternatives, outcome, capability and proof. Returns proof gaps and current approach questions, champion and alternatives maps for human choices, then a message and proof plan after a pause. Optional agreed workshop claim is the starting point. Without a real customer result, buyer lines are unproved hypotheses and the next step is discovery questions. Chat carries the brief between calls.',
+  description: "Helps you decide how to build a message for one segment when sellers do not use it or buyers keep their current approach. Needs the product, segment, champion problem, alternatives, outcome, capability and proof. Returns proof gaps and current approach questions, champion and alternatives maps for human choices, then a message and proof plan after a pause. Optional agreed workshop claim is the starting point. Without a real customer result, buyer lines are unproved hypotheses and the next step is discovery questions. Chat carries the brief between calls. Read-only for business data. It needs no sign-in and stores no inputs or outputs. Hosted usage metadata is recorded. Missing or invalid stage or brief fields return field-specific errors. The message stage requires the matching review receipt and confirmed choices. Missing real proof keeps buyer lines as unproved hypotheses. Use this instead of impact_craft_message when you need a staged segment workshop with confirmed champion and alternative choices.",
   inputSchema: {
     type: 'object' as const, additionalProperties: false, properties: {
-      stage: { type: 'string', enum: ['map', 'message'], description: 'Map first. After the buyer chooses, call message with the same brief, its review receipt and confirmed choices.' } as Node,
+      stage: { type: 'string', enum: ['map', 'message'], description: "Map first. After the buyer chooses, call message with the same brief, its review receipt and confirmed choices. Format is text using one of the listed labels. For example, \"map\"." } as Node,
       brief: briefSchema,
-      review_receipt: t('The receipt from the map call, carried by chat. The server stores no brief.'),
+      review_receipt: t("The receipt from the map call, carried by chat. The server stores no brief. Format is text. For example, \"copy the complete receipt returned by the map call\"."),
       choices: {
-        type: 'object', additionalProperties: false, description: 'The champion and alternative choices confirmed by the buyer after reading the maps.',
+        type: 'object', additionalProperties: false, description: "The champion and alternative choices confirmed by the buyer after reading the maps. Format is a JSON object. For example, {\"confirmed\":true,\"champion\":\"finance director\",\"champion_segment\":\"manufacturers with 200 to 500 employees\",\"alternative\":\"the current manual review process\"}.",
         properties: {
-          confirmed: { type: 'boolean', description: 'True only after the buyer confirms these choices in chat.' },
-          champion: t('The champion role or person the buyer chose. Confirmation is still a hypothesis until advocacy and access are evidenced.'),
-          champion_segment: t('The confirmed target customer wording in this segment. Sent to the value tool word for word.'),
-          alternative: t('The alternative chosen from the map. Sent to the message tool word for word.'),
+          confirmed: { type: 'boolean', description: "True only after the buyer confirms these choices in chat. Format is true or false. For example, true." },
+          champion: t("The champion role or person the buyer chose. Confirmation is still a hypothesis until advocacy and access are evidenced. Format is text. For example, \"finance director\"."),
+          champion_segment: t("The confirmed target customer wording in this segment. Sent to the value tool word for word. Format is text. For example, \"manufacturers with 200 to 500 employees\"."),
+          alternative: t("The alternative chosen from the map. Sent to the message tool word for word. Format is text. For example, \"the current manual review process\"."),
         }, required: ['confirmed', 'champion', 'champion_segment', 'alternative'],
       } as Node,
     }, required: ['stage', 'brief'],
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+  annotations: { title: 'Build our message for this segment', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
 };
 export type SegmentBrief = {
   product: string; product_description: string; segments: string[]; problem: string; category: string;
