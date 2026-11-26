@@ -1,0 +1,74 @@
+[
+  {
+    "sector": "SaaS",
+    "process": "subscription onboarding",
+    "teams": "customer success teams",
+    "exact": "The pilot reduced time spent on subscription onboarding from eight hours to five hours.",
+    "paraphrase": "Time spent on subscription onboarding fell from eight hours to five hours in the pilot.",
+    "opposite": "Reducing time spent on subscription onboarding from eight hours to five hours is a target. No measured result exists."
+  },
+  {
+    "sector": "ITeS",
+    "process": "service desk handovers",
+    "teams": "service desk teams",
+    "exact": "The pilot reduced time spent on service desk handovers from eight hours to five hours.",
+    "paraphrase": "Time spent on service desk handovers fell from eight hours to five hours in the pilot.",
+    "opposite": "Reducing time spent on service desk handovers from eight hours to five hours is a target. No measured result exists."
+  },
+  {
+    "sector": "fintech",
+    "process": "settlement reconciliation",
+    "teams": "payments operations teams",
+    "exact": "The pilot reduced time spent on settlement reconciliation from eight hours to five hours.",
+    "paraphrase": "Time spent on settlement reconciliation fell from eight hours to five hours in the pilot.",
+    "opposite": "Reducing time spent on settlement reconciliation from eight hours to five hours is a target. No measured result exists."
+  },
+  {
+    "sector": "HR tech",
+    "process": "candidate screening",
+    "teams": "recruiting teams",
+    "exact": "The pilot reduced time spent on candidate screening from eight hours to five hours.",
+    "paraphrase": "Time spent on candidate screening fell from eight hours to five hours in the pilot.",
+    "opposite": "Reducing time spent on candidate screening from eight hours to five hours is a target. No measured result exists."
+  },
+  {
+    "sector": "logistics",
+    "process": "parcel dispatch",
+    "teams": "dispatch teams",
+    "exact": "The pilot reduced time spent on parcel dispatch from eight hours to five hours.",
+    "paraphrase": "Time spent on parcel dispatch fell from eight hours to five hours in the pilot.",
+    "opposite": "Reducing time spent on parcel dispatch from eight hours to five hours is a target. No measured result exists."
+  },
+  {
+    "sector": "healthcare IT",
+    "process": "clinic scheduling",
+    "teams": "clinic scheduling teams",
+    "exact": "The pilot reduced time spent on clinic scheduling from eight hours to five hours.",
+    "paraphrase": "Time spent on clinic scheduling fell from eight hours to five hours in the pilot.",
+    "opposite": "Reducing time spent on clinic scheduling from eight hours to five hours is a target. No measured result exists."
+  },
+  {
+    "sector": "manufacturing software",
+    "process": "production inspection",
+    "teams": "plant quality teams",
+    "exact": "The pilot reduced time spent on production inspection from eight hours to five hours.",
+    "paraphrase": "Time spent on production inspection fell from eight hours to five hours in the pilot.",
+    "opposite": "Reducing time spent on production inspection from eight hours to five hours is a target. No measured result exists."
+  },
+  {
+    "sector": "edtech",
+    "process": "classroom scheduling",
+    "teams": "teaching teams",
+    "exact": "The pilot reduced time spent on classroom scheduling from eight hours to five hours.",
+    "paraphrase": "Time spent on classroom scheduling fell from eight hours to five hours in the pilot.",
+    "opposite": "Reducing time spent on classroom scheduling from eight hours to five hours is a target. No measured result exists."
+  },
+  {
+    "sector": "martech",
+    "process": "campaign approval",
+    "teams": "campaign operations teams",
+    "exact": "The pilot reduced time spent on campaign approval from eight hours to five hours.",
+    "paraphrase": "Time spent on campaign approval fell from eight hours to five hours in the pilot.",
+    "opposite": "Reducing time spent on campaign approval from eight hours to five hours is a target. No measured result exists."
+  }
+]

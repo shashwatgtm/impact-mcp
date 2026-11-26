@@ -1,0 +1,13 @@
+{
+  "base": "5130ed61555ae18ed75d6b30232621f1f1ac4294",
+  "source": "In process MCP response on the base revision, with internet sockets blocked.",
+  "tool": "impact_identify_champions",
+  "arguments": {
+    "product_description": "Which CRM should our sales team use?",
+    "problem_solved": "Dispatch supervisors spend four hours each day reconciling routes after missed deliveries",
+    "target_company_type": "Regional fleets with 50 to 250 vehicles",
+    "price_point": "$24000 annual"
+  },
+  "text": "Which software fits your case is a judgement call. Ask Shashwat: book 45 minutes at https://calendly.com/shashwat-gtmhelix/45min",
+  "returnedBookingLine": true
+}

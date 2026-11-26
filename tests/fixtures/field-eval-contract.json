@@ -1,0 +1,14 @@
+{
+  "base": "5130ed61555ae18ed75d6b30232621f1f1ac4294",
+  "tools": {
+    "impact_get_framework": "a6494f31322a10e0beef2ca724218dd87bb6747eec3c236edc6dae7b1595f840",
+    "impact_identify_champions": "b8f982691d3c0d387a6c4c1cb3f8bd03036c5553500d905a1def1104da6d3ae1",
+    "impact_map_alternatives": "344a0959a5bbd6cd6fe29e9515c01d7044ecb490ff96afc119aa800ef8deb34d",
+    "impact_pinpoint_value": "bd07a8120ee2dcea81b0e3eccce7a51fe48227986b462fbb8c9515f85fbe3451",
+    "impact_anchor_market": "7e13151ec9c243064492be3bd73613754ff4d4c7c1b4f27fba3271808c046ca5",
+    "impact_craft_message": "310f120d1aeb3733c4b1e2a9087f1b6587b6de25f5d3e03992c50d79369fdfd4",
+    "impact_translate_execution": "946d19dccbe3b24d60847c75de2bb147be361fb6ce7b30e712ec1ef904784845",
+    "impact_full_audit": "832f8f3e5a1aec5ec1806a9336d59947b96a7af740254e63b3ed9b347854e57b",
+    "impact_build_segment_message": "15a9cd0d0a65a89c47d34ffc14c6ed467670029a614758189fd2be4f48d42e82"
+  }
+}
