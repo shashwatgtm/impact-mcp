@@ -1435,7 +1435,7 @@
         "business_model": "services",
         "your_sector": "logistics_tech"
       },
-      "sha256": "665aaccfb35d71e88902aff04a69ad1df9ae5dbf49fd937e8543cdbbaaeaa53d"
+      "sha256": "2a4b79dcc4fdab15802f5ee19c5f7e3c8e93d7fc8b50a6c32f637964b6bc9a55"
     },
     {
       "tool": "impact_full_audit",
@@ -1454,7 +1454,7 @@
         "business_model": "services",
         "your_sector": "fintech"
       },
-      "sha256": "07d104c5cd24c8f1f4b97b85a294a74e095a37a6b91ed001d7c3bba3b83be6bb"
+      "sha256": "b355fab109282c91260f2b8b2d1e069916cb48eb81e61327dcc24a4cc3c13759"
     },
     {
       "tool": "impact_full_audit",
@@ -1473,7 +1473,7 @@
         "business_model": "services",
         "your_sector": "saas"
       },
-      "sha256": "026d71b768e3dec23ce12b5ffc01be9c6a530d5d2887cf3d8bcaa59cb03d2d31"
+      "sha256": "7d7f36d24a97812f544d60d73df300475ca6d9cad154c72f7ab276c20c16c979"
     },
     {
       "tool": "impact_full_audit",
@@ -1492,7 +1492,7 @@
         "business_model": "services",
         "your_sector": "vertical_saas"
       },
-      "sha256": "498a82e08e2db34a28d8daaf8393a7766278c6218eca2d4c6dbb19b21867d05f"
+      "sha256": "9db5d86bf4edf7fe4aa455ba16f4e66a7e750bf76ed4e6adf5431768fac36f1b"
     },
     {
       "tool": "impact_full_audit",
@@ -1511,7 +1511,7 @@
         "business_model": "services",
         "your_sector": "ai_native"
       },
-      "sha256": "b95a9060c86cff25d15265f069e22551e612198096dcca173cc122c4560b5d40"
+      "sha256": "040fa9e8b2253f066ca804f84fbd2e32ab67d401864b10d24d8b032c02cf0e89"
     },
     {
       "tool": "impact_full_audit",
@@ -1530,7 +1530,7 @@
         "business_model": "services",
         "your_sector": "ites"
       },
-      "sha256": "0ff5ebeddf79ca298bab7c49de39451103688c041f9510f337ff04ccc9bc0043"
+      "sha256": "81080abd9ea06bbf7b9de7627d53294c67464d5dea23e3f7893237ab949ff603"
     },
     {
       "tool": "impact_full_audit",
@@ -1549,7 +1549,7 @@
         "business_model": "services",
         "your_sector": "telecom"
       },
-      "sha256": "180e117327f224c6d0c0a8a8bcbf27b15da14a04bcd9bbee092280507d26dad3"
+      "sha256": "5c548505c7324f17928bc0d718ed84eb6deb2446e4cb2eaf01e0712eafcbf3c7"
     },
     {
       "tool": "impact_full_audit",
@@ -1568,7 +1568,7 @@
         "business_model": "services",
         "your_sector": "software"
       },
-      "sha256": "5b10a3554f9157a800d8343a946ab247419c4ab602b1ba4b8f5e454b722c2136"
+      "sha256": "3cd2073fb9a3f4d70ce28b673cbef6a86cf6e374503573e0a2b4c784755d82e0"
     },
     {
       "tool": "impact_full_audit",
@@ -1587,7 +1587,7 @@
         "business_model": "services",
         "your_sector": "cybersecurity"
       },
-      "sha256": "e72877c284045d60b08f382afab4fae0f434c8afe0f2309f5d72837d574abc75"
+      "sha256": "ff2a09e7c7e30976fdfe88f71441048ffd240df93985f767b8fcc6eb6b0a6fd7"
     }
   ]
 }

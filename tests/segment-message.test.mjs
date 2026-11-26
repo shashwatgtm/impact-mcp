@@ -54,7 +54,7 @@ test('coordinator: maps start side by side, independently, with exact brief hand
 });
 test('coordinator: no sales kit action without a real customer result; incomplete and scale proof are not enough',async()=>{
  for(const proof of [{kind:'none'},{kind:'illustrative',result:'Pilot from 12 days to 1 day'},{kind:'customer_result',result:'Time fell from 12 days to 1 day'}, {kind:'customer_result',result:'Serves 250 enterprises',source:'https://example.invalid/report',period:'The last year'}]){
-  const d=data(await message({...known,proof}));assert.deepEqual(d.actions.map(a=>a.label),['Draft discovery questions']);assert.ok(d.actions[0].destination.includes('competitive_trap_setter'));
+  const d=data(await message({...known,proof}));assert.deepEqual(d.actions.map(a=>a.label),['Draft discovery questions']);assert.ok(d.actions[0].prompt.includes('competitive_trap_setter'));
  }
  // Synthetic positive gate exercise for an unnamed product, not a company claim.
  const b={...known,product:'A security product',proof:{kind:'customer_result',result:'A bank reduced the time from a leaked credential finding to a named owner from 12 days to 1 day',source:'https://example.invalid/approved-customer-result',period:'The customer pilot month'}};

@@ -24,31 +24,13 @@ extra='''
   if(c.assets)for(const asset of c.assets)show(asset.name+': first draft',asset.text);
   if(c.checks)for(const check of c.checks){const lines=[...(check.flags??[]),...(check.date_issues??[]),...(check.derived_numbers??[]).map(x=>'Number not on the card: '+x),...(check.missing_view??[]).map(x=>'Missing view sentence: '+x)];if(lines.length)add(check.asset+': review these lines',lines);}
   add('Read before you use this',['The server check preserves the supplied words. Read every factual sentence against its source. It does not establish meaning or independent verification. The full server response is below.']);
-  if (!/^[a-f0-9]{64}$/.test(c.result_ref) || !Array.isArray(c.actions)) return;
-  const box=add('Continue in chat',[]);
-  for (const action of c.actions) {
-    let choice;
-    let panel=box;
-    if (action.kind==='champion' && c.stage==='map') choice='Select champion option 1';
-    else if (action.kind==='alternative' && c.stage==='map' && Number.isInteger(action.index) && action.index>=1 && action.index<=c.alternative_choices.length) choice='Select alternative option '+action.index;
-    else if (c.stage==='message' && (action.kind==='sales' || action.kind==='discovery') && action.fields) {
-      const destination=action.kind==='sales'?'CRAFT Content / sales_enablement_content':'Revenue Enablement / competitive_trap_setter';
-      choice='Approve the displayed fields for '+destination;
-      panel=make('details');panel.append(make('summary','Review '+action.label),make('p','Destination: '+destination));
-      for (const [key,value] of Object.entries(action.fields)) {
-        panel.append(make('strong',key.replace(/_/g,' ')),make('pre',Array.isArray(value)?value.join('\\n'):String(value)));
-      }
-      box.append(panel);
-    } else continue;
-    const prompt=choice+' for Helix result '+c.result_ref+'.';
-    const button=make('button',panel===box?action.label:'Approve these fields and continue');button.type='button';
-    button.addEventListener('click',()=>{
-      if(window.openai?.sendFollowUpMessage)window.openai.sendFollowUpMessage({prompt});
-      else if(ready)window.parent.postMessage({jsonrpc:'2.0',id:'chain-message-'+c.actions.indexOf(action),method:'ui/message',params:{role:'user',content:[{type:'text',text:prompt}]}},hostOrigin);
-      else $('status').textContent='Continue in the conversation: '+prompt;
-    });
-    panel.append(button);
-  }
+  const actions=c.actions??[];
+  if(actions.length){const box=add('Continue in chat',[]);
+   for(const action of actions){const button=make('button',action.label);button.type='button';button.addEventListener('click',()=>{
+    if(window.openai?.sendFollowUpMessage){window.openai.sendFollowUpMessage({prompt:action.prompt});}
+    else if(ready){window.parent.postMessage({jsonrpc:'2.0',id:'chain-message-'+actions.indexOf(action),method:'ui/message',params:{role:'user',content:[{type:'text',text:action.prompt}]}},hostOrigin);}
+    else{$('status').textContent='Continue in the conversation: '+action.prompt;}
+   });box.append(button);}}
  }
 '''
 h=h.replace(' function render(view)',extra+' function render(view)')

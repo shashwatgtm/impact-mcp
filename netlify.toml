@@ -5,3 +5,9 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+# Preserve the reviewed Job G/H hosted MCP profile. Plain npm builds retain current.
+[build.environment]
+  HELIX_PROFILE = "slice"
+  WAVE_PAYLOAD = "meta"
+  WIDGET_UI_DOMAIN = "on"

@@ -16,6 +16,7 @@ export declare const segmentMessageDefinition: {
         required: string[];
     };
     annotations: {
+        title: string;
         readOnlyHint: boolean;
         destructiveHint: boolean;
         openWorldHint: boolean;
@@ -112,15 +113,10 @@ export declare function runSegmentMessage(input: unknown, invoke: Invoke): Promi
                 your_strengths: string;
             };
         })[];
-        actions: ({
-            kind: string;
-            index: number;
+        actions: {
             label: string;
-        } | {
-            kind: string;
-            label: string;
-        })[];
-        result_ref: string;
+            prompt: string;
+        }[];
         proof_gaps: string[];
         status_quo_questions: string[];
         warnings: string[];
@@ -195,34 +191,10 @@ export declare function runSegmentMessage(input: unknown, invoke: Invoke): Promi
                 differentiation: string;
             };
         })[];
-        actions: ({
-            kind: string;
+        actions: {
             label: string;
-            destination: string;
-            fields: {
-                proof_result: string | undefined;
-                proof_source: string | undefined;
-                proof_period: string | undefined;
-                product: string;
-                target_customer: string;
-                problem: string;
-                alternative: string;
-                buyer_lines: string[];
-                capability: string;
-                proof_status: string;
-            };
-        } | {
-            kind: string;
-            label: string;
-            destination: string;
-            fields: {
-                target_customer: string;
-                problem: string;
-                alternative: string;
-                capability: string;
-            };
-        })[];
-        result_ref: string;
+            prompt: string;
+        }[];
         proof_gaps: string[];
         status_quo_questions: string[];
         warnings: string[];
