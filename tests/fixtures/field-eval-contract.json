@@ -1,14 +1,14 @@
 {
-  "base": "471e2c74b55f804a129763d6001d54bb9453d481",
+  "base": "5130ed61555ae18ed75d6b30232621f1f1ac4294",
   "tools": {
-    "impact_get_framework": "493cb033eab2bcab13a554af3e1b17138e1a677ab957989c19b95936161c0e18",
-    "impact_identify_champions": "105446353fd8e307dcb36facdb33f3e3e0a32e8ba6687713c46634ef3a7f6d07",
-    "impact_map_alternatives": "556bcd280b7a32324f3ad365c51ecda0169a47029d4be5419512875a1784d0f1",
-    "impact_pinpoint_value": "f4a399c2f4df52a04e5897ac4c639e9c5ea8b19c858cd19bdb50387379ec65c5",
-    "impact_anchor_market": "ea2660ad16c35c7f569a20a16f73548f98a877b5e024402bca2fe1d1464e9a7b",
-    "impact_craft_message": "f0ade3ee542f6d5dce17f1826f9871796f2cd488921c2dbbd54326fed8b17bb4",
-    "impact_translate_execution": "a1653e20f2e47be7fb487cba9e27b7b68090d1aa19d2bb2175dd0320cba3ebc3",
-    "impact_full_audit": "60e0977aca58cfbe7b906cac66f8dc1e84b164be28dc0dec9d9339cd6505292a",
-    "impact_build_segment_message": "519cc3c5b80c9477d43e9c0fd8ee021a2698c5fc5c0f35040a14070ef96fc870"
+    "impact_get_framework": "a6494f31322a10e0beef2ca724218dd87bb6747eec3c236edc6dae7b1595f840",
+    "impact_identify_champions": "b8f982691d3c0d387a6c4c1cb3f8bd03036c5553500d905a1def1104da6d3ae1",
+    "impact_map_alternatives": "344a0959a5bbd6cd6fe29e9515c01d7044ecb490ff96afc119aa800ef8deb34d",
+    "impact_pinpoint_value": "bd07a8120ee2dcea81b0e3eccce7a51fe48227986b462fbb8c9515f85fbe3451",
+    "impact_anchor_market": "7e13151ec9c243064492be3bd73613754ff4d4c7c1b4f27fba3271808c046ca5",
+    "impact_craft_message": "310f120d1aeb3733c4b1e2a9087f1b6587b6de25f5d3e03992c50d79369fdfd4",
+    "impact_translate_execution": "946d19dccbe3b24d60847c75de2bb147be361fb6ce7b30e712ec1ef904784845",
+    "impact_full_audit": "832f8f3e5a1aec5ec1806a9336d59947b96a7af740254e63b3ed9b347854e57b",
+    "impact_build_segment_message": "15a9cd0d0a65a89c47d34ffc14c6ed467670029a614758189fd2be4f48d42e82"
   }
 }

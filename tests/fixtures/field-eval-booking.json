@@ -1,5 +1,5 @@
 {
-  "base": "471e2c74b55f804a129763d6001d54bb9453d481",
+  "base": "5130ed61555ae18ed75d6b30232621f1f1ac4294",
   "source": "In process MCP response on the base revision, with internet sockets blocked.",
   "tool": "impact_identify_champions",
   "arguments": {
